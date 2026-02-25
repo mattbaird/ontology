@@ -30,8 +30,8 @@ Thumbs.db
 /bin/
 /dist/
 /server
-/signaldemo
 tmp/
+.cue_stamp
 
 # Database
 *.db

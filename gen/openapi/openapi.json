@@ -916,14 +916,14 @@
                 ]
             }
         },
-        "/v1/units": {
+        "/v1/buildings": {
             "post": {
-                "operationId": "CreateUnit",
+                "operationId": "CreateBuilding",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/UnitCreate"
+                                "$ref": "#/components/schemas/BuildingCreate"
                             }
                         }
                     },
@@ -934,7 +934,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Unit"
+                                    "$ref": "#/components/schemas/Building"
                                 }
                             }
                         },
@@ -944,13 +944,13 @@
                         "description": "Bad Request"
                     }
                 },
-                "summary": "Create a new unit within a property",
+                "summary": "Create a new building",
                 "tags": [
-                    "Unit"
+                    "Building"
                 ]
             },
             "get": {
-                "operationId": "ListUnits",
+                "operationId": "ListBuildings",
                 "parameters": [
                     {
                         "in": "query",
@@ -975,7 +975,7 @@
                             "application/json": {
                                 "schema": {
                                     "items": {
-                                        "$ref": "#/components/schemas/Unit"
+                                        "$ref": "#/components/schemas/Building"
                                     },
                                     "type": "array"
                                 }
@@ -984,15 +984,15 @@
                         "description": "OK"
                     }
                 },
-                "summary": "List units with filtering",
+                "summary": "List buildings",
                 "tags": [
-                    "Unit"
+                    "Building"
                 ]
             }
         },
-        "/v1/units/{id}": {
+        "/v1/buildings/{id}": {
             "get": {
-                "operationId": "GetUnit",
+                "operationId": "GetBuilding",
                 "parameters": [
                     {
                         "in": "path",
@@ -1009,7 +1009,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Unit"
+                                    "$ref": "#/components/schemas/Building"
                                 }
                             }
                         },
@@ -1019,13 +1019,13 @@
                         "description": "Not Found"
                     }
                 },
-                "summary": "Get unit by ID",
+                "summary": "Get building by ID",
                 "tags": [
-                    "Unit"
+                    "Building"
                 ]
             },
             "patch": {
-                "operationId": "UpdateUnit",
+                "operationId": "UpdateBuilding",
                 "parameters": [
                     {
                         "in": "path",
@@ -1041,7 +1041,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/UnitUpdate"
+                                "$ref": "#/components/schemas/BuildingUpdate"
                             }
                         }
                     },
@@ -1052,7 +1052,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/Unit"
+                                    "$ref": "#/components/schemas/Building"
                                 }
                             }
                         },
@@ -1065,15 +1065,555 @@
                         "description": "Not Found"
                     }
                 },
-                "summary": "Update unit fields",
+                "summary": "Update building",
                 "tags": [
-                    "Unit"
+                    "Building"
+                ]
+            }
+        },
+        "/v1/buildings/{id}/deactivate": {
+            "post": {
+                "operationId": "DeactivateBuilding",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Building"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Deactivate a building (transitions to \"inactive\")",
+                "tags": [
+                    "Building"
+                ]
+            }
+        },
+        "/v1/buildings/{id}/renovate": {
+            "post": {
+                "operationId": "StartBuildingRenovation",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Building"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Start building renovation (transitions to \"under_renovation\")",
+                "tags": [
+                    "Building"
+                ]
+            }
+        },
+        "/v1/buildings/{id}/activate": {
+            "post": {
+                "operationId": "ActivateBuilding",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Building"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Activate a building (transitions to \"active\")",
+                "tags": [
+                    "Building"
+                ]
+            }
+        },
+        "/v1/spaces": {
+            "post": {
+                "operationId": "CreateSpace",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SpaceCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                },
+                "summary": "Create a new space within a property",
+                "tags": [
+                    "Space"
+                ]
+            },
+            "get": {
+                "operationId": "ListSpaces",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "default": 50,
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "default": 0,
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/Space"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "List spaces with filtering",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}": {
+            "get": {
+                "operationId": "GetSpace",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "summary": "Get space by ID",
+                "tags": [
+                    "Space"
+                ]
+            },
+            "patch": {
+                "operationId": "UpdateSpace",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SpaceUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "summary": "Update space fields",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}/occupy": {
+            "post": {
+                "operationId": "OccupySpace",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Mark a space as occupied (transitions to \"occupied\")",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}/notice": {
+            "post": {
+                "operationId": "RecordSpaceNotice",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Record notice to vacate (transitions to \"notice_given\")",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}/rescind-notice": {
+            "post": {
+                "operationId": "RescindSpaceNotice",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Rescind a notice to vacate (transitions to \"occupied\")",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}/make-ready": {
+            "post": {
+                "operationId": "StartMakeReady",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Start make-ready process (transitions to \"make_ready\")",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}/vacate": {
+            "post": {
+                "operationId": "MarkSpaceVacant",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Mark a space as vacant (transitions to \"vacant\")",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}/mark-down": {
+            "post": {
+                "operationId": "MarkSpaceDown",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Mark a space as down (out of service) (transitions to \"down\")",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}/mark-model": {
+            "post": {
+                "operationId": "MarkSpaceModel",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Mark a space as a model unit (transitions to \"model\")",
+                "tags": [
+                    "Space"
+                ]
+            }
+        },
+        "/v1/spaces/{id}/reserve": {
+            "post": {
+                "operationId": "ReserveSpace",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Space"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Reserve a space (transitions to \"reserved\")",
+                "tags": [
+                    "Space"
                 ]
             }
         },
         "/v1/leases": {
             "post": {
-                "operationId": "CreateLease",
+                "operationId": "ApplyCredit",
                 "requestBody": {
                     "content": {
                         "application/json": {
@@ -1099,7 +1639,7 @@
                         "description": "Bad Request"
                     }
                 },
-                "summary": "Create a new lease draft",
+                "summary": "Apply a credit to a lease",
                 "tags": [
                     "Lease"
                 ]
@@ -1147,7 +1687,7 @@
         },
         "/v1/leases/{id}": {
             "get": {
-                "operationId": "GetLease",
+                "operationId": "GetLeaseLedger",
                 "parameters": [
                     {
                         "in": "path",
@@ -1174,7 +1714,7 @@
                         "description": "Not Found"
                     }
                 },
-                "summary": "Get lease by ID",
+                "summary": "Get ledger entries for a lease",
                 "tags": [
                     "Lease"
                 ]
@@ -1296,6 +1836,41 @@
                 ]
             }
         },
+        "/v1/leases/{id}/sign": {
+            "post": {
+                "operationId": "SendForSignature",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Lease"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Send lease for electronic signature (transitions to \"pending_signature\")",
+                "tags": [
+                    "Lease"
+                ]
+            }
+        },
         "/v1/leases/{id}/activate": {
             "post": {
                 "operationId": "ActivateLease",
@@ -1403,7 +1978,7 @@
         },
         "/v1/leases/{id}/evict": {
             "post": {
-                "operationId": "StartEviction",
+                "operationId": "InitiateEviction",
                 "parameters": [
                     {
                         "in": "path",
@@ -1433,6 +2008,196 @@
                 "summary": "Begin eviction process (transitions to \"eviction\")",
                 "tags": [
                     "Lease"
+                ]
+            }
+        },
+        "/v1/leases/{id}/notice": {
+            "post": {
+                "operationId": "RecordNotice",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Lease"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "409": {
+                        "description": "Invalid State Transition"
+                    }
+                },
+                "summary": "Record tenant notice date",
+                "tags": [
+                    "Lease"
+                ]
+            }
+        },
+        "/v1/lease-spaces": {
+            "post": {
+                "operationId": "CreateLeaseSpace",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LeaseSpaceCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LeaseSpace"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                },
+                "summary": "Create a lease-space association",
+                "tags": [
+                    "LeaseSpace"
+                ]
+            },
+            "get": {
+                "operationId": "ListLeaseSpaces",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "limit",
+                        "schema": {
+                            "default": 50,
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "in": "query",
+                        "name": "offset",
+                        "schema": {
+                            "default": 0,
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/LeaseSpace"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "List lease-space associations",
+                "tags": [
+                    "LeaseSpace"
+                ]
+            }
+        },
+        "/v1/lease-spaces/{id}": {
+            "get": {
+                "operationId": "GetLeaseSpace",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LeaseSpace"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "summary": "Get lease-space by ID",
+                "tags": [
+                    "LeaseSpace"
+                ]
+            },
+            "patch": {
+                "operationId": "UpdateLeaseSpace",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LeaseSpaceUpdate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LeaseSpace"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "summary": "Update lease-space association",
+                "tags": [
+                    "LeaseSpace"
                 ]
             }
         },
@@ -2324,6 +3089,144 @@
                     "Reconciliation"
                 ]
             }
+        },
+        "/v1/activity/entity/{id}": {
+            "get": {
+                "operationId": "GetEntityActivity",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ActivityEntry"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "summary": "Get chronological activity feed for any entity. Use as FIRST call when assessing an entity.",
+                "tags": [
+                    "ActivityEntry"
+                ]
+            }
+        },
+        "/v1/activity/summary/{id}": {
+            "get": {
+                "operationId": "GetSignalSummary",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "required": true,
+                        "schema": {
+                            "format": "uuid",
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ActivityEntry"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                },
+                "summary": "Get pre-aggregated signal summary for an entity with category breakdowns, sentiment, and escalations.",
+                "tags": [
+                    "ActivityEntry"
+                ]
+            }
+        },
+        "/v1/activity/portfolio": {
+            "post": {
+                "operationId": "GetPortfolioSignals",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActivityEntryCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ActivityEntry"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                },
+                "summary": "Batch screen multiple entities ranked by concern level. Use for portfolio-wide risk assessment.",
+                "tags": [
+                    "ActivityEntry"
+                ]
+            }
+        },
+        "/v1/activity/search": {
+            "post": {
+                "operationId": "SearchActivity",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ActivityEntryCreate"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ActivityEntry"
+                                }
+                            }
+                        },
+                        "description": "Created"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    }
+                },
+                "summary": "Full-text search across all activity streams by keyword.",
+                "tags": [
+                    "ActivityEntry"
+                ]
+            }
         }
     },
     "components": {
@@ -2373,6 +3276,7 @@
                             "rental_income",
                             "other_income",
                             "cam_recovery",
+                            "percentage_rent_income",
                             "operating_expense",
                             "maintenance_expense",
                             "utility_expense",
@@ -2393,10 +3297,6 @@
                         "type": "object"
                     },
                     "normal_balance": {
-                        "enum": [
-                            "debit",
-                            "credit"
-                        ],
                         "type": "string"
                     },
                     "is_header": {
@@ -2420,11 +3320,6 @@
                         "type": "boolean"
                     },
                     "trust_type": {
-                        "enum": [
-                            "operating",
-                            "security_deposit",
-                            "escrow"
-                        ],
                         "type": "string"
                     },
                     "budget_amount_amount_cents": {
@@ -2511,6 +3406,7 @@
                             "rental_income",
                             "other_income",
                             "cam_recovery",
+                            "percentage_rent_income",
                             "operating_expense",
                             "maintenance_expense",
                             "utility_expense",
@@ -2531,10 +3427,6 @@
                         "type": "object"
                     },
                     "normal_balance": {
-                        "enum": [
-                            "debit",
-                            "credit"
-                        ],
                         "type": "string"
                     },
                     "is_header": {
@@ -2558,11 +3450,6 @@
                         "type": "boolean"
                     },
                     "trust_type": {
-                        "enum": [
-                            "operating",
-                            "security_deposit",
-                            "escrow"
-                        ],
                         "type": "string"
                     },
                     "budget_amount_amount_cents": {
@@ -2633,6 +3520,7 @@
                             "rental_income",
                             "other_income",
                             "cam_recovery",
+                            "percentage_rent_income",
                             "operating_expense",
                             "maintenance_expense",
                             "utility_expense",
@@ -2653,10 +3541,6 @@
                         "type": "object"
                     },
                     "normal_balance": {
-                        "enum": [
-                            "debit",
-                            "credit"
-                        ],
                         "type": "string"
                     },
                     "is_header": {
@@ -2680,11 +3564,6 @@
                         "type": "boolean"
                     },
                     "trust_type": {
-                        "enum": [
-                            "operating",
-                            "security_deposit",
-                            "escrow"
-                        ],
                         "type": "string"
                     },
                     "budget_amount_amount_cents": {
@@ -2710,7 +3589,7 @@
                     "property_id": {
                         "type": "string"
                     },
-                    "unit_id": {
+                    "space_id": {
                         "type": "string"
                     },
                     "applicant_person_id": {
@@ -2821,7 +3700,7 @@
                     "property_id": {
                         "type": "string"
                     },
-                    "unit_id": {
+                    "space_id": {
                         "type": "string"
                     },
                     "applicant_person_id": {
@@ -3158,6 +4037,197 @@
                     }
                 }
             },
+            "Building": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "property_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "building_type": {
+                        "enum": [
+                            "residential",
+                            "commercial",
+                            "mixed_use",
+                            "parking_structure",
+                            "industrial",
+                            "storage",
+                            "auxiliary"
+                        ],
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "object"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "under_renovation"
+                        ],
+                        "type": "string"
+                    },
+                    "floors": {
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "year_built": {
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "total_square_footage": {
+                        "format": "double",
+                        "type": "number"
+                    },
+                    "total_rentable_square_footage": {
+                        "format": "double",
+                        "type": "number"
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "created_by": {
+                        "type": "string"
+                    },
+                    "updated_by": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "property_id",
+                    "name",
+                    "building_type",
+                    "status"
+                ]
+            },
+            "BuildingCreate": {
+                "type": "object",
+                "properties": {
+                    "property_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "building_type": {
+                        "enum": [
+                            "residential",
+                            "commercial",
+                            "mixed_use",
+                            "parking_structure",
+                            "industrial",
+                            "storage",
+                            "auxiliary"
+                        ],
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "object"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "under_renovation"
+                        ],
+                        "type": "string"
+                    },
+                    "floors": {
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "year_built": {
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "total_square_footage": {
+                        "format": "double",
+                        "type": "number"
+                    },
+                    "total_rentable_square_footage": {
+                        "format": "double",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "property_id",
+                    "name",
+                    "building_type",
+                    "status"
+                ]
+            },
+            "BuildingUpdate": {
+                "type": "object",
+                "description": "All fields optional for partial updates",
+                "properties": {
+                    "property_id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "building_type": {
+                        "enum": [
+                            "residential",
+                            "commercial",
+                            "mixed_use",
+                            "parking_structure",
+                            "industrial",
+                            "storage",
+                            "auxiliary"
+                        ],
+                        "type": "string"
+                    },
+                    "address": {
+                        "type": "object"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "enum": [
+                            "active",
+                            "inactive",
+                            "under_renovation"
+                        ],
+                        "type": "string"
+                    },
+                    "floors": {
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "year_built": {
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "total_square_footage": {
+                        "format": "double",
+                        "type": "number"
+                    },
+                    "total_rentable_square_footage": {
+                        "format": "double",
+                        "type": "number"
+                    }
+                }
+            },
             "JournalEntry": {
                 "type": "object",
                 "properties": {
@@ -3342,9 +4412,6 @@
                         "format": "uuid",
                         "type": "string"
                     },
-                    "unit_id": {
-                        "type": "string"
-                    },
                     "property_id": {
                         "type": "string"
                     },
@@ -3365,11 +4432,16 @@
                             "fixed_term",
                             "month_to_month",
                             "commercial_nnn",
+                            "commercial_nn",
+                            "commercial_n",
                             "commercial_gross",
                             "commercial_modified_gross",
                             "affordable",
                             "section_8",
-                            "student"
+                            "student",
+                            "ground_lease",
+                            "short_term",
+                            "membership"
                         ],
                         "type": "string"
                     },
@@ -3387,8 +4459,25 @@
                         ],
                         "type": "string"
                     },
+                    "liability_type": {
+                        "enum": [
+                            "joint_and_several",
+                            "individual",
+                            "by_the_bed",
+                            "proportional"
+                        ],
+                        "type": "string"
+                    },
                     "term": {
                         "type": "object"
+                    },
+                    "lease_commencement_date": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "rent_commencement_date": {
+                        "format": "date-time",
+                        "type": "string"
                     },
                     "base_rent_amount_cents": {
                         "description": "base_rent amount in cents",
@@ -3437,6 +4526,15 @@
                         },
                         "type": "array"
                     },
+                    "usage_charges": {
+                        "type": "object"
+                    },
+                    "expansion_rights": {
+                        "type": "object"
+                    },
+                    "contraction_rights": {
+                        "type": "object"
+                    },
                     "subsidy": {
                         "type": "object"
                     },
@@ -3455,6 +4553,48 @@
                     "notice_required_days": {
                         "format": "int32",
                         "type": "integer"
+                    },
+                    "check_in_time": {
+                        "type": "string"
+                    },
+                    "check_out_time": {
+                        "type": "string"
+                    },
+                    "cleaning_fee_amount_cents": {
+                        "description": "cleaning_fee amount in cents",
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "cleaning_fee_currency": {
+                        "description": "cleaning_fee ISO 4217 currency code",
+                        "pattern": "^[A-Z]{3}$",
+                        "type": "string"
+                    },
+                    "platform_booking_id": {
+                        "type": "string"
+                    },
+                    "membership_tier": {
+                        "enum": [
+                            "hot_desk",
+                            "dedicated_desk",
+                            "office",
+                            "suite",
+                            "virtual"
+                        ],
+                        "type": "string"
+                    },
+                    "parent_lease_id": {
+                        "type": "string"
+                    },
+                    "is_sublease": {
+                        "type": "boolean"
+                    },
+                    "sublease_billing": {
+                        "enum": [
+                            "through_master_tenant",
+                            "direct_to_landlord"
+                        ],
+                        "type": "string"
                     },
                     "signing_method": {
                         "enum": [
@@ -3488,23 +4628,22 @@
                 },
                 "required": [
                     "id",
-                    "unit_id",
                     "property_id",
                     "tenant_role_ids",
                     "lease_type",
                     "status",
+                    "liability_type",
                     "term",
                     "base_rent_amount_cents",
                     "security_deposit_amount_cents",
-                    "notice_required_days"
+                    "notice_required_days",
+                    "is_sublease",
+                    "sublease_billing"
                 ]
             },
             "LeaseCreate": {
                 "type": "object",
                 "properties": {
-                    "unit_id": {
-                        "type": "string"
-                    },
                     "property_id": {
                         "type": "string"
                     },
@@ -3525,11 +4664,16 @@
                             "fixed_term",
                             "month_to_month",
                             "commercial_nnn",
+                            "commercial_nn",
+                            "commercial_n",
                             "commercial_gross",
                             "commercial_modified_gross",
                             "affordable",
                             "section_8",
-                            "student"
+                            "student",
+                            "ground_lease",
+                            "short_term",
+                            "membership"
                         ],
                         "type": "string"
                     },
@@ -3547,8 +4691,25 @@
                         ],
                         "type": "string"
                     },
+                    "liability_type": {
+                        "enum": [
+                            "joint_and_several",
+                            "individual",
+                            "by_the_bed",
+                            "proportional"
+                        ],
+                        "type": "string"
+                    },
                     "term": {
                         "type": "object"
+                    },
+                    "lease_commencement_date": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "rent_commencement_date": {
+                        "format": "date-time",
+                        "type": "string"
                     },
                     "base_rent_amount_cents": {
                         "format": "int64",
@@ -3593,6 +4754,15 @@
                         },
                         "type": "array"
                     },
+                    "usage_charges": {
+                        "type": "object"
+                    },
+                    "expansion_rights": {
+                        "type": "object"
+                    },
+                    "contraction_rights": {
+                        "type": "object"
+                    },
                     "subsidy": {
                         "type": "object"
                     },
@@ -3611,6 +4781,46 @@
                     "notice_required_days": {
                         "format": "int32",
                         "type": "integer"
+                    },
+                    "check_in_time": {
+                        "type": "string"
+                    },
+                    "check_out_time": {
+                        "type": "string"
+                    },
+                    "cleaning_fee_amount_cents": {
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "cleaning_fee_currency": {
+                        "pattern": "^[A-Z]{3}$",
+                        "type": "string"
+                    },
+                    "platform_booking_id": {
+                        "type": "string"
+                    },
+                    "membership_tier": {
+                        "enum": [
+                            "hot_desk",
+                            "dedicated_desk",
+                            "office",
+                            "suite",
+                            "virtual"
+                        ],
+                        "type": "string"
+                    },
+                    "parent_lease_id": {
+                        "type": "string"
+                    },
+                    "is_sublease": {
+                        "type": "boolean"
+                    },
+                    "sublease_billing": {
+                        "enum": [
+                            "through_master_tenant",
+                            "direct_to_landlord"
+                        ],
+                        "type": "string"
                     },
                     "signing_method": {
                         "enum": [
@@ -3629,24 +4839,23 @@
                     }
                 },
                 "required": [
-                    "unit_id",
                     "property_id",
                     "tenant_role_ids",
                     "lease_type",
                     "status",
+                    "liability_type",
                     "term",
                     "base_rent_amount_cents",
                     "security_deposit_amount_cents",
-                    "notice_required_days"
+                    "notice_required_days",
+                    "is_sublease",
+                    "sublease_billing"
                 ]
             },
             "LeaseUpdate": {
                 "type": "object",
                 "description": "All fields optional for partial updates",
                 "properties": {
-                    "unit_id": {
-                        "type": "string"
-                    },
                     "property_id": {
                         "type": "string"
                     },
@@ -3667,11 +4876,16 @@
                             "fixed_term",
                             "month_to_month",
                             "commercial_nnn",
+                            "commercial_nn",
+                            "commercial_n",
                             "commercial_gross",
                             "commercial_modified_gross",
                             "affordable",
                             "section_8",
-                            "student"
+                            "student",
+                            "ground_lease",
+                            "short_term",
+                            "membership"
                         ],
                         "type": "string"
                     },
@@ -3689,8 +4903,25 @@
                         ],
                         "type": "string"
                     },
+                    "liability_type": {
+                        "enum": [
+                            "joint_and_several",
+                            "individual",
+                            "by_the_bed",
+                            "proportional"
+                        ],
+                        "type": "string"
+                    },
                     "term": {
                         "type": "object"
+                    },
+                    "lease_commencement_date": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "rent_commencement_date": {
+                        "format": "date-time",
+                        "type": "string"
                     },
                     "base_rent_amount_cents": {
                         "format": "int64",
@@ -3735,6 +4966,15 @@
                         },
                         "type": "array"
                     },
+                    "usage_charges": {
+                        "type": "object"
+                    },
+                    "expansion_rights": {
+                        "type": "object"
+                    },
+                    "contraction_rights": {
+                        "type": "object"
+                    },
                     "subsidy": {
                         "type": "object"
                     },
@@ -3754,6 +4994,46 @@
                         "format": "int32",
                         "type": "integer"
                     },
+                    "check_in_time": {
+                        "type": "string"
+                    },
+                    "check_out_time": {
+                        "type": "string"
+                    },
+                    "cleaning_fee_amount_cents": {
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "cleaning_fee_currency": {
+                        "pattern": "^[A-Z]{3}$",
+                        "type": "string"
+                    },
+                    "platform_booking_id": {
+                        "type": "string"
+                    },
+                    "membership_tier": {
+                        "enum": [
+                            "hot_desk",
+                            "dedicated_desk",
+                            "office",
+                            "suite",
+                            "virtual"
+                        ],
+                        "type": "string"
+                    },
+                    "parent_lease_id": {
+                        "type": "string"
+                    },
+                    "is_sublease": {
+                        "type": "boolean"
+                    },
+                    "sublease_billing": {
+                        "enum": [
+                            "through_master_tenant",
+                            "direct_to_landlord"
+                        ],
+                        "type": "string"
+                    },
                     "signing_method": {
                         "enum": [
                             "electronic",
@@ -3768,6 +5048,154 @@
                     },
                     "document_id": {
                         "type": "string"
+                    }
+                }
+            },
+            "LeaseSpace": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "format": "uuid",
+                        "type": "string"
+                    },
+                    "lease_id": {
+                        "type": "string"
+                    },
+                    "space_id": {
+                        "type": "string"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    },
+                    "relationship": {
+                        "enum": [
+                            "primary",
+                            "expansion",
+                            "sublease",
+                            "shared_access",
+                            "parking",
+                            "storage",
+                            "loading_dock",
+                            "rooftop",
+                            "patio",
+                            "signage",
+                            "included",
+                            "membership"
+                        ],
+                        "type": "string"
+                    },
+                    "effective": {
+                        "type": "object"
+                    },
+                    "square_footage_leased": {
+                        "format": "double",
+                        "type": "number"
+                    },
+                    "created_at": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "updated_at": {
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "created_by": {
+                        "type": "string"
+                    },
+                    "updated_by": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "lease_id",
+                    "space_id",
+                    "is_primary",
+                    "relationship",
+                    "effective"
+                ]
+            },
+            "LeaseSpaceCreate": {
+                "type": "object",
+                "properties": {
+                    "lease_id": {
+                        "type": "string"
+                    },
+                    "space_id": {
+                        "type": "string"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    },
+                    "relationship": {
+                        "enum": [
+                            "primary",
+                            "expansion",
+                            "sublease",
+                            "shared_access",
+                            "parking",
+                            "storage",
+                            "loading_dock",
+                            "rooftop",
+                            "patio",
+                            "signage",
+                            "included",
+                            "membership"
+                        ],
+                        "type": "string"
+                    },
+                    "effective": {
+                        "type": "object"
+                    },
+                    "square_footage_leased": {
+                        "format": "double",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "lease_id",
+                    "space_id",
+                    "is_primary",
+                    "relationship",
+                    "effective"
+                ]
+            },
+            "LeaseSpaceUpdate": {
+                "type": "object",
+                "description": "All fields optional for partial updates",
+                "properties": {
+                    "lease_id": {
+                        "type": "string"
+                    },
+                    "space_id": {
+                        "type": "string"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    },
+                    "relationship": {
+                        "enum": [
+                            "primary",
+                            "expansion",
+                            "sublease",
+                            "shared_access",
+                            "parking",
+                            "storage",
+                            "loading_dock",
+                            "rooftop",
+                            "patio",
+                            "signage",
+                            "included",
+                            "membership"
+                        ],
+                        "type": "string"
+                    },
+                    "effective": {
+                        "type": "object"
+                    },
+                    "square_footage_leased": {
+                        "format": "double",
+                        "type": "number"
                     }
                 }
             },
@@ -3830,7 +5258,7 @@
                     "property_id": {
                         "type": "string"
                     },
-                    "unit_id": {
+                    "space_id": {
                         "type": "string"
                     },
                     "lease_id": {
@@ -4395,7 +5823,8 @@
                             "vendor_contact",
                             "guarantor",
                             "emergency_contact",
-                            "authorized_occupant"
+                            "authorized_occupant",
+                            "co_signer"
                         ],
                         "type": "string"
                     },
@@ -4404,7 +5833,8 @@
                             "organization",
                             "portfolio",
                             "property",
-                            "unit",
+                            "building",
+                            "space",
                             "lease"
                         ],
                         "type": "string"
@@ -4469,7 +5899,8 @@
                             "vendor_contact",
                             "guarantor",
                             "emergency_contact",
-                            "authorized_occupant"
+                            "authorized_occupant",
+                            "co_signer"
                         ],
                         "type": "string"
                     },
@@ -4478,7 +5909,8 @@
                             "organization",
                             "portfolio",
                             "property",
-                            "unit",
+                            "building",
+                            "space",
                             "lease"
                         ],
                         "type": "string"
@@ -4545,9 +5977,6 @@
                             "onboarding",
                             "offboarding"
                         ],
-                        "type": "string"
-                    },
-                    "default_late_fee_policy": {
                         "type": "string"
                     },
                     "default_payment_methods": {
@@ -4617,9 +6046,6 @@
                         ],
                         "type": "string"
                     },
-                    "default_late_fee_policy": {
-                        "type": "string"
-                    },
                     "default_payment_methods": {
                         "items": {
                             "type": "string"
@@ -4673,9 +6099,6 @@
                         ],
                         "type": "string"
                     },
-                    "default_late_fee_policy": {
-                        "type": "string"
-                    },
                     "default_payment_methods": {
                         "items": {
                             "type": "string"
@@ -4716,7 +6139,11 @@
                             "student_housing",
                             "senior_living",
                             "vacation_rental",
-                            "mobile_home_park"
+                            "mobile_home_park",
+                            "self_storage",
+                            "coworking",
+                            "data_center",
+                            "medical_office"
                         ],
                         "type": "string"
                     },
@@ -4738,7 +6165,7 @@
                         "format": "double",
                         "type": "number"
                     },
-                    "total_units": {
+                    "total_spaces": {
                         "format": "int32",
                         "type": "integer"
                     },
@@ -4806,7 +6233,7 @@
                     "status",
                     "year_built",
                     "total_square_footage",
-                    "total_units",
+                    "total_spaces",
                     "rent_controlled",
                     "requires_lead_disclosure"
                 ]
@@ -4835,7 +6262,11 @@
                             "student_housing",
                             "senior_living",
                             "vacation_rental",
-                            "mobile_home_park"
+                            "mobile_home_park",
+                            "self_storage",
+                            "coworking",
+                            "data_center",
+                            "medical_office"
                         ],
                         "type": "string"
                     },
@@ -4857,7 +6288,7 @@
                         "format": "double",
                         "type": "number"
                     },
-                    "total_units": {
+                    "total_spaces": {
                         "format": "int32",
                         "type": "integer"
                     },
@@ -4910,7 +6341,7 @@
                     "status",
                     "year_built",
                     "total_square_footage",
-                    "total_units",
+                    "total_spaces",
                     "rent_controlled",
                     "requires_lead_disclosure"
                 ]
@@ -4940,7 +6371,11 @@
                             "student_housing",
                             "senior_living",
                             "vacation_rental",
-                            "mobile_home_park"
+                            "mobile_home_park",
+                            "self_storage",
+                            "coworking",
+                            "data_center",
+                            "medical_office"
                         ],
                         "type": "string"
                     },
@@ -4962,7 +6397,7 @@
                         "format": "double",
                         "type": "number"
                     },
-                    "total_units": {
+                    "total_spaces": {
                         "format": "int32",
                         "type": "integer"
                     },
@@ -5197,7 +6632,7 @@
                     "unmatched_transaction_count"
                 ]
             },
-            "Unit": {
+            "Space": {
                 "type": "object",
                 "properties": {
                     "id": {
@@ -5207,17 +6642,21 @@
                     "property_id": {
                         "type": "string"
                     },
-                    "unit_number": {
+                    "space_number": {
                         "type": "string"
                     },
-                    "unit_type": {
+                    "space_type": {
                         "enum": [
-                            "residential",
+                            "residential_unit",
                             "commercial_office",
                             "commercial_retail",
                             "storage",
                             "parking",
-                            "common_area"
+                            "common_area",
+                            "industrial",
+                            "lot_pad",
+                            "bed_space",
+                            "desk_space"
                         ],
                         "type": "string"
                     },
@@ -5229,9 +6668,22 @@
                             "make_ready",
                             "down",
                             "model",
-                            "reserved"
+                            "reserved",
+                            "owner_occupied"
                         ],
                         "type": "string"
+                    },
+                    "building_id": {
+                        "type": "string"
+                    },
+                    "parent_space_id": {
+                        "type": "string"
+                    },
+                    "leasable": {
+                        "type": "boolean"
+                    },
+                    "shared_with_parent": {
+                        "type": "boolean"
                     },
                     "square_footage": {
                         "format": "double",
@@ -5267,6 +6719,12 @@
                     "furnished": {
                         "type": "boolean"
                     },
+                    "specialized_infrastructure": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "market_rent_amount_cents": {
                         "description": "market_rent amount in cents",
                         "format": "int64",
@@ -5277,12 +6735,12 @@
                         "pattern": "^[A-Z]{3}$",
                         "type": "string"
                     },
-                    "active_lease_id": {
-                        "type": "string"
-                    },
                     "ami_restriction": {
                         "format": "int32",
                         "type": "integer"
+                    },
+                    "active_lease_id": {
+                        "type": "string"
                     },
                     "created_at": {
                         "format": "date-time",
@@ -5302,32 +6760,38 @@
                 "required": [
                     "id",
                     "property_id",
-                    "unit_number",
-                    "unit_type",
+                    "space_number",
+                    "space_type",
                     "status",
+                    "leasable",
+                    "shared_with_parent",
                     "square_footage",
                     "ada_accessible",
                     "pet_friendly",
                     "furnished"
                 ]
             },
-            "UnitCreate": {
+            "SpaceCreate": {
                 "type": "object",
                 "properties": {
                     "property_id": {
                         "type": "string"
                     },
-                    "unit_number": {
+                    "space_number": {
                         "type": "string"
                     },
-                    "unit_type": {
+                    "space_type": {
                         "enum": [
-                            "residential",
+                            "residential_unit",
                             "commercial_office",
                             "commercial_retail",
                             "storage",
                             "parking",
-                            "common_area"
+                            "common_area",
+                            "industrial",
+                            "lot_pad",
+                            "bed_space",
+                            "desk_space"
                         ],
                         "type": "string"
                     },
@@ -5339,9 +6803,22 @@
                             "make_ready",
                             "down",
                             "model",
-                            "reserved"
+                            "reserved",
+                            "owner_occupied"
                         ],
                         "type": "string"
+                    },
+                    "building_id": {
+                        "type": "string"
+                    },
+                    "parent_space_id": {
+                        "type": "string"
+                    },
+                    "leasable": {
+                        "type": "boolean"
+                    },
+                    "shared_with_parent": {
+                        "type": "boolean"
                     },
                     "square_footage": {
                         "format": "double",
@@ -5377,6 +6854,12 @@
                     "furnished": {
                         "type": "boolean"
                     },
+                    "specialized_infrastructure": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "market_rent_amount_cents": {
                         "format": "int64",
                         "type": "integer"
@@ -5385,43 +6868,49 @@
                         "pattern": "^[A-Z]{3}$",
                         "type": "string"
                     },
-                    "active_lease_id": {
-                        "type": "string"
-                    },
                     "ami_restriction": {
                         "format": "int32",
                         "type": "integer"
+                    },
+                    "active_lease_id": {
+                        "type": "string"
                     }
                 },
                 "required": [
                     "property_id",
-                    "unit_number",
-                    "unit_type",
+                    "space_number",
+                    "space_type",
                     "status",
+                    "leasable",
+                    "shared_with_parent",
                     "square_footage",
                     "ada_accessible",
                     "pet_friendly",
                     "furnished"
                 ]
             },
-            "UnitUpdate": {
+            "SpaceUpdate": {
                 "type": "object",
                 "description": "All fields optional for partial updates",
                 "properties": {
                     "property_id": {
                         "type": "string"
                     },
-                    "unit_number": {
+                    "space_number": {
                         "type": "string"
                     },
-                    "unit_type": {
+                    "space_type": {
                         "enum": [
-                            "residential",
+                            "residential_unit",
                             "commercial_office",
                             "commercial_retail",
                             "storage",
                             "parking",
-                            "common_area"
+                            "common_area",
+                            "industrial",
+                            "lot_pad",
+                            "bed_space",
+                            "desk_space"
                         ],
                         "type": "string"
                     },
@@ -5433,9 +6922,22 @@
                             "make_ready",
                             "down",
                             "model",
-                            "reserved"
+                            "reserved",
+                            "owner_occupied"
                         ],
                         "type": "string"
+                    },
+                    "building_id": {
+                        "type": "string"
+                    },
+                    "parent_space_id": {
+                        "type": "string"
+                    },
+                    "leasable": {
+                        "type": "boolean"
+                    },
+                    "shared_with_parent": {
+                        "type": "boolean"
                     },
                     "square_footage": {
                         "format": "double",
@@ -5471,6 +6973,12 @@
                     "furnished": {
                         "type": "boolean"
                     },
+                    "specialized_infrastructure": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
                     "market_rent_amount_cents": {
                         "format": "int64",
                         "type": "integer"
@@ -5479,12 +6987,12 @@
                         "pattern": "^[A-Z]{3}$",
                         "type": "string"
                     },
-                    "active_lease_id": {
-                        "type": "string"
-                    },
                     "ami_restriction": {
                         "format": "int32",
                         "type": "integer"
+                    },
+                    "active_lease_id": {
+                        "type": "string"
                     }
                 }
             },

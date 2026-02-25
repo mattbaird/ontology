@@ -1,16 +1,20 @@
-# Air config for the signaldemo server (signal discovery demo).
+# Air hot-reload config for dev.
 # CUE changes trigger make generate automatically; Go-only changes just rebuild.
+#
+# Usage:
+#   air                → full server with Ent + SQLite + auto-migration
+#   air -- --demo      → same, with seeded activity demo data
 
 root = "."
 tmp_dir = "tmp"
 
 [build]
   cmd = "bash scripts/air-build.sh"
-  bin = "tmp/signaldemo"
+  bin = "tmp/app"
   include_ext = ["go", "cue"]
-  include_dir = ["cmd/signaldemo", "internal", "ontology", "codegen"]
+  include_dir = ["cmd", "internal", "ontology", "codegen"]
   exclude_dir = ["tmp", "ent", "gen", "node_modules", ".git"]
-  exclude_regex = ["_test\\.go$"]
+  exclude_regex = ["_test\\.go$", "gen_.*\\.go$", "internal/worker/events\\.go$"]
   delay = 1000
 
 [log]

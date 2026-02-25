@@ -189,6 +189,7 @@ var (
 		{Name: "name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "building_type", Type: field.TypeEnum, Enums: []string{"residential", "commercial", "mixed_use", "parking_structure", "industrial", "storage", "auxiliary"}},
 		{Name: "address", Type: field.TypeJSON, Nullable: true},
+		{Name: "description", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "under_renovation"}},
 		{Name: "floors", Type: field.TypeInt, Nullable: true},
 		{Name: "year_built", Type: field.TypeInt, Nullable: true},
@@ -204,7 +205,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "buildings_properties_buildings",
-				Columns:    []*schema.Column{BuildingsColumns[16]},
+				Columns:    []*schema.Column{BuildingsColumns[17]},
 				RefColumns: []*schema.Column{PropertiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

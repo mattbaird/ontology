@@ -78,6 +78,7 @@ Fields:
 - `name`
 - `building_type`
 - `address (optional)`
+- `description (optional)`
 - `status`
 - `floors (optional)`
 - `year_built (optional)`

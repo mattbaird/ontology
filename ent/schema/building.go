@@ -32,6 +32,7 @@ func (Building) Fields() []ent.Field {
 		field.String("name").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("building_type").Values("residential", "commercial", "mixed_use", "parking_structure", "industrial", "storage", "auxiliary"),
 		field.JSON("address", &types.Address{}).Optional(),
+		field.String("description").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("status").Values("active", "inactive", "under_renovation"),
 		field.Int("floors").Optional().Nillable(),
 		field.Int("year_built").Optional().Nillable(),

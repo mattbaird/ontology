@@ -42,6 +42,8 @@ type Building struct {
 	BuildingType building.BuildingType `json:"building_type,omitempty"`
 	// Address holds the value of the "address" field.
 	Address *types.Address `json:"address,omitempty"`
+	// Description holds the value of the "description" field.
+	Description *string `json:"description,omitempty"`
 	// Status holds the value of the "status" field.
 	Status building.Status `json:"status,omitempty"`
 	// Floors holds the value of the "floors" field.
@@ -101,7 +103,7 @@ func (*Building) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case building.FieldFloors, building.FieldYearBuilt:
 			values[i] = new(sql.NullInt64)
-		case building.FieldCreatedBy, building.FieldUpdatedBy, building.FieldSource, building.FieldCorrelationID, building.FieldAgentGoalID, building.FieldName, building.FieldBuildingType, building.FieldStatus:
+		case building.FieldCreatedBy, building.FieldUpdatedBy, building.FieldSource, building.FieldCorrelationID, building.FieldAgentGoalID, building.FieldName, building.FieldBuildingType, building.FieldDescription, building.FieldStatus:
 			values[i] = new(sql.NullString)
 		case building.FieldCreatedAt, building.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -193,6 +195,13 @@ func (_m *Building) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Address); err != nil {
 					return fmt.Errorf("unmarshal field address: %w", err)
 				}
+			}
+		case building.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				_m.Description = new(string)
+				*_m.Description = value.String
 			}
 		case building.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -314,6 +323,11 @@ func (_m *Building) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("address=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Address))
+	builder.WriteString(", ")
+	if v := _m.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

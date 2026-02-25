@@ -160,6 +160,26 @@ func (_u *BuildingUpdate) ClearAddress() *BuildingUpdate {
 	return _u
 }
 
+// SetDescription sets the "description" field.
+func (_u *BuildingUpdate) SetDescription(v string) *BuildingUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_u *BuildingUpdate) SetNillableDescription(v *string) *BuildingUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
+	}
+	return _u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (_u *BuildingUpdate) ClearDescription() *BuildingUpdate {
+	_u.mutation.ClearDescription()
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *BuildingUpdate) SetStatus(v building.Status) *BuildingUpdate {
 	_u.mutation.SetStatus(v)
@@ -462,6 +482,12 @@ func (_u *BuildingUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.AddressCleared() {
 		_spec.ClearField(building.FieldAddress, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.Description(); ok {
+		_spec.SetField(building.FieldDescription, field.TypeString, value)
+	}
+	if _u.mutation.DescriptionCleared() {
+		_spec.ClearField(building.FieldDescription, field.TypeString)
+	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(building.FieldStatus, field.TypeEnum, value)
 	}
@@ -720,6 +746,26 @@ func (_u *BuildingUpdateOne) SetAddress(v *types.Address) *BuildingUpdateOne {
 // ClearAddress clears the value of the "address" field.
 func (_u *BuildingUpdateOne) ClearAddress() *BuildingUpdateOne {
 	_u.mutation.ClearAddress()
+	return _u
+}
+
+// SetDescription sets the "description" field.
+func (_u *BuildingUpdateOne) SetDescription(v string) *BuildingUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_u *BuildingUpdateOne) SetNillableDescription(v *string) *BuildingUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
+	}
+	return _u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (_u *BuildingUpdateOne) ClearDescription() *BuildingUpdateOne {
+	_u.mutation.ClearDescription()
 	return _u
 }
 
@@ -1054,6 +1100,12 @@ func (_u *BuildingUpdateOne) sqlSave(ctx context.Context) (_node *Building, err 
 	}
 	if _u.mutation.AddressCleared() {
 		_spec.ClearField(building.FieldAddress, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.Description(); ok {
+		_spec.SetField(building.FieldDescription, field.TypeString, value)
+	}
+	if _u.mutation.DescriptionCleared() {
+		_spec.ClearField(building.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(building.FieldStatus, field.TypeEnum, value)

@@ -12,7 +12,7 @@ import rego.v1
 default allow := false
 
 # Entity types in the system
-entity_types := ["Account", "Lease", "LedgerEntry", "JournalEntry", "BankAccount", "Person", "Organization", "PersonRole", "Portfolio", "Property", "Reconciliation", "Application", "Unit"]
+entity_types := ["Account", "Lease", "LedgerEntry", "JournalEntry", "BankAccount", "Person", "Organization", "PersonRole", "Portfolio", "Property", "Building", "Reconciliation", "Space", "LeaseSpace", "Application"]
 
 # Role types that can be assigned to persons
 role_types := ["tenant", "owner", "property_manager", "maintenance_tech", "leasing_agent", "accountant", "vendor_contact", "guarantor", "emergency_contact", "authorized_occupant"]

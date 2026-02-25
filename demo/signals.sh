@@ -5,19 +5,19 @@
 # A narrated walkthrough showing how the signal discovery system gives agents
 # the ability to see cross-cutting patterns that humans carry as intuition.
 #
-# This demo hits REAL API endpoints served by cmd/signaldemo.
-# The server seeds an in-memory store with demo data and serves the real
-# signal aggregation, classification, and escalation engine.
+# This demo hits REAL API endpoints served by the main server with --demo flag.
+# The server seeds an in-memory activity store with demo data and serves the
+# real signal aggregation, classification, and escalation engine.
 #
-# Prerequisites: the signaldemo server must be running.
-#   go run ./cmd/signaldemo    — or —    air -c .air.signaldemo.toml
+# Prerequisites: the server must be running with --demo flag.
+#   go run ./cmd/server --demo    — or —    air
 # =============================================================================
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-BASE_URL="${SIGNAL_DEMO_URL:-http://localhost:8090}"
+BASE_URL="${SIGNAL_DEMO_URL:-http://localhost:8080}"
 
 # ---------------------------------------------------------------------------
 # Colors & formatting
@@ -50,9 +50,9 @@ pause() {
 # Preflight: make sure the server is up
 # ---------------------------------------------------------------------------
 if ! curl -s -o /dev/null -w '' "${BASE_URL}/healthz" 2>/dev/null; then
-  printf "${RED}ERROR: signaldemo server not running at ${BASE_URL}${RESET}\n"
-  printf "${DIM}Start it with:  go run ./cmd/signaldemo${RESET}\n"
-  printf "${DIM}    — or —      air -c .air.signaldemo.toml${RESET}\n"
+  printf "${RED}ERROR: server not running at ${BASE_URL}${RESET}\n"
+  printf "${DIM}Start it with:  go run ./cmd/server --demo${RESET}\n"
+  printf "${DIM}    — or —      air${RESET}\n"
   exit 1
 fi
 

@@ -511,6 +511,7 @@ type createBuildingRequest struct {
 	Name                       string         `json:"name"`
 	BuildingType               string         `json:"building_type"`
 	Address                    *types.Address `json:"address,omitempty"`
+	Description                *string        `json:"description,omitempty"`
 	Status                     string         `json:"status"`
 	Floors                     *int           `json:"floors,omitempty"`
 	YearBuilt                  *int           `json:"year_built,omitempty"`
@@ -534,6 +535,9 @@ func (h *PropertyHandler) CreateBuilding(w http.ResponseWriter, r *http.Request)
 	builder.SetBuildingType(building.BuildingType(req.BuildingType))
 	if req.Address != nil {
 		builder.SetAddress(req.Address)
+	}
+	if req.Description != nil {
+		builder.SetNillableDescription(req.Description)
 	}
 	builder.SetStatus(building.Status(req.Status))
 	if req.Floors != nil {
@@ -598,6 +602,7 @@ type updateBuildingRequest struct {
 	Name                       *string        `json:"name,omitempty"`
 	BuildingType               *string        `json:"building_type,omitempty"`
 	Address                    *types.Address `json:"address,omitempty"`
+	Description                *string        `json:"description,omitempty"`
 	Status                     *string        `json:"status,omitempty"`
 	Floors                     *int           `json:"floors,omitempty"`
 	YearBuilt                  *int           `json:"year_built,omitempty"`
@@ -629,6 +634,9 @@ func (h *PropertyHandler) UpdateBuilding(w http.ResponseWriter, r *http.Request)
 	}
 	if req.Address != nil {
 		builder.SetAddress(req.Address)
+	}
+	if req.Description != nil {
+		builder.SetNillableDescription(req.Description)
 	}
 	if req.Status != nil {
 		builder.SetStatus(building.Status(*req.Status))

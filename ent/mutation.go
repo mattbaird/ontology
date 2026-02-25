@@ -6345,6 +6345,7 @@ type BuildingMutation struct {
 	name                             *string
 	building_type                    *building.BuildingType
 	address                          **types.Address
+	description                      *string
 	status                           *building.Status
 	floors                           *int
 	addfloors                        *int
@@ -6868,6 +6869,55 @@ func (m *BuildingMutation) ResetAddress() {
 	delete(m.clearedFields, building.FieldAddress)
 }
 
+// SetDescription sets the "description" field.
+func (m *BuildingMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *BuildingMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldDescription(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *BuildingMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[building.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *BuildingMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[building.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *BuildingMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, building.FieldDescription)
+}
+
 // SetStatus sets the "status" field.
 func (m *BuildingMutation) SetStatus(b building.Status) {
 	m.status = &b
@@ -7311,7 +7361,7 @@ func (m *BuildingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *BuildingMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 16)
 	if m.created_at != nil {
 		fields = append(fields, building.FieldCreatedAt)
 	}
@@ -7341,6 +7391,9 @@ func (m *BuildingMutation) Fields() []string {
 	}
 	if m.address != nil {
 		fields = append(fields, building.FieldAddress)
+	}
+	if m.description != nil {
+		fields = append(fields, building.FieldDescription)
 	}
 	if m.status != nil {
 		fields = append(fields, building.FieldStatus)
@@ -7385,6 +7438,8 @@ func (m *BuildingMutation) Field(name string) (ent.Value, bool) {
 		return m.BuildingType()
 	case building.FieldAddress:
 		return m.Address()
+	case building.FieldDescription:
+		return m.Description()
 	case building.FieldStatus:
 		return m.Status()
 	case building.FieldFloors:
@@ -7424,6 +7479,8 @@ func (m *BuildingMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldBuildingType(ctx)
 	case building.FieldAddress:
 		return m.OldAddress(ctx)
+	case building.FieldDescription:
+		return m.OldDescription(ctx)
 	case building.FieldStatus:
 		return m.OldStatus(ctx)
 	case building.FieldFloors:
@@ -7512,6 +7569,13 @@ func (m *BuildingMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAddress(v)
+		return nil
+	case building.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
 		return nil
 	case building.FieldStatus:
 		v, ok := value.(building.Status)
@@ -7638,6 +7702,9 @@ func (m *BuildingMutation) ClearedFields() []string {
 	if m.FieldCleared(building.FieldAddress) {
 		fields = append(fields, building.FieldAddress)
 	}
+	if m.FieldCleared(building.FieldDescription) {
+		fields = append(fields, building.FieldDescription)
+	}
 	if m.FieldCleared(building.FieldFloors) {
 		fields = append(fields, building.FieldFloors)
 	}
@@ -7672,6 +7739,9 @@ func (m *BuildingMutation) ClearField(name string) error {
 		return nil
 	case building.FieldAddress:
 		m.ClearAddress()
+		return nil
+	case building.FieldDescription:
+		m.ClearDescription()
 		return nil
 	case building.FieldFloors:
 		m.ClearFloors()
@@ -7722,6 +7792,9 @@ func (m *BuildingMutation) ResetField(name string) error {
 		return nil
 	case building.FieldAddress:
 		m.ResetAddress()
+		return nil
+	case building.FieldDescription:
+		m.ResetDescription()
 		return nil
 	case building.FieldStatus:
 		m.ResetStatus()

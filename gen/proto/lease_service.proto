@@ -51,7 +51,7 @@ message SideEffect {
 message Application {
   string id = 1;
   string property_id = 2;
-  string unit_id = 3;
+  string space_id = 3;
   string applicant_person_id = 4;
   string status = 5;
   google.protobuf.Timestamp desired_move_in = 6;
@@ -77,34 +77,63 @@ message Application {
 
 message Lease {
   string id = 1;
-  string unit_id = 2;
-  string property_id = 3;
-  repeated string tenant_role_ids = 4;
-  repeated string guarantor_role_ids = 5;
-  string lease_type = 6;
-  string status = 7;
+  string property_id = 2;
+  repeated string tenant_role_ids = 3;
+  repeated string guarantor_role_ids = 4;
+  string lease_type = 5;
+  string status = 6;
+  string liability_type = 7;
   DateRange term = 8;
-  Money base_rent = 9;
-  Money security_deposit = 10;
-  repeated string rent_schedule = 11;
-  repeated string recurring_charges = 12;
-  string late_fee_policy = 13;
-  string cam_terms = 14;
-  string tenant_improvement = 15;
-  repeated string renewal_options = 16;
-  string subsidy = 17;
-  google.protobuf.Timestamp move_in_date = 18;
-  google.protobuf.Timestamp move_out_date = 19;
-  google.protobuf.Timestamp notice_date = 20;
-  int64 notice_required_days = 21;
-  string signing_method = 22;
-  google.protobuf.Timestamp signed_at = 23;
-  string document_id = 24;
-  google.protobuf.Timestamp created_at = 25;
-  google.protobuf.Timestamp updated_at = 26;
-  string created_by = 27;
-  string updated_by = 28;
-  string source = 29;
+  google.protobuf.Timestamp lease_commencement_date = 9;
+  google.protobuf.Timestamp rent_commencement_date = 10;
+  Money base_rent = 11;
+  Money security_deposit = 12;
+  repeated string rent_schedule = 13;
+  repeated string recurring_charges = 14;
+  string late_fee_policy = 15;
+  string cam_terms = 16;
+  string tenant_improvement = 17;
+  repeated string renewal_options = 18;
+  repeated string usage_charges = 19;
+  string percentage_rent = 20;
+  repeated string expansion_rights = 21;
+  repeated string contraction_rights = 22;
+  string subsidy = 23;
+  google.protobuf.Timestamp move_in_date = 24;
+  google.protobuf.Timestamp move_out_date = 25;
+  google.protobuf.Timestamp notice_date = 26;
+  int64 notice_required_days = 27;
+  string check_in_time = 28;
+  string check_out_time = 29;
+  Money cleaning_fee = 30;
+  string platform_booking_id = 31;
+  string membership_tier = 32;
+  string parent_lease_id = 33;
+  bool is_sublease = 34;
+  string sublease_billing = 35;
+  string signing_method = 36;
+  google.protobuf.Timestamp signed_at = 37;
+  string document_id = 38;
+  google.protobuf.Timestamp created_at = 39;
+  google.protobuf.Timestamp updated_at = 40;
+  string created_by = 41;
+  string updated_by = 42;
+  string source = 43;
+}
+
+message LeaseSpace {
+  string id = 1;
+  string lease_id = 2;
+  string space_id = 3;
+  bool is_primary = 4;
+  string relationship = 5;
+  DateRange effective = 6;
+  double square_footage_leased = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  string created_by = 10;
+  string updated_by = 11;
+  string source = 12;
 }
 
 // ─── Service Definition ──────────────────────────────────────────────────────
@@ -122,6 +151,8 @@ service LeaseService {
   rpc SubmitForApproval(SubmitForApprovalRequest) returns (SubmitForApprovalResponse);
   // Approve lease for signing
   rpc ApproveLease(ApproveLeaseRequest) returns (ApproveLeaseResponse);
+  // Send lease for electronic signature
+  rpc SendForSignature(SendForSignatureRequest) returns (SendForSignatureResponse);
   // Activate a signed lease
   rpc ActivateLease(ActivateLeaseRequest) returns (ActivateLeaseResponse);
   // Terminate a lease early. Requires reason for audit trail
@@ -129,7 +160,27 @@ service LeaseService {
   // Renew a lease
   rpc RenewLease(RenewLeaseRequest) returns (RenewLeaseResponse);
   // Begin eviction process
-  rpc StartEviction(StartEvictionRequest) returns (StartEvictionResponse);
+  rpc InitiateEviction(InitiateEvictionRequest) returns (InitiateEvictionResponse);
+  // Record tenant notice date
+  rpc RecordNotice(RecordNoticeRequest) returns (RecordNoticeResponse);
+  // Search leases with advanced filters
+  rpc SearchLeases(SearchLeasesRequest) returns (SearchLeasesResponse);
+  // Get ledger entries for a lease
+  rpc GetLeaseLedger(GetLeaseLedgerRequest) returns (GetLeaseLedgerResponse);
+  // Record a payment on a lease
+  rpc RecordPayment(RecordPaymentRequest) returns (RecordPaymentResponse);
+  // Post a charge to a lease
+  rpc PostCharge(PostChargeRequest) returns (PostChargeResponse);
+  // Apply a credit to a lease
+  rpc ApplyCredit(ApplyCreditRequest) returns (ApplyCreditResponse);
+  // Create a lease-space association
+  rpc CreateLeaseSpace(CreateLeaseSpaceRequest) returns (CreateLeaseSpaceResponse);
+  // Get lease-space by ID
+  rpc GetLeaseSpace(GetLeaseSpaceRequest) returns (GetLeaseSpaceResponse);
+  // List lease-space associations
+  rpc ListLeaseSpaces(ListLeaseSpacesRequest) returns (ListLeaseSpacesResponse);
+  // Update lease-space association
+  rpc UpdateLeaseSpace(UpdateLeaseSpaceRequest) returns (UpdateLeaseSpaceResponse);
   // Submit a new lease application
   rpc CreateApplication(CreateApplicationRequest) returns (CreateApplicationResponse);
   // Get application by ID
@@ -201,6 +252,15 @@ message ApproveLeaseResponse {
   repeated SideEffect side_effects = 2;
 }
 
+message SendForSignatureRequest {
+  string id = 1;
+}
+
+message SendForSignatureResponse {
+  Lease lease = 1;
+  repeated SideEffect side_effects = 2;
+}
+
 message ActivateLeaseRequest {
   string id = 1;
   string move_in_date = 2;
@@ -231,13 +291,102 @@ message RenewLeaseResponse {
   repeated SideEffect side_effects = 2;
 }
 
-message StartEvictionRequest {
+message InitiateEvictionRequest {
   string id = 1;
 }
 
-message StartEvictionResponse {
+message InitiateEvictionResponse {
   Lease lease = 1;
   repeated SideEffect side_effects = 2;
+}
+
+message RecordNoticeRequest {
+  string id = 1;
+}
+
+message RecordNoticeResponse {
+  Lease lease = 1;
+  repeated SideEffect side_effects = 2;
+}
+
+message SearchLeasesRequest {
+  Lease lease = 1;
+}
+
+message SearchLeasesResponse {
+  Lease lease = 1;
+}
+
+message GetLeaseLedgerRequest {
+  string id = 1;
+  repeated string include = 2; // Edge names to include
+}
+
+message GetLeaseLedgerResponse {
+  Lease lease = 1;
+}
+
+message RecordPaymentRequest {
+  Lease lease = 1;
+}
+
+message RecordPaymentResponse {
+  Lease lease = 1;
+}
+
+message PostChargeRequest {
+  Lease lease = 1;
+}
+
+message PostChargeResponse {
+  Lease lease = 1;
+}
+
+message ApplyCreditRequest {
+  Lease lease = 1;
+}
+
+message ApplyCreditResponse {
+  Lease lease = 1;
+}
+
+message CreateLeaseSpaceRequest {
+  LeaseSpace lease_space = 1;
+}
+
+message CreateLeaseSpaceResponse {
+  LeaseSpace lease_space = 1;
+}
+
+message GetLeaseSpaceRequest {
+  string id = 1;
+  repeated string include = 2; // Edge names to include
+}
+
+message GetLeaseSpaceResponse {
+  LeaseSpace lease_space = 1;
+}
+
+message ListLeaseSpacesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  string filter = 3;
+  string order_by = 4;
+}
+
+message ListLeaseSpacesResponse {
+  repeated LeaseSpace lease_spaces = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message UpdateLeaseSpaceRequest {
+  LeaseSpace lease_space = 1;
+  repeated string update_mask = 2; // Fields to update
+}
+
+message UpdateLeaseSpaceResponse {
+  LeaseSpace lease_space = 1;
 }
 
 message CreateApplicationRequest {

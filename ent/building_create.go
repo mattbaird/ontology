@@ -116,6 +116,20 @@ func (_c *BuildingCreate) SetAddress(v *types.Address) *BuildingCreate {
 	return _c
 }
 
+// SetDescription sets the "description" field.
+func (_c *BuildingCreate) SetDescription(v string) *BuildingCreate {
+	_c.mutation.SetDescription(v)
+	return _c
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_c *BuildingCreate) SetNillableDescription(v *string) *BuildingCreate {
+	if v != nil {
+		_c.SetDescription(*v)
+	}
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *BuildingCreate) SetStatus(v building.Status) *BuildingCreate {
 	_c.mutation.SetStatus(v)
@@ -400,6 +414,10 @@ func (_c *BuildingCreate) createSpec() (*Building, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Address(); ok {
 		_spec.SetField(building.FieldAddress, field.TypeJSON, value)
 		_node.Address = value
+	}
+	if value, ok := _c.mutation.Description(); ok {
+		_spec.SetField(building.FieldDescription, field.TypeString, value)
+		_node.Description = &value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(building.FieldStatus, field.TypeEnum, value)

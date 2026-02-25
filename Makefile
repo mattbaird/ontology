@@ -1,4 +1,4 @@
-.PHONY: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen generate ci-check clean serve
+.PHONY: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen generate ci-check clean serve migrate-diff migrate-apply migrate-status
 
 # Validate CUE ontology
 validate:
@@ -60,6 +60,18 @@ test:
 # Run the REST API server (SQLite, port 8080)
 serve:
 	go run ./cmd/server
+
+# Generate a new Atlas migration from schema changes
+migrate-diff:
+	atlas migrate diff --env local
+
+# Apply pending Atlas migrations
+migrate-apply:
+	atlas migrate apply --env local
+
+# Show Atlas migration status
+migrate-status:
+	atlas migrate status --env local
 
 # Clean generated files
 clean:

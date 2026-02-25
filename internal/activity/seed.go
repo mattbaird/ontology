@@ -1,79 +1,18 @@
-// signaldemo starts a standalone HTTP server with in-memory activity data.
-// It seeds the Marcus Johnson flight risk scenario and other demo tenants,
-// then serves the real activity/signal API endpoints.
-//
-// No Postgres, no Ent, no external dependencies — just `go run ./cmd/signaldemo`.
-package main
+// Seed populates an activity store with demo data for signal discovery demos.
+package activity
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"strconv"
-	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/matthewbaird/ontology/internal/activity"
-	"github.com/matthewbaird/ontology/internal/handler"
-	"github.com/matthewbaird/ontology/internal/server"
-	"github.com/matthewbaird/ontology/internal/signals"
 	"github.com/matthewbaird/ontology/internal/types"
 )
 
-func main() {
-	signals.Init()
-
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
-	store := activity.NewMemoryStore()
-	seed(ctx, store)
-
-	port := 8090
-	if p := os.Getenv("PORT"); p != "" {
-		if v, err := strconv.Atoi(p); err == nil {
-			port = v
-		}
-	}
-
-	r := chi.NewRouter()
-	r.Use(handler.Logging, handler.Recovery)
-	server.RegisterActivityRoutes(r, store)
-
-	// Health check.
-	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "ok")
-	})
-
-	addr := fmt.Sprintf(":%d", port)
-	log.Printf("signaldemo server starting on %s", addr)
-	log.Printf("seeded activity store with demo data")
-	log.Printf("")
-	log.Printf("  GET  http://localhost%s/v1/activity/entity/{entity_type}/{entity_id}", addr)
-	log.Printf("  GET  http://localhost%s/v1/activity/summary/{entity_type}/{entity_id}", addr)
-	log.Printf("  POST http://localhost%s/v1/activity/search", addr)
-	log.Printf("")
-	log.Printf("try: curl -s http://localhost%s/v1/activity/entity/person/marcus-johnson | jq .", addr)
-
-	srv := &http.Server{Addr: addr, Handler: r}
-	go func() {
-		<-ctx.Done()
-		srv.Shutdown(context.Background())
-	}()
-
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("server error: %v", err)
-	}
-}
-
-// seed populates the in-memory store with realistic demo data.
-func seed(ctx context.Context, store activity.Store) {
+// SeedDemoData populates the store with realistic activity data for 6 demo tenants.
+func SeedDemoData(ctx context.Context, store Store) error {
 	var entries []types.ActivityEntry
 
 	// ─── Marcus Johnson: flight risk scenario ───
@@ -100,7 +39,6 @@ func seed(ctx context.Context, store activity.Store) {
 			"Payment received on time", "financial", "info", "positive",
 			map[string]any{"amount_cents": 185000, "currency": "USD", "days_past_due": 0},
 		))
-		// Same event indexed against the lease.
 		entries = append(entries, makeEntry(
 			"pay-mj-"+month, "PaymentRecorded",
 			mustTime(month+"-01T10:00:00Z"),
@@ -313,9 +251,10 @@ func seed(ctx context.Context, store activity.Store) {
 	))
 
 	if err := store.WriteEntries(ctx, entries); err != nil {
-		log.Fatalf("seeding activity store: %v", err)
+		return fmt.Errorf("seeding activity store: %w", err)
 	}
 	log.Printf("seeded %d activity entries for 6 demo tenants", len(entries))
+	return nil
 }
 
 func makeEntry(

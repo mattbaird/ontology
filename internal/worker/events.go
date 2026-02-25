@@ -14,6 +14,9 @@ const (
 	EventBankAccountClosed = "bank_account.closed"
 	EventBankAccountFrozen = "bank_account.frozen"
 	EventBankAccountInactive = "bank_account.inactive"
+	EventBuildingActive = "building.active"
+	EventBuildingInactive = "building.inactive"
+	EventBuildingUnderRenovation = "building.under_renovation"
 	EventJournalEntryDraft = "journal_entry.draft"
 	EventJournalEntryPendingApproval = "journal_entry.pending_approval"
 	EventJournalEntryPosted = "journal_entry.posted"
@@ -45,13 +48,13 @@ const (
 	EventReconciliationBalanced = "reconciliation.balanced"
 	EventReconciliationInProgress = "reconciliation.in_progress"
 	EventReconciliationUnbalanced = "reconciliation.unbalanced"
-	EventUnitDown = "unit.down"
-	EventUnitMakeReady = "unit.make_ready"
-	EventUnitModel = "unit.model"
-	EventUnitNoticeGiven = "unit.notice_given"
-	EventUnitOccupied = "unit.occupied"
-	EventUnitReserved = "unit.reserved"
-	EventUnitVacant = "unit.vacant"
+	EventSpaceDown = "space.down"
+	EventSpaceMakeReady = "space.make_ready"
+	EventSpaceModel = "space.model"
+	EventSpaceNoticeGiven = "space.notice_given"
+	EventSpaceOccupied = "space.occupied"
+	EventSpaceReserved = "space.reserved"
+	EventSpaceVacant = "space.vacant"
 )
 
 // NATSSubjects maps event types to NATS subjects.
@@ -67,6 +70,9 @@ var NATSSubjects = map[string]string{
 	"bank_account.closed": "propeller.events.bank_account.closed",
 	"bank_account.frozen": "propeller.events.bank_account.frozen",
 	"bank_account.inactive": "propeller.events.bank_account.inactive",
+	"building.active": "propeller.events.building.active",
+	"building.inactive": "propeller.events.building.inactive",
+	"building.under_renovation": "propeller.events.building.under_renovation",
 	"journal_entry.draft": "propeller.events.journal_entry.draft",
 	"journal_entry.pending_approval": "propeller.events.journal_entry.pending_approval",
 	"journal_entry.posted": "propeller.events.journal_entry.posted",
@@ -98,11 +104,11 @@ var NATSSubjects = map[string]string{
 	"reconciliation.balanced": "propeller.events.reconciliation.balanced",
 	"reconciliation.in_progress": "propeller.events.reconciliation.in_progress",
 	"reconciliation.unbalanced": "propeller.events.reconciliation.unbalanced",
-	"unit.down": "propeller.events.unit.down",
-	"unit.make_ready": "propeller.events.unit.make_ready",
-	"unit.model": "propeller.events.unit.model",
-	"unit.notice_given": "propeller.events.unit.notice_given",
-	"unit.occupied": "propeller.events.unit.occupied",
-	"unit.reserved": "propeller.events.unit.reserved",
-	"unit.vacant": "propeller.events.unit.vacant",
+	"space.down": "propeller.events.space.down",
+	"space.make_ready": "propeller.events.space.make_ready",
+	"space.model": "propeller.events.space.model",
+	"space.notice_given": "propeller.events.space.notice_given",
+	"space.occupied": "propeller.events.space.occupied",
+	"space.reserved": "propeller.events.space.reserved",
+	"space.vacant": "propeller.events.space.vacant",
 }

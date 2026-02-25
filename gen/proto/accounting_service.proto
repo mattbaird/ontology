@@ -133,7 +133,7 @@ message LedgerEntry {
   string charge_code = 9;
   string memo = 10;
   string property_id = 11;
-  string unit_id = 12;
+  string space_id = 12;
   string lease_id = 13;
   string person_id = 14;
   string bank_account_id = 15;

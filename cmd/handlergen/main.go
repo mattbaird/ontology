@@ -1260,8 +1260,12 @@ func generateRoutesFile(projectRoot string, services []serviceDef, handlerTypes 
 		"AccountingService": "ah",
 	}
 
-	// Instantiate handlers
+	// Instantiate handlers — skip services where all operations are custom
+	// (their routes are registered manually, not generated).
 	for _, svc := range services {
+		if !hasGeneratedRoutes(svc) {
+			continue
+		}
 		v := handlerVars[svc.Name]
 		ht := handlerTypes[svc.Name]
 		buf.line("\t%s := handler.New%s(client)", v, ht)
@@ -1270,6 +1274,9 @@ func generateRoutesFile(projectRoot string, services []serviceDef, handlerTypes 
 
 	// Register routes
 	for _, svc := range services {
+		if !hasGeneratedRoutes(svc) {
+			continue
+		}
 		v := handlerVars[svc.Name]
 		for _, op := range svc.Operations {
 			// Custom non-transition operations have unique paths that don't fit
@@ -1310,6 +1317,17 @@ func generateRoutesFile(projectRoot string, services []serviceDef, handlerTypes 
 	return os.WriteFile(outPath, formatted, 0644)
 }
 
+// hasGeneratedRoutes returns true if the service has at least one operation
+// that produces a generated route (i.e., not all operations are custom).
+func hasGeneratedRoutes(svc serviceDef) bool {
+	for _, op := range svc.Operations {
+		if !op.Custom || op.Type == "transition" {
+			return true
+		}
+	}
+	return false
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 func main() {
@@ -1343,6 +1361,11 @@ func main() {
 		handlerTypes[svc.Name] = ht
 		svcBase := strings.TrimSuffix(svc.Name, "Service")
 		fileName := "gen_" + toSnake(svcBase) + ".go"
+
+		// Skip handler file generation for services where all operations are custom.
+		if !hasGeneratedRoutes(svc) {
+			continue
+		}
 
 		if err := generateHandlerFile(projectRoot, svc, entities); err != nil {
 			log.Fatalf("generating %s: %v", fileName, err)

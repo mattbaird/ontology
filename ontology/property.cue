@@ -109,6 +109,7 @@ import "time"
 		"industrial" | "storage" | "auxiliary"
 
 	address?: #Address
+	description?: string
 
 	status: "active" | "inactive" | "under_renovation"
 

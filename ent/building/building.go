@@ -36,6 +36,8 @@ const (
 	FieldBuildingType = "building_type"
 	// FieldAddress holds the string denoting the address field in the database.
 	FieldAddress = "address"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldFloors holds the string denoting the floors field in the database.
@@ -81,6 +83,7 @@ var Columns = []string{
 	FieldName,
 	FieldBuildingType,
 	FieldAddress,
+	FieldDescription,
 	FieldStatus,
 	FieldFloors,
 	FieldYearBuilt,
@@ -253,6 +256,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByBuildingType orders the results by the building_type field.
 func ByBuildingType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBuildingType, opts...).ToFunc()
+}
+
+// ByDescription orders the results by the description field.
+func ByDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.

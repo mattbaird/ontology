@@ -119,6 +119,37 @@
     "nats_subject": "propeller.events.bank_account.inactive"
   },
   {
+    "event_type": "building.active",
+    "entity_type": "Building",
+    "from_states": [
+      "inactive",
+      "under_renovation"
+    ],
+    "to_state": "active",
+    "description": "Building transitioned to active",
+    "nats_subject": "propeller.events.building.active"
+  },
+  {
+    "event_type": "building.inactive",
+    "entity_type": "Building",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "inactive",
+    "description": "Building transitioned to inactive",
+    "nats_subject": "propeller.events.building.inactive"
+  },
+  {
+    "event_type": "building.under_renovation",
+    "entity_type": "Building",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "under_renovation",
+    "description": "Building transitioned to under_renovation",
+    "nats_subject": "propeller.events.building.under_renovation"
+  },
+  {
     "event_type": "journal_entry.draft",
     "entity_type": "JournalEntry",
     "from_states": [
@@ -458,51 +489,51 @@
     "nats_subject": "propeller.events.reconciliation.unbalanced"
   },
   {
-    "event_type": "unit.down",
-    "entity_type": "Unit",
+    "event_type": "space.down",
+    "entity_type": "Space",
     "from_states": [
       "vacant",
       "make_ready"
     ],
     "to_state": "down",
-    "description": "Unit transitioned to down",
-    "nats_subject": "propeller.events.unit.down"
+    "description": "Space transitioned to down",
+    "nats_subject": "propeller.events.space.down"
   },
   {
-    "event_type": "unit.make_ready",
-    "entity_type": "Unit",
+    "event_type": "space.make_ready",
+    "entity_type": "Space",
     "from_states": [
       "vacant",
       "notice_given",
       "down"
     ],
     "to_state": "make_ready",
-    "description": "Unit transitioned to make_ready",
-    "nats_subject": "propeller.events.unit.make_ready"
+    "description": "Space transitioned to make_ready",
+    "nats_subject": "propeller.events.space.make_ready"
   },
   {
-    "event_type": "unit.model",
-    "entity_type": "Unit",
+    "event_type": "space.model",
+    "entity_type": "Space",
     "from_states": [
       "vacant"
     ],
     "to_state": "model",
-    "description": "Unit transitioned to model",
-    "nats_subject": "propeller.events.unit.model"
+    "description": "Space transitioned to model",
+    "nats_subject": "propeller.events.space.model"
   },
   {
-    "event_type": "unit.notice_given",
-    "entity_type": "Unit",
+    "event_type": "space.notice_given",
+    "entity_type": "Space",
     "from_states": [
       "occupied"
     ],
     "to_state": "notice_given",
-    "description": "Unit transitioned to notice_given",
-    "nats_subject": "propeller.events.unit.notice_given"
+    "description": "Space transitioned to notice_given",
+    "nats_subject": "propeller.events.space.notice_given"
   },
   {
-    "event_type": "unit.occupied",
-    "entity_type": "Unit",
+    "event_type": "space.occupied",
+    "entity_type": "Space",
     "from_states": [
       "vacant",
       "notice_given",
@@ -510,30 +541,31 @@
       "reserved"
     ],
     "to_state": "occupied",
-    "description": "Unit transitioned to occupied",
-    "nats_subject": "propeller.events.unit.occupied"
+    "description": "Space transitioned to occupied",
+    "nats_subject": "propeller.events.space.occupied"
   },
   {
-    "event_type": "unit.reserved",
-    "entity_type": "Unit",
+    "event_type": "space.reserved",
+    "entity_type": "Space",
     "from_states": [
       "vacant"
     ],
     "to_state": "reserved",
-    "description": "Unit transitioned to reserved",
-    "nats_subject": "propeller.events.unit.reserved"
+    "description": "Space transitioned to reserved",
+    "nats_subject": "propeller.events.space.reserved"
   },
   {
-    "event_type": "unit.vacant",
-    "entity_type": "Unit",
+    "event_type": "space.vacant",
+    "entity_type": "Space",
     "from_states": [
       "make_ready",
       "down",
       "model",
-      "reserved"
+      "reserved",
+      "owner_occupied"
     ],
     "to_state": "vacant",
-    "description": "Unit transitioned to vacant",
-    "nats_subject": "propeller.events.unit.vacant"
+    "description": "Space transitioned to vacant",
+    "nats_subject": "propeller.events.space.vacant"
   }
 ]
