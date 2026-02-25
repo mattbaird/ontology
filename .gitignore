@@ -29,6 +29,13 @@ Thumbs.db
 # Build
 /bin/
 /dist/
+/signaldemo
+tmp/
+
+# Database
+*.db
+*.db-journal
+*.db-wal
 
 # Test
 coverage.out

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/matthewbaird/ontology/internal/activity"
 	"github.com/matthewbaird/ontology/internal/signals"
 	"github.com/matthewbaird/ontology/internal/types"
@@ -27,8 +28,8 @@ func NewActivityHandler(store activity.Store) *ActivityHandler {
 // HandleGetEntityActivity returns a chronological activity feed for any entity.
 // GET /v1/activity/entity/{entity_type}/{entity_id}
 func (h *ActivityHandler) HandleGetEntityActivity(w http.ResponseWriter, r *http.Request) {
-	entityType := r.PathValue("entity_type")
-	entityID := r.PathValue("entity_id")
+	entityType := chi.URLParam(r, "entity_type")
+	entityID := chi.URLParam(r, "entity_id")
 	if entityType == "" || entityID == "" {
 		writeError(w, http.StatusBadRequest, "MISSING_PARAMS", "entity_type and entity_id are required")
 		return
@@ -98,8 +99,8 @@ func (h *ActivityHandler) HandleGetEntityActivity(w http.ResponseWriter, r *http
 // HandleGetSignalSummary returns a pre-aggregated signal summary for an entity.
 // GET /v1/activity/summary/{entity_type}/{entity_id}
 func (h *ActivityHandler) HandleGetSignalSummary(w http.ResponseWriter, r *http.Request) {
-	entityType := r.PathValue("entity_type")
-	entityID := r.PathValue("entity_id")
+	entityType := chi.URLParam(r, "entity_type")
+	entityID := chi.URLParam(r, "entity_id")
 	if entityType == "" || entityID == "" {
 		writeError(w, http.StatusBadRequest, "MISSING_PARAMS", "entity_type and entity_id are required")
 		return

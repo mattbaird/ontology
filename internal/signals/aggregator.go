@@ -59,17 +59,18 @@ func EvaluateEscalations(entries []types.ActivityEntry) []types.EscalatedSignal 
 	var escalated []types.EscalatedSignal
 
 	// Collect all escalation rules from registrations.
+	// Per-registration rules are scoped to entries matching the parent's EventType.
 	for _, reg := range SignalRegistry {
 		for _, rule := range reg.EscalationRules {
-			if es, ok := evaluateRule(rule, entries); ok {
+			if es, ok := evaluateRule(rule, entries, reg.EventType); ok {
 				escalated = append(escalated, es)
 			}
 		}
 	}
 
-	// Check cross-category escalation rules.
+	// Check cross-category escalation rules (no event-type scoping).
 	for _, rule := range GetCrossCategoryEscalations() {
-		if es, ok := evaluateRule(rule, entries); ok {
+		if es, ok := evaluateRule(rule, entries, ""); ok {
 			escalated = append(escalated, es)
 		}
 	}
@@ -77,10 +78,10 @@ func EvaluateEscalations(entries []types.ActivityEntry) []types.EscalatedSignal 
 	return escalated
 }
 
-func evaluateRule(rule types.EscalationRule, entries []types.ActivityEntry) (types.EscalatedSignal, bool) {
+func evaluateRule(rule types.EscalationRule, entries []types.ActivityEntry, scopeEventType string) (types.EscalatedSignal, bool) {
 	switch rule.TriggerType {
 	case "count":
-		return evaluateCountRule(rule, entries)
+		return evaluateCountRule(rule, entries, scopeEventType)
 	case "cross_category":
 		return evaluateCrossCategoryRule(rule, entries)
 	default:
@@ -89,13 +90,17 @@ func evaluateRule(rule types.EscalationRule, entries []types.ActivityEntry) (typ
 	}
 }
 
-func evaluateCountRule(rule types.EscalationRule, entries []types.ActivityEntry) (types.EscalatedSignal, bool) {
+func evaluateCountRule(rule types.EscalationRule, entries []types.ActivityEntry, scopeEventType string) (types.EscalatedSignal, bool) {
 	now := time.Now()
 	windowStart := now.AddDate(0, 0, -rule.WithinDays)
 
 	var matching []types.ActivityEntry
 	for _, e := range entries {
 		if e.OccurredAt.Before(windowStart) {
+			continue
+		}
+		// Scope to parent registration's event type when set.
+		if scopeEventType != "" && e.EventType != scopeEventType {
 			continue
 		}
 		if rule.SignalCategory != "" && e.Category != rule.SignalCategory {
@@ -216,23 +221,35 @@ func computeSentiment(categories map[string]types.CategorySummary, escalations [
 		}
 	}
 
-	// Count negative signals by severity.
-	var criticalCount, strongCount, negativeCount, positiveCount int
+	// Count signals by severity and polarity.
+	var criticalCount, negativeCount, positiveCount int
+	strongNegative := 0
 	for _, cs := range categories {
 		criticalCount += cs.ByWeight["critical"]
-		strongCount += cs.ByWeight["strong"]
 		negativeCount += cs.ByPolarity["negative"]
 		positiveCount += cs.ByPolarity["positive"]
+		// Strong signals only count toward concern if the category is predominantly negative.
+		if cs.DominantPolarity == "negative" {
+			strongNegative += cs.ByWeight["strong"]
+		}
 	}
 
 	if criticalCount > 0 {
 		return "critical", "Critical-weight signals present requiring immediate attention."
 	}
-	if strongCount >= 2 || negativeCount > positiveCount*2 {
-		return "concerning", "Multiple strong signals or predominantly negative activity."
+
+	// Triggered escalations with strong+ weight indicate a pattern requiring attention.
+	for _, e := range escalations {
+		if IsAtLeastWeight(e.Rule.EscalatedWeight, "strong") {
+			return "concerning", "Escalation triggered: " + e.Rule.EscalatedDescription
+		}
 	}
-	if negativeCount > positiveCount {
-		return "mixed", "More negative than positive signals, but no critical concerns."
+
+	if strongNegative >= 2 || negativeCount > positiveCount*2 {
+		return "concerning", "Multiple strong negative signals or predominantly negative activity."
+	}
+	if strongNegative >= 1 || negativeCount > positiveCount {
+		return "mixed", "Strong negative or unfavorable signals present that warrant monitoring."
 	}
 	return "positive", "Activity is predominantly positive or neutral."
 }
