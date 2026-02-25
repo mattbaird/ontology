@@ -40,8 +40,14 @@ const (
 	FieldLeaseType = "lease_type"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldLiabilityType holds the string denoting the liability_type field in the database.
+	FieldLiabilityType = "liability_type"
 	// FieldTerm holds the string denoting the term field in the database.
 	FieldTerm = "term"
+	// FieldLeaseCommencementDate holds the string denoting the lease_commencement_date field in the database.
+	FieldLeaseCommencementDate = "lease_commencement_date"
+	// FieldRentCommencementDate holds the string denoting the rent_commencement_date field in the database.
+	FieldRentCommencementDate = "rent_commencement_date"
 	// FieldBaseRentAmountCents holds the string denoting the base_rent_amount_cents field in the database.
 	FieldBaseRentAmountCents = "base_rent_amount_cents"
 	// FieldBaseRentCurrency holds the string denoting the base_rent_currency field in the database.
@@ -62,6 +68,14 @@ const (
 	FieldTenantImprovement = "tenant_improvement"
 	// FieldRenewalOptions holds the string denoting the renewal_options field in the database.
 	FieldRenewalOptions = "renewal_options"
+	// FieldUsageCharges holds the string denoting the usage_charges field in the database.
+	FieldUsageCharges = "usage_charges"
+	// FieldPercentageRent holds the string denoting the percentage_rent field in the database.
+	FieldPercentageRent = "percentage_rent"
+	// FieldExpansionRights holds the string denoting the expansion_rights field in the database.
+	FieldExpansionRights = "expansion_rights"
+	// FieldContractionRights holds the string denoting the contraction_rights field in the database.
+	FieldContractionRights = "contraction_rights"
 	// FieldSubsidy holds the string denoting the subsidy field in the database.
 	FieldSubsidy = "subsidy"
 	// FieldMoveInDate holds the string denoting the move_in_date field in the database.
@@ -72,16 +86,30 @@ const (
 	FieldNoticeDate = "notice_date"
 	// FieldNoticeRequiredDays holds the string denoting the notice_required_days field in the database.
 	FieldNoticeRequiredDays = "notice_required_days"
+	// FieldCheckInTime holds the string denoting the check_in_time field in the database.
+	FieldCheckInTime = "check_in_time"
+	// FieldCheckOutTime holds the string denoting the check_out_time field in the database.
+	FieldCheckOutTime = "check_out_time"
+	// FieldCleaningFeeAmountCents holds the string denoting the cleaning_fee_amount_cents field in the database.
+	FieldCleaningFeeAmountCents = "cleaning_fee_amount_cents"
+	// FieldCleaningFeeCurrency holds the string denoting the cleaning_fee_currency field in the database.
+	FieldCleaningFeeCurrency = "cleaning_fee_currency"
+	// FieldPlatformBookingID holds the string denoting the platform_booking_id field in the database.
+	FieldPlatformBookingID = "platform_booking_id"
+	// FieldMembershipTier holds the string denoting the membership_tier field in the database.
+	FieldMembershipTier = "membership_tier"
+	// FieldIsSublease holds the string denoting the is_sublease field in the database.
+	FieldIsSublease = "is_sublease"
+	// FieldSubleaseBilling holds the string denoting the sublease_billing field in the database.
+	FieldSubleaseBilling = "sublease_billing"
 	// FieldSigningMethod holds the string denoting the signing_method field in the database.
 	FieldSigningMethod = "signing_method"
 	// FieldSignedAt holds the string denoting the signed_at field in the database.
 	FieldSignedAt = "signed_at"
 	// FieldDocumentID holds the string denoting the document_id field in the database.
 	FieldDocumentID = "document_id"
-	// EdgeUnit holds the string denoting the unit edge name in mutations.
-	EdgeUnit = "unit"
-	// EdgeOccupiedUnit holds the string denoting the occupied_unit edge name in mutations.
-	EdgeOccupiedUnit = "occupied_unit"
+	// EdgeLeaseSpaces holds the string denoting the lease_spaces edge name in mutations.
+	EdgeLeaseSpaces = "lease_spaces"
 	// EdgeTenantRoles holds the string denoting the tenant_roles edge name in mutations.
 	EdgeTenantRoles = "tenant_roles"
 	// EdgeGuarantorRoles holds the string denoting the guarantor_roles edge name in mutations.
@@ -90,22 +118,19 @@ const (
 	EdgeLedgerEntries = "ledger_entries"
 	// EdgeApplication holds the string denoting the application edge name in mutations.
 	EdgeApplication = "application"
+	// EdgeSubleases holds the string denoting the subleases edge name in mutations.
+	EdgeSubleases = "subleases"
+	// EdgeParentLease holds the string denoting the parent_lease edge name in mutations.
+	EdgeParentLease = "parent_lease"
 	// Table holds the table name of the lease in the database.
 	Table = "leases"
-	// UnitTable is the table that holds the unit relation/edge.
-	UnitTable = "leases"
-	// UnitInverseTable is the table name for the Unit entity.
-	// It exists in this package in order to avoid circular dependency with the "unit" package.
-	UnitInverseTable = "units"
-	// UnitColumn is the table column denoting the unit relation/edge.
-	UnitColumn = "unit_leases"
-	// OccupiedUnitTable is the table that holds the occupied_unit relation/edge.
-	OccupiedUnitTable = "leases"
-	// OccupiedUnitInverseTable is the table name for the Unit entity.
-	// It exists in this package in order to avoid circular dependency with the "unit" package.
-	OccupiedUnitInverseTable = "units"
-	// OccupiedUnitColumn is the table column denoting the occupied_unit relation/edge.
-	OccupiedUnitColumn = "unit_active_lease"
+	// LeaseSpacesTable is the table that holds the lease_spaces relation/edge.
+	LeaseSpacesTable = "lease_spaces"
+	// LeaseSpacesInverseTable is the table name for the LeaseSpace entity.
+	// It exists in this package in order to avoid circular dependency with the "leasespace" package.
+	LeaseSpacesInverseTable = "lease_spaces"
+	// LeaseSpacesColumn is the table column denoting the lease_spaces relation/edge.
+	LeaseSpacesColumn = "lease_lease_spaces"
 	// TenantRolesTable is the table that holds the tenant_roles relation/edge. The primary key declared below.
 	TenantRolesTable = "lease_tenant_roles"
 	// TenantRolesInverseTable is the table name for the PersonRole entity.
@@ -130,6 +155,14 @@ const (
 	ApplicationInverseTable = "applications"
 	// ApplicationColumn is the table column denoting the application relation/edge.
 	ApplicationColumn = "lease_application"
+	// SubleasesTable is the table that holds the subleases relation/edge.
+	SubleasesTable = "leases"
+	// SubleasesColumn is the table column denoting the subleases relation/edge.
+	SubleasesColumn = "lease_subleases"
+	// ParentLeaseTable is the table that holds the parent_lease relation/edge.
+	ParentLeaseTable = "leases"
+	// ParentLeaseColumn is the table column denoting the parent_lease relation/edge.
+	ParentLeaseColumn = "lease_subleases"
 )
 
 // Columns holds all SQL columns for lease fields.
@@ -147,7 +180,10 @@ var Columns = []string{
 	FieldGuarantorRoleIds,
 	FieldLeaseType,
 	FieldStatus,
+	FieldLiabilityType,
 	FieldTerm,
+	FieldLeaseCommencementDate,
+	FieldRentCommencementDate,
 	FieldBaseRentAmountCents,
 	FieldBaseRentCurrency,
 	FieldSecurityDepositAmountCents,
@@ -158,11 +194,23 @@ var Columns = []string{
 	FieldCamTerms,
 	FieldTenantImprovement,
 	FieldRenewalOptions,
+	FieldUsageCharges,
+	FieldPercentageRent,
+	FieldExpansionRights,
+	FieldContractionRights,
 	FieldSubsidy,
 	FieldMoveInDate,
 	FieldMoveOutDate,
 	FieldNoticeDate,
 	FieldNoticeRequiredDays,
+	FieldCheckInTime,
+	FieldCheckOutTime,
+	FieldCleaningFeeAmountCents,
+	FieldCleaningFeeCurrency,
+	FieldPlatformBookingID,
+	FieldMembershipTier,
+	FieldIsSublease,
+	FieldSubleaseBilling,
 	FieldSigningMethod,
 	FieldSignedAt,
 	FieldDocumentID,
@@ -171,8 +219,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "leases"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"unit_leases",
-	"unit_active_lease",
+	"lease_subleases",
 }
 
 var (
@@ -218,6 +265,12 @@ var (
 	DefaultSecurityDepositCurrency string
 	// SecurityDepositCurrencyValidator is a validator for the "security_deposit_currency" field. It is called by the builders before save.
 	SecurityDepositCurrencyValidator func(string) error
+	// DefaultCleaningFeeCurrency holds the default value on creation for the "cleaning_fee_currency" field.
+	DefaultCleaningFeeCurrency string
+	// CleaningFeeCurrencyValidator is a validator for the "cleaning_fee_currency" field. It is called by the builders before save.
+	CleaningFeeCurrencyValidator func(string) error
+	// DefaultIsSublease holds the default value on creation for the "is_sublease" field.
+	DefaultIsSublease bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -256,11 +309,16 @@ const (
 	LeaseTypeFixedTerm               LeaseType = "fixed_term"
 	LeaseTypeMonthToMonth            LeaseType = "month_to_month"
 	LeaseTypeCommercialNnn           LeaseType = "commercial_nnn"
+	LeaseTypeCommercialNn            LeaseType = "commercial_nn"
+	LeaseTypeCommercialN             LeaseType = "commercial_n"
 	LeaseTypeCommercialGross         LeaseType = "commercial_gross"
 	LeaseTypeCommercialModifiedGross LeaseType = "commercial_modified_gross"
 	LeaseTypeAffordable              LeaseType = "affordable"
 	LeaseTypeSection8                LeaseType = "section_8"
 	LeaseTypeStudent                 LeaseType = "student"
+	LeaseTypeGroundLease             LeaseType = "ground_lease"
+	LeaseTypeShortTerm               LeaseType = "short_term"
+	LeaseTypeMembership              LeaseType = "membership"
 )
 
 func (lt LeaseType) String() string {
@@ -270,7 +328,7 @@ func (lt LeaseType) String() string {
 // LeaseTypeValidator is a validator for the "lease_type" field enum values. It is called by the builders before save.
 func LeaseTypeValidator(lt LeaseType) error {
 	switch lt {
-	case LeaseTypeFixedTerm, LeaseTypeMonthToMonth, LeaseTypeCommercialNnn, LeaseTypeCommercialGross, LeaseTypeCommercialModifiedGross, LeaseTypeAffordable, LeaseTypeSection8, LeaseTypeStudent:
+	case LeaseTypeFixedTerm, LeaseTypeMonthToMonth, LeaseTypeCommercialNnn, LeaseTypeCommercialNn, LeaseTypeCommercialN, LeaseTypeCommercialGross, LeaseTypeCommercialModifiedGross, LeaseTypeAffordable, LeaseTypeSection8, LeaseTypeStudent, LeaseTypeGroundLease, LeaseTypeShortTerm, LeaseTypeMembership:
 		return nil
 	default:
 		return fmt.Errorf("lease: invalid enum value for lease_type field: %q", lt)
@@ -304,6 +362,86 @@ func StatusValidator(s Status) error {
 		return nil
 	default:
 		return fmt.Errorf("lease: invalid enum value for status field: %q", s)
+	}
+}
+
+// LiabilityType defines the type for the "liability_type" enum field.
+type LiabilityType string
+
+// LiabilityTypeJointAndSeveral is the default value of the LiabilityType enum.
+const DefaultLiabilityType = LiabilityTypeJointAndSeveral
+
+// LiabilityType values.
+const (
+	LiabilityTypeJointAndSeveral LiabilityType = "joint_and_several"
+	LiabilityTypeIndividual      LiabilityType = "individual"
+	LiabilityTypeByTheBed        LiabilityType = "by_the_bed"
+	LiabilityTypeProportional    LiabilityType = "proportional"
+)
+
+func (lt LiabilityType) String() string {
+	return string(lt)
+}
+
+// LiabilityTypeValidator is a validator for the "liability_type" field enum values. It is called by the builders before save.
+func LiabilityTypeValidator(lt LiabilityType) error {
+	switch lt {
+	case LiabilityTypeJointAndSeveral, LiabilityTypeIndividual, LiabilityTypeByTheBed, LiabilityTypeProportional:
+		return nil
+	default:
+		return fmt.Errorf("lease: invalid enum value for liability_type field: %q", lt)
+	}
+}
+
+// MembershipTier defines the type for the "membership_tier" enum field.
+type MembershipTier string
+
+// MembershipTier values.
+const (
+	MembershipTierHotDesk       MembershipTier = "hot_desk"
+	MembershipTierDedicatedDesk MembershipTier = "dedicated_desk"
+	MembershipTierOffice        MembershipTier = "office"
+	MembershipTierSuite         MembershipTier = "suite"
+	MembershipTierVirtual       MembershipTier = "virtual"
+)
+
+func (mt MembershipTier) String() string {
+	return string(mt)
+}
+
+// MembershipTierValidator is a validator for the "membership_tier" field enum values. It is called by the builders before save.
+func MembershipTierValidator(mt MembershipTier) error {
+	switch mt {
+	case MembershipTierHotDesk, MembershipTierDedicatedDesk, MembershipTierOffice, MembershipTierSuite, MembershipTierVirtual:
+		return nil
+	default:
+		return fmt.Errorf("lease: invalid enum value for membership_tier field: %q", mt)
+	}
+}
+
+// SubleaseBilling defines the type for the "sublease_billing" enum field.
+type SubleaseBilling string
+
+// SubleaseBillingThroughMasterTenant is the default value of the SubleaseBilling enum.
+const DefaultSubleaseBilling = SubleaseBillingThroughMasterTenant
+
+// SubleaseBilling values.
+const (
+	SubleaseBillingThroughMasterTenant SubleaseBilling = "through_master_tenant"
+	SubleaseBillingDirectToLandlord    SubleaseBilling = "direct_to_landlord"
+)
+
+func (sb SubleaseBilling) String() string {
+	return string(sb)
+}
+
+// SubleaseBillingValidator is a validator for the "sublease_billing" field enum values. It is called by the builders before save.
+func SubleaseBillingValidator(sb SubleaseBilling) error {
+	switch sb {
+	case SubleaseBillingThroughMasterTenant, SubleaseBillingDirectToLandlord:
+		return nil
+	default:
+		return fmt.Errorf("lease: invalid enum value for sublease_billing field: %q", sb)
 	}
 }
 
@@ -389,6 +527,21 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
+// ByLiabilityType orders the results by the liability_type field.
+func ByLiabilityType(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLiabilityType, opts...).ToFunc()
+}
+
+// ByLeaseCommencementDate orders the results by the lease_commencement_date field.
+func ByLeaseCommencementDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLeaseCommencementDate, opts...).ToFunc()
+}
+
+// ByRentCommencementDate orders the results by the rent_commencement_date field.
+func ByRentCommencementDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRentCommencementDate, opts...).ToFunc()
+}
+
 // ByBaseRentAmountCents orders the results by the base_rent_amount_cents field.
 func ByBaseRentAmountCents(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBaseRentAmountCents, opts...).ToFunc()
@@ -429,6 +582,46 @@ func ByNoticeRequiredDays(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldNoticeRequiredDays, opts...).ToFunc()
 }
 
+// ByCheckInTime orders the results by the check_in_time field.
+func ByCheckInTime(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCheckInTime, opts...).ToFunc()
+}
+
+// ByCheckOutTime orders the results by the check_out_time field.
+func ByCheckOutTime(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCheckOutTime, opts...).ToFunc()
+}
+
+// ByCleaningFeeAmountCents orders the results by the cleaning_fee_amount_cents field.
+func ByCleaningFeeAmountCents(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCleaningFeeAmountCents, opts...).ToFunc()
+}
+
+// ByCleaningFeeCurrency orders the results by the cleaning_fee_currency field.
+func ByCleaningFeeCurrency(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCleaningFeeCurrency, opts...).ToFunc()
+}
+
+// ByPlatformBookingID orders the results by the platform_booking_id field.
+func ByPlatformBookingID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPlatformBookingID, opts...).ToFunc()
+}
+
+// ByMembershipTier orders the results by the membership_tier field.
+func ByMembershipTier(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMembershipTier, opts...).ToFunc()
+}
+
+// ByIsSublease orders the results by the is_sublease field.
+func ByIsSublease(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsSublease, opts...).ToFunc()
+}
+
+// BySubleaseBilling orders the results by the sublease_billing field.
+func BySubleaseBilling(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSubleaseBilling, opts...).ToFunc()
+}
+
 // BySigningMethod orders the results by the signing_method field.
 func BySigningMethod(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSigningMethod, opts...).ToFunc()
@@ -444,17 +637,17 @@ func ByDocumentID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDocumentID, opts...).ToFunc()
 }
 
-// ByUnitField orders the results by unit field.
-func ByUnitField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByLeaseSpacesCount orders the results by lease_spaces count.
+func ByLeaseSpacesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newUnitStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborsCount(s, newLeaseSpacesStep(), opts...)
 	}
 }
 
-// ByOccupiedUnitField orders the results by occupied_unit field.
-func ByOccupiedUnitField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByLeaseSpaces orders the results by lease_spaces terms.
+func ByLeaseSpaces(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newOccupiedUnitStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newLeaseSpacesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -506,18 +699,32 @@ func ByApplicationField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newApplicationStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newUnitStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(UnitInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, UnitTable, UnitColumn),
-	)
+
+// BySubleasesCount orders the results by subleases count.
+func BySubleasesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSubleasesStep(), opts...)
+	}
 }
-func newOccupiedUnitStep() *sqlgraph.Step {
+
+// BySubleases orders the results by subleases terms.
+func BySubleases(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSubleasesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByParentLeaseField orders the results by parent_lease field.
+func ByParentLeaseField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newParentLeaseStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newLeaseSpacesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(OccupiedUnitInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, true, OccupiedUnitTable, OccupiedUnitColumn),
+		sqlgraph.To(LeaseSpacesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LeaseSpacesTable, LeaseSpacesColumn),
 	)
 }
 func newTenantRolesStep() *sqlgraph.Step {
@@ -546,5 +753,19 @@ func newApplicationStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ApplicationInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, ApplicationTable, ApplicationColumn),
+	)
+}
+func newSubleasesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SubleasesTable, SubleasesColumn),
+	)
+}
+func newParentLeaseStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Table, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ParentLeaseTable, ParentLeaseColumn),
 	)
 }

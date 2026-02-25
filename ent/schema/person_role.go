@@ -29,8 +29,8 @@ func (PersonRole) Mixin() []ent.Mixin {
 func (PersonRole) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.Enum("role_type").Values("tenant", "owner", "property_manager", "maintenance_tech", "leasing_agent", "accountant", "vendor_contact", "guarantor", "emergency_contact", "authorized_occupant"),
-		field.Enum("scope_type").Values("organization", "portfolio", "property", "unit", "lease"),
+		field.Enum("role_type").Values("tenant", "owner", "property_manager", "maintenance_tech", "leasing_agent", "accountant", "vendor_contact", "guarantor", "emergency_contact", "authorized_occupant", "co_signer"),
+		field.Enum("scope_type").Values("organization", "portfolio", "property", "building", "space", "lease"),
 		field.String("scope_id").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("status").Values("active", "inactive", "pending", "terminated"),
 		field.JSON("effective", &types.DateRange{}),

@@ -121,11 +121,6 @@ func Memo(v string) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldEQ(FieldMemo, v))
 }
 
-// UnitID applies equality check predicate on the "unit_id" field. It's identical to UnitIDEQ.
-func UnitID(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldEQ(FieldUnitID, v))
-}
-
 // BankAccountID applies equality check predicate on the "bank_account_id" field. It's identical to BankAccountIDEQ.
 func BankAccountID(v string) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldEQ(FieldBankAccountID, v))
@@ -946,81 +941,6 @@ func MemoContainsFold(v string) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldContainsFold(FieldMemo, v))
 }
 
-// UnitIDEQ applies the EQ predicate on the "unit_id" field.
-func UnitIDEQ(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldEQ(FieldUnitID, v))
-}
-
-// UnitIDNEQ applies the NEQ predicate on the "unit_id" field.
-func UnitIDNEQ(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldNEQ(FieldUnitID, v))
-}
-
-// UnitIDIn applies the In predicate on the "unit_id" field.
-func UnitIDIn(vs ...string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldIn(FieldUnitID, vs...))
-}
-
-// UnitIDNotIn applies the NotIn predicate on the "unit_id" field.
-func UnitIDNotIn(vs ...string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldNotIn(FieldUnitID, vs...))
-}
-
-// UnitIDGT applies the GT predicate on the "unit_id" field.
-func UnitIDGT(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldGT(FieldUnitID, v))
-}
-
-// UnitIDGTE applies the GTE predicate on the "unit_id" field.
-func UnitIDGTE(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldGTE(FieldUnitID, v))
-}
-
-// UnitIDLT applies the LT predicate on the "unit_id" field.
-func UnitIDLT(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldLT(FieldUnitID, v))
-}
-
-// UnitIDLTE applies the LTE predicate on the "unit_id" field.
-func UnitIDLTE(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldLTE(FieldUnitID, v))
-}
-
-// UnitIDContains applies the Contains predicate on the "unit_id" field.
-func UnitIDContains(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldContains(FieldUnitID, v))
-}
-
-// UnitIDHasPrefix applies the HasPrefix predicate on the "unit_id" field.
-func UnitIDHasPrefix(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldHasPrefix(FieldUnitID, v))
-}
-
-// UnitIDHasSuffix applies the HasSuffix predicate on the "unit_id" field.
-func UnitIDHasSuffix(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldHasSuffix(FieldUnitID, v))
-}
-
-// UnitIDIsNil applies the IsNil predicate on the "unit_id" field.
-func UnitIDIsNil() predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldIsNull(FieldUnitID))
-}
-
-// UnitIDNotNil applies the NotNil predicate on the "unit_id" field.
-func UnitIDNotNil() predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldNotNull(FieldUnitID))
-}
-
-// UnitIDEqualFold applies the EqualFold predicate on the "unit_id" field.
-func UnitIDEqualFold(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldEqualFold(FieldUnitID, v))
-}
-
-// UnitIDContainsFold applies the ContainsFold predicate on the "unit_id" field.
-func UnitIDContainsFold(v string) predicate.LedgerEntry {
-	return predicate.LedgerEntry(sql.FieldContainsFold(FieldUnitID, v))
-}
-
 // BankAccountIDEQ applies the EQ predicate on the "bank_account_id" field.
 func BankAccountIDEQ(v string) predicate.LedgerEntry {
 	return predicate.LedgerEntry(sql.FieldEQ(FieldBankAccountID, v))
@@ -1465,6 +1385,29 @@ func HasProperty() predicate.LedgerEntry {
 func HasPropertyWith(preds ...predicate.Property) predicate.LedgerEntry {
 	return predicate.LedgerEntry(func(s *sql.Selector) {
 		step := newPropertyStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSpace applies the HasEdge predicate on the "space" edge.
+func HasSpace() predicate.LedgerEntry {
+	return predicate.LedgerEntry(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, SpaceTable, SpaceColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSpaceWith applies the HasEdge predicate on the "space" edge with a given conditions (other predicates).
+func HasSpaceWith(preds ...predicate.Space) predicate.LedgerEntry {
+	return predicate.LedgerEntry(func(s *sql.Selector) {
+		step := newSpaceStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

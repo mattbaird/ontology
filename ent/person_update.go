@@ -381,19 +381,19 @@ func (_u *PersonUpdate) AddOrganizations(v ...*Organization) *PersonUpdate {
 	return _u.AddOrganizationIDs(ids...)
 }
 
-// AddPersonLedgerEntryIDs adds the "person_ledger_entries" edge to the LedgerEntry entity by IDs.
-func (_u *PersonUpdate) AddPersonLedgerEntryIDs(ids ...uuid.UUID) *PersonUpdate {
-	_u.mutation.AddPersonLedgerEntryIDs(ids...)
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (_u *PersonUpdate) AddLedgerEntryIDs(ids ...uuid.UUID) *PersonUpdate {
+	_u.mutation.AddLedgerEntryIDs(ids...)
 	return _u
 }
 
-// AddPersonLedgerEntries adds the "person_ledger_entries" edges to the LedgerEntry entity.
-func (_u *PersonUpdate) AddPersonLedgerEntries(v ...*LedgerEntry) *PersonUpdate {
+// AddLedgerEntries adds the "ledger_entries" edges to the LedgerEntry entity.
+func (_u *PersonUpdate) AddLedgerEntries(v ...*LedgerEntry) *PersonUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddPersonLedgerEntryIDs(ids...)
+	return _u.AddLedgerEntryIDs(ids...)
 }
 
 // AddApplicationIDs adds the "applications" edge to the Application entity by IDs.
@@ -458,25 +458,25 @@ func (_u *PersonUpdate) RemoveOrganizations(v ...*Organization) *PersonUpdate {
 	return _u.RemoveOrganizationIDs(ids...)
 }
 
-// ClearPersonLedgerEntries clears all "person_ledger_entries" edges to the LedgerEntry entity.
-func (_u *PersonUpdate) ClearPersonLedgerEntries() *PersonUpdate {
-	_u.mutation.ClearPersonLedgerEntries()
+// ClearLedgerEntries clears all "ledger_entries" edges to the LedgerEntry entity.
+func (_u *PersonUpdate) ClearLedgerEntries() *PersonUpdate {
+	_u.mutation.ClearLedgerEntries()
 	return _u
 }
 
-// RemovePersonLedgerEntryIDs removes the "person_ledger_entries" edge to LedgerEntry entities by IDs.
-func (_u *PersonUpdate) RemovePersonLedgerEntryIDs(ids ...uuid.UUID) *PersonUpdate {
-	_u.mutation.RemovePersonLedgerEntryIDs(ids...)
+// RemoveLedgerEntryIDs removes the "ledger_entries" edge to LedgerEntry entities by IDs.
+func (_u *PersonUpdate) RemoveLedgerEntryIDs(ids ...uuid.UUID) *PersonUpdate {
+	_u.mutation.RemoveLedgerEntryIDs(ids...)
 	return _u
 }
 
-// RemovePersonLedgerEntries removes "person_ledger_entries" edges to LedgerEntry entities.
-func (_u *PersonUpdate) RemovePersonLedgerEntries(v ...*LedgerEntry) *PersonUpdate {
+// RemoveLedgerEntries removes "ledger_entries" edges to LedgerEntry entities.
+func (_u *PersonUpdate) RemoveLedgerEntries(v ...*LedgerEntry) *PersonUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemovePersonLedgerEntryIDs(ids...)
+	return _u.RemoveLedgerEntryIDs(ids...)
 }
 
 // ClearApplications clears all "applications" edges to the Application entity.
@@ -762,12 +762,12 @@ func (_u *PersonUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.PersonLedgerEntriesCleared() {
+	if _u.mutation.LedgerEntriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   person.PersonLedgerEntriesTable,
-			Columns: []string{person.PersonLedgerEntriesColumn},
+			Table:   person.LedgerEntriesTable,
+			Columns: []string{person.LedgerEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
@@ -775,12 +775,12 @@ func (_u *PersonUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedPersonLedgerEntriesIDs(); len(nodes) > 0 && !_u.mutation.PersonLedgerEntriesCleared() {
+	if nodes := _u.mutation.RemovedLedgerEntriesIDs(); len(nodes) > 0 && !_u.mutation.LedgerEntriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   person.PersonLedgerEntriesTable,
-			Columns: []string{person.PersonLedgerEntriesColumn},
+			Table:   person.LedgerEntriesTable,
+			Columns: []string{person.LedgerEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
@@ -791,12 +791,12 @@ func (_u *PersonUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.PersonLedgerEntriesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.LedgerEntriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   person.PersonLedgerEntriesTable,
-			Columns: []string{person.PersonLedgerEntriesColumn},
+			Table:   person.LedgerEntriesTable,
+			Columns: []string{person.LedgerEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
@@ -1218,19 +1218,19 @@ func (_u *PersonUpdateOne) AddOrganizations(v ...*Organization) *PersonUpdateOne
 	return _u.AddOrganizationIDs(ids...)
 }
 
-// AddPersonLedgerEntryIDs adds the "person_ledger_entries" edge to the LedgerEntry entity by IDs.
-func (_u *PersonUpdateOne) AddPersonLedgerEntryIDs(ids ...uuid.UUID) *PersonUpdateOne {
-	_u.mutation.AddPersonLedgerEntryIDs(ids...)
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (_u *PersonUpdateOne) AddLedgerEntryIDs(ids ...uuid.UUID) *PersonUpdateOne {
+	_u.mutation.AddLedgerEntryIDs(ids...)
 	return _u
 }
 
-// AddPersonLedgerEntries adds the "person_ledger_entries" edges to the LedgerEntry entity.
-func (_u *PersonUpdateOne) AddPersonLedgerEntries(v ...*LedgerEntry) *PersonUpdateOne {
+// AddLedgerEntries adds the "ledger_entries" edges to the LedgerEntry entity.
+func (_u *PersonUpdateOne) AddLedgerEntries(v ...*LedgerEntry) *PersonUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddPersonLedgerEntryIDs(ids...)
+	return _u.AddLedgerEntryIDs(ids...)
 }
 
 // AddApplicationIDs adds the "applications" edge to the Application entity by IDs.
@@ -1295,25 +1295,25 @@ func (_u *PersonUpdateOne) RemoveOrganizations(v ...*Organization) *PersonUpdate
 	return _u.RemoveOrganizationIDs(ids...)
 }
 
-// ClearPersonLedgerEntries clears all "person_ledger_entries" edges to the LedgerEntry entity.
-func (_u *PersonUpdateOne) ClearPersonLedgerEntries() *PersonUpdateOne {
-	_u.mutation.ClearPersonLedgerEntries()
+// ClearLedgerEntries clears all "ledger_entries" edges to the LedgerEntry entity.
+func (_u *PersonUpdateOne) ClearLedgerEntries() *PersonUpdateOne {
+	_u.mutation.ClearLedgerEntries()
 	return _u
 }
 
-// RemovePersonLedgerEntryIDs removes the "person_ledger_entries" edge to LedgerEntry entities by IDs.
-func (_u *PersonUpdateOne) RemovePersonLedgerEntryIDs(ids ...uuid.UUID) *PersonUpdateOne {
-	_u.mutation.RemovePersonLedgerEntryIDs(ids...)
+// RemoveLedgerEntryIDs removes the "ledger_entries" edge to LedgerEntry entities by IDs.
+func (_u *PersonUpdateOne) RemoveLedgerEntryIDs(ids ...uuid.UUID) *PersonUpdateOne {
+	_u.mutation.RemoveLedgerEntryIDs(ids...)
 	return _u
 }
 
-// RemovePersonLedgerEntries removes "person_ledger_entries" edges to LedgerEntry entities.
-func (_u *PersonUpdateOne) RemovePersonLedgerEntries(v ...*LedgerEntry) *PersonUpdateOne {
+// RemoveLedgerEntries removes "ledger_entries" edges to LedgerEntry entities.
+func (_u *PersonUpdateOne) RemoveLedgerEntries(v ...*LedgerEntry) *PersonUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemovePersonLedgerEntryIDs(ids...)
+	return _u.RemoveLedgerEntryIDs(ids...)
 }
 
 // ClearApplications clears all "applications" edges to the Application entity.
@@ -1629,12 +1629,12 @@ func (_u *PersonUpdateOne) sqlSave(ctx context.Context) (_node *Person, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.PersonLedgerEntriesCleared() {
+	if _u.mutation.LedgerEntriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   person.PersonLedgerEntriesTable,
-			Columns: []string{person.PersonLedgerEntriesColumn},
+			Table:   person.LedgerEntriesTable,
+			Columns: []string{person.LedgerEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
@@ -1642,12 +1642,12 @@ func (_u *PersonUpdateOne) sqlSave(ctx context.Context) (_node *Person, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedPersonLedgerEntriesIDs(); len(nodes) > 0 && !_u.mutation.PersonLedgerEntriesCleared() {
+	if nodes := _u.mutation.RemovedLedgerEntriesIDs(); len(nodes) > 0 && !_u.mutation.LedgerEntriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   person.PersonLedgerEntriesTable,
-			Columns: []string{person.PersonLedgerEntriesColumn},
+			Table:   person.LedgerEntriesTable,
+			Columns: []string{person.LedgerEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
@@ -1658,12 +1658,12 @@ func (_u *PersonUpdateOne) sqlSave(ctx context.Context) (_node *Person, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.PersonLedgerEntriesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.LedgerEntriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   person.PersonLedgerEntriesTable,
-			Columns: []string{person.PersonLedgerEntriesColumn},
+			Table:   person.LedgerEntriesTable,
+			Columns: []string{person.LedgerEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),

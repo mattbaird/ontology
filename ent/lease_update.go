@@ -15,10 +15,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/lease"
+	"github.com/matthewbaird/ontology/ent/leasespace"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/personrole"
 	"github.com/matthewbaird/ontology/ent/predicate"
-	"github.com/matthewbaird/ontology/ent/unit"
 	"github.com/matthewbaird/ontology/internal/types"
 )
 
@@ -195,9 +195,63 @@ func (_u *LeaseUpdate) SetNillableStatus(v *lease.Status) *LeaseUpdate {
 	return _u
 }
 
+// SetLiabilityType sets the "liability_type" field.
+func (_u *LeaseUpdate) SetLiabilityType(v lease.LiabilityType) *LeaseUpdate {
+	_u.mutation.SetLiabilityType(v)
+	return _u
+}
+
+// SetNillableLiabilityType sets the "liability_type" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableLiabilityType(v *lease.LiabilityType) *LeaseUpdate {
+	if v != nil {
+		_u.SetLiabilityType(*v)
+	}
+	return _u
+}
+
 // SetTerm sets the "term" field.
 func (_u *LeaseUpdate) SetTerm(v *types.DateRange) *LeaseUpdate {
 	_u.mutation.SetTerm(v)
+	return _u
+}
+
+// SetLeaseCommencementDate sets the "lease_commencement_date" field.
+func (_u *LeaseUpdate) SetLeaseCommencementDate(v time.Time) *LeaseUpdate {
+	_u.mutation.SetLeaseCommencementDate(v)
+	return _u
+}
+
+// SetNillableLeaseCommencementDate sets the "lease_commencement_date" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableLeaseCommencementDate(v *time.Time) *LeaseUpdate {
+	if v != nil {
+		_u.SetLeaseCommencementDate(*v)
+	}
+	return _u
+}
+
+// ClearLeaseCommencementDate clears the value of the "lease_commencement_date" field.
+func (_u *LeaseUpdate) ClearLeaseCommencementDate() *LeaseUpdate {
+	_u.mutation.ClearLeaseCommencementDate()
+	return _u
+}
+
+// SetRentCommencementDate sets the "rent_commencement_date" field.
+func (_u *LeaseUpdate) SetRentCommencementDate(v time.Time) *LeaseUpdate {
+	_u.mutation.SetRentCommencementDate(v)
+	return _u
+}
+
+// SetNillableRentCommencementDate sets the "rent_commencement_date" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableRentCommencementDate(v *time.Time) *LeaseUpdate {
+	if v != nil {
+		_u.SetRentCommencementDate(*v)
+	}
+	return _u
+}
+
+// ClearRentCommencementDate clears the value of the "rent_commencement_date" field.
+func (_u *LeaseUpdate) ClearRentCommencementDate() *LeaseUpdate {
+	_u.mutation.ClearRentCommencementDate()
 	return _u
 }
 
@@ -361,6 +415,72 @@ func (_u *LeaseUpdate) ClearRenewalOptions() *LeaseUpdate {
 	return _u
 }
 
+// SetUsageCharges sets the "usage_charges" field.
+func (_u *LeaseUpdate) SetUsageCharges(v []types.UsageBasedCharge) *LeaseUpdate {
+	_u.mutation.SetUsageCharges(v)
+	return _u
+}
+
+// AppendUsageCharges appends value to the "usage_charges" field.
+func (_u *LeaseUpdate) AppendUsageCharges(v []types.UsageBasedCharge) *LeaseUpdate {
+	_u.mutation.AppendUsageCharges(v)
+	return _u
+}
+
+// ClearUsageCharges clears the value of the "usage_charges" field.
+func (_u *LeaseUpdate) ClearUsageCharges() *LeaseUpdate {
+	_u.mutation.ClearUsageCharges()
+	return _u
+}
+
+// SetPercentageRent sets the "percentage_rent" field.
+func (_u *LeaseUpdate) SetPercentageRent(v *types.PercentageRent) *LeaseUpdate {
+	_u.mutation.SetPercentageRent(v)
+	return _u
+}
+
+// ClearPercentageRent clears the value of the "percentage_rent" field.
+func (_u *LeaseUpdate) ClearPercentageRent() *LeaseUpdate {
+	_u.mutation.ClearPercentageRent()
+	return _u
+}
+
+// SetExpansionRights sets the "expansion_rights" field.
+func (_u *LeaseUpdate) SetExpansionRights(v []types.ExpansionRight) *LeaseUpdate {
+	_u.mutation.SetExpansionRights(v)
+	return _u
+}
+
+// AppendExpansionRights appends value to the "expansion_rights" field.
+func (_u *LeaseUpdate) AppendExpansionRights(v []types.ExpansionRight) *LeaseUpdate {
+	_u.mutation.AppendExpansionRights(v)
+	return _u
+}
+
+// ClearExpansionRights clears the value of the "expansion_rights" field.
+func (_u *LeaseUpdate) ClearExpansionRights() *LeaseUpdate {
+	_u.mutation.ClearExpansionRights()
+	return _u
+}
+
+// SetContractionRights sets the "contraction_rights" field.
+func (_u *LeaseUpdate) SetContractionRights(v []types.ContractionRight) *LeaseUpdate {
+	_u.mutation.SetContractionRights(v)
+	return _u
+}
+
+// AppendContractionRights appends value to the "contraction_rights" field.
+func (_u *LeaseUpdate) AppendContractionRights(v []types.ContractionRight) *LeaseUpdate {
+	_u.mutation.AppendContractionRights(v)
+	return _u
+}
+
+// ClearContractionRights clears the value of the "contraction_rights" field.
+func (_u *LeaseUpdate) ClearContractionRights() *LeaseUpdate {
+	_u.mutation.ClearContractionRights()
+	return _u
+}
+
 // SetSubsidy sets the "subsidy" field.
 func (_u *LeaseUpdate) SetSubsidy(v *types.SubsidyTerms) *LeaseUpdate {
 	_u.mutation.SetSubsidy(v)
@@ -454,6 +574,161 @@ func (_u *LeaseUpdate) AddNoticeRequiredDays(v int) *LeaseUpdate {
 	return _u
 }
 
+// SetCheckInTime sets the "check_in_time" field.
+func (_u *LeaseUpdate) SetCheckInTime(v string) *LeaseUpdate {
+	_u.mutation.SetCheckInTime(v)
+	return _u
+}
+
+// SetNillableCheckInTime sets the "check_in_time" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableCheckInTime(v *string) *LeaseUpdate {
+	if v != nil {
+		_u.SetCheckInTime(*v)
+	}
+	return _u
+}
+
+// ClearCheckInTime clears the value of the "check_in_time" field.
+func (_u *LeaseUpdate) ClearCheckInTime() *LeaseUpdate {
+	_u.mutation.ClearCheckInTime()
+	return _u
+}
+
+// SetCheckOutTime sets the "check_out_time" field.
+func (_u *LeaseUpdate) SetCheckOutTime(v string) *LeaseUpdate {
+	_u.mutation.SetCheckOutTime(v)
+	return _u
+}
+
+// SetNillableCheckOutTime sets the "check_out_time" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableCheckOutTime(v *string) *LeaseUpdate {
+	if v != nil {
+		_u.SetCheckOutTime(*v)
+	}
+	return _u
+}
+
+// ClearCheckOutTime clears the value of the "check_out_time" field.
+func (_u *LeaseUpdate) ClearCheckOutTime() *LeaseUpdate {
+	_u.mutation.ClearCheckOutTime()
+	return _u
+}
+
+// SetCleaningFeeAmountCents sets the "cleaning_fee_amount_cents" field.
+func (_u *LeaseUpdate) SetCleaningFeeAmountCents(v int64) *LeaseUpdate {
+	_u.mutation.ResetCleaningFeeAmountCents()
+	_u.mutation.SetCleaningFeeAmountCents(v)
+	return _u
+}
+
+// SetNillableCleaningFeeAmountCents sets the "cleaning_fee_amount_cents" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableCleaningFeeAmountCents(v *int64) *LeaseUpdate {
+	if v != nil {
+		_u.SetCleaningFeeAmountCents(*v)
+	}
+	return _u
+}
+
+// AddCleaningFeeAmountCents adds value to the "cleaning_fee_amount_cents" field.
+func (_u *LeaseUpdate) AddCleaningFeeAmountCents(v int64) *LeaseUpdate {
+	_u.mutation.AddCleaningFeeAmountCents(v)
+	return _u
+}
+
+// ClearCleaningFeeAmountCents clears the value of the "cleaning_fee_amount_cents" field.
+func (_u *LeaseUpdate) ClearCleaningFeeAmountCents() *LeaseUpdate {
+	_u.mutation.ClearCleaningFeeAmountCents()
+	return _u
+}
+
+// SetCleaningFeeCurrency sets the "cleaning_fee_currency" field.
+func (_u *LeaseUpdate) SetCleaningFeeCurrency(v string) *LeaseUpdate {
+	_u.mutation.SetCleaningFeeCurrency(v)
+	return _u
+}
+
+// SetNillableCleaningFeeCurrency sets the "cleaning_fee_currency" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableCleaningFeeCurrency(v *string) *LeaseUpdate {
+	if v != nil {
+		_u.SetCleaningFeeCurrency(*v)
+	}
+	return _u
+}
+
+// ClearCleaningFeeCurrency clears the value of the "cleaning_fee_currency" field.
+func (_u *LeaseUpdate) ClearCleaningFeeCurrency() *LeaseUpdate {
+	_u.mutation.ClearCleaningFeeCurrency()
+	return _u
+}
+
+// SetPlatformBookingID sets the "platform_booking_id" field.
+func (_u *LeaseUpdate) SetPlatformBookingID(v string) *LeaseUpdate {
+	_u.mutation.SetPlatformBookingID(v)
+	return _u
+}
+
+// SetNillablePlatformBookingID sets the "platform_booking_id" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillablePlatformBookingID(v *string) *LeaseUpdate {
+	if v != nil {
+		_u.SetPlatformBookingID(*v)
+	}
+	return _u
+}
+
+// ClearPlatformBookingID clears the value of the "platform_booking_id" field.
+func (_u *LeaseUpdate) ClearPlatformBookingID() *LeaseUpdate {
+	_u.mutation.ClearPlatformBookingID()
+	return _u
+}
+
+// SetMembershipTier sets the "membership_tier" field.
+func (_u *LeaseUpdate) SetMembershipTier(v lease.MembershipTier) *LeaseUpdate {
+	_u.mutation.SetMembershipTier(v)
+	return _u
+}
+
+// SetNillableMembershipTier sets the "membership_tier" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableMembershipTier(v *lease.MembershipTier) *LeaseUpdate {
+	if v != nil {
+		_u.SetMembershipTier(*v)
+	}
+	return _u
+}
+
+// ClearMembershipTier clears the value of the "membership_tier" field.
+func (_u *LeaseUpdate) ClearMembershipTier() *LeaseUpdate {
+	_u.mutation.ClearMembershipTier()
+	return _u
+}
+
+// SetIsSublease sets the "is_sublease" field.
+func (_u *LeaseUpdate) SetIsSublease(v bool) *LeaseUpdate {
+	_u.mutation.SetIsSublease(v)
+	return _u
+}
+
+// SetNillableIsSublease sets the "is_sublease" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableIsSublease(v *bool) *LeaseUpdate {
+	if v != nil {
+		_u.SetIsSublease(*v)
+	}
+	return _u
+}
+
+// SetSubleaseBilling sets the "sublease_billing" field.
+func (_u *LeaseUpdate) SetSubleaseBilling(v lease.SubleaseBilling) *LeaseUpdate {
+	_u.mutation.SetSubleaseBilling(v)
+	return _u
+}
+
+// SetNillableSubleaseBilling sets the "sublease_billing" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableSubleaseBilling(v *lease.SubleaseBilling) *LeaseUpdate {
+	if v != nil {
+		_u.SetSubleaseBilling(*v)
+	}
+	return _u
+}
+
 // SetSigningMethod sets the "signing_method" field.
 func (_u *LeaseUpdate) SetSigningMethod(v lease.SigningMethod) *LeaseUpdate {
 	_u.mutation.SetSigningMethod(v)
@@ -514,42 +789,19 @@ func (_u *LeaseUpdate) ClearDocumentID() *LeaseUpdate {
 	return _u
 }
 
-// SetUnitID sets the "unit" edge to the Unit entity by ID.
-func (_u *LeaseUpdate) SetUnitID(id uuid.UUID) *LeaseUpdate {
-	_u.mutation.SetUnitID(id)
+// AddLeaseSpaceIDs adds the "lease_spaces" edge to the LeaseSpace entity by IDs.
+func (_u *LeaseUpdate) AddLeaseSpaceIDs(ids ...uuid.UUID) *LeaseUpdate {
+	_u.mutation.AddLeaseSpaceIDs(ids...)
 	return _u
 }
 
-// SetNillableUnitID sets the "unit" edge to the Unit entity by ID if the given value is not nil.
-func (_u *LeaseUpdate) SetNillableUnitID(id *uuid.UUID) *LeaseUpdate {
-	if id != nil {
-		_u = _u.SetUnitID(*id)
+// AddLeaseSpaces adds the "lease_spaces" edges to the LeaseSpace entity.
+func (_u *LeaseUpdate) AddLeaseSpaces(v ...*LeaseSpace) *LeaseUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return _u
-}
-
-// SetUnit sets the "unit" edge to the Unit entity.
-func (_u *LeaseUpdate) SetUnit(v *Unit) *LeaseUpdate {
-	return _u.SetUnitID(v.ID)
-}
-
-// SetOccupiedUnitID sets the "occupied_unit" edge to the Unit entity by ID.
-func (_u *LeaseUpdate) SetOccupiedUnitID(id uuid.UUID) *LeaseUpdate {
-	_u.mutation.SetOccupiedUnitID(id)
-	return _u
-}
-
-// SetNillableOccupiedUnitID sets the "occupied_unit" edge to the Unit entity by ID if the given value is not nil.
-func (_u *LeaseUpdate) SetNillableOccupiedUnitID(id *uuid.UUID) *LeaseUpdate {
-	if id != nil {
-		_u = _u.SetOccupiedUnitID(*id)
-	}
-	return _u
-}
-
-// SetOccupiedUnit sets the "occupied_unit" edge to the Unit entity.
-func (_u *LeaseUpdate) SetOccupiedUnit(v *Unit) *LeaseUpdate {
-	return _u.SetOccupiedUnitID(v.ID)
+	return _u.AddLeaseSpaceIDs(ids...)
 }
 
 // AddTenantRoleIDs adds the "tenant_roles" edge to the PersonRole entity by IDs.
@@ -616,21 +868,64 @@ func (_u *LeaseUpdate) SetApplication(v *Application) *LeaseUpdate {
 	return _u.SetApplicationID(v.ID)
 }
 
+// AddSubleaseIDs adds the "subleases" edge to the Lease entity by IDs.
+func (_u *LeaseUpdate) AddSubleaseIDs(ids ...uuid.UUID) *LeaseUpdate {
+	_u.mutation.AddSubleaseIDs(ids...)
+	return _u
+}
+
+// AddSubleases adds the "subleases" edges to the Lease entity.
+func (_u *LeaseUpdate) AddSubleases(v ...*Lease) *LeaseUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSubleaseIDs(ids...)
+}
+
+// SetParentLeaseID sets the "parent_lease" edge to the Lease entity by ID.
+func (_u *LeaseUpdate) SetParentLeaseID(id uuid.UUID) *LeaseUpdate {
+	_u.mutation.SetParentLeaseID(id)
+	return _u
+}
+
+// SetNillableParentLeaseID sets the "parent_lease" edge to the Lease entity by ID if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableParentLeaseID(id *uuid.UUID) *LeaseUpdate {
+	if id != nil {
+		_u = _u.SetParentLeaseID(*id)
+	}
+	return _u
+}
+
+// SetParentLease sets the "parent_lease" edge to the Lease entity.
+func (_u *LeaseUpdate) SetParentLease(v *Lease) *LeaseUpdate {
+	return _u.SetParentLeaseID(v.ID)
+}
+
 // Mutation returns the LeaseMutation object of the builder.
 func (_u *LeaseUpdate) Mutation() *LeaseMutation {
 	return _u.mutation
 }
 
-// ClearUnit clears the "unit" edge to the Unit entity.
-func (_u *LeaseUpdate) ClearUnit() *LeaseUpdate {
-	_u.mutation.ClearUnit()
+// ClearLeaseSpaces clears all "lease_spaces" edges to the LeaseSpace entity.
+func (_u *LeaseUpdate) ClearLeaseSpaces() *LeaseUpdate {
+	_u.mutation.ClearLeaseSpaces()
 	return _u
 }
 
-// ClearOccupiedUnit clears the "occupied_unit" edge to the Unit entity.
-func (_u *LeaseUpdate) ClearOccupiedUnit() *LeaseUpdate {
-	_u.mutation.ClearOccupiedUnit()
+// RemoveLeaseSpaceIDs removes the "lease_spaces" edge to LeaseSpace entities by IDs.
+func (_u *LeaseUpdate) RemoveLeaseSpaceIDs(ids ...uuid.UUID) *LeaseUpdate {
+	_u.mutation.RemoveLeaseSpaceIDs(ids...)
 	return _u
+}
+
+// RemoveLeaseSpaces removes "lease_spaces" edges to LeaseSpace entities.
+func (_u *LeaseUpdate) RemoveLeaseSpaces(v ...*LeaseSpace) *LeaseUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeaseSpaceIDs(ids...)
 }
 
 // ClearTenantRoles clears all "tenant_roles" edges to the PersonRole entity.
@@ -702,6 +997,33 @@ func (_u *LeaseUpdate) ClearApplication() *LeaseUpdate {
 	return _u
 }
 
+// ClearSubleases clears all "subleases" edges to the Lease entity.
+func (_u *LeaseUpdate) ClearSubleases() *LeaseUpdate {
+	_u.mutation.ClearSubleases()
+	return _u
+}
+
+// RemoveSubleaseIDs removes the "subleases" edge to Lease entities by IDs.
+func (_u *LeaseUpdate) RemoveSubleaseIDs(ids ...uuid.UUID) *LeaseUpdate {
+	_u.mutation.RemoveSubleaseIDs(ids...)
+	return _u
+}
+
+// RemoveSubleases removes "subleases" edges to Lease entities.
+func (_u *LeaseUpdate) RemoveSubleases(v ...*Lease) *LeaseUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSubleaseIDs(ids...)
+}
+
+// ClearParentLease clears the "parent_lease" edge to the Lease entity.
+func (_u *LeaseUpdate) ClearParentLease() *LeaseUpdate {
+	_u.mutation.ClearParentLease()
+	return _u
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *LeaseUpdate) Save(ctx context.Context) (int, error) {
 	_u.defaults()
@@ -765,6 +1087,11 @@ func (_u *LeaseUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Lease.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LiabilityType(); ok {
+		if err := lease.LiabilityTypeValidator(v); err != nil {
+			return &ValidationError{Name: "liability_type", err: fmt.Errorf(`ent: validator failed for field "Lease.liability_type": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.BaseRentCurrency(); ok {
 		if err := lease.BaseRentCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "base_rent_currency", err: fmt.Errorf(`ent: validator failed for field "Lease.base_rent_currency": %w`, err)}
@@ -773,6 +1100,21 @@ func (_u *LeaseUpdate) check() error {
 	if v, ok := _u.mutation.SecurityDepositCurrency(); ok {
 		if err := lease.SecurityDepositCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "security_deposit_currency", err: fmt.Errorf(`ent: validator failed for field "Lease.security_deposit_currency": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.CleaningFeeCurrency(); ok {
+		if err := lease.CleaningFeeCurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "cleaning_fee_currency", err: fmt.Errorf(`ent: validator failed for field "Lease.cleaning_fee_currency": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.MembershipTier(); ok {
+		if err := lease.MembershipTierValidator(v); err != nil {
+			return &ValidationError{Name: "membership_tier", err: fmt.Errorf(`ent: validator failed for field "Lease.membership_tier": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.SubleaseBilling(); ok {
+		if err := lease.SubleaseBillingValidator(v); err != nil {
+			return &ValidationError{Name: "sublease_billing", err: fmt.Errorf(`ent: validator failed for field "Lease.sublease_billing": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.SigningMethod(); ok {
@@ -847,8 +1189,23 @@ func (_u *LeaseUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(lease.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.LiabilityType(); ok {
+		_spec.SetField(lease.FieldLiabilityType, field.TypeEnum, value)
+	}
 	if value, ok := _u.mutation.Term(); ok {
 		_spec.SetField(lease.FieldTerm, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.LeaseCommencementDate(); ok {
+		_spec.SetField(lease.FieldLeaseCommencementDate, field.TypeTime, value)
+	}
+	if _u.mutation.LeaseCommencementDateCleared() {
+		_spec.ClearField(lease.FieldLeaseCommencementDate, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RentCommencementDate(); ok {
+		_spec.SetField(lease.FieldRentCommencementDate, field.TypeTime, value)
+	}
+	if _u.mutation.RentCommencementDateCleared() {
+		_spec.ClearField(lease.FieldRentCommencementDate, field.TypeTime)
 	}
 	if value, ok := _u.mutation.BaseRentAmountCents(); ok {
 		_spec.SetField(lease.FieldBaseRentAmountCents, field.TypeInt64, value)
@@ -919,6 +1276,45 @@ func (_u *LeaseUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.RenewalOptionsCleared() {
 		_spec.ClearField(lease.FieldRenewalOptions, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.UsageCharges(); ok {
+		_spec.SetField(lease.FieldUsageCharges, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedUsageCharges(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, lease.FieldUsageCharges, value)
+		})
+	}
+	if _u.mutation.UsageChargesCleared() {
+		_spec.ClearField(lease.FieldUsageCharges, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.PercentageRent(); ok {
+		_spec.SetField(lease.FieldPercentageRent, field.TypeJSON, value)
+	}
+	if _u.mutation.PercentageRentCleared() {
+		_spec.ClearField(lease.FieldPercentageRent, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ExpansionRights(); ok {
+		_spec.SetField(lease.FieldExpansionRights, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedExpansionRights(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, lease.FieldExpansionRights, value)
+		})
+	}
+	if _u.mutation.ExpansionRightsCleared() {
+		_spec.ClearField(lease.FieldExpansionRights, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ContractionRights(); ok {
+		_spec.SetField(lease.FieldContractionRights, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedContractionRights(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, lease.FieldContractionRights, value)
+		})
+	}
+	if _u.mutation.ContractionRightsCleared() {
+		_spec.ClearField(lease.FieldContractionRights, field.TypeJSON)
+	}
 	if value, ok := _u.mutation.Subsidy(); ok {
 		_spec.SetField(lease.FieldSubsidy, field.TypeJSON, value)
 	}
@@ -949,6 +1345,51 @@ func (_u *LeaseUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedNoticeRequiredDays(); ok {
 		_spec.AddField(lease.FieldNoticeRequiredDays, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.CheckInTime(); ok {
+		_spec.SetField(lease.FieldCheckInTime, field.TypeString, value)
+	}
+	if _u.mutation.CheckInTimeCleared() {
+		_spec.ClearField(lease.FieldCheckInTime, field.TypeString)
+	}
+	if value, ok := _u.mutation.CheckOutTime(); ok {
+		_spec.SetField(lease.FieldCheckOutTime, field.TypeString, value)
+	}
+	if _u.mutation.CheckOutTimeCleared() {
+		_spec.ClearField(lease.FieldCheckOutTime, field.TypeString)
+	}
+	if value, ok := _u.mutation.CleaningFeeAmountCents(); ok {
+		_spec.SetField(lease.FieldCleaningFeeAmountCents, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCleaningFeeAmountCents(); ok {
+		_spec.AddField(lease.FieldCleaningFeeAmountCents, field.TypeInt64, value)
+	}
+	if _u.mutation.CleaningFeeAmountCentsCleared() {
+		_spec.ClearField(lease.FieldCleaningFeeAmountCents, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.CleaningFeeCurrency(); ok {
+		_spec.SetField(lease.FieldCleaningFeeCurrency, field.TypeString, value)
+	}
+	if _u.mutation.CleaningFeeCurrencyCleared() {
+		_spec.ClearField(lease.FieldCleaningFeeCurrency, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlatformBookingID(); ok {
+		_spec.SetField(lease.FieldPlatformBookingID, field.TypeString, value)
+	}
+	if _u.mutation.PlatformBookingIDCleared() {
+		_spec.ClearField(lease.FieldPlatformBookingID, field.TypeString)
+	}
+	if value, ok := _u.mutation.MembershipTier(); ok {
+		_spec.SetField(lease.FieldMembershipTier, field.TypeEnum, value)
+	}
+	if _u.mutation.MembershipTierCleared() {
+		_spec.ClearField(lease.FieldMembershipTier, field.TypeEnum)
+	}
+	if value, ok := _u.mutation.IsSublease(); ok {
+		_spec.SetField(lease.FieldIsSublease, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SubleaseBilling(); ok {
+		_spec.SetField(lease.FieldSubleaseBilling, field.TypeEnum, value)
+	}
 	if value, ok := _u.mutation.SigningMethod(); ok {
 		_spec.SetField(lease.FieldSigningMethod, field.TypeEnum, value)
 	}
@@ -967,57 +1408,44 @@ func (_u *LeaseUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.DocumentIDCleared() {
 		_spec.ClearField(lease.FieldDocumentID, field.TypeString)
 	}
-	if _u.mutation.UnitCleared() {
+	if _u.mutation.LeaseSpacesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   lease.UnitTable,
-			Columns: []string{lease.UnitColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.LeaseSpacesTable,
+			Columns: []string{lease.LeaseSpacesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leasespace.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.UnitIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedLeaseSpacesIDs(); len(nodes) > 0 && !_u.mutation.LeaseSpacesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   lease.UnitTable,
-			Columns: []string{lease.UnitColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.LeaseSpacesTable,
+			Columns: []string{lease.LeaseSpacesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leasespace.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.OccupiedUnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   lease.OccupiedUnitTable,
-			Columns: []string{lease.OccupiedUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
-			},
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.OccupiedUnitIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.LeaseSpacesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   lease.OccupiedUnitTable,
-			Columns: []string{lease.OccupiedUnitColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.LeaseSpacesTable,
+			Columns: []string{lease.LeaseSpacesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leasespace.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1182,6 +1610,80 @@ func (_u *LeaseUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(application.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SubleasesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.SubleasesTable,
+			Columns: []string{lease.SubleasesColumn},
+			Bidi:    true,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSubleasesIDs(); len(nodes) > 0 && !_u.mutation.SubleasesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.SubleasesTable,
+			Columns: []string{lease.SubleasesColumn},
+			Bidi:    true,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SubleasesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.SubleasesTable,
+			Columns: []string{lease.SubleasesColumn},
+			Bidi:    true,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ParentLeaseCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lease.ParentLeaseTable,
+			Columns: []string{lease.ParentLeaseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ParentLeaseIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lease.ParentLeaseTable,
+			Columns: []string{lease.ParentLeaseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1369,9 +1871,63 @@ func (_u *LeaseUpdateOne) SetNillableStatus(v *lease.Status) *LeaseUpdateOne {
 	return _u
 }
 
+// SetLiabilityType sets the "liability_type" field.
+func (_u *LeaseUpdateOne) SetLiabilityType(v lease.LiabilityType) *LeaseUpdateOne {
+	_u.mutation.SetLiabilityType(v)
+	return _u
+}
+
+// SetNillableLiabilityType sets the "liability_type" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableLiabilityType(v *lease.LiabilityType) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetLiabilityType(*v)
+	}
+	return _u
+}
+
 // SetTerm sets the "term" field.
 func (_u *LeaseUpdateOne) SetTerm(v *types.DateRange) *LeaseUpdateOne {
 	_u.mutation.SetTerm(v)
+	return _u
+}
+
+// SetLeaseCommencementDate sets the "lease_commencement_date" field.
+func (_u *LeaseUpdateOne) SetLeaseCommencementDate(v time.Time) *LeaseUpdateOne {
+	_u.mutation.SetLeaseCommencementDate(v)
+	return _u
+}
+
+// SetNillableLeaseCommencementDate sets the "lease_commencement_date" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableLeaseCommencementDate(v *time.Time) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetLeaseCommencementDate(*v)
+	}
+	return _u
+}
+
+// ClearLeaseCommencementDate clears the value of the "lease_commencement_date" field.
+func (_u *LeaseUpdateOne) ClearLeaseCommencementDate() *LeaseUpdateOne {
+	_u.mutation.ClearLeaseCommencementDate()
+	return _u
+}
+
+// SetRentCommencementDate sets the "rent_commencement_date" field.
+func (_u *LeaseUpdateOne) SetRentCommencementDate(v time.Time) *LeaseUpdateOne {
+	_u.mutation.SetRentCommencementDate(v)
+	return _u
+}
+
+// SetNillableRentCommencementDate sets the "rent_commencement_date" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableRentCommencementDate(v *time.Time) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetRentCommencementDate(*v)
+	}
+	return _u
+}
+
+// ClearRentCommencementDate clears the value of the "rent_commencement_date" field.
+func (_u *LeaseUpdateOne) ClearRentCommencementDate() *LeaseUpdateOne {
+	_u.mutation.ClearRentCommencementDate()
 	return _u
 }
 
@@ -1535,6 +2091,72 @@ func (_u *LeaseUpdateOne) ClearRenewalOptions() *LeaseUpdateOne {
 	return _u
 }
 
+// SetUsageCharges sets the "usage_charges" field.
+func (_u *LeaseUpdateOne) SetUsageCharges(v []types.UsageBasedCharge) *LeaseUpdateOne {
+	_u.mutation.SetUsageCharges(v)
+	return _u
+}
+
+// AppendUsageCharges appends value to the "usage_charges" field.
+func (_u *LeaseUpdateOne) AppendUsageCharges(v []types.UsageBasedCharge) *LeaseUpdateOne {
+	_u.mutation.AppendUsageCharges(v)
+	return _u
+}
+
+// ClearUsageCharges clears the value of the "usage_charges" field.
+func (_u *LeaseUpdateOne) ClearUsageCharges() *LeaseUpdateOne {
+	_u.mutation.ClearUsageCharges()
+	return _u
+}
+
+// SetPercentageRent sets the "percentage_rent" field.
+func (_u *LeaseUpdateOne) SetPercentageRent(v *types.PercentageRent) *LeaseUpdateOne {
+	_u.mutation.SetPercentageRent(v)
+	return _u
+}
+
+// ClearPercentageRent clears the value of the "percentage_rent" field.
+func (_u *LeaseUpdateOne) ClearPercentageRent() *LeaseUpdateOne {
+	_u.mutation.ClearPercentageRent()
+	return _u
+}
+
+// SetExpansionRights sets the "expansion_rights" field.
+func (_u *LeaseUpdateOne) SetExpansionRights(v []types.ExpansionRight) *LeaseUpdateOne {
+	_u.mutation.SetExpansionRights(v)
+	return _u
+}
+
+// AppendExpansionRights appends value to the "expansion_rights" field.
+func (_u *LeaseUpdateOne) AppendExpansionRights(v []types.ExpansionRight) *LeaseUpdateOne {
+	_u.mutation.AppendExpansionRights(v)
+	return _u
+}
+
+// ClearExpansionRights clears the value of the "expansion_rights" field.
+func (_u *LeaseUpdateOne) ClearExpansionRights() *LeaseUpdateOne {
+	_u.mutation.ClearExpansionRights()
+	return _u
+}
+
+// SetContractionRights sets the "contraction_rights" field.
+func (_u *LeaseUpdateOne) SetContractionRights(v []types.ContractionRight) *LeaseUpdateOne {
+	_u.mutation.SetContractionRights(v)
+	return _u
+}
+
+// AppendContractionRights appends value to the "contraction_rights" field.
+func (_u *LeaseUpdateOne) AppendContractionRights(v []types.ContractionRight) *LeaseUpdateOne {
+	_u.mutation.AppendContractionRights(v)
+	return _u
+}
+
+// ClearContractionRights clears the value of the "contraction_rights" field.
+func (_u *LeaseUpdateOne) ClearContractionRights() *LeaseUpdateOne {
+	_u.mutation.ClearContractionRights()
+	return _u
+}
+
 // SetSubsidy sets the "subsidy" field.
 func (_u *LeaseUpdateOne) SetSubsidy(v *types.SubsidyTerms) *LeaseUpdateOne {
 	_u.mutation.SetSubsidy(v)
@@ -1628,6 +2250,161 @@ func (_u *LeaseUpdateOne) AddNoticeRequiredDays(v int) *LeaseUpdateOne {
 	return _u
 }
 
+// SetCheckInTime sets the "check_in_time" field.
+func (_u *LeaseUpdateOne) SetCheckInTime(v string) *LeaseUpdateOne {
+	_u.mutation.SetCheckInTime(v)
+	return _u
+}
+
+// SetNillableCheckInTime sets the "check_in_time" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableCheckInTime(v *string) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetCheckInTime(*v)
+	}
+	return _u
+}
+
+// ClearCheckInTime clears the value of the "check_in_time" field.
+func (_u *LeaseUpdateOne) ClearCheckInTime() *LeaseUpdateOne {
+	_u.mutation.ClearCheckInTime()
+	return _u
+}
+
+// SetCheckOutTime sets the "check_out_time" field.
+func (_u *LeaseUpdateOne) SetCheckOutTime(v string) *LeaseUpdateOne {
+	_u.mutation.SetCheckOutTime(v)
+	return _u
+}
+
+// SetNillableCheckOutTime sets the "check_out_time" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableCheckOutTime(v *string) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetCheckOutTime(*v)
+	}
+	return _u
+}
+
+// ClearCheckOutTime clears the value of the "check_out_time" field.
+func (_u *LeaseUpdateOne) ClearCheckOutTime() *LeaseUpdateOne {
+	_u.mutation.ClearCheckOutTime()
+	return _u
+}
+
+// SetCleaningFeeAmountCents sets the "cleaning_fee_amount_cents" field.
+func (_u *LeaseUpdateOne) SetCleaningFeeAmountCents(v int64) *LeaseUpdateOne {
+	_u.mutation.ResetCleaningFeeAmountCents()
+	_u.mutation.SetCleaningFeeAmountCents(v)
+	return _u
+}
+
+// SetNillableCleaningFeeAmountCents sets the "cleaning_fee_amount_cents" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableCleaningFeeAmountCents(v *int64) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetCleaningFeeAmountCents(*v)
+	}
+	return _u
+}
+
+// AddCleaningFeeAmountCents adds value to the "cleaning_fee_amount_cents" field.
+func (_u *LeaseUpdateOne) AddCleaningFeeAmountCents(v int64) *LeaseUpdateOne {
+	_u.mutation.AddCleaningFeeAmountCents(v)
+	return _u
+}
+
+// ClearCleaningFeeAmountCents clears the value of the "cleaning_fee_amount_cents" field.
+func (_u *LeaseUpdateOne) ClearCleaningFeeAmountCents() *LeaseUpdateOne {
+	_u.mutation.ClearCleaningFeeAmountCents()
+	return _u
+}
+
+// SetCleaningFeeCurrency sets the "cleaning_fee_currency" field.
+func (_u *LeaseUpdateOne) SetCleaningFeeCurrency(v string) *LeaseUpdateOne {
+	_u.mutation.SetCleaningFeeCurrency(v)
+	return _u
+}
+
+// SetNillableCleaningFeeCurrency sets the "cleaning_fee_currency" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableCleaningFeeCurrency(v *string) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetCleaningFeeCurrency(*v)
+	}
+	return _u
+}
+
+// ClearCleaningFeeCurrency clears the value of the "cleaning_fee_currency" field.
+func (_u *LeaseUpdateOne) ClearCleaningFeeCurrency() *LeaseUpdateOne {
+	_u.mutation.ClearCleaningFeeCurrency()
+	return _u
+}
+
+// SetPlatformBookingID sets the "platform_booking_id" field.
+func (_u *LeaseUpdateOne) SetPlatformBookingID(v string) *LeaseUpdateOne {
+	_u.mutation.SetPlatformBookingID(v)
+	return _u
+}
+
+// SetNillablePlatformBookingID sets the "platform_booking_id" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillablePlatformBookingID(v *string) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetPlatformBookingID(*v)
+	}
+	return _u
+}
+
+// ClearPlatformBookingID clears the value of the "platform_booking_id" field.
+func (_u *LeaseUpdateOne) ClearPlatformBookingID() *LeaseUpdateOne {
+	_u.mutation.ClearPlatformBookingID()
+	return _u
+}
+
+// SetMembershipTier sets the "membership_tier" field.
+func (_u *LeaseUpdateOne) SetMembershipTier(v lease.MembershipTier) *LeaseUpdateOne {
+	_u.mutation.SetMembershipTier(v)
+	return _u
+}
+
+// SetNillableMembershipTier sets the "membership_tier" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableMembershipTier(v *lease.MembershipTier) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetMembershipTier(*v)
+	}
+	return _u
+}
+
+// ClearMembershipTier clears the value of the "membership_tier" field.
+func (_u *LeaseUpdateOne) ClearMembershipTier() *LeaseUpdateOne {
+	_u.mutation.ClearMembershipTier()
+	return _u
+}
+
+// SetIsSublease sets the "is_sublease" field.
+func (_u *LeaseUpdateOne) SetIsSublease(v bool) *LeaseUpdateOne {
+	_u.mutation.SetIsSublease(v)
+	return _u
+}
+
+// SetNillableIsSublease sets the "is_sublease" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableIsSublease(v *bool) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetIsSublease(*v)
+	}
+	return _u
+}
+
+// SetSubleaseBilling sets the "sublease_billing" field.
+func (_u *LeaseUpdateOne) SetSubleaseBilling(v lease.SubleaseBilling) *LeaseUpdateOne {
+	_u.mutation.SetSubleaseBilling(v)
+	return _u
+}
+
+// SetNillableSubleaseBilling sets the "sublease_billing" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableSubleaseBilling(v *lease.SubleaseBilling) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetSubleaseBilling(*v)
+	}
+	return _u
+}
+
 // SetSigningMethod sets the "signing_method" field.
 func (_u *LeaseUpdateOne) SetSigningMethod(v lease.SigningMethod) *LeaseUpdateOne {
 	_u.mutation.SetSigningMethod(v)
@@ -1688,42 +2465,19 @@ func (_u *LeaseUpdateOne) ClearDocumentID() *LeaseUpdateOne {
 	return _u
 }
 
-// SetUnitID sets the "unit" edge to the Unit entity by ID.
-func (_u *LeaseUpdateOne) SetUnitID(id uuid.UUID) *LeaseUpdateOne {
-	_u.mutation.SetUnitID(id)
+// AddLeaseSpaceIDs adds the "lease_spaces" edge to the LeaseSpace entity by IDs.
+func (_u *LeaseUpdateOne) AddLeaseSpaceIDs(ids ...uuid.UUID) *LeaseUpdateOne {
+	_u.mutation.AddLeaseSpaceIDs(ids...)
 	return _u
 }
 
-// SetNillableUnitID sets the "unit" edge to the Unit entity by ID if the given value is not nil.
-func (_u *LeaseUpdateOne) SetNillableUnitID(id *uuid.UUID) *LeaseUpdateOne {
-	if id != nil {
-		_u = _u.SetUnitID(*id)
+// AddLeaseSpaces adds the "lease_spaces" edges to the LeaseSpace entity.
+func (_u *LeaseUpdateOne) AddLeaseSpaces(v ...*LeaseSpace) *LeaseUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return _u
-}
-
-// SetUnit sets the "unit" edge to the Unit entity.
-func (_u *LeaseUpdateOne) SetUnit(v *Unit) *LeaseUpdateOne {
-	return _u.SetUnitID(v.ID)
-}
-
-// SetOccupiedUnitID sets the "occupied_unit" edge to the Unit entity by ID.
-func (_u *LeaseUpdateOne) SetOccupiedUnitID(id uuid.UUID) *LeaseUpdateOne {
-	_u.mutation.SetOccupiedUnitID(id)
-	return _u
-}
-
-// SetNillableOccupiedUnitID sets the "occupied_unit" edge to the Unit entity by ID if the given value is not nil.
-func (_u *LeaseUpdateOne) SetNillableOccupiedUnitID(id *uuid.UUID) *LeaseUpdateOne {
-	if id != nil {
-		_u = _u.SetOccupiedUnitID(*id)
-	}
-	return _u
-}
-
-// SetOccupiedUnit sets the "occupied_unit" edge to the Unit entity.
-func (_u *LeaseUpdateOne) SetOccupiedUnit(v *Unit) *LeaseUpdateOne {
-	return _u.SetOccupiedUnitID(v.ID)
+	return _u.AddLeaseSpaceIDs(ids...)
 }
 
 // AddTenantRoleIDs adds the "tenant_roles" edge to the PersonRole entity by IDs.
@@ -1790,21 +2544,64 @@ func (_u *LeaseUpdateOne) SetApplication(v *Application) *LeaseUpdateOne {
 	return _u.SetApplicationID(v.ID)
 }
 
+// AddSubleaseIDs adds the "subleases" edge to the Lease entity by IDs.
+func (_u *LeaseUpdateOne) AddSubleaseIDs(ids ...uuid.UUID) *LeaseUpdateOne {
+	_u.mutation.AddSubleaseIDs(ids...)
+	return _u
+}
+
+// AddSubleases adds the "subleases" edges to the Lease entity.
+func (_u *LeaseUpdateOne) AddSubleases(v ...*Lease) *LeaseUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSubleaseIDs(ids...)
+}
+
+// SetParentLeaseID sets the "parent_lease" edge to the Lease entity by ID.
+func (_u *LeaseUpdateOne) SetParentLeaseID(id uuid.UUID) *LeaseUpdateOne {
+	_u.mutation.SetParentLeaseID(id)
+	return _u
+}
+
+// SetNillableParentLeaseID sets the "parent_lease" edge to the Lease entity by ID if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableParentLeaseID(id *uuid.UUID) *LeaseUpdateOne {
+	if id != nil {
+		_u = _u.SetParentLeaseID(*id)
+	}
+	return _u
+}
+
+// SetParentLease sets the "parent_lease" edge to the Lease entity.
+func (_u *LeaseUpdateOne) SetParentLease(v *Lease) *LeaseUpdateOne {
+	return _u.SetParentLeaseID(v.ID)
+}
+
 // Mutation returns the LeaseMutation object of the builder.
 func (_u *LeaseUpdateOne) Mutation() *LeaseMutation {
 	return _u.mutation
 }
 
-// ClearUnit clears the "unit" edge to the Unit entity.
-func (_u *LeaseUpdateOne) ClearUnit() *LeaseUpdateOne {
-	_u.mutation.ClearUnit()
+// ClearLeaseSpaces clears all "lease_spaces" edges to the LeaseSpace entity.
+func (_u *LeaseUpdateOne) ClearLeaseSpaces() *LeaseUpdateOne {
+	_u.mutation.ClearLeaseSpaces()
 	return _u
 }
 
-// ClearOccupiedUnit clears the "occupied_unit" edge to the Unit entity.
-func (_u *LeaseUpdateOne) ClearOccupiedUnit() *LeaseUpdateOne {
-	_u.mutation.ClearOccupiedUnit()
+// RemoveLeaseSpaceIDs removes the "lease_spaces" edge to LeaseSpace entities by IDs.
+func (_u *LeaseUpdateOne) RemoveLeaseSpaceIDs(ids ...uuid.UUID) *LeaseUpdateOne {
+	_u.mutation.RemoveLeaseSpaceIDs(ids...)
 	return _u
+}
+
+// RemoveLeaseSpaces removes "lease_spaces" edges to LeaseSpace entities.
+func (_u *LeaseUpdateOne) RemoveLeaseSpaces(v ...*LeaseSpace) *LeaseUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeaseSpaceIDs(ids...)
 }
 
 // ClearTenantRoles clears all "tenant_roles" edges to the PersonRole entity.
@@ -1873,6 +2670,33 @@ func (_u *LeaseUpdateOne) RemoveLedgerEntries(v ...*LedgerEntry) *LeaseUpdateOne
 // ClearApplication clears the "application" edge to the Application entity.
 func (_u *LeaseUpdateOne) ClearApplication() *LeaseUpdateOne {
 	_u.mutation.ClearApplication()
+	return _u
+}
+
+// ClearSubleases clears all "subleases" edges to the Lease entity.
+func (_u *LeaseUpdateOne) ClearSubleases() *LeaseUpdateOne {
+	_u.mutation.ClearSubleases()
+	return _u
+}
+
+// RemoveSubleaseIDs removes the "subleases" edge to Lease entities by IDs.
+func (_u *LeaseUpdateOne) RemoveSubleaseIDs(ids ...uuid.UUID) *LeaseUpdateOne {
+	_u.mutation.RemoveSubleaseIDs(ids...)
+	return _u
+}
+
+// RemoveSubleases removes "subleases" edges to Lease entities.
+func (_u *LeaseUpdateOne) RemoveSubleases(v ...*Lease) *LeaseUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSubleaseIDs(ids...)
+}
+
+// ClearParentLease clears the "parent_lease" edge to the Lease entity.
+func (_u *LeaseUpdateOne) ClearParentLease() *LeaseUpdateOne {
+	_u.mutation.ClearParentLease()
 	return _u
 }
 
@@ -1952,6 +2776,11 @@ func (_u *LeaseUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Lease.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LiabilityType(); ok {
+		if err := lease.LiabilityTypeValidator(v); err != nil {
+			return &ValidationError{Name: "liability_type", err: fmt.Errorf(`ent: validator failed for field "Lease.liability_type": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.BaseRentCurrency(); ok {
 		if err := lease.BaseRentCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "base_rent_currency", err: fmt.Errorf(`ent: validator failed for field "Lease.base_rent_currency": %w`, err)}
@@ -1960,6 +2789,21 @@ func (_u *LeaseUpdateOne) check() error {
 	if v, ok := _u.mutation.SecurityDepositCurrency(); ok {
 		if err := lease.SecurityDepositCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "security_deposit_currency", err: fmt.Errorf(`ent: validator failed for field "Lease.security_deposit_currency": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.CleaningFeeCurrency(); ok {
+		if err := lease.CleaningFeeCurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "cleaning_fee_currency", err: fmt.Errorf(`ent: validator failed for field "Lease.cleaning_fee_currency": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.MembershipTier(); ok {
+		if err := lease.MembershipTierValidator(v); err != nil {
+			return &ValidationError{Name: "membership_tier", err: fmt.Errorf(`ent: validator failed for field "Lease.membership_tier": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.SubleaseBilling(); ok {
+		if err := lease.SubleaseBillingValidator(v); err != nil {
+			return &ValidationError{Name: "sublease_billing", err: fmt.Errorf(`ent: validator failed for field "Lease.sublease_billing": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.SigningMethod(); ok {
@@ -2051,8 +2895,23 @@ func (_u *LeaseUpdateOne) sqlSave(ctx context.Context) (_node *Lease, err error)
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(lease.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.LiabilityType(); ok {
+		_spec.SetField(lease.FieldLiabilityType, field.TypeEnum, value)
+	}
 	if value, ok := _u.mutation.Term(); ok {
 		_spec.SetField(lease.FieldTerm, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.LeaseCommencementDate(); ok {
+		_spec.SetField(lease.FieldLeaseCommencementDate, field.TypeTime, value)
+	}
+	if _u.mutation.LeaseCommencementDateCleared() {
+		_spec.ClearField(lease.FieldLeaseCommencementDate, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RentCommencementDate(); ok {
+		_spec.SetField(lease.FieldRentCommencementDate, field.TypeTime, value)
+	}
+	if _u.mutation.RentCommencementDateCleared() {
+		_spec.ClearField(lease.FieldRentCommencementDate, field.TypeTime)
 	}
 	if value, ok := _u.mutation.BaseRentAmountCents(); ok {
 		_spec.SetField(lease.FieldBaseRentAmountCents, field.TypeInt64, value)
@@ -2123,6 +2982,45 @@ func (_u *LeaseUpdateOne) sqlSave(ctx context.Context) (_node *Lease, err error)
 	if _u.mutation.RenewalOptionsCleared() {
 		_spec.ClearField(lease.FieldRenewalOptions, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.UsageCharges(); ok {
+		_spec.SetField(lease.FieldUsageCharges, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedUsageCharges(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, lease.FieldUsageCharges, value)
+		})
+	}
+	if _u.mutation.UsageChargesCleared() {
+		_spec.ClearField(lease.FieldUsageCharges, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.PercentageRent(); ok {
+		_spec.SetField(lease.FieldPercentageRent, field.TypeJSON, value)
+	}
+	if _u.mutation.PercentageRentCleared() {
+		_spec.ClearField(lease.FieldPercentageRent, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ExpansionRights(); ok {
+		_spec.SetField(lease.FieldExpansionRights, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedExpansionRights(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, lease.FieldExpansionRights, value)
+		})
+	}
+	if _u.mutation.ExpansionRightsCleared() {
+		_spec.ClearField(lease.FieldExpansionRights, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.ContractionRights(); ok {
+		_spec.SetField(lease.FieldContractionRights, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedContractionRights(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, lease.FieldContractionRights, value)
+		})
+	}
+	if _u.mutation.ContractionRightsCleared() {
+		_spec.ClearField(lease.FieldContractionRights, field.TypeJSON)
+	}
 	if value, ok := _u.mutation.Subsidy(); ok {
 		_spec.SetField(lease.FieldSubsidy, field.TypeJSON, value)
 	}
@@ -2153,6 +3051,51 @@ func (_u *LeaseUpdateOne) sqlSave(ctx context.Context) (_node *Lease, err error)
 	if value, ok := _u.mutation.AddedNoticeRequiredDays(); ok {
 		_spec.AddField(lease.FieldNoticeRequiredDays, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.CheckInTime(); ok {
+		_spec.SetField(lease.FieldCheckInTime, field.TypeString, value)
+	}
+	if _u.mutation.CheckInTimeCleared() {
+		_spec.ClearField(lease.FieldCheckInTime, field.TypeString)
+	}
+	if value, ok := _u.mutation.CheckOutTime(); ok {
+		_spec.SetField(lease.FieldCheckOutTime, field.TypeString, value)
+	}
+	if _u.mutation.CheckOutTimeCleared() {
+		_spec.ClearField(lease.FieldCheckOutTime, field.TypeString)
+	}
+	if value, ok := _u.mutation.CleaningFeeAmountCents(); ok {
+		_spec.SetField(lease.FieldCleaningFeeAmountCents, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCleaningFeeAmountCents(); ok {
+		_spec.AddField(lease.FieldCleaningFeeAmountCents, field.TypeInt64, value)
+	}
+	if _u.mutation.CleaningFeeAmountCentsCleared() {
+		_spec.ClearField(lease.FieldCleaningFeeAmountCents, field.TypeInt64)
+	}
+	if value, ok := _u.mutation.CleaningFeeCurrency(); ok {
+		_spec.SetField(lease.FieldCleaningFeeCurrency, field.TypeString, value)
+	}
+	if _u.mutation.CleaningFeeCurrencyCleared() {
+		_spec.ClearField(lease.FieldCleaningFeeCurrency, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlatformBookingID(); ok {
+		_spec.SetField(lease.FieldPlatformBookingID, field.TypeString, value)
+	}
+	if _u.mutation.PlatformBookingIDCleared() {
+		_spec.ClearField(lease.FieldPlatformBookingID, field.TypeString)
+	}
+	if value, ok := _u.mutation.MembershipTier(); ok {
+		_spec.SetField(lease.FieldMembershipTier, field.TypeEnum, value)
+	}
+	if _u.mutation.MembershipTierCleared() {
+		_spec.ClearField(lease.FieldMembershipTier, field.TypeEnum)
+	}
+	if value, ok := _u.mutation.IsSublease(); ok {
+		_spec.SetField(lease.FieldIsSublease, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SubleaseBilling(); ok {
+		_spec.SetField(lease.FieldSubleaseBilling, field.TypeEnum, value)
+	}
 	if value, ok := _u.mutation.SigningMethod(); ok {
 		_spec.SetField(lease.FieldSigningMethod, field.TypeEnum, value)
 	}
@@ -2171,57 +3114,44 @@ func (_u *LeaseUpdateOne) sqlSave(ctx context.Context) (_node *Lease, err error)
 	if _u.mutation.DocumentIDCleared() {
 		_spec.ClearField(lease.FieldDocumentID, field.TypeString)
 	}
-	if _u.mutation.UnitCleared() {
+	if _u.mutation.LeaseSpacesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   lease.UnitTable,
-			Columns: []string{lease.UnitColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.LeaseSpacesTable,
+			Columns: []string{lease.LeaseSpacesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leasespace.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.UnitIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedLeaseSpacesIDs(); len(nodes) > 0 && !_u.mutation.LeaseSpacesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   lease.UnitTable,
-			Columns: []string{lease.UnitColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.LeaseSpacesTable,
+			Columns: []string{lease.LeaseSpacesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leasespace.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.OccupiedUnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   lease.OccupiedUnitTable,
-			Columns: []string{lease.OccupiedUnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
-			},
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.OccupiedUnitIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.LeaseSpacesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   lease.OccupiedUnitTable,
-			Columns: []string{lease.OccupiedUnitColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.LeaseSpacesTable,
+			Columns: []string{lease.LeaseSpacesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leasespace.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2386,6 +3316,80 @@ func (_u *LeaseUpdateOne) sqlSave(ctx context.Context) (_node *Lease, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(application.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SubleasesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.SubleasesTable,
+			Columns: []string{lease.SubleasesColumn},
+			Bidi:    true,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSubleasesIDs(); len(nodes) > 0 && !_u.mutation.SubleasesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.SubleasesTable,
+			Columns: []string{lease.SubleasesColumn},
+			Bidi:    true,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SubleasesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lease.SubleasesTable,
+			Columns: []string{lease.SubleasesColumn},
+			Bidi:    true,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ParentLeaseCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lease.ParentLeaseTable,
+			Columns: []string{lease.ParentLeaseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ParentLeaseIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lease.ParentLeaseTable,
+			Columns: []string{lease.ParentLeaseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(lease.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

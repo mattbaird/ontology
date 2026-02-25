@@ -19,6 +19,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/person"
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // LedgerEntryQuery is the builder for querying LedgerEntry entities.
@@ -32,6 +33,7 @@ type LedgerEntryQuery struct {
 	withJournalEntry *JournalEntryQuery
 	withAccount      *AccountQuery
 	withProperty     *PropertyQuery
+	withSpace        *SpaceQuery
 	withPerson       *PersonQuery
 	withFKs          bool
 	// intermediate query (i.e. traversal path).
@@ -151,6 +153,28 @@ func (_q *LedgerEntryQuery) QueryProperty() *PropertyQuery {
 			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, selector),
 			sqlgraph.To(property.Table, property.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, ledgerentry.PropertyTable, ledgerentry.PropertyColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySpace chains the current query on the "space" edge.
+func (_q *LedgerEntryQuery) QuerySpace() *SpaceQuery {
+	query := (&SpaceClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, selector),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ledgerentry.SpaceTable, ledgerentry.SpaceColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -376,6 +400,7 @@ func (_q *LedgerEntryQuery) Clone() *LedgerEntryQuery {
 		withJournalEntry: _q.withJournalEntry.Clone(),
 		withAccount:      _q.withAccount.Clone(),
 		withProperty:     _q.withProperty.Clone(),
+		withSpace:        _q.withSpace.Clone(),
 		withPerson:       _q.withPerson.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
@@ -424,6 +449,17 @@ func (_q *LedgerEntryQuery) WithProperty(opts ...func(*PropertyQuery)) *LedgerEn
 		opt(query)
 	}
 	_q.withProperty = query
+	return _q
+}
+
+// WithSpace tells the query-builder to eager-load the nodes that are connected to
+// the "space" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LedgerEntryQuery) WithSpace(opts ...func(*SpaceQuery)) *LedgerEntryQuery {
+	query := (&SpaceClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSpace = query
 	return _q
 }
 
@@ -517,15 +553,16 @@ func (_q *LedgerEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		nodes       = []*LedgerEntry{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			_q.withLease != nil,
 			_q.withJournalEntry != nil,
 			_q.withAccount != nil,
 			_q.withProperty != nil,
+			_q.withSpace != nil,
 			_q.withPerson != nil,
 		}
 	)
-	if _q.withLease != nil || _q.withJournalEntry != nil || _q.withAccount != nil || _q.withProperty != nil || _q.withPerson != nil {
+	if _q.withLease != nil || _q.withJournalEntry != nil || _q.withAccount != nil || _q.withProperty != nil || _q.withSpace != nil || _q.withPerson != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -570,6 +607,12 @@ func (_q *LedgerEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if query := _q.withProperty; query != nil {
 		if err := _q.loadProperty(ctx, query, nodes, nil,
 			func(n *LedgerEntry, e *Property) { n.Edges.Property = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSpace; query != nil {
+		if err := _q.loadSpace(ctx, query, nodes, nil,
+			func(n *LedgerEntry, e *Space) { n.Edges.Space = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -703,6 +746,38 @@ func (_q *LedgerEntryQuery) loadProperty(ctx context.Context, query *PropertyQue
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "ledger_entry_property" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *LedgerEntryQuery) loadSpace(ctx context.Context, query *SpaceQuery, nodes []*LedgerEntry, init func(*LedgerEntry), assign func(*LedgerEntry, *Space)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*LedgerEntry)
+	for i := range nodes {
+		if nodes[i].ledger_entry_space == nil {
+			continue
+		}
+		fk := *nodes[i].ledger_entry_space
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(space.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "ledger_entry_space" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

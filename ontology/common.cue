@@ -57,7 +57,7 @@ import "time"
 }
 
 #EntityType:
-	"person" | "organization" | "portfolio" | "property" | "unit" |
+	"person" | "organization" | "portfolio" | "property" | "building" | "space" | "lease_space" |
 	"lease" | "work_order" | "vendor" | "ledger_entry" | "journal_entry" |
 	"account" | "bank_account" | "application" | "inspection" | "document"
 
@@ -66,7 +66,7 @@ import "time"
 	"leased_to" | "occupied_by" | "reported_by" | "assigned_to" |
 	"billed_to" | "paid_by" | "performed_by" | "approved_by" |
 	"guarantor_for" | "emergency_contact_for" | "employed_by" |
-	"related_to" | "parent_of" | "child_of"
+	"related_to" | "parent_of" | "child_of" | "sublease_of"
 
 // ─── Audit ───────────────────────────────────────────────────────────────────
 

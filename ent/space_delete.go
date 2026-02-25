@@ -9,29 +9,29 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/matthewbaird/ontology/ent/predicate"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
-// UnitDelete is the builder for deleting a Unit entity.
-type UnitDelete struct {
+// SpaceDelete is the builder for deleting a Space entity.
+type SpaceDelete struct {
 	config
 	hooks    []Hook
-	mutation *UnitMutation
+	mutation *SpaceMutation
 }
 
-// Where appends a list predicates to the UnitDelete builder.
-func (_d *UnitDelete) Where(ps ...predicate.Unit) *UnitDelete {
+// Where appends a list predicates to the SpaceDelete builder.
+func (_d *SpaceDelete) Where(ps ...predicate.Space) *SpaceDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *UnitDelete) Exec(ctx context.Context) (int, error) {
+func (_d *SpaceDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *UnitDelete) ExecX(ctx context.Context) int {
+func (_d *SpaceDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *UnitDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *UnitDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(unit.Table, sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID))
+func (_d *SpaceDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(space.Table, sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *UnitDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// UnitDeleteOne is the builder for deleting a single Unit entity.
-type UnitDeleteOne struct {
-	_d *UnitDelete
+// SpaceDeleteOne is the builder for deleting a single Space entity.
+type SpaceDeleteOne struct {
+	_d *SpaceDelete
 }
 
-// Where appends a list predicates to the UnitDelete builder.
-func (_d *UnitDeleteOne) Where(ps ...predicate.Unit) *UnitDeleteOne {
+// Where appends a list predicates to the SpaceDelete builder.
+func (_d *SpaceDeleteOne) Where(ps ...predicate.Space) *SpaceDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *UnitDeleteOne) Exec(ctx context.Context) error {
+func (_d *SpaceDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{unit.Label}
+		return &NotFoundError{space.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *UnitDeleteOne) ExecX(ctx context.Context) {
+func (_d *SpaceDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

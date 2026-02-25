@@ -46,8 +46,6 @@ const (
 	FieldChargeCode = "charge_code"
 	// FieldMemo holds the string denoting the memo field in the database.
 	FieldMemo = "memo"
-	// FieldUnitID holds the string denoting the unit_id field in the database.
-	FieldUnitID = "unit_id"
 	// FieldBankAccountID holds the string denoting the bank_account_id field in the database.
 	FieldBankAccountID = "bank_account_id"
 	// FieldBankTransactionID holds the string denoting the bank_transaction_id field in the database.
@@ -68,6 +66,8 @@ const (
 	EdgeAccount = "account"
 	// EdgeProperty holds the string denoting the property edge name in mutations.
 	EdgeProperty = "property"
+	// EdgeSpace holds the string denoting the space edge name in mutations.
+	EdgeSpace = "space"
 	// EdgePerson holds the string denoting the person edge name in mutations.
 	EdgePerson = "person"
 	// Table holds the table name of the ledgerentry in the database.
@@ -100,6 +100,13 @@ const (
 	PropertyInverseTable = "properties"
 	// PropertyColumn is the table column denoting the property relation/edge.
 	PropertyColumn = "ledger_entry_property"
+	// SpaceTable is the table that holds the space relation/edge.
+	SpaceTable = "ledger_entries"
+	// SpaceInverseTable is the table name for the Space entity.
+	// It exists in this package in order to avoid circular dependency with the "space" package.
+	SpaceInverseTable = "spaces"
+	// SpaceColumn is the table column denoting the space relation/edge.
+	SpaceColumn = "ledger_entry_space"
 	// PersonTable is the table that holds the person relation/edge.
 	PersonTable = "ledger_entries"
 	// PersonInverseTable is the table name for the Person entity.
@@ -127,7 +134,6 @@ var Columns = []string{
 	FieldDescription,
 	FieldChargeCode,
 	FieldMemo,
-	FieldUnitID,
 	FieldBankAccountID,
 	FieldBankTransactionID,
 	FieldReconciled,
@@ -145,9 +151,11 @@ var ForeignKeys = []string{
 	"ledger_entry_journal_entry",
 	"ledger_entry_account",
 	"ledger_entry_property",
+	"ledger_entry_space",
 	"ledger_entry_person",
-	"person_person_ledger_entries",
-	"property_property_ledger_entries",
+	"person_ledger_entries",
+	"property_ledger_entries",
+	"space_ledger_entries",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -327,11 +335,6 @@ func ByMemo(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMemo, opts...).ToFunc()
 }
 
-// ByUnitID orders the results by the unit_id field.
-func ByUnitID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUnitID, opts...).ToFunc()
-}
-
 // ByBankAccountID orders the results by the bank_account_id field.
 func ByBankAccountID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBankAccountID, opts...).ToFunc()
@@ -390,6 +393,13 @@ func ByPropertyField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// BySpaceField orders the results by space field.
+func BySpaceField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSpaceStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByPersonField orders the results by person field.
 func ByPersonField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -422,6 +432,13 @@ func newPropertyStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PropertyInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, PropertyTable, PropertyColumn),
+	)
+}
+func newSpaceStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SpaceInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, SpaceTable, SpaceColumn),
 	)
 }
 func newPersonStep() *sqlgraph.Step {

@@ -22,17 +22,17 @@ var (
 		{Name: "name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "description", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"asset", "liability", "equity", "revenue", "expense"}},
-		{Name: "account_subtype", Type: field.TypeEnum, Enums: []string{"cash", "accounts_receivable", "prepaid", "fixed_asset", "accumulated_depreciation", "other_asset", "accounts_payable", "accrued_liability", "unearned_revenue", "security_deposits_held", "other_liability", "owners_equity", "retained_earnings", "distributions", "rental_income", "other_income", "cam_recovery", "operating_expense", "maintenance_expense", "utility_expense", "management_fee_expense", "depreciation_expense", "other_expense"}},
-		{Name: "parent_account_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "account_subtype", Type: field.TypeEnum, Enums: []string{"cash", "accounts_receivable", "prepaid", "fixed_asset", "accumulated_depreciation", "other_asset", "accounts_payable", "accrued_liability", "unearned_revenue", "security_deposits_held", "other_liability", "owners_equity", "retained_earnings", "distributions", "rental_income", "other_income", "cam_recovery", "percentage_rent_income", "operating_expense", "maintenance_expense", "utility_expense", "management_fee_expense", "depreciation_expense", "other_expense"}},
+		{Name: "parent_account_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "depth", Type: field.TypeInt},
 		{Name: "dimensions", Type: field.TypeJSON, Nullable: true},
-		{Name: "normal_balance", Type: field.TypeEnum, Enums: []string{"debit", "credit"}},
+		{Name: "normal_balance", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "is_header", Type: field.TypeBool, Default: false},
 		{Name: "is_system", Type: field.TypeBool, Default: false},
 		{Name: "allows_direct_posting", Type: field.TypeBool, Default: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "archived"}},
 		{Name: "is_trust_account", Type: field.TypeBool, Default: false},
-		{Name: "trust_type", Type: field.TypeEnum, Nullable: true, Enums: []string{"operating", "security_deposit", "escrow"}},
+		{Name: "trust_type", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "budget_amount_amount_cents", Type: field.TypeInt64, Nullable: true},
 		{Name: "budget_amount_currency", Type: field.TypeString, Nullable: true, Default: "USD"},
 		{Name: "tax_line", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
@@ -62,7 +62,6 @@ var (
 		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
 		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
-		{Name: "applicant_person_id", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"submitted", "screening", "under_review", "approved", "conditionally_approved", "denied", "withdrawn", "expired"}},
 		{Name: "desired_move_in", Type: field.TypeTime},
 		{Name: "desired_lease_term_months", Type: field.TypeInt},
@@ -79,13 +78,11 @@ var (
 		{Name: "application_fee_amount_cents", Type: field.TypeInt64},
 		{Name: "application_fee_currency", Type: field.TypeString, Default: "USD"},
 		{Name: "fee_paid", Type: field.TypeBool, Default: false},
-		{Name: "application_applicant", Type: field.TypeUUID},
-		{Name: "application_property", Type: field.TypeUUID},
-		{Name: "application_unit", Type: field.TypeUUID, Nullable: true},
+		{Name: "applicant_person_id", Type: field.TypeUUID},
 		{Name: "lease_application", Type: field.TypeUUID, Unique: true, Nullable: true},
 		{Name: "person_applications", Type: field.TypeUUID, Nullable: true},
 		{Name: "property_applications", Type: field.TypeUUID, Nullable: true},
-		{Name: "unit_applications", Type: field.TypeUUID, Nullable: true},
+		{Name: "space_applications", Type: field.TypeUUID, Nullable: true},
 	}
 	// ApplicationsTable holds the schema information for the "applications" table.
 	ApplicationsTable = &schema.Table{
@@ -95,44 +92,32 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "applications_persons_applicant",
-				Columns:    []*schema.Column{ApplicationsColumns[25]},
+				Columns:    []*schema.Column{ApplicationsColumns[24]},
 				RefColumns: []*schema.Column{PersonsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "applications_properties_property",
-				Columns:    []*schema.Column{ApplicationsColumns[26]},
-				RefColumns: []*schema.Column{PropertiesColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-			{
-				Symbol:     "applications_units_unit",
-				Columns:    []*schema.Column{ApplicationsColumns[27]},
-				RefColumns: []*schema.Column{UnitsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
 				Symbol:     "applications_leases_application",
-				Columns:    []*schema.Column{ApplicationsColumns[28]},
+				Columns:    []*schema.Column{ApplicationsColumns[25]},
 				RefColumns: []*schema.Column{LeasesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "applications_persons_applications",
-				Columns:    []*schema.Column{ApplicationsColumns[29]},
+				Columns:    []*schema.Column{ApplicationsColumns[26]},
 				RefColumns: []*schema.Column{PersonsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "applications_properties_applications",
-				Columns:    []*schema.Column{ApplicationsColumns[30]},
+				Columns:    []*schema.Column{ApplicationsColumns[27]},
 				RefColumns: []*schema.Column{PropertiesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "applications_units_applications",
-				Columns:    []*schema.Column{ApplicationsColumns[31]},
-				RefColumns: []*schema.Column{UnitsColumns[0]},
+				Symbol:     "applications_spaces_applications",
+				Columns:    []*schema.Column{ApplicationsColumns[28]},
+				RefColumns: []*schema.Column{SpacesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -191,6 +176,40 @@ var (
 			},
 		},
 	}
+	// BuildingsColumns holds the columns for the "buildings" table.
+	BuildingsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by", Type: field.TypeString},
+		{Name: "updated_by", Type: field.TypeString},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
+		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
+		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
+		{Name: "name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "building_type", Type: field.TypeEnum, Enums: []string{"residential", "commercial", "mixed_use", "parking_structure", "industrial", "storage", "auxiliary"}},
+		{Name: "address", Type: field.TypeJSON, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "under_renovation"}},
+		{Name: "floors", Type: field.TypeInt, Nullable: true},
+		{Name: "year_built", Type: field.TypeInt, Nullable: true},
+		{Name: "total_square_footage", Type: field.TypeFloat64, Nullable: true},
+		{Name: "total_rentable_square_footage", Type: field.TypeFloat64, Nullable: true},
+		{Name: "property_buildings", Type: field.TypeUUID, Nullable: true},
+	}
+	// BuildingsTable holds the schema information for the "buildings" table.
+	BuildingsTable = &schema.Table{
+		Name:       "buildings",
+		Columns:    BuildingsColumns,
+		PrimaryKey: []*schema.Column{BuildingsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "buildings_properties_buildings",
+				Columns:    []*schema.Column{BuildingsColumns[16]},
+				RefColumns: []*schema.Column{PropertiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// JournalEntriesColumns holds the columns for the "journal_entries" table.
 	JournalEntriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -235,9 +254,12 @@ var (
 		{Name: "property_id", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "tenant_role_ids", Type: field.TypeJSON},
 		{Name: "guarantor_role_ids", Type: field.TypeJSON, Nullable: true},
-		{Name: "lease_type", Type: field.TypeEnum, Enums: []string{"fixed_term", "month_to_month", "commercial_nnn", "commercial_gross", "commercial_modified_gross", "affordable", "section_8", "student"}},
+		{Name: "lease_type", Type: field.TypeEnum, Enums: []string{"fixed_term", "month_to_month", "commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross", "affordable", "section_8", "student", "ground_lease", "short_term", "membership"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "pending_approval", "pending_signature", "active", "expired", "month_to_month_holdover", "renewed", "terminated", "eviction"}},
+		{Name: "liability_type", Type: field.TypeEnum, Enums: []string{"joint_and_several", "individual", "by_the_bed", "proportional"}, Default: "joint_and_several"},
 		{Name: "term", Type: field.TypeJSON},
+		{Name: "lease_commencement_date", Type: field.TypeTime, Nullable: true},
+		{Name: "rent_commencement_date", Type: field.TypeTime, Nullable: true},
 		{Name: "base_rent_amount_cents", Type: field.TypeInt64},
 		{Name: "base_rent_currency", Type: field.TypeString, Default: "USD"},
 		{Name: "security_deposit_amount_cents", Type: field.TypeInt64},
@@ -248,16 +270,27 @@ var (
 		{Name: "cam_terms", Type: field.TypeJSON, Nullable: true},
 		{Name: "tenant_improvement", Type: field.TypeJSON, Nullable: true},
 		{Name: "renewal_options", Type: field.TypeJSON, Nullable: true},
+		{Name: "usage_charges", Type: field.TypeJSON, Nullable: true},
+		{Name: "percentage_rent", Type: field.TypeJSON, Nullable: true},
+		{Name: "expansion_rights", Type: field.TypeJSON, Nullable: true},
+		{Name: "contraction_rights", Type: field.TypeJSON, Nullable: true},
 		{Name: "subsidy", Type: field.TypeJSON, Nullable: true},
 		{Name: "move_in_date", Type: field.TypeTime, Nullable: true},
 		{Name: "move_out_date", Type: field.TypeTime, Nullable: true},
 		{Name: "notice_date", Type: field.TypeTime, Nullable: true},
 		{Name: "notice_required_days", Type: field.TypeInt},
+		{Name: "check_in_time", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "check_out_time", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "cleaning_fee_amount_cents", Type: field.TypeInt64, Nullable: true},
+		{Name: "cleaning_fee_currency", Type: field.TypeString, Nullable: true, Default: "USD"},
+		{Name: "platform_booking_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "membership_tier", Type: field.TypeEnum, Nullable: true, Enums: []string{"hot_desk", "dedicated_desk", "office", "suite", "virtual"}},
+		{Name: "is_sublease", Type: field.TypeBool, Default: false},
+		{Name: "sublease_billing", Type: field.TypeEnum, Enums: []string{"through_master_tenant", "direct_to_landlord"}, Default: "through_master_tenant"},
 		{Name: "signing_method", Type: field.TypeEnum, Nullable: true, Enums: []string{"electronic", "wet_ink", "both"}},
 		{Name: "signed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "document_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
-		{Name: "unit_leases", Type: field.TypeUUID, Nullable: true},
-		{Name: "unit_active_lease", Type: field.TypeUUID, Unique: true, Nullable: true},
+		{Name: "lease_subleases", Type: field.TypeUUID, Nullable: true},
 	}
 	// LeasesTable holds the schema information for the "leases" table.
 	LeasesTable = &schema.Table{
@@ -266,15 +299,60 @@ var (
 		PrimaryKey: []*schema.Column{LeasesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "leases_units_leases",
-				Columns:    []*schema.Column{LeasesColumns[32]},
-				RefColumns: []*schema.Column{UnitsColumns[0]},
+				Symbol:     "leases_leases_subleases",
+				Columns:    []*schema.Column{LeasesColumns[47]},
+				RefColumns: []*schema.Column{LeasesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// LeaseSpacesColumns holds the columns for the "lease_spaces" table.
+	LeaseSpacesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by", Type: field.TypeString},
+		{Name: "updated_by", Type: field.TypeString},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
+		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
+		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
+		{Name: "is_primary", Type: field.TypeBool, Default: true},
+		{Name: "relationship", Type: field.TypeEnum, Enums: []string{"primary", "expansion", "sublease", "shared_access", "parking", "storage", "loading_dock", "rooftop", "patio", "signage", "included", "membership"}},
+		{Name: "effective", Type: field.TypeJSON},
+		{Name: "square_footage_leased", Type: field.TypeFloat64, Nullable: true},
+		{Name: "lease_lease_spaces", Type: field.TypeUUID, Nullable: true},
+		{Name: "lease_space_lease", Type: field.TypeUUID},
+		{Name: "lease_space_space", Type: field.TypeUUID},
+		{Name: "space_lease_spaces", Type: field.TypeUUID, Nullable: true},
+	}
+	// LeaseSpacesTable holds the schema information for the "lease_spaces" table.
+	LeaseSpacesTable = &schema.Table{
+		Name:       "lease_spaces",
+		Columns:    LeaseSpacesColumns,
+		PrimaryKey: []*schema.Column{LeaseSpacesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "lease_spaces_leases_lease_spaces",
+				Columns:    []*schema.Column{LeaseSpacesColumns[12]},
+				RefColumns: []*schema.Column{LeasesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "leases_units_active_lease",
-				Columns:    []*schema.Column{LeasesColumns[33]},
-				RefColumns: []*schema.Column{UnitsColumns[0]},
+				Symbol:     "lease_spaces_leases_lease",
+				Columns:    []*schema.Column{LeaseSpacesColumns[13]},
+				RefColumns: []*schema.Column{LeasesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "lease_spaces_spaces_space",
+				Columns:    []*schema.Column{LeaseSpacesColumns[14]},
+				RefColumns: []*schema.Column{SpacesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "lease_spaces_spaces_lease_spaces",
+				Columns:    []*schema.Column{LeaseSpacesColumns[15]},
+				RefColumns: []*schema.Column{SpacesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -297,7 +375,6 @@ var (
 		{Name: "description", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "charge_code", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "memo", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
-		{Name: "unit_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "bank_account_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "bank_transaction_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "reconciled", Type: field.TypeBool, Default: false},
@@ -310,9 +387,11 @@ var (
 		{Name: "ledger_entry_journal_entry", Type: field.TypeUUID},
 		{Name: "ledger_entry_account", Type: field.TypeUUID},
 		{Name: "ledger_entry_property", Type: field.TypeUUID},
+		{Name: "ledger_entry_space", Type: field.TypeUUID, Nullable: true},
 		{Name: "ledger_entry_person", Type: field.TypeUUID, Nullable: true},
-		{Name: "person_person_ledger_entries", Type: field.TypeUUID, Nullable: true},
-		{Name: "property_property_ledger_entries", Type: field.TypeUUID, Nullable: true},
+		{Name: "person_ledger_entries", Type: field.TypeUUID, Nullable: true},
+		{Name: "property_ledger_entries", Type: field.TypeUUID, Nullable: true},
+		{Name: "space_ledger_entries", Type: field.TypeUUID, Nullable: true},
 	}
 	// LedgerEntriesTable holds the schema information for the "ledger_entries" table.
 	LedgerEntriesTable = &schema.Table{
@@ -322,39 +401,45 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "ledger_entries_accounts_entries",
-				Columns:    []*schema.Column{LedgerEntriesColumns[23]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[22]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "ledger_entries_journal_entries_ledger_entries",
-				Columns:    []*schema.Column{LedgerEntriesColumns[24]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[23]},
 				RefColumns: []*schema.Column{JournalEntriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "ledger_entries_leases_ledger_entries",
-				Columns:    []*schema.Column{LedgerEntriesColumns[25]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[24]},
 				RefColumns: []*schema.Column{LeasesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "ledger_entries_journal_entries_journal_entry",
-				Columns:    []*schema.Column{LedgerEntriesColumns[26]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[25]},
 				RefColumns: []*schema.Column{JournalEntriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "ledger_entries_accounts_account",
-				Columns:    []*schema.Column{LedgerEntriesColumns[27]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[26]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "ledger_entries_properties_property",
-				Columns:    []*schema.Column{LedgerEntriesColumns[28]},
+				Columns:    []*schema.Column{LedgerEntriesColumns[27]},
 				RefColumns: []*schema.Column{PropertiesColumns[0]},
 				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "ledger_entries_spaces_space",
+				Columns:    []*schema.Column{LedgerEntriesColumns[28]},
+				RefColumns: []*schema.Column{SpacesColumns[0]},
+				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "ledger_entries_persons_person",
@@ -363,15 +448,21 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "ledger_entries_persons_person_ledger_entries",
+				Symbol:     "ledger_entries_persons_ledger_entries",
 				Columns:    []*schema.Column{LedgerEntriesColumns[30]},
 				RefColumns: []*schema.Column{PersonsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "ledger_entries_properties_property_ledger_entries",
+				Symbol:     "ledger_entries_properties_ledger_entries",
 				Columns:    []*schema.Column{LedgerEntriesColumns[31]},
 				RefColumns: []*schema.Column{PropertiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "ledger_entries_spaces_ledger_entries",
+				Columns:    []*schema.Column{LedgerEntriesColumns[32]},
+				RefColumns: []*schema.Column{SpacesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -431,7 +522,7 @@ var (
 		{Name: "date_of_birth", Type: field.TypeTime, Nullable: true},
 		{Name: "ssn_last_four", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "contact_methods", Type: field.TypeJSON},
-		{Name: "preferred_contact", Type: field.TypeEnum, Enums: []string{"email", "sms", "phone", "mail", "portal"}},
+		{Name: "preferred_contact", Type: field.TypeEnum, Enums: []string{"email", "sms", "phone", "mail", "portal"}, Default: "email"},
 		{Name: "language_preference", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "timezone", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "do_not_contact", Type: field.TypeBool, Default: false},
@@ -456,8 +547,8 @@ var (
 		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
 		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
-		{Name: "role_type", Type: field.TypeEnum, Enums: []string{"tenant", "owner", "property_manager", "maintenance_tech", "leasing_agent", "accountant", "vendor_contact", "guarantor", "emergency_contact", "authorized_occupant"}},
-		{Name: "scope_type", Type: field.TypeEnum, Enums: []string{"organization", "portfolio", "property", "unit", "lease"}},
+		{Name: "role_type", Type: field.TypeEnum, Enums: []string{"tenant", "owner", "property_manager", "maintenance_tech", "leasing_agent", "accountant", "vendor_contact", "guarantor", "emergency_contact", "authorized_occupant", "co_signer"}},
+		{Name: "scope_type", Type: field.TypeEnum, Enums: []string{"organization", "portfolio", "property", "building", "space", "lease"}},
 		{Name: "scope_id", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "pending", "terminated"}},
 		{Name: "effective", Type: field.TypeJSON},
@@ -493,7 +584,6 @@ var (
 		{Name: "requires_trust_accounting", Type: field.TypeBool},
 		{Name: "trust_bank_account_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "onboarding", "offboarding"}},
-		{Name: "default_late_fee_policy", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "default_payment_methods", Type: field.TypeJSON, Nullable: true},
 		{Name: "fiscal_year_start_month", Type: field.TypeInt},
 		{Name: "organization_owned_portfolios", Type: field.TypeUUID, Nullable: true},
@@ -507,13 +597,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "portfolios_organizations_owned_portfolios",
-				Columns:    []*schema.Column{PortfoliosColumns[16]},
+				Columns:    []*schema.Column{PortfoliosColumns[15]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "portfolios_organizations_owner",
-				Columns:    []*schema.Column{PortfoliosColumns[17]},
+				Columns:    []*schema.Column{PortfoliosColumns[16]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -531,11 +621,11 @@ var (
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
 		{Name: "name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "address", Type: field.TypeJSON},
-		{Name: "property_type", Type: field.TypeEnum, Enums: []string{"single_family", "multi_family", "commercial_office", "commercial_retail", "mixed_use", "industrial", "affordable_housing", "student_housing", "senior_living", "vacation_rental", "mobile_home_park"}},
+		{Name: "property_type", Type: field.TypeEnum, Enums: []string{"single_family", "multi_family", "commercial_office", "commercial_retail", "mixed_use", "industrial", "affordable_housing", "student_housing", "senior_living", "vacation_rental", "mobile_home_park", "self_storage", "coworking", "data_center", "medical_office"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "under_renovation", "for_sale", "onboarding"}},
 		{Name: "year_built", Type: field.TypeInt},
 		{Name: "total_square_footage", Type: field.TypeFloat64},
-		{Name: "total_units", Type: field.TypeInt},
+		{Name: "total_spaces", Type: field.TypeInt},
 		{Name: "lot_size_sqft", Type: field.TypeFloat64, Nullable: true},
 		{Name: "stories", Type: field.TypeInt, Nullable: true},
 		{Name: "parking_spaces", Type: field.TypeInt, Nullable: true},
@@ -624,8 +714,8 @@ var (
 			},
 		},
 	}
-	// UnitsColumns holds the columns for the "units" table.
-	UnitsColumns = []*schema.Column{
+	// SpacesColumns holds the columns for the "spaces" table.
+	SpacesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -634,9 +724,11 @@ var (
 		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
 		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
-		{Name: "unit_number", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
-		{Name: "unit_type", Type: field.TypeEnum, Enums: []string{"residential", "commercial_office", "commercial_retail", "storage", "parking", "common_area"}},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"vacant", "occupied", "notice_given", "make_ready", "down", "model", "reserved"}},
+		{Name: "space_number", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "space_type", Type: field.TypeEnum, Enums: []string{"residential_unit", "commercial_office", "commercial_retail", "storage", "parking", "common_area", "industrial", "lot_pad", "bed_space", "desk_space"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"vacant", "occupied", "notice_given", "make_ready", "down", "model", "reserved", "owner_occupied"}},
+		{Name: "leasable", Type: field.TypeBool},
+		{Name: "shared_with_parent", Type: field.TypeBool, Default: false},
 		{Name: "square_footage", Type: field.TypeFloat64},
 		{Name: "bedrooms", Type: field.TypeInt, Nullable: true},
 		{Name: "bathrooms", Type: field.TypeFloat64, Nullable: true},
@@ -646,21 +738,37 @@ var (
 		{Name: "ada_accessible", Type: field.TypeBool, Default: false},
 		{Name: "pet_friendly", Type: field.TypeBool, Default: true},
 		{Name: "furnished", Type: field.TypeBool, Default: false},
+		{Name: "specialized_infrastructure", Type: field.TypeJSON, Nullable: true},
 		{Name: "market_rent_amount_cents", Type: field.TypeInt64, Nullable: true},
 		{Name: "market_rent_currency", Type: field.TypeString, Nullable: true, Default: "USD"},
 		{Name: "ami_restriction", Type: field.TypeInt, Nullable: true},
-		{Name: "property_units", Type: field.TypeUUID, Nullable: true},
+		{Name: "active_lease_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "building_spaces", Type: field.TypeUUID, Nullable: true},
+		{Name: "property_spaces", Type: field.TypeUUID, Nullable: true},
+		{Name: "space_children", Type: field.TypeUUID, Nullable: true},
 	}
-	// UnitsTable holds the schema information for the "units" table.
-	UnitsTable = &schema.Table{
-		Name:       "units",
-		Columns:    UnitsColumns,
-		PrimaryKey: []*schema.Column{UnitsColumns[0]},
+	// SpacesTable holds the schema information for the "spaces" table.
+	SpacesTable = &schema.Table{
+		Name:       "spaces",
+		Columns:    SpacesColumns,
+		PrimaryKey: []*schema.Column{SpacesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "units_properties_units",
-				Columns:    []*schema.Column{UnitsColumns[23]},
+				Symbol:     "spaces_buildings_spaces",
+				Columns:    []*schema.Column{SpacesColumns[27]},
+				RefColumns: []*schema.Column{BuildingsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "spaces_properties_spaces",
+				Columns:    []*schema.Column{SpacesColumns[28]},
 				RefColumns: []*schema.Column{PropertiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "spaces_spaces_children",
+				Columns:    []*schema.Column{SpacesColumns[29]},
+				RefColumns: []*schema.Column{SpacesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -745,8 +853,10 @@ var (
 		AccountsTable,
 		ApplicationsTable,
 		BankAccountsTable,
+		BuildingsTable,
 		JournalEntriesTable,
 		LeasesTable,
+		LeaseSpacesTable,
 		LedgerEntriesTable,
 		OrganizationsTable,
 		PersonsTable,
@@ -754,7 +864,7 @@ var (
 		PortfoliosTable,
 		PropertiesTable,
 		ReconciliationsTable,
-		UnitsTable,
+		SpacesTable,
 		LeaseTenantRolesTable,
 		LeaseGuarantorRolesTable,
 		PersonOrganizationsTable,
@@ -764,26 +874,30 @@ var (
 func init() {
 	AccountsTable.ForeignKeys[0].RefTable = AccountsTable
 	ApplicationsTable.ForeignKeys[0].RefTable = PersonsTable
-	ApplicationsTable.ForeignKeys[1].RefTable = PropertiesTable
-	ApplicationsTable.ForeignKeys[2].RefTable = UnitsTable
-	ApplicationsTable.ForeignKeys[3].RefTable = LeasesTable
-	ApplicationsTable.ForeignKeys[4].RefTable = PersonsTable
-	ApplicationsTable.ForeignKeys[5].RefTable = PropertiesTable
-	ApplicationsTable.ForeignKeys[6].RefTable = UnitsTable
+	ApplicationsTable.ForeignKeys[1].RefTable = LeasesTable
+	ApplicationsTable.ForeignKeys[2].RefTable = PersonsTable
+	ApplicationsTable.ForeignKeys[3].RefTable = PropertiesTable
+	ApplicationsTable.ForeignKeys[4].RefTable = SpacesTable
 	BankAccountsTable.ForeignKeys[0].RefTable = AccountsTable
 	BankAccountsTable.ForeignKeys[1].RefTable = AccountsTable
 	BankAccountsTable.ForeignKeys[2].RefTable = PortfoliosTable
-	LeasesTable.ForeignKeys[0].RefTable = UnitsTable
-	LeasesTable.ForeignKeys[1].RefTable = UnitsTable
+	BuildingsTable.ForeignKeys[0].RefTable = PropertiesTable
+	LeasesTable.ForeignKeys[0].RefTable = LeasesTable
+	LeaseSpacesTable.ForeignKeys[0].RefTable = LeasesTable
+	LeaseSpacesTable.ForeignKeys[1].RefTable = LeasesTable
+	LeaseSpacesTable.ForeignKeys[2].RefTable = SpacesTable
+	LeaseSpacesTable.ForeignKeys[3].RefTable = SpacesTable
 	LedgerEntriesTable.ForeignKeys[0].RefTable = AccountsTable
 	LedgerEntriesTable.ForeignKeys[1].RefTable = JournalEntriesTable
 	LedgerEntriesTable.ForeignKeys[2].RefTable = LeasesTable
 	LedgerEntriesTable.ForeignKeys[3].RefTable = JournalEntriesTable
 	LedgerEntriesTable.ForeignKeys[4].RefTable = AccountsTable
 	LedgerEntriesTable.ForeignKeys[5].RefTable = PropertiesTable
-	LedgerEntriesTable.ForeignKeys[6].RefTable = PersonsTable
+	LedgerEntriesTable.ForeignKeys[6].RefTable = SpacesTable
 	LedgerEntriesTable.ForeignKeys[7].RefTable = PersonsTable
-	LedgerEntriesTable.ForeignKeys[8].RefTable = PropertiesTable
+	LedgerEntriesTable.ForeignKeys[8].RefTable = PersonsTable
+	LedgerEntriesTable.ForeignKeys[9].RefTable = PropertiesTable
+	LedgerEntriesTable.ForeignKeys[10].RefTable = SpacesTable
 	OrganizationsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	PersonRolesTable.ForeignKeys[0].RefTable = PersonsTable
 	PortfoliosTable.ForeignKeys[0].RefTable = OrganizationsTable
@@ -793,7 +907,9 @@ func init() {
 	PropertiesTable.ForeignKeys[2].RefTable = BankAccountsTable
 	ReconciliationsTable.ForeignKeys[0].RefTable = BankAccountsTable
 	ReconciliationsTable.ForeignKeys[1].RefTable = BankAccountsTable
-	UnitsTable.ForeignKeys[0].RefTable = PropertiesTable
+	SpacesTable.ForeignKeys[0].RefTable = BuildingsTable
+	SpacesTable.ForeignKeys[1].RefTable = PropertiesTable
+	SpacesTable.ForeignKeys[2].RefTable = SpacesTable
 	LeaseTenantRolesTable.ForeignKeys[0].RefTable = LeasesTable
 	LeaseTenantRolesTable.ForeignKeys[1].RefTable = PersonRolesTable
 	LeaseGuarantorRolesTable.ForeignKeys[0].RefTable = LeasesTable

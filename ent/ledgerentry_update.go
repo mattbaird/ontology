@@ -19,6 +19,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/person"
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // LedgerEntryUpdate is the builder for updating LedgerEntry entities.
@@ -247,26 +248,6 @@ func (_u *LedgerEntryUpdate) ClearMemo() *LedgerEntryUpdate {
 	return _u
 }
 
-// SetUnitID sets the "unit_id" field.
-func (_u *LedgerEntryUpdate) SetUnitID(v string) *LedgerEntryUpdate {
-	_u.mutation.SetUnitID(v)
-	return _u
-}
-
-// SetNillableUnitID sets the "unit_id" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableUnitID(v *string) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetUnitID(*v)
-	}
-	return _u
-}
-
-// ClearUnitID clears the value of the "unit_id" field.
-func (_u *LedgerEntryUpdate) ClearUnitID() *LedgerEntryUpdate {
-	_u.mutation.ClearUnitID()
-	return _u
-}
-
 // SetBankAccountID sets the "bank_account_id" field.
 func (_u *LedgerEntryUpdate) SetBankAccountID(v string) *LedgerEntryUpdate {
 	_u.mutation.SetBankAccountID(v)
@@ -433,6 +414,25 @@ func (_u *LedgerEntryUpdate) SetProperty(v *Property) *LedgerEntryUpdate {
 	return _u.SetPropertyID(v.ID)
 }
 
+// SetSpaceID sets the "space" edge to the Space entity by ID.
+func (_u *LedgerEntryUpdate) SetSpaceID(id uuid.UUID) *LedgerEntryUpdate {
+	_u.mutation.SetSpaceID(id)
+	return _u
+}
+
+// SetNillableSpaceID sets the "space" edge to the Space entity by ID if the given value is not nil.
+func (_u *LedgerEntryUpdate) SetNillableSpaceID(id *uuid.UUID) *LedgerEntryUpdate {
+	if id != nil {
+		_u = _u.SetSpaceID(*id)
+	}
+	return _u
+}
+
+// SetSpace sets the "space" edge to the Space entity.
+func (_u *LedgerEntryUpdate) SetSpace(v *Space) *LedgerEntryUpdate {
+	return _u.SetSpaceID(v.ID)
+}
+
 // SetPersonID sets the "person" edge to the Person entity by ID.
 func (_u *LedgerEntryUpdate) SetPersonID(id uuid.UUID) *LedgerEntryUpdate {
 	_u.mutation.SetPersonID(id)
@@ -478,6 +478,12 @@ func (_u *LedgerEntryUpdate) ClearAccount() *LedgerEntryUpdate {
 // ClearProperty clears the "property" edge to the Property entity.
 func (_u *LedgerEntryUpdate) ClearProperty() *LedgerEntryUpdate {
 	_u.mutation.ClearProperty()
+	return _u
+}
+
+// ClearSpace clears the "space" edge to the Space entity.
+func (_u *LedgerEntryUpdate) ClearSpace() *LedgerEntryUpdate {
+	_u.mutation.ClearSpace()
 	return _u
 }
 
@@ -628,12 +634,6 @@ func (_u *LedgerEntryUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if _u.mutation.MemoCleared() {
 		_spec.ClearField(ledgerentry.FieldMemo, field.TypeString)
 	}
-	if value, ok := _u.mutation.UnitID(); ok {
-		_spec.SetField(ledgerentry.FieldUnitID, field.TypeString, value)
-	}
-	if _u.mutation.UnitIDCleared() {
-		_spec.ClearField(ledgerentry.FieldUnitID, field.TypeString)
-	}
 	if value, ok := _u.mutation.BankAccountID(); ok {
 		_spec.SetField(ledgerentry.FieldBankAccountID, field.TypeString, value)
 	}
@@ -776,6 +776,35 @@ func (_u *LedgerEntryUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SpaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   ledgerentry.SpaceTable,
+			Columns: []string{ledgerentry.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SpaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   ledgerentry.SpaceTable,
+			Columns: []string{ledgerentry.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1045,26 +1074,6 @@ func (_u *LedgerEntryUpdateOne) ClearMemo() *LedgerEntryUpdateOne {
 	return _u
 }
 
-// SetUnitID sets the "unit_id" field.
-func (_u *LedgerEntryUpdateOne) SetUnitID(v string) *LedgerEntryUpdateOne {
-	_u.mutation.SetUnitID(v)
-	return _u
-}
-
-// SetNillableUnitID sets the "unit_id" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableUnitID(v *string) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetUnitID(*v)
-	}
-	return _u
-}
-
-// ClearUnitID clears the value of the "unit_id" field.
-func (_u *LedgerEntryUpdateOne) ClearUnitID() *LedgerEntryUpdateOne {
-	_u.mutation.ClearUnitID()
-	return _u
-}
-
 // SetBankAccountID sets the "bank_account_id" field.
 func (_u *LedgerEntryUpdateOne) SetBankAccountID(v string) *LedgerEntryUpdateOne {
 	_u.mutation.SetBankAccountID(v)
@@ -1231,6 +1240,25 @@ func (_u *LedgerEntryUpdateOne) SetProperty(v *Property) *LedgerEntryUpdateOne {
 	return _u.SetPropertyID(v.ID)
 }
 
+// SetSpaceID sets the "space" edge to the Space entity by ID.
+func (_u *LedgerEntryUpdateOne) SetSpaceID(id uuid.UUID) *LedgerEntryUpdateOne {
+	_u.mutation.SetSpaceID(id)
+	return _u
+}
+
+// SetNillableSpaceID sets the "space" edge to the Space entity by ID if the given value is not nil.
+func (_u *LedgerEntryUpdateOne) SetNillableSpaceID(id *uuid.UUID) *LedgerEntryUpdateOne {
+	if id != nil {
+		_u = _u.SetSpaceID(*id)
+	}
+	return _u
+}
+
+// SetSpace sets the "space" edge to the Space entity.
+func (_u *LedgerEntryUpdateOne) SetSpace(v *Space) *LedgerEntryUpdateOne {
+	return _u.SetSpaceID(v.ID)
+}
+
 // SetPersonID sets the "person" edge to the Person entity by ID.
 func (_u *LedgerEntryUpdateOne) SetPersonID(id uuid.UUID) *LedgerEntryUpdateOne {
 	_u.mutation.SetPersonID(id)
@@ -1276,6 +1304,12 @@ func (_u *LedgerEntryUpdateOne) ClearAccount() *LedgerEntryUpdateOne {
 // ClearProperty clears the "property" edge to the Property entity.
 func (_u *LedgerEntryUpdateOne) ClearProperty() *LedgerEntryUpdateOne {
 	_u.mutation.ClearProperty()
+	return _u
+}
+
+// ClearSpace clears the "space" edge to the Space entity.
+func (_u *LedgerEntryUpdateOne) ClearSpace() *LedgerEntryUpdateOne {
+	_u.mutation.ClearSpace()
 	return _u
 }
 
@@ -1456,12 +1490,6 @@ func (_u *LedgerEntryUpdateOne) sqlSave(ctx context.Context) (_node *LedgerEntry
 	if _u.mutation.MemoCleared() {
 		_spec.ClearField(ledgerentry.FieldMemo, field.TypeString)
 	}
-	if value, ok := _u.mutation.UnitID(); ok {
-		_spec.SetField(ledgerentry.FieldUnitID, field.TypeString, value)
-	}
-	if _u.mutation.UnitIDCleared() {
-		_spec.ClearField(ledgerentry.FieldUnitID, field.TypeString)
-	}
 	if value, ok := _u.mutation.BankAccountID(); ok {
 		_spec.SetField(ledgerentry.FieldBankAccountID, field.TypeString, value)
 	}
@@ -1604,6 +1632,35 @@ func (_u *LedgerEntryUpdateOne) sqlSave(ctx context.Context) (_node *LedgerEntry
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SpaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   ledgerentry.SpaceTable,
+			Columns: []string{ledgerentry.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SpaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   ledgerentry.SpaceTable,
+			Columns: []string{ledgerentry.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -87,7 +87,7 @@ func AgentGoalID(v string) predicate.Application {
 }
 
 // ApplicantPersonID applies equality check predicate on the "applicant_person_id" field. It's identical to ApplicantPersonIDEQ.
-func ApplicantPersonID(v string) predicate.Application {
+func ApplicantPersonID(v uuid.UUID) predicate.Application {
 	return predicate.Application(sql.FieldEQ(FieldApplicantPersonID, v))
 }
 
@@ -542,68 +542,23 @@ func AgentGoalIDContainsFold(v string) predicate.Application {
 }
 
 // ApplicantPersonIDEQ applies the EQ predicate on the "applicant_person_id" field.
-func ApplicantPersonIDEQ(v string) predicate.Application {
+func ApplicantPersonIDEQ(v uuid.UUID) predicate.Application {
 	return predicate.Application(sql.FieldEQ(FieldApplicantPersonID, v))
 }
 
 // ApplicantPersonIDNEQ applies the NEQ predicate on the "applicant_person_id" field.
-func ApplicantPersonIDNEQ(v string) predicate.Application {
+func ApplicantPersonIDNEQ(v uuid.UUID) predicate.Application {
 	return predicate.Application(sql.FieldNEQ(FieldApplicantPersonID, v))
 }
 
 // ApplicantPersonIDIn applies the In predicate on the "applicant_person_id" field.
-func ApplicantPersonIDIn(vs ...string) predicate.Application {
+func ApplicantPersonIDIn(vs ...uuid.UUID) predicate.Application {
 	return predicate.Application(sql.FieldIn(FieldApplicantPersonID, vs...))
 }
 
 // ApplicantPersonIDNotIn applies the NotIn predicate on the "applicant_person_id" field.
-func ApplicantPersonIDNotIn(vs ...string) predicate.Application {
+func ApplicantPersonIDNotIn(vs ...uuid.UUID) predicate.Application {
 	return predicate.Application(sql.FieldNotIn(FieldApplicantPersonID, vs...))
-}
-
-// ApplicantPersonIDGT applies the GT predicate on the "applicant_person_id" field.
-func ApplicantPersonIDGT(v string) predicate.Application {
-	return predicate.Application(sql.FieldGT(FieldApplicantPersonID, v))
-}
-
-// ApplicantPersonIDGTE applies the GTE predicate on the "applicant_person_id" field.
-func ApplicantPersonIDGTE(v string) predicate.Application {
-	return predicate.Application(sql.FieldGTE(FieldApplicantPersonID, v))
-}
-
-// ApplicantPersonIDLT applies the LT predicate on the "applicant_person_id" field.
-func ApplicantPersonIDLT(v string) predicate.Application {
-	return predicate.Application(sql.FieldLT(FieldApplicantPersonID, v))
-}
-
-// ApplicantPersonIDLTE applies the LTE predicate on the "applicant_person_id" field.
-func ApplicantPersonIDLTE(v string) predicate.Application {
-	return predicate.Application(sql.FieldLTE(FieldApplicantPersonID, v))
-}
-
-// ApplicantPersonIDContains applies the Contains predicate on the "applicant_person_id" field.
-func ApplicantPersonIDContains(v string) predicate.Application {
-	return predicate.Application(sql.FieldContains(FieldApplicantPersonID, v))
-}
-
-// ApplicantPersonIDHasPrefix applies the HasPrefix predicate on the "applicant_person_id" field.
-func ApplicantPersonIDHasPrefix(v string) predicate.Application {
-	return predicate.Application(sql.FieldHasPrefix(FieldApplicantPersonID, v))
-}
-
-// ApplicantPersonIDHasSuffix applies the HasSuffix predicate on the "applicant_person_id" field.
-func ApplicantPersonIDHasSuffix(v string) predicate.Application {
-	return predicate.Application(sql.FieldHasSuffix(FieldApplicantPersonID, v))
-}
-
-// ApplicantPersonIDEqualFold applies the EqualFold predicate on the "applicant_person_id" field.
-func ApplicantPersonIDEqualFold(v string) predicate.Application {
-	return predicate.Application(sql.FieldEqualFold(FieldApplicantPersonID, v))
-}
-
-// ApplicantPersonIDContainsFold applies the ContainsFold predicate on the "applicant_person_id" field.
-func ApplicantPersonIDContainsFold(v string) predicate.Application {
-	return predicate.Application(sql.FieldContainsFold(FieldApplicantPersonID, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
@@ -1276,6 +1231,52 @@ func FeePaidNEQ(v bool) predicate.Application {
 	return predicate.Application(sql.FieldNEQ(FieldFeePaid, v))
 }
 
+// HasProperty applies the HasEdge predicate on the "property" edge.
+func HasProperty() predicate.Application {
+	return predicate.Application(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, PropertyTable, PropertyColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPropertyWith applies the HasEdge predicate on the "property" edge with a given conditions (other predicates).
+func HasPropertyWith(preds ...predicate.Property) predicate.Application {
+	return predicate.Application(func(s *sql.Selector) {
+		step := newPropertyStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSpace applies the HasEdge predicate on the "space" edge.
+func HasSpace() predicate.Application {
+	return predicate.Application(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, SpaceTable, SpaceColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSpaceWith applies the HasEdge predicate on the "space" edge with a given conditions (other predicates).
+func HasSpaceWith(preds ...predicate.Space) predicate.Application {
+	return predicate.Application(func(s *sql.Selector) {
+		step := newSpaceStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasResultingLease applies the HasEdge predicate on the "resulting_lease" edge.
 func HasResultingLease() predicate.Application {
 	return predicate.Application(func(s *sql.Selector) {
@@ -1314,52 +1315,6 @@ func HasApplicant() predicate.Application {
 func HasApplicantWith(preds ...predicate.Person) predicate.Application {
 	return predicate.Application(func(s *sql.Selector) {
 		step := newApplicantStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasProperty applies the HasEdge predicate on the "property" edge.
-func HasProperty() predicate.Application {
-	return predicate.Application(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, PropertyTable, PropertyColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasPropertyWith applies the HasEdge predicate on the "property" edge with a given conditions (other predicates).
-func HasPropertyWith(preds ...predicate.Property) predicate.Application {
-	return predicate.Application(func(s *sql.Selector) {
-		step := newPropertyStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasUnit applies the HasEdge predicate on the "unit" edge.
-func HasUnit() predicate.Application {
-	return predicate.Application(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, UnitTable, UnitColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasUnitWith applies the HasEdge predicate on the "unit" edge with a given conditions (other predicates).
-func HasUnitWith(preds ...predicate.Unit) predicate.Application {
-	return predicate.Application(func(s *sql.Selector) {
-		step := newUnitStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

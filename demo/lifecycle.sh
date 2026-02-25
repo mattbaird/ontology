@@ -246,7 +246,7 @@ PROP=$(api_ok POST /v1/properties "{
   \"status\": \"onboarding\",
   \"year_built\": 1995,
   \"total_square_footage\": 24000,
-  \"total_units\": 12,
+  \"total_spaces\": 12,
   \"stories\": 3,
   \"parking_spaces\": 24,
   \"requires_lead_disclosure\": false,
@@ -265,11 +265,11 @@ entity "Property: Sunset Apartments (onboarding)  (id: ${PROP_ID:0:8}…)"
 api_ok POST "/v1/properties/${PROP_ID}/activate" '{}' >/dev/null
 transition "Property: onboarding → active  (via POST /activate)"
 
-# Unit 101
-UNIT1=$(api_ok POST /v1/units "{
+# Space 101
+SPACE1=$(api_ok POST /v1/spaces "{
   \"property_id\": \"${PROP_ID}\",
-  \"unit_number\": \"101\",
-  \"unit_type\": \"residential\",
+  \"space_number\": \"101\",
+  \"space_type\": \"residential_unit\",
   \"status\": \"vacant\",
   \"square_footage\": 750,
   \"bedrooms\": 1,
@@ -279,14 +279,14 @@ UNIT1=$(api_ok POST /v1/units "{
   \"market_rent_currency\": \"USD\",
   \"amenities\": [\"dishwasher\", \"in_unit_laundry\"]
 }")
-UNIT1_ID=$(id_of "$UNIT1")
-entity "Unit: 101 — 1BR/1BA vacant  (id: ${UNIT1_ID:0:8}…)"
+SPACE1_ID=$(id_of "$SPACE1")
+entity "Space: 101 — 1BR/1BA vacant  (id: ${SPACE1_ID:0:8}…)"
 
-# Unit 202
-UNIT2=$(api_ok POST /v1/units "{
+# Space 202
+SPACE2=$(api_ok POST /v1/spaces "{
   \"property_id\": \"${PROP_ID}\",
-  \"unit_number\": \"202\",
-  \"unit_type\": \"residential\",
+  \"space_number\": \"202\",
+  \"space_type\": \"residential_unit\",
   \"status\": \"vacant\",
   \"square_footage\": 1100,
   \"bedrooms\": 2,
@@ -296,8 +296,8 @@ UNIT2=$(api_ok POST /v1/units "{
   \"market_rent_currency\": \"USD\",
   \"amenities\": [\"dishwasher\", \"in_unit_laundry\", \"balcony\"]
 }")
-UNIT2_ID=$(id_of "$UNIT2")
-entity "Unit: 202 — 2BR/2BA vacant  (id: ${UNIT2_ID:0:8}…)"
+SPACE2_ID=$(id_of "$SPACE2")
+entity "Space: 202 — 2BR/2BA vacant  (id: ${SPACE2_ID:0:8}…)"
 
 sleep 0.3
 
@@ -305,7 +305,7 @@ sleep 0.3
 header "ACT 3 — The Tenant Application"
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-narrate "Marcus Johnson finds Unit 101 online and submits an application."
+narrate "Marcus Johnson finds Space 101 online and submits an application."
 sleep 0.3
 
 # Person — prospective tenant
@@ -324,7 +324,7 @@ entity "Person: Marcus Johnson — prospective tenant  (id: ${MARCUS_ID:0:8}…)
 APP=$(api_ok POST /v1/applications "{
   \"applicant_person_id\": \"${MARCUS_ID}\",
   \"property_id\": \"${PROP_ID}\",
-  \"unit_id\": \"${UNIT1_ID}\",
+  \"space_id\": \"${SPACE1_ID}\",
   \"status\": \"submitted\",
   \"desired_move_in\": \"${TERM_START}\",
   \"desired_lease_term_months\": 12,
@@ -332,7 +332,7 @@ APP=$(api_ok POST /v1/applications "{
   \"application_fee_currency\": \"USD\"
 }")
 APP_ID=$(id_of "$APP")
-entity "Application: submitted for Unit 101  (id: ${APP_ID:0:8}…)"
+entity "Application: submitted for Space 101  (id: ${APP_ID:0:8}…)"
 
 # GUARDRAIL: Try invalid transition submitted → approved
 narrate "Can we skip straight to approved? The ontology says NO."
@@ -347,7 +347,7 @@ narrate "After screening completes, the application reaches under_review..."
 APP2=$(api_ok POST /v1/applications "{
   \"applicant_person_id\": \"${MARCUS_ID}\",
   \"property_id\": \"${PROP_ID}\",
-  \"unit_id\": \"${UNIT1_ID}\",
+  \"space_id\": \"${SPACE1_ID}\",
   \"status\": \"under_review\",
   \"desired_move_in\": \"${TERM_START}\",
   \"desired_lease_term_months\": 12,
@@ -365,7 +365,7 @@ sleep 0.3
 header "ACT 4 — The Lease Lifecycle"
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-narrate "Application approved — time to draft a lease for Marcus on Unit 101."
+narrate "Application approved — time to draft a lease for Marcus on Space 101."
 sleep 0.3
 
 # Create a tenant PersonRole for Marcus
@@ -385,10 +385,10 @@ transition "PersonRole: pending → active"
 # Lease
 LEASE=$(api_ok POST /v1/leases "{
   \"property_id\": \"${PROP_ID}\",
-  \"unit_id\": \"${UNIT1_ID}\",
   \"tenant_role_ids\": [\"${TENANT_ROLE_ID}\"],
   \"lease_type\": \"fixed_term\",
   \"status\": \"draft\",
+  \"liability_type\": \"joint_and_several\",
   \"term\": {\"start\": \"${TERM_START}\", \"end\": \"${TERM_END}\"},
   \"base_rent_amount_cents\": 185000,
   \"base_rent_currency\": \"USD\",
@@ -478,7 +478,7 @@ narrate "Recording first month's rent: debit Cash \$1,850, credit Rental Income 
 JE_RENT=$(api_ok POST /v1/journal-entries "{
   \"entry_date\": \"${TERM_START}\",
   \"posted_date\": \"${TERM_START}\",
-  \"description\": \"March 2026 rent — Unit 101, Marcus Johnson\",
+  \"description\": \"March 2026 rent — Space 101, Marcus Johnson\",
   \"source_type\": \"auto_charge\",
   \"status\": \"draft\",
   \"property_id\": \"${PROP_ID}\",
@@ -527,7 +527,7 @@ narrate "Recording security deposit, then voiding it to show full JE lifecycle."
 JE_DEP=$(api_ok POST /v1/journal-entries "{
   \"entry_date\": \"${TERM_START}\",
   \"posted_date\": \"${TERM_START}\",
-  \"description\": \"Security deposit — Unit 101, Marcus Johnson\",
+  \"description\": \"Security deposit — Space 101, Marcus Johnson\",
   \"source_type\": \"manual\",
   \"status\": \"draft\",
   \"property_id\": \"${PROP_ID}\",
@@ -556,9 +556,10 @@ printf "  ${CYAN}╔════════════════════
 box_line ""
 box_line "  One CUE Ontology Generated:"
 box_line ""
-box_line "    13 Ent entities (Person, Org, Role, Portfolio,"
-box_line "       Property, Unit, Application, Lease, Account,"
-box_line "       LedgerEntry, JournalEntry, BankAccount, Recon)"
+box_line "    15 Ent entities (Person, Org, Role, Portfolio,"
+box_line "       Property, Building, Space, LeaseSpace, Application,"
+box_line "       Lease, Account, LedgerEntry, JournalEntry,"
+box_line "       BankAccount, Recon)"
 box_line ""
 box_line "    50 REST endpoints across 4 services"
 box_line "    10 state machines with enforced transitions"
@@ -575,4 +576,4 @@ box_line ""
 printf "  ${CYAN}╚════════════════════════════════════════════════════════╝${RESET}\n"
 printf "\n"
 
-printf "${GREEN}${BOLD}Demo complete.${RESET} All 13 entities exercised across the full lifecycle.\n\n"
+printf "${GREEN}${BOLD}Demo complete.${RESET} All 15 entities exercised across the full lifecycle.\n\n"

@@ -173,6 +173,7 @@ const (
 	RoleTypeGuarantor          RoleType = "guarantor"
 	RoleTypeEmergencyContact   RoleType = "emergency_contact"
 	RoleTypeAuthorizedOccupant RoleType = "authorized_occupant"
+	RoleTypeCoSigner           RoleType = "co_signer"
 )
 
 func (rt RoleType) String() string {
@@ -182,7 +183,7 @@ func (rt RoleType) String() string {
 // RoleTypeValidator is a validator for the "role_type" field enum values. It is called by the builders before save.
 func RoleTypeValidator(rt RoleType) error {
 	switch rt {
-	case RoleTypeTenant, RoleTypeOwner, RoleTypePropertyManager, RoleTypeMaintenanceTech, RoleTypeLeasingAgent, RoleTypeAccountant, RoleTypeVendorContact, RoleTypeGuarantor, RoleTypeEmergencyContact, RoleTypeAuthorizedOccupant:
+	case RoleTypeTenant, RoleTypeOwner, RoleTypePropertyManager, RoleTypeMaintenanceTech, RoleTypeLeasingAgent, RoleTypeAccountant, RoleTypeVendorContact, RoleTypeGuarantor, RoleTypeEmergencyContact, RoleTypeAuthorizedOccupant, RoleTypeCoSigner:
 		return nil
 	default:
 		return fmt.Errorf("personrole: invalid enum value for role_type field: %q", rt)
@@ -197,7 +198,8 @@ const (
 	ScopeTypeOrganization ScopeType = "organization"
 	ScopeTypePortfolio    ScopeType = "portfolio"
 	ScopeTypeProperty     ScopeType = "property"
-	ScopeTypeUnit         ScopeType = "unit"
+	ScopeTypeBuilding     ScopeType = "building"
+	ScopeTypeSpace        ScopeType = "space"
 	ScopeTypeLease        ScopeType = "lease"
 )
 
@@ -208,7 +210,7 @@ func (st ScopeType) String() string {
 // ScopeTypeValidator is a validator for the "scope_type" field enum values. It is called by the builders before save.
 func ScopeTypeValidator(st ScopeType) error {
 	switch st {
-	case ScopeTypeOrganization, ScopeTypePortfolio, ScopeTypeProperty, ScopeTypeUnit, ScopeTypeLease:
+	case ScopeTypeOrganization, ScopeTypePortfolio, ScopeTypeProperty, ScopeTypeBuilding, ScopeTypeSpace, ScopeTypeLease:
 		return nil
 	default:
 		return fmt.Errorf("personrole: invalid enum value for scope_type field: %q", st)

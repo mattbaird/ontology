@@ -3,7 +3,10 @@
 // as JSON columns in Postgres when embedded in entities.
 package types
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // Money represents a monetary amount using integer cents to eliminate
 // floating-point errors in financial operations.
@@ -58,10 +61,11 @@ type EntityRef struct {
 
 // RentScheduleEntry defines rent for a specific time period within a lease.
 type RentScheduleEntry struct {
-	EffectivePeriod DateRange `json:"effective_period"`
-	Amount          Money     `json:"amount"`
-	Description     string    `json:"description"`
-	ChargeCode      string    `json:"charge_code"`
+	EffectivePeriod DateRange       `json:"effective_period"`
+	FixedAmount     *Money          `json:"fixed_amount,omitempty"`
+	Adjustment      *RentAdjustment `json:"adjustment,omitempty"`
+	Description     string          `json:"description"`
+	ChargeCode      string          `json:"charge_code"`
 }
 
 // RecurringCharge represents a recurring fee beyond base rent.
@@ -73,6 +77,7 @@ type RecurringCharge struct {
 	Frequency       string    `json:"frequency"` // "monthly", "quarterly", "annually", "one_time"
 	EffectivePeriod DateRange `json:"effective_period"`
 	Taxable         bool      `json:"taxable"`
+	SpaceID         string    `json:"space_id,omitempty"`
 }
 
 // LateFeePolicy defines how late fees are calculated.
@@ -104,6 +109,9 @@ type CAMTerms struct {
 	IncludesInsurance     bool    `json:"includes_insurance"`
 	IncludesUtilities     bool    `json:"includes_utilities"`
 	ExcludedCategories    []string `json:"excluded_categories,omitempty"`
+	BaseYearExpenses      *Money   `json:"base_year_expenses,omitempty"`
+	ExpenseStop           *Money   `json:"expense_stop,omitempty"`
+	CategoryTerms         []CAMCategoryTerms `json:"category_terms,omitempty"`
 }
 
 // TenantImprovement defines tenant improvement allowance terms.
@@ -124,6 +132,8 @@ type RenewalOption struct {
 	PercentIncrease    *float64 `json:"percent_increase,omitempty"`
 	NoticeRequiredDays int      `json:"notice_required_days"`
 	MustExerciseBy     *time.Time `json:"must_exercise_by,omitempty"`
+	CPIFloor           *float64 `json:"cpi_floor,omitempty"`
+	CPICeiling         *float64 `json:"cpi_ceiling,omitempty"`
 }
 
 // SubsidyTerms defines affordable housing subsidy information.
@@ -168,6 +178,8 @@ type TenantAttributes struct {
 	MoveOutDate     *time.Time `json:"move_out_date,omitempty"`
 	PetCount        *int       `json:"pet_count,omitempty"`
 	VehicleCount    *int       `json:"vehicle_count,omitempty"`
+	OccupancyStatus string     `json:"occupancy_status"`
+	LiabilityStatus string     `json:"liability_status"`
 }
 
 // OwnerAttributes are role-specific attributes for owners.
@@ -199,6 +211,67 @@ type GuarantorAttributes struct {
 	CreditScore     *int       `json:"credit_score,omitempty"`
 }
 
+// UsageBasedCharge defines metered utility charges.
+type UsageBasedCharge struct {
+	ID               string `json:"id"`
+	ChargeCode       string `json:"charge_code"`
+	Description      string `json:"description"`
+	UnitOfMeasure    string `json:"unit_of_measure"`    // "kwh", "gallon", "cubic_foot", "therm", "hour", "gb"
+	RatePerUnit      Money  `json:"rate_per_unit"`       // #PositiveMoney
+	MeterID          string `json:"meter_id,omitempty"`
+	BillingFrequency string `json:"billing_frequency"`   // "monthly", "quarterly"
+	Cap              *Money `json:"cap,omitempty"`
+	SpaceID          string `json:"space_id,omitempty"`
+}
+
+// PercentageRent defines retail percentage rent terms.
+type PercentageRent struct {
+	Rate                  float64 `json:"rate"`
+	BreakpointType        string  `json:"breakpoint_type"`
+	NaturalBreakpoint     *Money  `json:"natural_breakpoint,omitempty"`
+	ArtificialBreakpoint  *Money  `json:"artificial_breakpoint,omitempty"`
+	ReportingFrequency    string  `json:"reporting_frequency"`
+	AuditRights           bool    `json:"audit_rights"`
+}
+
+// RentAdjustment defines formula-based rent escalations.
+type RentAdjustment struct {
+	Method                 string   `json:"method"`      // "cpi", "fixed_percent", "fixed_amount_increase", "market_review"
+	BaseAmount             Money    `json:"base_amount"`
+	CPIIndex               string   `json:"cpi_index,omitempty"`    // "CPI-U", "CPI-W", "regional"
+	CPIFloor               *float64 `json:"cpi_floor,omitempty"`
+	CPICeiling             *float64 `json:"cpi_ceiling,omitempty"`
+	PercentIncrease        *float64 `json:"percent_increase,omitempty"`
+	AmountIncrease         *Money   `json:"amount_increase,omitempty"`
+	MarketReviewMechanism  string   `json:"market_review_mechanism,omitempty"`
+}
+
+// ExpansionRight defines commercial expansion options.
+type ExpansionRight struct {
+	Type               string     `json:"type"` // "first_right_of_refusal", "first_right_to_negotiate", "must_take", "option"
+	TargetSpaceIDs     []string   `json:"target_space_ids"`
+	ExerciseDeadline   *time.Time `json:"exercise_deadline,omitempty"`
+	Terms              string     `json:"terms,omitempty"`
+	NoticeRequiredDays int        `json:"notice_required_days"`
+}
+
+// ContractionRight defines commercial contraction options.
+type ContractionRight struct {
+	MinimumRetainedSqft  float64    `json:"minimum_retained_sqft"`
+	EarliestExerciseDate time.Time  `json:"earliest_exercise_date"`
+	Penalty              *Money     `json:"penalty,omitempty"`
+	NoticeRequiredDays   int        `json:"notice_required_days"`
+}
+
+// CAMCategoryTerms defines per-category CAM controls.
+type CAMCategoryTerms struct {
+	Category    string   `json:"category"` // "property_tax", "insurance", "utilities", etc.
+	TenantPays  bool     `json:"tenant_pays"`
+	LandlordCap *Money   `json:"landlord_cap,omitempty"`
+	TenantCap   *Money   `json:"tenant_cap,omitempty"`
+	Escalation  *float64 `json:"escalation,omitempty"`
+}
+
 // RoleAttributes is a union type for role-specific attributes.
 // In Go, we use json.RawMessage at the Ent level and unmarshal to the
 // specific type based on the _type field.
@@ -206,4 +279,105 @@ type RoleAttributes struct {
 	Type string `json:"_type"`
 	// Raw holds the full JSON for type-specific unmarshaling
 	Raw []byte `json:"-"`
+}
+
+// ─── Signal Discovery Types ────────────────────────────────────────────────────
+// These types support the signal discovery system (Layers 1-3).
+// ActivityEntry is NOT an Ent entity — it's stored in a separate partitioned
+// Postgres table outside the ORM.
+
+// SourceRef identifies an entity referenced by a domain event.
+type SourceRef struct {
+	EntityType string `json:"entity_type"`
+	EntityID   string `json:"entity_id"`
+	Role       string `json:"role"` // "subject", "target", "related", "context"
+}
+
+// ActivityEntry is a secondary index entry over the domain event log,
+// keyed by a referenced entity. One event produces multiple entries.
+type ActivityEntry struct {
+	EventID           string            `json:"event_id"`
+	EventType         string            `json:"event_type"`
+	OccurredAt        time.Time         `json:"occurred_at"`
+	IndexedEntityType string            `json:"indexed_entity_type"`
+	IndexedEntityID   string            `json:"indexed_entity_id"`
+	EntityRole        string            `json:"entity_role"` // "subject", "target", "related", "context"
+	SourceRefs        []SourceRef       `json:"source_refs"`
+	Summary           string            `json:"summary"`
+	Category          string            `json:"category"` // #SignalCategory
+	Weight            string            `json:"weight"`   // #SignalWeight
+	Polarity          string            `json:"polarity"` // #SignalPolarity
+	Payload           json.RawMessage   `json:"payload"`
+}
+
+// SignalRegistration maps an event type to a signal classification.
+type SignalRegistration struct {
+	ID                     string           `json:"id"`
+	EventType              string           `json:"event_type"`
+	Condition              string           `json:"condition,omitempty"`
+	Category               string           `json:"category"`
+	Weight                 string           `json:"weight"`
+	Polarity               string           `json:"polarity"`
+	Description            string           `json:"description"`
+	InterpretationGuidance string           `json:"interpretation_guidance,omitempty"`
+	EscalationRules        []EscalationRule `json:"escalation_rules,omitempty"`
+}
+
+// EscalationRule defines when repeated or combined signals escalate in severity.
+type EscalationRule struct {
+	ID                     string                 `json:"id"`
+	Description            string                 `json:"description"`
+	TriggerType            string                 `json:"trigger_type"` // "count", "cross_category", "absence", "trend"
+	SignalCategory         string                 `json:"signal_category,omitempty"`
+	SignalPolarity         string                 `json:"signal_polarity,omitempty"`
+	Count                  int                    `json:"count,omitempty"`
+	WithinDays             int                    `json:"within_days,omitempty"`
+	RequiredCategories     []CategoryRequirement  `json:"required_categories,omitempty"`
+	ExpectedSignalCategory string                 `json:"expected_signal_category,omitempty"`
+	AbsentForDays          int                    `json:"absent_for_days,omitempty"`
+	AppliesToCondition     string                 `json:"applies_to_condition,omitempty"`
+	TrendDirection         string                 `json:"trend_direction,omitempty"`
+	TrendMetric            string                 `json:"trend_metric,omitempty"`
+	TrendWindowDays        int                    `json:"trend_window_days,omitempty"`
+	EscalatedWeight        string                 `json:"escalated_weight"`
+	EscalatedDescription   string                 `json:"escalated_description"`
+	RecommendedAction      string                 `json:"recommended_action,omitempty"`
+}
+
+// CategoryRequirement is used in cross-category escalation rules.
+type CategoryRequirement struct {
+	Category string `json:"category"`
+	Polarity string `json:"polarity,omitempty"`
+	MinCount int    `json:"min_count"`
+}
+
+// EscalatedSignal is a triggered escalation rule with context.
+type EscalatedSignal struct {
+	Rule             EscalationRule `json:"rule"`
+	TriggeringCount  int            `json:"triggering_count"`
+	EarliestOccurred time.Time      `json:"earliest_occurred"`
+	LatestOccurred   time.Time      `json:"latest_occurred"`
+}
+
+// CategorySummary aggregates signals within a single category.
+type CategorySummary struct {
+	Category        string            `json:"category"`
+	SignalCount     int               `json:"signal_count"`
+	ByWeight        map[string]int    `json:"by_weight"`
+	ByPolarity      map[string]int    `json:"by_polarity"`
+	DominantPolarity string           `json:"dominant_polarity"`
+	TopSignals      []ActivityEntry   `json:"top_signals,omitempty"`
+	Trend           string            `json:"trend"` // "improving", "stable", "declining"
+}
+
+// SignalSummary is the pre-aggregated signal overview for an entity.
+type SignalSummary struct {
+	EntityType          string                     `json:"entity_type"`
+	EntityID            string                     `json:"entity_id"`
+	Since               time.Time                  `json:"since"`
+	Until               time.Time                  `json:"until"`
+	Categories          map[string]CategorySummary  `json:"categories"`
+	OverallSentiment    string                     `json:"overall_sentiment"` // "positive", "mixed", "concerning", "critical"
+	SentimentReason     string                     `json:"sentiment_reason"`
+	Escalations         []EscalatedSignal          `json:"escalations"`
 }

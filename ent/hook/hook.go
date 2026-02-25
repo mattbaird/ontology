@@ -45,6 +45,18 @@ func (f BankAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BankAccountMutation", m)
 }
 
+// The BuildingFunc type is an adapter to allow the use of ordinary
+// function as Building mutator.
+type BuildingFunc func(context.Context, *ent.BuildingMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BuildingFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BuildingMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BuildingMutation", m)
+}
+
 // The JournalEntryFunc type is an adapter to allow the use of ordinary
 // function as JournalEntry mutator.
 type JournalEntryFunc func(context.Context, *ent.JournalEntryMutation) (ent.Value, error)
@@ -67,6 +79,18 @@ func (f LeaseFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeaseMutation", m)
+}
+
+// The LeaseSpaceFunc type is an adapter to allow the use of ordinary
+// function as LeaseSpace mutator.
+type LeaseSpaceFunc func(context.Context, *ent.LeaseSpaceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f LeaseSpaceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.LeaseSpaceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeaseSpaceMutation", m)
 }
 
 // The LedgerEntryFunc type is an adapter to allow the use of ordinary
@@ -153,16 +177,16 @@ func (f ReconciliationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReconciliationMutation", m)
 }
 
-// The UnitFunc type is an adapter to allow the use of ordinary
-// function as Unit mutator.
-type UnitFunc func(context.Context, *ent.UnitMutation) (ent.Value, error)
+// The SpaceFunc type is an adapter to allow the use of ordinary
+// function as Space mutator.
+type SpaceFunc func(context.Context, *ent.SpaceMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f UnitFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.UnitMutation); ok {
+func (f SpaceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SpaceMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UnitMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SpaceMutation", m)
 }
 
 // Condition is a hook condition function.

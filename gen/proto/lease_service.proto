@@ -122,11 +122,11 @@ service LeaseService {
   rpc SubmitForApproval(SubmitForApprovalRequest) returns (SubmitForApprovalResponse);
   // Approve lease for signing
   rpc ApproveLease(ApproveLeaseRequest) returns (ApproveLeaseResponse);
-  // Activate a signed lease. Side effects: Unit status -> occupied, security deposit charge created
+  // Activate a signed lease
   rpc ActivateLease(ActivateLeaseRequest) returns (ActivateLeaseResponse);
   // Terminate a lease early. Requires reason for audit trail
   rpc TerminateLease(TerminateLeaseRequest) returns (TerminateLeaseResponse);
-  // Renew a lease. Creates a new lease entity for the renewal term
+  // Renew a lease
   rpc RenewLease(RenewLeaseRequest) returns (RenewLeaseResponse);
   // Begin eviction process
   rpc StartEviction(StartEvictionRequest) returns (StartEvictionResponse);
@@ -138,7 +138,7 @@ service LeaseService {
   rpc ListApplications(ListApplicationsRequest) returns (ListApplicationsResponse);
   // Approve a lease application
   rpc ApproveApplication(ApproveApplicationRequest) returns (ApproveApplicationResponse);
-  // Deny a lease application. Reason required for fair housing compliance
+  // Deny a lease application
   rpc DenyApplication(DenyApplicationRequest) returns (DenyApplicationResponse);
 }
 
@@ -204,7 +204,6 @@ message ApproveLeaseResponse {
 message ActivateLeaseRequest {
   string id = 1;
   string move_in_date = 2;
-  string confirmed_rent = 3;
 }
 
 message ActivateLeaseResponse {
@@ -234,7 +233,6 @@ message RenewLeaseResponse {
 
 message StartEvictionRequest {
   string id = 1;
-  string reason = 2;
 }
 
 message StartEvictionResponse {
@@ -274,7 +272,6 @@ message ListApplicationsResponse {
 
 message ApproveApplicationRequest {
   string id = 1;
-  string conditions = 2;
 }
 
 message ApproveApplicationResponse {
@@ -284,7 +281,6 @@ message ApproveApplicationResponse {
 
 message DenyApplicationRequest {
   string id = 1;
-  string reason = 2;
 }
 
 message DenyApplicationResponse {

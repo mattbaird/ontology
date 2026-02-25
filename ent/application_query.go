@@ -17,7 +17,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/person"
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // ApplicationQuery is the builder for querying Application entities.
@@ -27,10 +27,10 @@ type ApplicationQuery struct {
 	order              []application.OrderOption
 	inters             []Interceptor
 	predicates         []predicate.Application
+	withProperty       *PropertyQuery
+	withSpace          *SpaceQuery
 	withResultingLease *LeaseQuery
 	withApplicant      *PersonQuery
-	withProperty       *PropertyQuery
-	withUnit           *UnitQuery
 	withFKs            bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -66,6 +66,50 @@ func (_q *ApplicationQuery) Unique(unique bool) *ApplicationQuery {
 func (_q *ApplicationQuery) Order(o ...application.OrderOption) *ApplicationQuery {
 	_q.order = append(_q.order, o...)
 	return _q
+}
+
+// QueryProperty chains the current query on the "property" edge.
+func (_q *ApplicationQuery) QueryProperty() *PropertyQuery {
+	query := (&PropertyClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(application.Table, application.FieldID, selector),
+			sqlgraph.To(property.Table, property.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, application.PropertyTable, application.PropertyColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySpace chains the current query on the "space" edge.
+func (_q *ApplicationQuery) QuerySpace() *SpaceQuery {
+	query := (&SpaceClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(application.Table, application.FieldID, selector),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, application.SpaceTable, application.SpaceColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // QueryResultingLease chains the current query on the "resulting_lease" edge.
@@ -105,50 +149,6 @@ func (_q *ApplicationQuery) QueryApplicant() *PersonQuery {
 			sqlgraph.From(application.Table, application.FieldID, selector),
 			sqlgraph.To(person.Table, person.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, application.ApplicantTable, application.ApplicantColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryProperty chains the current query on the "property" edge.
-func (_q *ApplicationQuery) QueryProperty() *PropertyQuery {
-	query := (&PropertyClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(application.Table, application.FieldID, selector),
-			sqlgraph.To(property.Table, property.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, application.PropertyTable, application.PropertyColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryUnit chains the current query on the "unit" edge.
-func (_q *ApplicationQuery) QueryUnit() *UnitQuery {
-	query := (&UnitClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(application.Table, application.FieldID, selector),
-			sqlgraph.To(unit.Table, unit.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, application.UnitTable, application.UnitColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -348,14 +348,36 @@ func (_q *ApplicationQuery) Clone() *ApplicationQuery {
 		order:              append([]application.OrderOption{}, _q.order...),
 		inters:             append([]Interceptor{}, _q.inters...),
 		predicates:         append([]predicate.Application{}, _q.predicates...),
+		withProperty:       _q.withProperty.Clone(),
+		withSpace:          _q.withSpace.Clone(),
 		withResultingLease: _q.withResultingLease.Clone(),
 		withApplicant:      _q.withApplicant.Clone(),
-		withProperty:       _q.withProperty.Clone(),
-		withUnit:           _q.withUnit.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
+}
+
+// WithProperty tells the query-builder to eager-load the nodes that are connected to
+// the "property" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ApplicationQuery) WithProperty(opts ...func(*PropertyQuery)) *ApplicationQuery {
+	query := (&PropertyClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withProperty = query
+	return _q
+}
+
+// WithSpace tells the query-builder to eager-load the nodes that are connected to
+// the "space" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ApplicationQuery) WithSpace(opts ...func(*SpaceQuery)) *ApplicationQuery {
+	query := (&SpaceClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSpace = query
+	return _q
 }
 
 // WithResultingLease tells the query-builder to eager-load the nodes that are connected to
@@ -377,28 +399,6 @@ func (_q *ApplicationQuery) WithApplicant(opts ...func(*PersonQuery)) *Applicati
 		opt(query)
 	}
 	_q.withApplicant = query
-	return _q
-}
-
-// WithProperty tells the query-builder to eager-load the nodes that are connected to
-// the "property" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *ApplicationQuery) WithProperty(opts ...func(*PropertyQuery)) *ApplicationQuery {
-	query := (&PropertyClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withProperty = query
-	return _q
-}
-
-// WithUnit tells the query-builder to eager-load the nodes that are connected to
-// the "unit" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *ApplicationQuery) WithUnit(opts ...func(*UnitQuery)) *ApplicationQuery {
-	query := (&UnitClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withUnit = query
 	return _q
 }
 
@@ -482,13 +482,13 @@ func (_q *ApplicationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [4]bool{
+			_q.withProperty != nil,
+			_q.withSpace != nil,
 			_q.withResultingLease != nil,
 			_q.withApplicant != nil,
-			_q.withProperty != nil,
-			_q.withUnit != nil,
 		}
 	)
-	if _q.withResultingLease != nil || _q.withApplicant != nil || _q.withProperty != nil || _q.withUnit != nil {
+	if _q.withProperty != nil || _q.withSpace != nil || _q.withResultingLease != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -512,6 +512,18 @@ func (_q *ApplicationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := _q.withProperty; query != nil {
+		if err := _q.loadProperty(ctx, query, nodes, nil,
+			func(n *Application, e *Property) { n.Edges.Property = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSpace; query != nil {
+		if err := _q.loadSpace(ctx, query, nodes, nil,
+			func(n *Application, e *Space) { n.Edges.Space = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := _q.withResultingLease; query != nil {
 		if err := _q.loadResultingLease(ctx, query, nodes, nil,
 			func(n *Application, e *Lease) { n.Edges.ResultingLease = e }); err != nil {
@@ -524,21 +536,73 @@ func (_q *ApplicationQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 			return nil, err
 		}
 	}
-	if query := _q.withProperty; query != nil {
-		if err := _q.loadProperty(ctx, query, nodes, nil,
-			func(n *Application, e *Property) { n.Edges.Property = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withUnit; query != nil {
-		if err := _q.loadUnit(ctx, query, nodes, nil,
-			func(n *Application, e *Unit) { n.Edges.Unit = e }); err != nil {
-			return nil, err
-		}
-	}
 	return nodes, nil
 }
 
+func (_q *ApplicationQuery) loadProperty(ctx context.Context, query *PropertyQuery, nodes []*Application, init func(*Application), assign func(*Application, *Property)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Application)
+	for i := range nodes {
+		if nodes[i].property_applications == nil {
+			continue
+		}
+		fk := *nodes[i].property_applications
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(property.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "property_applications" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *ApplicationQuery) loadSpace(ctx context.Context, query *SpaceQuery, nodes []*Application, init func(*Application), assign func(*Application, *Space)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Application)
+	for i := range nodes {
+		if nodes[i].space_applications == nil {
+			continue
+		}
+		fk := *nodes[i].space_applications
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(space.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "space_applications" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 func (_q *ApplicationQuery) loadResultingLease(ctx context.Context, query *LeaseQuery, nodes []*Application, init func(*Application), assign func(*Application, *Lease)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Application)
@@ -575,10 +639,7 @@ func (_q *ApplicationQuery) loadApplicant(ctx context.Context, query *PersonQuer
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Application)
 	for i := range nodes {
-		if nodes[i].application_applicant == nil {
-			continue
-		}
-		fk := *nodes[i].application_applicant
+		fk := nodes[i].ApplicantPersonID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -595,71 +656,7 @@ func (_q *ApplicationQuery) loadApplicant(ctx context.Context, query *PersonQuer
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "application_applicant" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *ApplicationQuery) loadProperty(ctx context.Context, query *PropertyQuery, nodes []*Application, init func(*Application), assign func(*Application, *Property)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Application)
-	for i := range nodes {
-		if nodes[i].application_property == nil {
-			continue
-		}
-		fk := *nodes[i].application_property
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(property.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "application_property" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *ApplicationQuery) loadUnit(ctx context.Context, query *UnitQuery, nodes []*Application, init func(*Application), assign func(*Application, *Unit)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Application)
-	for i := range nodes {
-		if nodes[i].application_unit == nil {
-			continue
-		}
-		fk := *nodes[i].application_unit
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(unit.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "application_unit" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "applicant_person_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -692,6 +689,9 @@ func (_q *ApplicationQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != application.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withApplicant != nil {
+			_spec.Node.AddColumnOnce(application.FieldApplicantPersonID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

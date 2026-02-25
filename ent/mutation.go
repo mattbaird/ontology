@@ -15,8 +15,10 @@ import (
 	"github.com/matthewbaird/ontology/ent/account"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/building"
 	"github.com/matthewbaird/ontology/ent/journalentry"
 	"github.com/matthewbaird/ontology/ent/lease"
+	"github.com/matthewbaird/ontology/ent/leasespace"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/organization"
 	"github.com/matthewbaird/ontology/ent/person"
@@ -25,7 +27,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
 	"github.com/matthewbaird/ontology/ent/reconciliation"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 	"github.com/matthewbaird/ontology/internal/types"
 )
 
@@ -41,8 +43,10 @@ const (
 	TypeAccount        = "Account"
 	TypeApplication    = "Application"
 	TypeBankAccount    = "BankAccount"
+	TypeBuilding       = "Building"
 	TypeJournalEntry   = "JournalEntry"
 	TypeLease          = "Lease"
+	TypeLeaseSpace     = "LeaseSpace"
 	TypeLedgerEntry    = "LedgerEntry"
 	TypeOrganization   = "Organization"
 	TypePerson         = "Person"
@@ -50,7 +54,7 @@ const (
 	TypePortfolio      = "Portfolio"
 	TypeProperty       = "Property"
 	TypeReconciliation = "Reconciliation"
-	TypeUnit           = "Unit"
+	TypeSpace          = "Space"
 )
 
 // AccountMutation represents an operation that mutates the Account nodes in the graph.
@@ -71,17 +75,17 @@ type AccountMutation struct {
 	description                   *string
 	account_type                  *account.AccountType
 	account_subtype               *account.AccountSubtype
-	parent_account_id             *string
+	parent_account_id             *uuid.UUID
 	depth                         *int
 	adddepth                      *int
 	dimensions                    **types.AccountDimensions
-	normal_balance                *account.NormalBalance
+	normal_balance                *string
 	is_header                     *bool
 	is_system                     *bool
 	allows_direct_posting         *bool
 	status                        *account.Status
 	is_trust_account              *bool
-	trust_type                    *account.TrustType
+	trust_type                    *string
 	budget_amount_amount_cents    *int64
 	addbudget_amount_amount_cents *int64
 	budget_amount_currency        *string
@@ -679,12 +683,12 @@ func (m *AccountMutation) ResetAccountSubtype() {
 }
 
 // SetParentAccountID sets the "parent_account_id" field.
-func (m *AccountMutation) SetParentAccountID(s string) {
-	m.parent_account_id = &s
+func (m *AccountMutation) SetParentAccountID(u uuid.UUID) {
+	m.parent_account_id = &u
 }
 
 // ParentAccountID returns the value of the "parent_account_id" field in the mutation.
-func (m *AccountMutation) ParentAccountID() (r string, exists bool) {
+func (m *AccountMutation) ParentAccountID() (r uuid.UUID, exists bool) {
 	v := m.parent_account_id
 	if v == nil {
 		return
@@ -695,7 +699,7 @@ func (m *AccountMutation) ParentAccountID() (r string, exists bool) {
 // OldParentAccountID returns the old "parent_account_id" field's value of the Account entity.
 // If the Account object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AccountMutation) OldParentAccountID(ctx context.Context) (v *string, err error) {
+func (m *AccountMutation) OldParentAccountID(ctx context.Context) (v *uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldParentAccountID is only allowed on UpdateOne operations")
 	}
@@ -833,12 +837,12 @@ func (m *AccountMutation) ResetDimensions() {
 }
 
 // SetNormalBalance sets the "normal_balance" field.
-func (m *AccountMutation) SetNormalBalance(ab account.NormalBalance) {
-	m.normal_balance = &ab
+func (m *AccountMutation) SetNormalBalance(s string) {
+	m.normal_balance = &s
 }
 
 // NormalBalance returns the value of the "normal_balance" field in the mutation.
-func (m *AccountMutation) NormalBalance() (r account.NormalBalance, exists bool) {
+func (m *AccountMutation) NormalBalance() (r string, exists bool) {
 	v := m.normal_balance
 	if v == nil {
 		return
@@ -849,7 +853,7 @@ func (m *AccountMutation) NormalBalance() (r account.NormalBalance, exists bool)
 // OldNormalBalance returns the old "normal_balance" field's value of the Account entity.
 // If the Account object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AccountMutation) OldNormalBalance(ctx context.Context) (v account.NormalBalance, err error) {
+func (m *AccountMutation) OldNormalBalance(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldNormalBalance is only allowed on UpdateOne operations")
 	}
@@ -1049,12 +1053,12 @@ func (m *AccountMutation) ResetIsTrustAccount() {
 }
 
 // SetTrustType sets the "trust_type" field.
-func (m *AccountMutation) SetTrustType(at account.TrustType) {
-	m.trust_type = &at
+func (m *AccountMutation) SetTrustType(s string) {
+	m.trust_type = &s
 }
 
 // TrustType returns the value of the "trust_type" field in the mutation.
-func (m *AccountMutation) TrustType() (r account.TrustType, exists bool) {
+func (m *AccountMutation) TrustType() (r string, exists bool) {
 	v := m.trust_type
 	if v == nil {
 		return
@@ -1065,7 +1069,7 @@ func (m *AccountMutation) TrustType() (r account.TrustType, exists bool) {
 // OldTrustType returns the old "trust_type" field's value of the Account entity.
 // If the Account object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *AccountMutation) OldTrustType(ctx context.Context) (v *account.TrustType, err error) {
+func (m *AccountMutation) OldTrustType(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldTrustType is only allowed on UpdateOne operations")
 	}
@@ -1787,7 +1791,7 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 		m.SetAccountSubtype(v)
 		return nil
 	case account.FieldParentAccountID:
-		v, ok := value.(string)
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1808,7 +1812,7 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 		m.SetDimensions(v)
 		return nil
 	case account.FieldNormalBalance:
-		v, ok := value.(account.NormalBalance)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1850,7 +1854,7 @@ func (m *AccountMutation) SetField(name string, value ent.Value) error {
 		m.SetIsTrustAccount(v)
 		return nil
 	case account.FieldTrustType:
-		v, ok := value.(account.TrustType)
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2256,7 +2260,6 @@ type ApplicationMutation struct {
 	source                          *application.Source
 	correlation_id                  *string
 	agent_goal_id                   *string
-	applicant_person_id             *string
 	status                          *application.Status
 	desired_move_in                 *time.Time
 	desired_lease_term_months       *int
@@ -2279,14 +2282,14 @@ type ApplicationMutation struct {
 	application_fee_currency        *string
 	fee_paid                        *bool
 	clearedFields                   map[string]struct{}
+	property                        *uuid.UUID
+	clearedproperty                 bool
+	space                           *uuid.UUID
+	clearedspace                    bool
 	resulting_lease                 *uuid.UUID
 	clearedresulting_lease          bool
 	applicant                       *uuid.UUID
 	clearedapplicant                bool
-	property                        *uuid.UUID
-	clearedproperty                 bool
-	unit                            *uuid.UUID
-	clearedunit                     bool
 	done                            bool
 	oldValue                        func(context.Context) (*Application, error)
 	predicates                      []predicate.Application
@@ -2675,13 +2678,13 @@ func (m *ApplicationMutation) ResetAgentGoalID() {
 }
 
 // SetApplicantPersonID sets the "applicant_person_id" field.
-func (m *ApplicationMutation) SetApplicantPersonID(s string) {
-	m.applicant_person_id = &s
+func (m *ApplicationMutation) SetApplicantPersonID(u uuid.UUID) {
+	m.applicant = &u
 }
 
 // ApplicantPersonID returns the value of the "applicant_person_id" field in the mutation.
-func (m *ApplicationMutation) ApplicantPersonID() (r string, exists bool) {
-	v := m.applicant_person_id
+func (m *ApplicationMutation) ApplicantPersonID() (r uuid.UUID, exists bool) {
+	v := m.applicant
 	if v == nil {
 		return
 	}
@@ -2691,7 +2694,7 @@ func (m *ApplicationMutation) ApplicantPersonID() (r string, exists bool) {
 // OldApplicantPersonID returns the old "applicant_person_id" field's value of the Application entity.
 // If the Application object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *ApplicationMutation) OldApplicantPersonID(ctx context.Context) (v string, err error) {
+func (m *ApplicationMutation) OldApplicantPersonID(ctx context.Context) (v uuid.UUID, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldApplicantPersonID is only allowed on UpdateOne operations")
 	}
@@ -2707,7 +2710,7 @@ func (m *ApplicationMutation) OldApplicantPersonID(ctx context.Context) (v strin
 
 // ResetApplicantPersonID resets all changes to the "applicant_person_id" field.
 func (m *ApplicationMutation) ResetApplicantPersonID() {
-	m.applicant_person_id = nil
+	m.applicant = nil
 }
 
 // SetStatus sets the "status" field.
@@ -3488,6 +3491,84 @@ func (m *ApplicationMutation) ResetFeePaid() {
 	m.fee_paid = nil
 }
 
+// SetPropertyID sets the "property" edge to the Property entity by id.
+func (m *ApplicationMutation) SetPropertyID(id uuid.UUID) {
+	m.property = &id
+}
+
+// ClearProperty clears the "property" edge to the Property entity.
+func (m *ApplicationMutation) ClearProperty() {
+	m.clearedproperty = true
+}
+
+// PropertyCleared reports if the "property" edge to the Property entity was cleared.
+func (m *ApplicationMutation) PropertyCleared() bool {
+	return m.clearedproperty
+}
+
+// PropertyID returns the "property" edge ID in the mutation.
+func (m *ApplicationMutation) PropertyID() (id uuid.UUID, exists bool) {
+	if m.property != nil {
+		return *m.property, true
+	}
+	return
+}
+
+// PropertyIDs returns the "property" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PropertyID instead. It exists only for internal usage by the builders.
+func (m *ApplicationMutation) PropertyIDs() (ids []uuid.UUID) {
+	if id := m.property; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetProperty resets all changes to the "property" edge.
+func (m *ApplicationMutation) ResetProperty() {
+	m.property = nil
+	m.clearedproperty = false
+}
+
+// SetSpaceID sets the "space" edge to the Space entity by id.
+func (m *ApplicationMutation) SetSpaceID(id uuid.UUID) {
+	m.space = &id
+}
+
+// ClearSpace clears the "space" edge to the Space entity.
+func (m *ApplicationMutation) ClearSpace() {
+	m.clearedspace = true
+}
+
+// SpaceCleared reports if the "space" edge to the Space entity was cleared.
+func (m *ApplicationMutation) SpaceCleared() bool {
+	return m.clearedspace
+}
+
+// SpaceID returns the "space" edge ID in the mutation.
+func (m *ApplicationMutation) SpaceID() (id uuid.UUID, exists bool) {
+	if m.space != nil {
+		return *m.space, true
+	}
+	return
+}
+
+// SpaceIDs returns the "space" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SpaceID instead. It exists only for internal usage by the builders.
+func (m *ApplicationMutation) SpaceIDs() (ids []uuid.UUID) {
+	if id := m.space; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSpace resets all changes to the "space" edge.
+func (m *ApplicationMutation) ResetSpace() {
+	m.space = nil
+	m.clearedspace = false
+}
+
 // SetResultingLeaseID sets the "resulting_lease" edge to the Lease entity by id.
 func (m *ApplicationMutation) SetResultingLeaseID(id uuid.UUID) {
 	m.resulting_lease = &id
@@ -3535,6 +3616,7 @@ func (m *ApplicationMutation) SetApplicantID(id uuid.UUID) {
 // ClearApplicant clears the "applicant" edge to the Person entity.
 func (m *ApplicationMutation) ClearApplicant() {
 	m.clearedapplicant = true
+	m.clearedFields[application.FieldApplicantPersonID] = struct{}{}
 }
 
 // ApplicantCleared reports if the "applicant" edge to the Person entity was cleared.
@@ -3564,84 +3646,6 @@ func (m *ApplicationMutation) ApplicantIDs() (ids []uuid.UUID) {
 func (m *ApplicationMutation) ResetApplicant() {
 	m.applicant = nil
 	m.clearedapplicant = false
-}
-
-// SetPropertyID sets the "property" edge to the Property entity by id.
-func (m *ApplicationMutation) SetPropertyID(id uuid.UUID) {
-	m.property = &id
-}
-
-// ClearProperty clears the "property" edge to the Property entity.
-func (m *ApplicationMutation) ClearProperty() {
-	m.clearedproperty = true
-}
-
-// PropertyCleared reports if the "property" edge to the Property entity was cleared.
-func (m *ApplicationMutation) PropertyCleared() bool {
-	return m.clearedproperty
-}
-
-// PropertyID returns the "property" edge ID in the mutation.
-func (m *ApplicationMutation) PropertyID() (id uuid.UUID, exists bool) {
-	if m.property != nil {
-		return *m.property, true
-	}
-	return
-}
-
-// PropertyIDs returns the "property" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// PropertyID instead. It exists only for internal usage by the builders.
-func (m *ApplicationMutation) PropertyIDs() (ids []uuid.UUID) {
-	if id := m.property; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetProperty resets all changes to the "property" edge.
-func (m *ApplicationMutation) ResetProperty() {
-	m.property = nil
-	m.clearedproperty = false
-}
-
-// SetUnitID sets the "unit" edge to the Unit entity by id.
-func (m *ApplicationMutation) SetUnitID(id uuid.UUID) {
-	m.unit = &id
-}
-
-// ClearUnit clears the "unit" edge to the Unit entity.
-func (m *ApplicationMutation) ClearUnit() {
-	m.clearedunit = true
-}
-
-// UnitCleared reports if the "unit" edge to the Unit entity was cleared.
-func (m *ApplicationMutation) UnitCleared() bool {
-	return m.clearedunit
-}
-
-// UnitID returns the "unit" edge ID in the mutation.
-func (m *ApplicationMutation) UnitID() (id uuid.UUID, exists bool) {
-	if m.unit != nil {
-		return *m.unit, true
-	}
-	return
-}
-
-// UnitIDs returns the "unit" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// UnitID instead. It exists only for internal usage by the builders.
-func (m *ApplicationMutation) UnitIDs() (ids []uuid.UUID) {
-	if id := m.unit; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetUnit resets all changes to the "unit" edge.
-func (m *ApplicationMutation) ResetUnit() {
-	m.unit = nil
-	m.clearedunit = false
 }
 
 // Where appends a list predicates to the ApplicationMutation builder.
@@ -3700,7 +3704,7 @@ func (m *ApplicationMutation) Fields() []string {
 	if m.agent_goal_id != nil {
 		fields = append(fields, application.FieldAgentGoalID)
 	}
-	if m.applicant_person_id != nil {
+	if m.applicant != nil {
 		fields = append(fields, application.FieldApplicantPersonID)
 	}
 	if m.status != nil {
@@ -3923,7 +3927,7 @@ func (m *ApplicationMutation) SetField(name string, value ent.Value) error {
 		m.SetAgentGoalID(v)
 		return nil
 	case application.FieldApplicantPersonID:
-		v, ok := value.(string)
+		v, ok := value.(uuid.UUID)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -4283,17 +4287,17 @@ func (m *ApplicationMutation) ResetField(name string) error {
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *ApplicationMutation) AddedEdges() []string {
 	edges := make([]string, 0, 4)
+	if m.property != nil {
+		edges = append(edges, application.EdgeProperty)
+	}
+	if m.space != nil {
+		edges = append(edges, application.EdgeSpace)
+	}
 	if m.resulting_lease != nil {
 		edges = append(edges, application.EdgeResultingLease)
 	}
 	if m.applicant != nil {
 		edges = append(edges, application.EdgeApplicant)
-	}
-	if m.property != nil {
-		edges = append(edges, application.EdgeProperty)
-	}
-	if m.unit != nil {
-		edges = append(edges, application.EdgeUnit)
 	}
 	return edges
 }
@@ -4302,20 +4306,20 @@ func (m *ApplicationMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *ApplicationMutation) AddedIDs(name string) []ent.Value {
 	switch name {
+	case application.EdgeProperty:
+		if id := m.property; id != nil {
+			return []ent.Value{*id}
+		}
+	case application.EdgeSpace:
+		if id := m.space; id != nil {
+			return []ent.Value{*id}
+		}
 	case application.EdgeResultingLease:
 		if id := m.resulting_lease; id != nil {
 			return []ent.Value{*id}
 		}
 	case application.EdgeApplicant:
 		if id := m.applicant; id != nil {
-			return []ent.Value{*id}
-		}
-	case application.EdgeProperty:
-		if id := m.property; id != nil {
-			return []ent.Value{*id}
-		}
-	case application.EdgeUnit:
-		if id := m.unit; id != nil {
 			return []ent.Value{*id}
 		}
 	}
@@ -4337,17 +4341,17 @@ func (m *ApplicationMutation) RemovedIDs(name string) []ent.Value {
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *ApplicationMutation) ClearedEdges() []string {
 	edges := make([]string, 0, 4)
+	if m.clearedproperty {
+		edges = append(edges, application.EdgeProperty)
+	}
+	if m.clearedspace {
+		edges = append(edges, application.EdgeSpace)
+	}
 	if m.clearedresulting_lease {
 		edges = append(edges, application.EdgeResultingLease)
 	}
 	if m.clearedapplicant {
 		edges = append(edges, application.EdgeApplicant)
-	}
-	if m.clearedproperty {
-		edges = append(edges, application.EdgeProperty)
-	}
-	if m.clearedunit {
-		edges = append(edges, application.EdgeUnit)
 	}
 	return edges
 }
@@ -4356,14 +4360,14 @@ func (m *ApplicationMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *ApplicationMutation) EdgeCleared(name string) bool {
 	switch name {
+	case application.EdgeProperty:
+		return m.clearedproperty
+	case application.EdgeSpace:
+		return m.clearedspace
 	case application.EdgeResultingLease:
 		return m.clearedresulting_lease
 	case application.EdgeApplicant:
 		return m.clearedapplicant
-	case application.EdgeProperty:
-		return m.clearedproperty
-	case application.EdgeUnit:
-		return m.clearedunit
 	}
 	return false
 }
@@ -4372,17 +4376,17 @@ func (m *ApplicationMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *ApplicationMutation) ClearEdge(name string) error {
 	switch name {
+	case application.EdgeProperty:
+		m.ClearProperty()
+		return nil
+	case application.EdgeSpace:
+		m.ClearSpace()
+		return nil
 	case application.EdgeResultingLease:
 		m.ClearResultingLease()
 		return nil
 	case application.EdgeApplicant:
 		m.ClearApplicant()
-		return nil
-	case application.EdgeProperty:
-		m.ClearProperty()
-		return nil
-	case application.EdgeUnit:
-		m.ClearUnit()
 		return nil
 	}
 	return fmt.Errorf("unknown Application unique edge %s", name)
@@ -4392,17 +4396,17 @@ func (m *ApplicationMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ApplicationMutation) ResetEdge(name string) error {
 	switch name {
+	case application.EdgeProperty:
+		m.ResetProperty()
+		return nil
+	case application.EdgeSpace:
+		m.ResetSpace()
+		return nil
 	case application.EdgeResultingLease:
 		m.ResetResultingLease()
 		return nil
 	case application.EdgeApplicant:
 		m.ResetApplicant()
-		return nil
-	case application.EdgeProperty:
-		m.ResetProperty()
-		return nil
-	case application.EdgeUnit:
-		m.ResetUnit()
 		return nil
 	}
 	return fmt.Errorf("unknown Application edge %s", name)
@@ -6325,6 +6329,1521 @@ func (m *BankAccountMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown BankAccount edge %s", name)
 }
 
+// BuildingMutation represents an operation that mutates the Building nodes in the graph.
+type BuildingMutation struct {
+	config
+	op                               Op
+	typ                              string
+	id                               *uuid.UUID
+	created_at                       *time.Time
+	updated_at                       *time.Time
+	created_by                       *string
+	updated_by                       *string
+	source                           *building.Source
+	correlation_id                   *string
+	agent_goal_id                    *string
+	name                             *string
+	building_type                    *building.BuildingType
+	address                          **types.Address
+	status                           *building.Status
+	floors                           *int
+	addfloors                        *int
+	year_built                       *int
+	addyear_built                    *int
+	total_square_footage             *float64
+	addtotal_square_footage          *float64
+	total_rentable_square_footage    *float64
+	addtotal_rentable_square_footage *float64
+	clearedFields                    map[string]struct{}
+	property                         *uuid.UUID
+	clearedproperty                  bool
+	spaces                           map[uuid.UUID]struct{}
+	removedspaces                    map[uuid.UUID]struct{}
+	clearedspaces                    bool
+	done                             bool
+	oldValue                         func(context.Context) (*Building, error)
+	predicates                       []predicate.Building
+}
+
+var _ ent.Mutation = (*BuildingMutation)(nil)
+
+// buildingOption allows management of the mutation configuration using functional options.
+type buildingOption func(*BuildingMutation)
+
+// newBuildingMutation creates new mutation for the Building entity.
+func newBuildingMutation(c config, op Op, opts ...buildingOption) *BuildingMutation {
+	m := &BuildingMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeBuilding,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withBuildingID sets the ID field of the mutation.
+func withBuildingID(id uuid.UUID) buildingOption {
+	return func(m *BuildingMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Building
+		)
+		m.oldValue = func(ctx context.Context) (*Building, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Building.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withBuilding sets the old Building of the mutation.
+func withBuilding(node *Building) buildingOption {
+	return func(m *BuildingMutation) {
+		m.oldValue = func(context.Context) (*Building, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m BuildingMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m BuildingMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Building entities.
+func (m *BuildingMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *BuildingMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *BuildingMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Building.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *BuildingMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *BuildingMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *BuildingMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *BuildingMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *BuildingMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *BuildingMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (m *BuildingMutation) SetCreatedBy(s string) {
+	m.created_by = &s
+}
+
+// CreatedBy returns the value of the "created_by" field in the mutation.
+func (m *BuildingMutation) CreatedBy() (r string, exists bool) {
+	v := m.created_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedBy returns the old "created_by" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldCreatedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedBy: %w", err)
+	}
+	return oldValue.CreatedBy, nil
+}
+
+// ResetCreatedBy resets all changes to the "created_by" field.
+func (m *BuildingMutation) ResetCreatedBy() {
+	m.created_by = nil
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (m *BuildingMutation) SetUpdatedBy(s string) {
+	m.updated_by = &s
+}
+
+// UpdatedBy returns the value of the "updated_by" field in the mutation.
+func (m *BuildingMutation) UpdatedBy() (r string, exists bool) {
+	v := m.updated_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedBy returns the old "updated_by" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldUpdatedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedBy: %w", err)
+	}
+	return oldValue.UpdatedBy, nil
+}
+
+// ResetUpdatedBy resets all changes to the "updated_by" field.
+func (m *BuildingMutation) ResetUpdatedBy() {
+	m.updated_by = nil
+}
+
+// SetSource sets the "source" field.
+func (m *BuildingMutation) SetSource(b building.Source) {
+	m.source = &b
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *BuildingMutation) Source() (r building.Source, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldSource(ctx context.Context) (v building.Source, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *BuildingMutation) ResetSource() {
+	m.source = nil
+}
+
+// SetCorrelationID sets the "correlation_id" field.
+func (m *BuildingMutation) SetCorrelationID(s string) {
+	m.correlation_id = &s
+}
+
+// CorrelationID returns the value of the "correlation_id" field in the mutation.
+func (m *BuildingMutation) CorrelationID() (r string, exists bool) {
+	v := m.correlation_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCorrelationID returns the old "correlation_id" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldCorrelationID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCorrelationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCorrelationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCorrelationID: %w", err)
+	}
+	return oldValue.CorrelationID, nil
+}
+
+// ClearCorrelationID clears the value of the "correlation_id" field.
+func (m *BuildingMutation) ClearCorrelationID() {
+	m.correlation_id = nil
+	m.clearedFields[building.FieldCorrelationID] = struct{}{}
+}
+
+// CorrelationIDCleared returns if the "correlation_id" field was cleared in this mutation.
+func (m *BuildingMutation) CorrelationIDCleared() bool {
+	_, ok := m.clearedFields[building.FieldCorrelationID]
+	return ok
+}
+
+// ResetCorrelationID resets all changes to the "correlation_id" field.
+func (m *BuildingMutation) ResetCorrelationID() {
+	m.correlation_id = nil
+	delete(m.clearedFields, building.FieldCorrelationID)
+}
+
+// SetAgentGoalID sets the "agent_goal_id" field.
+func (m *BuildingMutation) SetAgentGoalID(s string) {
+	m.agent_goal_id = &s
+}
+
+// AgentGoalID returns the value of the "agent_goal_id" field in the mutation.
+func (m *BuildingMutation) AgentGoalID() (r string, exists bool) {
+	v := m.agent_goal_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAgentGoalID returns the old "agent_goal_id" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldAgentGoalID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAgentGoalID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAgentGoalID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAgentGoalID: %w", err)
+	}
+	return oldValue.AgentGoalID, nil
+}
+
+// ClearAgentGoalID clears the value of the "agent_goal_id" field.
+func (m *BuildingMutation) ClearAgentGoalID() {
+	m.agent_goal_id = nil
+	m.clearedFields[building.FieldAgentGoalID] = struct{}{}
+}
+
+// AgentGoalIDCleared returns if the "agent_goal_id" field was cleared in this mutation.
+func (m *BuildingMutation) AgentGoalIDCleared() bool {
+	_, ok := m.clearedFields[building.FieldAgentGoalID]
+	return ok
+}
+
+// ResetAgentGoalID resets all changes to the "agent_goal_id" field.
+func (m *BuildingMutation) ResetAgentGoalID() {
+	m.agent_goal_id = nil
+	delete(m.clearedFields, building.FieldAgentGoalID)
+}
+
+// SetName sets the "name" field.
+func (m *BuildingMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *BuildingMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *BuildingMutation) ResetName() {
+	m.name = nil
+}
+
+// SetBuildingType sets the "building_type" field.
+func (m *BuildingMutation) SetBuildingType(bt building.BuildingType) {
+	m.building_type = &bt
+}
+
+// BuildingType returns the value of the "building_type" field in the mutation.
+func (m *BuildingMutation) BuildingType() (r building.BuildingType, exists bool) {
+	v := m.building_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBuildingType returns the old "building_type" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldBuildingType(ctx context.Context) (v building.BuildingType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBuildingType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBuildingType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBuildingType: %w", err)
+	}
+	return oldValue.BuildingType, nil
+}
+
+// ResetBuildingType resets all changes to the "building_type" field.
+func (m *BuildingMutation) ResetBuildingType() {
+	m.building_type = nil
+}
+
+// SetAddress sets the "address" field.
+func (m *BuildingMutation) SetAddress(t *types.Address) {
+	m.address = &t
+}
+
+// Address returns the value of the "address" field in the mutation.
+func (m *BuildingMutation) Address() (r *types.Address, exists bool) {
+	v := m.address
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddress returns the old "address" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldAddress(ctx context.Context) (v *types.Address, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddress is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddress requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddress: %w", err)
+	}
+	return oldValue.Address, nil
+}
+
+// ClearAddress clears the value of the "address" field.
+func (m *BuildingMutation) ClearAddress() {
+	m.address = nil
+	m.clearedFields[building.FieldAddress] = struct{}{}
+}
+
+// AddressCleared returns if the "address" field was cleared in this mutation.
+func (m *BuildingMutation) AddressCleared() bool {
+	_, ok := m.clearedFields[building.FieldAddress]
+	return ok
+}
+
+// ResetAddress resets all changes to the "address" field.
+func (m *BuildingMutation) ResetAddress() {
+	m.address = nil
+	delete(m.clearedFields, building.FieldAddress)
+}
+
+// SetStatus sets the "status" field.
+func (m *BuildingMutation) SetStatus(b building.Status) {
+	m.status = &b
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *BuildingMutation) Status() (r building.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldStatus(ctx context.Context) (v building.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *BuildingMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetFloors sets the "floors" field.
+func (m *BuildingMutation) SetFloors(i int) {
+	m.floors = &i
+	m.addfloors = nil
+}
+
+// Floors returns the value of the "floors" field in the mutation.
+func (m *BuildingMutation) Floors() (r int, exists bool) {
+	v := m.floors
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFloors returns the old "floors" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldFloors(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFloors is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFloors requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFloors: %w", err)
+	}
+	return oldValue.Floors, nil
+}
+
+// AddFloors adds i to the "floors" field.
+func (m *BuildingMutation) AddFloors(i int) {
+	if m.addfloors != nil {
+		*m.addfloors += i
+	} else {
+		m.addfloors = &i
+	}
+}
+
+// AddedFloors returns the value that was added to the "floors" field in this mutation.
+func (m *BuildingMutation) AddedFloors() (r int, exists bool) {
+	v := m.addfloors
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearFloors clears the value of the "floors" field.
+func (m *BuildingMutation) ClearFloors() {
+	m.floors = nil
+	m.addfloors = nil
+	m.clearedFields[building.FieldFloors] = struct{}{}
+}
+
+// FloorsCleared returns if the "floors" field was cleared in this mutation.
+func (m *BuildingMutation) FloorsCleared() bool {
+	_, ok := m.clearedFields[building.FieldFloors]
+	return ok
+}
+
+// ResetFloors resets all changes to the "floors" field.
+func (m *BuildingMutation) ResetFloors() {
+	m.floors = nil
+	m.addfloors = nil
+	delete(m.clearedFields, building.FieldFloors)
+}
+
+// SetYearBuilt sets the "year_built" field.
+func (m *BuildingMutation) SetYearBuilt(i int) {
+	m.year_built = &i
+	m.addyear_built = nil
+}
+
+// YearBuilt returns the value of the "year_built" field in the mutation.
+func (m *BuildingMutation) YearBuilt() (r int, exists bool) {
+	v := m.year_built
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldYearBuilt returns the old "year_built" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldYearBuilt(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldYearBuilt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldYearBuilt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldYearBuilt: %w", err)
+	}
+	return oldValue.YearBuilt, nil
+}
+
+// AddYearBuilt adds i to the "year_built" field.
+func (m *BuildingMutation) AddYearBuilt(i int) {
+	if m.addyear_built != nil {
+		*m.addyear_built += i
+	} else {
+		m.addyear_built = &i
+	}
+}
+
+// AddedYearBuilt returns the value that was added to the "year_built" field in this mutation.
+func (m *BuildingMutation) AddedYearBuilt() (r int, exists bool) {
+	v := m.addyear_built
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearYearBuilt clears the value of the "year_built" field.
+func (m *BuildingMutation) ClearYearBuilt() {
+	m.year_built = nil
+	m.addyear_built = nil
+	m.clearedFields[building.FieldYearBuilt] = struct{}{}
+}
+
+// YearBuiltCleared returns if the "year_built" field was cleared in this mutation.
+func (m *BuildingMutation) YearBuiltCleared() bool {
+	_, ok := m.clearedFields[building.FieldYearBuilt]
+	return ok
+}
+
+// ResetYearBuilt resets all changes to the "year_built" field.
+func (m *BuildingMutation) ResetYearBuilt() {
+	m.year_built = nil
+	m.addyear_built = nil
+	delete(m.clearedFields, building.FieldYearBuilt)
+}
+
+// SetTotalSquareFootage sets the "total_square_footage" field.
+func (m *BuildingMutation) SetTotalSquareFootage(f float64) {
+	m.total_square_footage = &f
+	m.addtotal_square_footage = nil
+}
+
+// TotalSquareFootage returns the value of the "total_square_footage" field in the mutation.
+func (m *BuildingMutation) TotalSquareFootage() (r float64, exists bool) {
+	v := m.total_square_footage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTotalSquareFootage returns the old "total_square_footage" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldTotalSquareFootage(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTotalSquareFootage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTotalSquareFootage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTotalSquareFootage: %w", err)
+	}
+	return oldValue.TotalSquareFootage, nil
+}
+
+// AddTotalSquareFootage adds f to the "total_square_footage" field.
+func (m *BuildingMutation) AddTotalSquareFootage(f float64) {
+	if m.addtotal_square_footage != nil {
+		*m.addtotal_square_footage += f
+	} else {
+		m.addtotal_square_footage = &f
+	}
+}
+
+// AddedTotalSquareFootage returns the value that was added to the "total_square_footage" field in this mutation.
+func (m *BuildingMutation) AddedTotalSquareFootage() (r float64, exists bool) {
+	v := m.addtotal_square_footage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearTotalSquareFootage clears the value of the "total_square_footage" field.
+func (m *BuildingMutation) ClearTotalSquareFootage() {
+	m.total_square_footage = nil
+	m.addtotal_square_footage = nil
+	m.clearedFields[building.FieldTotalSquareFootage] = struct{}{}
+}
+
+// TotalSquareFootageCleared returns if the "total_square_footage" field was cleared in this mutation.
+func (m *BuildingMutation) TotalSquareFootageCleared() bool {
+	_, ok := m.clearedFields[building.FieldTotalSquareFootage]
+	return ok
+}
+
+// ResetTotalSquareFootage resets all changes to the "total_square_footage" field.
+func (m *BuildingMutation) ResetTotalSquareFootage() {
+	m.total_square_footage = nil
+	m.addtotal_square_footage = nil
+	delete(m.clearedFields, building.FieldTotalSquareFootage)
+}
+
+// SetTotalRentableSquareFootage sets the "total_rentable_square_footage" field.
+func (m *BuildingMutation) SetTotalRentableSquareFootage(f float64) {
+	m.total_rentable_square_footage = &f
+	m.addtotal_rentable_square_footage = nil
+}
+
+// TotalRentableSquareFootage returns the value of the "total_rentable_square_footage" field in the mutation.
+func (m *BuildingMutation) TotalRentableSquareFootage() (r float64, exists bool) {
+	v := m.total_rentable_square_footage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTotalRentableSquareFootage returns the old "total_rentable_square_footage" field's value of the Building entity.
+// If the Building object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *BuildingMutation) OldTotalRentableSquareFootage(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTotalRentableSquareFootage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTotalRentableSquareFootage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTotalRentableSquareFootage: %w", err)
+	}
+	return oldValue.TotalRentableSquareFootage, nil
+}
+
+// AddTotalRentableSquareFootage adds f to the "total_rentable_square_footage" field.
+func (m *BuildingMutation) AddTotalRentableSquareFootage(f float64) {
+	if m.addtotal_rentable_square_footage != nil {
+		*m.addtotal_rentable_square_footage += f
+	} else {
+		m.addtotal_rentable_square_footage = &f
+	}
+}
+
+// AddedTotalRentableSquareFootage returns the value that was added to the "total_rentable_square_footage" field in this mutation.
+func (m *BuildingMutation) AddedTotalRentableSquareFootage() (r float64, exists bool) {
+	v := m.addtotal_rentable_square_footage
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearTotalRentableSquareFootage clears the value of the "total_rentable_square_footage" field.
+func (m *BuildingMutation) ClearTotalRentableSquareFootage() {
+	m.total_rentable_square_footage = nil
+	m.addtotal_rentable_square_footage = nil
+	m.clearedFields[building.FieldTotalRentableSquareFootage] = struct{}{}
+}
+
+// TotalRentableSquareFootageCleared returns if the "total_rentable_square_footage" field was cleared in this mutation.
+func (m *BuildingMutation) TotalRentableSquareFootageCleared() bool {
+	_, ok := m.clearedFields[building.FieldTotalRentableSquareFootage]
+	return ok
+}
+
+// ResetTotalRentableSquareFootage resets all changes to the "total_rentable_square_footage" field.
+func (m *BuildingMutation) ResetTotalRentableSquareFootage() {
+	m.total_rentable_square_footage = nil
+	m.addtotal_rentable_square_footage = nil
+	delete(m.clearedFields, building.FieldTotalRentableSquareFootage)
+}
+
+// SetPropertyID sets the "property" edge to the Property entity by id.
+func (m *BuildingMutation) SetPropertyID(id uuid.UUID) {
+	m.property = &id
+}
+
+// ClearProperty clears the "property" edge to the Property entity.
+func (m *BuildingMutation) ClearProperty() {
+	m.clearedproperty = true
+}
+
+// PropertyCleared reports if the "property" edge to the Property entity was cleared.
+func (m *BuildingMutation) PropertyCleared() bool {
+	return m.clearedproperty
+}
+
+// PropertyID returns the "property" edge ID in the mutation.
+func (m *BuildingMutation) PropertyID() (id uuid.UUID, exists bool) {
+	if m.property != nil {
+		return *m.property, true
+	}
+	return
+}
+
+// PropertyIDs returns the "property" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PropertyID instead. It exists only for internal usage by the builders.
+func (m *BuildingMutation) PropertyIDs() (ids []uuid.UUID) {
+	if id := m.property; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetProperty resets all changes to the "property" edge.
+func (m *BuildingMutation) ResetProperty() {
+	m.property = nil
+	m.clearedproperty = false
+}
+
+// AddSpaceIDs adds the "spaces" edge to the Space entity by ids.
+func (m *BuildingMutation) AddSpaceIDs(ids ...uuid.UUID) {
+	if m.spaces == nil {
+		m.spaces = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.spaces[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSpaces clears the "spaces" edge to the Space entity.
+func (m *BuildingMutation) ClearSpaces() {
+	m.clearedspaces = true
+}
+
+// SpacesCleared reports if the "spaces" edge to the Space entity was cleared.
+func (m *BuildingMutation) SpacesCleared() bool {
+	return m.clearedspaces
+}
+
+// RemoveSpaceIDs removes the "spaces" edge to the Space entity by IDs.
+func (m *BuildingMutation) RemoveSpaceIDs(ids ...uuid.UUID) {
+	if m.removedspaces == nil {
+		m.removedspaces = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.spaces, ids[i])
+		m.removedspaces[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSpaces returns the removed IDs of the "spaces" edge to the Space entity.
+func (m *BuildingMutation) RemovedSpacesIDs() (ids []uuid.UUID) {
+	for id := range m.removedspaces {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SpacesIDs returns the "spaces" edge IDs in the mutation.
+func (m *BuildingMutation) SpacesIDs() (ids []uuid.UUID) {
+	for id := range m.spaces {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSpaces resets all changes to the "spaces" edge.
+func (m *BuildingMutation) ResetSpaces() {
+	m.spaces = nil
+	m.clearedspaces = false
+	m.removedspaces = nil
+}
+
+// Where appends a list predicates to the BuildingMutation builder.
+func (m *BuildingMutation) Where(ps ...predicate.Building) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the BuildingMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *BuildingMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Building, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *BuildingMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *BuildingMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Building).
+func (m *BuildingMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *BuildingMutation) Fields() []string {
+	fields := make([]string, 0, 15)
+	if m.created_at != nil {
+		fields = append(fields, building.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, building.FieldUpdatedAt)
+	}
+	if m.created_by != nil {
+		fields = append(fields, building.FieldCreatedBy)
+	}
+	if m.updated_by != nil {
+		fields = append(fields, building.FieldUpdatedBy)
+	}
+	if m.source != nil {
+		fields = append(fields, building.FieldSource)
+	}
+	if m.correlation_id != nil {
+		fields = append(fields, building.FieldCorrelationID)
+	}
+	if m.agent_goal_id != nil {
+		fields = append(fields, building.FieldAgentGoalID)
+	}
+	if m.name != nil {
+		fields = append(fields, building.FieldName)
+	}
+	if m.building_type != nil {
+		fields = append(fields, building.FieldBuildingType)
+	}
+	if m.address != nil {
+		fields = append(fields, building.FieldAddress)
+	}
+	if m.status != nil {
+		fields = append(fields, building.FieldStatus)
+	}
+	if m.floors != nil {
+		fields = append(fields, building.FieldFloors)
+	}
+	if m.year_built != nil {
+		fields = append(fields, building.FieldYearBuilt)
+	}
+	if m.total_square_footage != nil {
+		fields = append(fields, building.FieldTotalSquareFootage)
+	}
+	if m.total_rentable_square_footage != nil {
+		fields = append(fields, building.FieldTotalRentableSquareFootage)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *BuildingMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case building.FieldCreatedAt:
+		return m.CreatedAt()
+	case building.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case building.FieldCreatedBy:
+		return m.CreatedBy()
+	case building.FieldUpdatedBy:
+		return m.UpdatedBy()
+	case building.FieldSource:
+		return m.Source()
+	case building.FieldCorrelationID:
+		return m.CorrelationID()
+	case building.FieldAgentGoalID:
+		return m.AgentGoalID()
+	case building.FieldName:
+		return m.Name()
+	case building.FieldBuildingType:
+		return m.BuildingType()
+	case building.FieldAddress:
+		return m.Address()
+	case building.FieldStatus:
+		return m.Status()
+	case building.FieldFloors:
+		return m.Floors()
+	case building.FieldYearBuilt:
+		return m.YearBuilt()
+	case building.FieldTotalSquareFootage:
+		return m.TotalSquareFootage()
+	case building.FieldTotalRentableSquareFootage:
+		return m.TotalRentableSquareFootage()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *BuildingMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case building.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case building.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case building.FieldCreatedBy:
+		return m.OldCreatedBy(ctx)
+	case building.FieldUpdatedBy:
+		return m.OldUpdatedBy(ctx)
+	case building.FieldSource:
+		return m.OldSource(ctx)
+	case building.FieldCorrelationID:
+		return m.OldCorrelationID(ctx)
+	case building.FieldAgentGoalID:
+		return m.OldAgentGoalID(ctx)
+	case building.FieldName:
+		return m.OldName(ctx)
+	case building.FieldBuildingType:
+		return m.OldBuildingType(ctx)
+	case building.FieldAddress:
+		return m.OldAddress(ctx)
+	case building.FieldStatus:
+		return m.OldStatus(ctx)
+	case building.FieldFloors:
+		return m.OldFloors(ctx)
+	case building.FieldYearBuilt:
+		return m.OldYearBuilt(ctx)
+	case building.FieldTotalSquareFootage:
+		return m.OldTotalSquareFootage(ctx)
+	case building.FieldTotalRentableSquareFootage:
+		return m.OldTotalRentableSquareFootage(ctx)
+	}
+	return nil, fmt.Errorf("unknown Building field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BuildingMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case building.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case building.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case building.FieldCreatedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedBy(v)
+		return nil
+	case building.FieldUpdatedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedBy(v)
+		return nil
+	case building.FieldSource:
+		v, ok := value.(building.Source)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case building.FieldCorrelationID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCorrelationID(v)
+		return nil
+	case building.FieldAgentGoalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAgentGoalID(v)
+		return nil
+	case building.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case building.FieldBuildingType:
+		v, ok := value.(building.BuildingType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBuildingType(v)
+		return nil
+	case building.FieldAddress:
+		v, ok := value.(*types.Address)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddress(v)
+		return nil
+	case building.FieldStatus:
+		v, ok := value.(building.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case building.FieldFloors:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFloors(v)
+		return nil
+	case building.FieldYearBuilt:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetYearBuilt(v)
+		return nil
+	case building.FieldTotalSquareFootage:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTotalSquareFootage(v)
+		return nil
+	case building.FieldTotalRentableSquareFootage:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTotalRentableSquareFootage(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Building field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *BuildingMutation) AddedFields() []string {
+	var fields []string
+	if m.addfloors != nil {
+		fields = append(fields, building.FieldFloors)
+	}
+	if m.addyear_built != nil {
+		fields = append(fields, building.FieldYearBuilt)
+	}
+	if m.addtotal_square_footage != nil {
+		fields = append(fields, building.FieldTotalSquareFootage)
+	}
+	if m.addtotal_rentable_square_footage != nil {
+		fields = append(fields, building.FieldTotalRentableSquareFootage)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *BuildingMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case building.FieldFloors:
+		return m.AddedFloors()
+	case building.FieldYearBuilt:
+		return m.AddedYearBuilt()
+	case building.FieldTotalSquareFootage:
+		return m.AddedTotalSquareFootage()
+	case building.FieldTotalRentableSquareFootage:
+		return m.AddedTotalRentableSquareFootage()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *BuildingMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case building.FieldFloors:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFloors(v)
+		return nil
+	case building.FieldYearBuilt:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddYearBuilt(v)
+		return nil
+	case building.FieldTotalSquareFootage:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTotalSquareFootage(v)
+		return nil
+	case building.FieldTotalRentableSquareFootage:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTotalRentableSquareFootage(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Building numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *BuildingMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(building.FieldCorrelationID) {
+		fields = append(fields, building.FieldCorrelationID)
+	}
+	if m.FieldCleared(building.FieldAgentGoalID) {
+		fields = append(fields, building.FieldAgentGoalID)
+	}
+	if m.FieldCleared(building.FieldAddress) {
+		fields = append(fields, building.FieldAddress)
+	}
+	if m.FieldCleared(building.FieldFloors) {
+		fields = append(fields, building.FieldFloors)
+	}
+	if m.FieldCleared(building.FieldYearBuilt) {
+		fields = append(fields, building.FieldYearBuilt)
+	}
+	if m.FieldCleared(building.FieldTotalSquareFootage) {
+		fields = append(fields, building.FieldTotalSquareFootage)
+	}
+	if m.FieldCleared(building.FieldTotalRentableSquareFootage) {
+		fields = append(fields, building.FieldTotalRentableSquareFootage)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *BuildingMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *BuildingMutation) ClearField(name string) error {
+	switch name {
+	case building.FieldCorrelationID:
+		m.ClearCorrelationID()
+		return nil
+	case building.FieldAgentGoalID:
+		m.ClearAgentGoalID()
+		return nil
+	case building.FieldAddress:
+		m.ClearAddress()
+		return nil
+	case building.FieldFloors:
+		m.ClearFloors()
+		return nil
+	case building.FieldYearBuilt:
+		m.ClearYearBuilt()
+		return nil
+	case building.FieldTotalSquareFootage:
+		m.ClearTotalSquareFootage()
+		return nil
+	case building.FieldTotalRentableSquareFootage:
+		m.ClearTotalRentableSquareFootage()
+		return nil
+	}
+	return fmt.Errorf("unknown Building nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *BuildingMutation) ResetField(name string) error {
+	switch name {
+	case building.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case building.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case building.FieldCreatedBy:
+		m.ResetCreatedBy()
+		return nil
+	case building.FieldUpdatedBy:
+		m.ResetUpdatedBy()
+		return nil
+	case building.FieldSource:
+		m.ResetSource()
+		return nil
+	case building.FieldCorrelationID:
+		m.ResetCorrelationID()
+		return nil
+	case building.FieldAgentGoalID:
+		m.ResetAgentGoalID()
+		return nil
+	case building.FieldName:
+		m.ResetName()
+		return nil
+	case building.FieldBuildingType:
+		m.ResetBuildingType()
+		return nil
+	case building.FieldAddress:
+		m.ResetAddress()
+		return nil
+	case building.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case building.FieldFloors:
+		m.ResetFloors()
+		return nil
+	case building.FieldYearBuilt:
+		m.ResetYearBuilt()
+		return nil
+	case building.FieldTotalSquareFootage:
+		m.ResetTotalSquareFootage()
+		return nil
+	case building.FieldTotalRentableSquareFootage:
+		m.ResetTotalRentableSquareFootage()
+		return nil
+	}
+	return fmt.Errorf("unknown Building field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *BuildingMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.property != nil {
+		edges = append(edges, building.EdgeProperty)
+	}
+	if m.spaces != nil {
+		edges = append(edges, building.EdgeSpaces)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *BuildingMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case building.EdgeProperty:
+		if id := m.property; id != nil {
+			return []ent.Value{*id}
+		}
+	case building.EdgeSpaces:
+		ids := make([]ent.Value, 0, len(m.spaces))
+		for id := range m.spaces {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *BuildingMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedspaces != nil {
+		edges = append(edges, building.EdgeSpaces)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *BuildingMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case building.EdgeSpaces:
+		ids := make([]ent.Value, 0, len(m.removedspaces))
+		for id := range m.removedspaces {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *BuildingMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedproperty {
+		edges = append(edges, building.EdgeProperty)
+	}
+	if m.clearedspaces {
+		edges = append(edges, building.EdgeSpaces)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *BuildingMutation) EdgeCleared(name string) bool {
+	switch name {
+	case building.EdgeProperty:
+		return m.clearedproperty
+	case building.EdgeSpaces:
+		return m.clearedspaces
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *BuildingMutation) ClearEdge(name string) error {
+	switch name {
+	case building.EdgeProperty:
+		m.ClearProperty()
+		return nil
+	}
+	return fmt.Errorf("unknown Building unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *BuildingMutation) ResetEdge(name string) error {
+	switch name {
+	case building.EdgeProperty:
+		m.ResetProperty()
+		return nil
+	case building.EdgeSpaces:
+		m.ResetSpaces()
+		return nil
+	}
+	return fmt.Errorf("unknown Building edge %s", name)
+}
+
 // JournalEntryMutation represents an operation that mutates the JournalEntry nodes in the graph.
 type JournalEntryMutation struct {
 	config
@@ -8059,7 +9578,10 @@ type LeaseMutation struct {
 	appendguarantor_role_ids         []string
 	lease_type                       *lease.LeaseType
 	status                           *lease.Status
+	liability_type                   *lease.LiabilityType
 	term                             **types.DateRange
+	lease_commencement_date          *time.Time
+	rent_commencement_date           *time.Time
 	base_rent_amount_cents           *int64
 	addbase_rent_amount_cents        *int64
 	base_rent_currency               *string
@@ -8075,20 +9597,35 @@ type LeaseMutation struct {
 	tenant_improvement               **types.TenantImprovement
 	renewal_options                  *[]types.RenewalOption
 	appendrenewal_options            []types.RenewalOption
+	usage_charges                    *[]types.UsageBasedCharge
+	appendusage_charges              []types.UsageBasedCharge
+	percentage_rent                  **types.PercentageRent
+	expansion_rights                 *[]types.ExpansionRight
+	appendexpansion_rights           []types.ExpansionRight
+	contraction_rights               *[]types.ContractionRight
+	appendcontraction_rights         []types.ContractionRight
 	subsidy                          **types.SubsidyTerms
 	move_in_date                     *time.Time
 	move_out_date                    *time.Time
 	notice_date                      *time.Time
 	notice_required_days             *int
 	addnotice_required_days          *int
+	check_in_time                    *string
+	check_out_time                   *string
+	cleaning_fee_amount_cents        *int64
+	addcleaning_fee_amount_cents     *int64
+	cleaning_fee_currency            *string
+	platform_booking_id              *string
+	membership_tier                  *lease.MembershipTier
+	is_sublease                      *bool
+	sublease_billing                 *lease.SubleaseBilling
 	signing_method                   *lease.SigningMethod
 	signed_at                        *time.Time
 	document_id                      *string
 	clearedFields                    map[string]struct{}
-	unit                             *uuid.UUID
-	clearedunit                      bool
-	occupied_unit                    *uuid.UUID
-	clearedoccupied_unit             bool
+	lease_spaces                     map[uuid.UUID]struct{}
+	removedlease_spaces              map[uuid.UUID]struct{}
+	clearedlease_spaces              bool
 	tenant_roles                     map[uuid.UUID]struct{}
 	removedtenant_roles              map[uuid.UUID]struct{}
 	clearedtenant_roles              bool
@@ -8100,6 +9637,11 @@ type LeaseMutation struct {
 	clearedledger_entries            bool
 	application                      *uuid.UUID
 	clearedapplication               bool
+	subleases                        map[uuid.UUID]struct{}
+	removedsubleases                 map[uuid.UUID]struct{}
+	clearedsubleases                 bool
+	parent_lease                     *uuid.UUID
+	clearedparent_lease              bool
 	done                             bool
 	oldValue                         func(context.Context) (*Lease, error)
 	predicates                       []predicate.Lease
@@ -8711,6 +10253,42 @@ func (m *LeaseMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetLiabilityType sets the "liability_type" field.
+func (m *LeaseMutation) SetLiabilityType(lt lease.LiabilityType) {
+	m.liability_type = &lt
+}
+
+// LiabilityType returns the value of the "liability_type" field in the mutation.
+func (m *LeaseMutation) LiabilityType() (r lease.LiabilityType, exists bool) {
+	v := m.liability_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLiabilityType returns the old "liability_type" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldLiabilityType(ctx context.Context) (v lease.LiabilityType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLiabilityType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLiabilityType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLiabilityType: %w", err)
+	}
+	return oldValue.LiabilityType, nil
+}
+
+// ResetLiabilityType resets all changes to the "liability_type" field.
+func (m *LeaseMutation) ResetLiabilityType() {
+	m.liability_type = nil
+}
+
 // SetTerm sets the "term" field.
 func (m *LeaseMutation) SetTerm(tr *types.DateRange) {
 	m.term = &tr
@@ -8745,6 +10323,104 @@ func (m *LeaseMutation) OldTerm(ctx context.Context) (v *types.DateRange, err er
 // ResetTerm resets all changes to the "term" field.
 func (m *LeaseMutation) ResetTerm() {
 	m.term = nil
+}
+
+// SetLeaseCommencementDate sets the "lease_commencement_date" field.
+func (m *LeaseMutation) SetLeaseCommencementDate(t time.Time) {
+	m.lease_commencement_date = &t
+}
+
+// LeaseCommencementDate returns the value of the "lease_commencement_date" field in the mutation.
+func (m *LeaseMutation) LeaseCommencementDate() (r time.Time, exists bool) {
+	v := m.lease_commencement_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeaseCommencementDate returns the old "lease_commencement_date" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldLeaseCommencementDate(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeaseCommencementDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeaseCommencementDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeaseCommencementDate: %w", err)
+	}
+	return oldValue.LeaseCommencementDate, nil
+}
+
+// ClearLeaseCommencementDate clears the value of the "lease_commencement_date" field.
+func (m *LeaseMutation) ClearLeaseCommencementDate() {
+	m.lease_commencement_date = nil
+	m.clearedFields[lease.FieldLeaseCommencementDate] = struct{}{}
+}
+
+// LeaseCommencementDateCleared returns if the "lease_commencement_date" field was cleared in this mutation.
+func (m *LeaseMutation) LeaseCommencementDateCleared() bool {
+	_, ok := m.clearedFields[lease.FieldLeaseCommencementDate]
+	return ok
+}
+
+// ResetLeaseCommencementDate resets all changes to the "lease_commencement_date" field.
+func (m *LeaseMutation) ResetLeaseCommencementDate() {
+	m.lease_commencement_date = nil
+	delete(m.clearedFields, lease.FieldLeaseCommencementDate)
+}
+
+// SetRentCommencementDate sets the "rent_commencement_date" field.
+func (m *LeaseMutation) SetRentCommencementDate(t time.Time) {
+	m.rent_commencement_date = &t
+}
+
+// RentCommencementDate returns the value of the "rent_commencement_date" field in the mutation.
+func (m *LeaseMutation) RentCommencementDate() (r time.Time, exists bool) {
+	v := m.rent_commencement_date
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRentCommencementDate returns the old "rent_commencement_date" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldRentCommencementDate(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRentCommencementDate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRentCommencementDate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRentCommencementDate: %w", err)
+	}
+	return oldValue.RentCommencementDate, nil
+}
+
+// ClearRentCommencementDate clears the value of the "rent_commencement_date" field.
+func (m *LeaseMutation) ClearRentCommencementDate() {
+	m.rent_commencement_date = nil
+	m.clearedFields[lease.FieldRentCommencementDate] = struct{}{}
+}
+
+// RentCommencementDateCleared returns if the "rent_commencement_date" field was cleared in this mutation.
+func (m *LeaseMutation) RentCommencementDateCleared() bool {
+	_, ok := m.clearedFields[lease.FieldRentCommencementDate]
+	return ok
+}
+
+// ResetRentCommencementDate resets all changes to the "rent_commencement_date" field.
+func (m *LeaseMutation) ResetRentCommencementDate() {
+	m.rent_commencement_date = nil
+	delete(m.clearedFields, lease.FieldRentCommencementDate)
 }
 
 // SetBaseRentAmountCents sets the "base_rent_amount_cents" field.
@@ -9273,6 +10949,250 @@ func (m *LeaseMutation) ResetRenewalOptions() {
 	delete(m.clearedFields, lease.FieldRenewalOptions)
 }
 
+// SetUsageCharges sets the "usage_charges" field.
+func (m *LeaseMutation) SetUsageCharges(tbc []types.UsageBasedCharge) {
+	m.usage_charges = &tbc
+	m.appendusage_charges = nil
+}
+
+// UsageCharges returns the value of the "usage_charges" field in the mutation.
+func (m *LeaseMutation) UsageCharges() (r []types.UsageBasedCharge, exists bool) {
+	v := m.usage_charges
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUsageCharges returns the old "usage_charges" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldUsageCharges(ctx context.Context) (v []types.UsageBasedCharge, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUsageCharges is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUsageCharges requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUsageCharges: %w", err)
+	}
+	return oldValue.UsageCharges, nil
+}
+
+// AppendUsageCharges adds tbc to the "usage_charges" field.
+func (m *LeaseMutation) AppendUsageCharges(tbc []types.UsageBasedCharge) {
+	m.appendusage_charges = append(m.appendusage_charges, tbc...)
+}
+
+// AppendedUsageCharges returns the list of values that were appended to the "usage_charges" field in this mutation.
+func (m *LeaseMutation) AppendedUsageCharges() ([]types.UsageBasedCharge, bool) {
+	if len(m.appendusage_charges) == 0 {
+		return nil, false
+	}
+	return m.appendusage_charges, true
+}
+
+// ClearUsageCharges clears the value of the "usage_charges" field.
+func (m *LeaseMutation) ClearUsageCharges() {
+	m.usage_charges = nil
+	m.appendusage_charges = nil
+	m.clearedFields[lease.FieldUsageCharges] = struct{}{}
+}
+
+// UsageChargesCleared returns if the "usage_charges" field was cleared in this mutation.
+func (m *LeaseMutation) UsageChargesCleared() bool {
+	_, ok := m.clearedFields[lease.FieldUsageCharges]
+	return ok
+}
+
+// ResetUsageCharges resets all changes to the "usage_charges" field.
+func (m *LeaseMutation) ResetUsageCharges() {
+	m.usage_charges = nil
+	m.appendusage_charges = nil
+	delete(m.clearedFields, lease.FieldUsageCharges)
+}
+
+// SetPercentageRent sets the "percentage_rent" field.
+func (m *LeaseMutation) SetPercentageRent(tr *types.PercentageRent) {
+	m.percentage_rent = &tr
+}
+
+// PercentageRent returns the value of the "percentage_rent" field in the mutation.
+func (m *LeaseMutation) PercentageRent() (r *types.PercentageRent, exists bool) {
+	v := m.percentage_rent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPercentageRent returns the old "percentage_rent" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldPercentageRent(ctx context.Context) (v *types.PercentageRent, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPercentageRent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPercentageRent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPercentageRent: %w", err)
+	}
+	return oldValue.PercentageRent, nil
+}
+
+// ClearPercentageRent clears the value of the "percentage_rent" field.
+func (m *LeaseMutation) ClearPercentageRent() {
+	m.percentage_rent = nil
+	m.clearedFields[lease.FieldPercentageRent] = struct{}{}
+}
+
+// PercentageRentCleared returns if the "percentage_rent" field was cleared in this mutation.
+func (m *LeaseMutation) PercentageRentCleared() bool {
+	_, ok := m.clearedFields[lease.FieldPercentageRent]
+	return ok
+}
+
+// ResetPercentageRent resets all changes to the "percentage_rent" field.
+func (m *LeaseMutation) ResetPercentageRent() {
+	m.percentage_rent = nil
+	delete(m.clearedFields, lease.FieldPercentageRent)
+}
+
+// SetExpansionRights sets the "expansion_rights" field.
+func (m *LeaseMutation) SetExpansionRights(tr []types.ExpansionRight) {
+	m.expansion_rights = &tr
+	m.appendexpansion_rights = nil
+}
+
+// ExpansionRights returns the value of the "expansion_rights" field in the mutation.
+func (m *LeaseMutation) ExpansionRights() (r []types.ExpansionRight, exists bool) {
+	v := m.expansion_rights
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpansionRights returns the old "expansion_rights" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldExpansionRights(ctx context.Context) (v []types.ExpansionRight, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpansionRights is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpansionRights requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpansionRights: %w", err)
+	}
+	return oldValue.ExpansionRights, nil
+}
+
+// AppendExpansionRights adds tr to the "expansion_rights" field.
+func (m *LeaseMutation) AppendExpansionRights(tr []types.ExpansionRight) {
+	m.appendexpansion_rights = append(m.appendexpansion_rights, tr...)
+}
+
+// AppendedExpansionRights returns the list of values that were appended to the "expansion_rights" field in this mutation.
+func (m *LeaseMutation) AppendedExpansionRights() ([]types.ExpansionRight, bool) {
+	if len(m.appendexpansion_rights) == 0 {
+		return nil, false
+	}
+	return m.appendexpansion_rights, true
+}
+
+// ClearExpansionRights clears the value of the "expansion_rights" field.
+func (m *LeaseMutation) ClearExpansionRights() {
+	m.expansion_rights = nil
+	m.appendexpansion_rights = nil
+	m.clearedFields[lease.FieldExpansionRights] = struct{}{}
+}
+
+// ExpansionRightsCleared returns if the "expansion_rights" field was cleared in this mutation.
+func (m *LeaseMutation) ExpansionRightsCleared() bool {
+	_, ok := m.clearedFields[lease.FieldExpansionRights]
+	return ok
+}
+
+// ResetExpansionRights resets all changes to the "expansion_rights" field.
+func (m *LeaseMutation) ResetExpansionRights() {
+	m.expansion_rights = nil
+	m.appendexpansion_rights = nil
+	delete(m.clearedFields, lease.FieldExpansionRights)
+}
+
+// SetContractionRights sets the "contraction_rights" field.
+func (m *LeaseMutation) SetContractionRights(tr []types.ContractionRight) {
+	m.contraction_rights = &tr
+	m.appendcontraction_rights = nil
+}
+
+// ContractionRights returns the value of the "contraction_rights" field in the mutation.
+func (m *LeaseMutation) ContractionRights() (r []types.ContractionRight, exists bool) {
+	v := m.contraction_rights
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContractionRights returns the old "contraction_rights" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldContractionRights(ctx context.Context) (v []types.ContractionRight, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContractionRights is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContractionRights requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContractionRights: %w", err)
+	}
+	return oldValue.ContractionRights, nil
+}
+
+// AppendContractionRights adds tr to the "contraction_rights" field.
+func (m *LeaseMutation) AppendContractionRights(tr []types.ContractionRight) {
+	m.appendcontraction_rights = append(m.appendcontraction_rights, tr...)
+}
+
+// AppendedContractionRights returns the list of values that were appended to the "contraction_rights" field in this mutation.
+func (m *LeaseMutation) AppendedContractionRights() ([]types.ContractionRight, bool) {
+	if len(m.appendcontraction_rights) == 0 {
+		return nil, false
+	}
+	return m.appendcontraction_rights, true
+}
+
+// ClearContractionRights clears the value of the "contraction_rights" field.
+func (m *LeaseMutation) ClearContractionRights() {
+	m.contraction_rights = nil
+	m.appendcontraction_rights = nil
+	m.clearedFields[lease.FieldContractionRights] = struct{}{}
+}
+
+// ContractionRightsCleared returns if the "contraction_rights" field was cleared in this mutation.
+func (m *LeaseMutation) ContractionRightsCleared() bool {
+	_, ok := m.clearedFields[lease.FieldContractionRights]
+	return ok
+}
+
+// ResetContractionRights resets all changes to the "contraction_rights" field.
+func (m *LeaseMutation) ResetContractionRights() {
+	m.contraction_rights = nil
+	m.appendcontraction_rights = nil
+	delete(m.clearedFields, lease.FieldContractionRights)
+}
+
 // SetSubsidy sets the "subsidy" field.
 func (m *LeaseMutation) SetSubsidy(tt *types.SubsidyTerms) {
 	m.subsidy = &tt
@@ -9525,6 +11445,393 @@ func (m *LeaseMutation) ResetNoticeRequiredDays() {
 	m.addnotice_required_days = nil
 }
 
+// SetCheckInTime sets the "check_in_time" field.
+func (m *LeaseMutation) SetCheckInTime(s string) {
+	m.check_in_time = &s
+}
+
+// CheckInTime returns the value of the "check_in_time" field in the mutation.
+func (m *LeaseMutation) CheckInTime() (r string, exists bool) {
+	v := m.check_in_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCheckInTime returns the old "check_in_time" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldCheckInTime(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCheckInTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCheckInTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCheckInTime: %w", err)
+	}
+	return oldValue.CheckInTime, nil
+}
+
+// ClearCheckInTime clears the value of the "check_in_time" field.
+func (m *LeaseMutation) ClearCheckInTime() {
+	m.check_in_time = nil
+	m.clearedFields[lease.FieldCheckInTime] = struct{}{}
+}
+
+// CheckInTimeCleared returns if the "check_in_time" field was cleared in this mutation.
+func (m *LeaseMutation) CheckInTimeCleared() bool {
+	_, ok := m.clearedFields[lease.FieldCheckInTime]
+	return ok
+}
+
+// ResetCheckInTime resets all changes to the "check_in_time" field.
+func (m *LeaseMutation) ResetCheckInTime() {
+	m.check_in_time = nil
+	delete(m.clearedFields, lease.FieldCheckInTime)
+}
+
+// SetCheckOutTime sets the "check_out_time" field.
+func (m *LeaseMutation) SetCheckOutTime(s string) {
+	m.check_out_time = &s
+}
+
+// CheckOutTime returns the value of the "check_out_time" field in the mutation.
+func (m *LeaseMutation) CheckOutTime() (r string, exists bool) {
+	v := m.check_out_time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCheckOutTime returns the old "check_out_time" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldCheckOutTime(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCheckOutTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCheckOutTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCheckOutTime: %w", err)
+	}
+	return oldValue.CheckOutTime, nil
+}
+
+// ClearCheckOutTime clears the value of the "check_out_time" field.
+func (m *LeaseMutation) ClearCheckOutTime() {
+	m.check_out_time = nil
+	m.clearedFields[lease.FieldCheckOutTime] = struct{}{}
+}
+
+// CheckOutTimeCleared returns if the "check_out_time" field was cleared in this mutation.
+func (m *LeaseMutation) CheckOutTimeCleared() bool {
+	_, ok := m.clearedFields[lease.FieldCheckOutTime]
+	return ok
+}
+
+// ResetCheckOutTime resets all changes to the "check_out_time" field.
+func (m *LeaseMutation) ResetCheckOutTime() {
+	m.check_out_time = nil
+	delete(m.clearedFields, lease.FieldCheckOutTime)
+}
+
+// SetCleaningFeeAmountCents sets the "cleaning_fee_amount_cents" field.
+func (m *LeaseMutation) SetCleaningFeeAmountCents(i int64) {
+	m.cleaning_fee_amount_cents = &i
+	m.addcleaning_fee_amount_cents = nil
+}
+
+// CleaningFeeAmountCents returns the value of the "cleaning_fee_amount_cents" field in the mutation.
+func (m *LeaseMutation) CleaningFeeAmountCents() (r int64, exists bool) {
+	v := m.cleaning_fee_amount_cents
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCleaningFeeAmountCents returns the old "cleaning_fee_amount_cents" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldCleaningFeeAmountCents(ctx context.Context) (v *int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCleaningFeeAmountCents is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCleaningFeeAmountCents requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCleaningFeeAmountCents: %w", err)
+	}
+	return oldValue.CleaningFeeAmountCents, nil
+}
+
+// AddCleaningFeeAmountCents adds i to the "cleaning_fee_amount_cents" field.
+func (m *LeaseMutation) AddCleaningFeeAmountCents(i int64) {
+	if m.addcleaning_fee_amount_cents != nil {
+		*m.addcleaning_fee_amount_cents += i
+	} else {
+		m.addcleaning_fee_amount_cents = &i
+	}
+}
+
+// AddedCleaningFeeAmountCents returns the value that was added to the "cleaning_fee_amount_cents" field in this mutation.
+func (m *LeaseMutation) AddedCleaningFeeAmountCents() (r int64, exists bool) {
+	v := m.addcleaning_fee_amount_cents
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearCleaningFeeAmountCents clears the value of the "cleaning_fee_amount_cents" field.
+func (m *LeaseMutation) ClearCleaningFeeAmountCents() {
+	m.cleaning_fee_amount_cents = nil
+	m.addcleaning_fee_amount_cents = nil
+	m.clearedFields[lease.FieldCleaningFeeAmountCents] = struct{}{}
+}
+
+// CleaningFeeAmountCentsCleared returns if the "cleaning_fee_amount_cents" field was cleared in this mutation.
+func (m *LeaseMutation) CleaningFeeAmountCentsCleared() bool {
+	_, ok := m.clearedFields[lease.FieldCleaningFeeAmountCents]
+	return ok
+}
+
+// ResetCleaningFeeAmountCents resets all changes to the "cleaning_fee_amount_cents" field.
+func (m *LeaseMutation) ResetCleaningFeeAmountCents() {
+	m.cleaning_fee_amount_cents = nil
+	m.addcleaning_fee_amount_cents = nil
+	delete(m.clearedFields, lease.FieldCleaningFeeAmountCents)
+}
+
+// SetCleaningFeeCurrency sets the "cleaning_fee_currency" field.
+func (m *LeaseMutation) SetCleaningFeeCurrency(s string) {
+	m.cleaning_fee_currency = &s
+}
+
+// CleaningFeeCurrency returns the value of the "cleaning_fee_currency" field in the mutation.
+func (m *LeaseMutation) CleaningFeeCurrency() (r string, exists bool) {
+	v := m.cleaning_fee_currency
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCleaningFeeCurrency returns the old "cleaning_fee_currency" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldCleaningFeeCurrency(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCleaningFeeCurrency is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCleaningFeeCurrency requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCleaningFeeCurrency: %w", err)
+	}
+	return oldValue.CleaningFeeCurrency, nil
+}
+
+// ClearCleaningFeeCurrency clears the value of the "cleaning_fee_currency" field.
+func (m *LeaseMutation) ClearCleaningFeeCurrency() {
+	m.cleaning_fee_currency = nil
+	m.clearedFields[lease.FieldCleaningFeeCurrency] = struct{}{}
+}
+
+// CleaningFeeCurrencyCleared returns if the "cleaning_fee_currency" field was cleared in this mutation.
+func (m *LeaseMutation) CleaningFeeCurrencyCleared() bool {
+	_, ok := m.clearedFields[lease.FieldCleaningFeeCurrency]
+	return ok
+}
+
+// ResetCleaningFeeCurrency resets all changes to the "cleaning_fee_currency" field.
+func (m *LeaseMutation) ResetCleaningFeeCurrency() {
+	m.cleaning_fee_currency = nil
+	delete(m.clearedFields, lease.FieldCleaningFeeCurrency)
+}
+
+// SetPlatformBookingID sets the "platform_booking_id" field.
+func (m *LeaseMutation) SetPlatformBookingID(s string) {
+	m.platform_booking_id = &s
+}
+
+// PlatformBookingID returns the value of the "platform_booking_id" field in the mutation.
+func (m *LeaseMutation) PlatformBookingID() (r string, exists bool) {
+	v := m.platform_booking_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPlatformBookingID returns the old "platform_booking_id" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldPlatformBookingID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPlatformBookingID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPlatformBookingID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPlatformBookingID: %w", err)
+	}
+	return oldValue.PlatformBookingID, nil
+}
+
+// ClearPlatformBookingID clears the value of the "platform_booking_id" field.
+func (m *LeaseMutation) ClearPlatformBookingID() {
+	m.platform_booking_id = nil
+	m.clearedFields[lease.FieldPlatformBookingID] = struct{}{}
+}
+
+// PlatformBookingIDCleared returns if the "platform_booking_id" field was cleared in this mutation.
+func (m *LeaseMutation) PlatformBookingIDCleared() bool {
+	_, ok := m.clearedFields[lease.FieldPlatformBookingID]
+	return ok
+}
+
+// ResetPlatformBookingID resets all changes to the "platform_booking_id" field.
+func (m *LeaseMutation) ResetPlatformBookingID() {
+	m.platform_booking_id = nil
+	delete(m.clearedFields, lease.FieldPlatformBookingID)
+}
+
+// SetMembershipTier sets the "membership_tier" field.
+func (m *LeaseMutation) SetMembershipTier(lt lease.MembershipTier) {
+	m.membership_tier = &lt
+}
+
+// MembershipTier returns the value of the "membership_tier" field in the mutation.
+func (m *LeaseMutation) MembershipTier() (r lease.MembershipTier, exists bool) {
+	v := m.membership_tier
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMembershipTier returns the old "membership_tier" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldMembershipTier(ctx context.Context) (v *lease.MembershipTier, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMembershipTier is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMembershipTier requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMembershipTier: %w", err)
+	}
+	return oldValue.MembershipTier, nil
+}
+
+// ClearMembershipTier clears the value of the "membership_tier" field.
+func (m *LeaseMutation) ClearMembershipTier() {
+	m.membership_tier = nil
+	m.clearedFields[lease.FieldMembershipTier] = struct{}{}
+}
+
+// MembershipTierCleared returns if the "membership_tier" field was cleared in this mutation.
+func (m *LeaseMutation) MembershipTierCleared() bool {
+	_, ok := m.clearedFields[lease.FieldMembershipTier]
+	return ok
+}
+
+// ResetMembershipTier resets all changes to the "membership_tier" field.
+func (m *LeaseMutation) ResetMembershipTier() {
+	m.membership_tier = nil
+	delete(m.clearedFields, lease.FieldMembershipTier)
+}
+
+// SetIsSublease sets the "is_sublease" field.
+func (m *LeaseMutation) SetIsSublease(b bool) {
+	m.is_sublease = &b
+}
+
+// IsSublease returns the value of the "is_sublease" field in the mutation.
+func (m *LeaseMutation) IsSublease() (r bool, exists bool) {
+	v := m.is_sublease
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsSublease returns the old "is_sublease" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldIsSublease(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsSublease is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsSublease requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsSublease: %w", err)
+	}
+	return oldValue.IsSublease, nil
+}
+
+// ResetIsSublease resets all changes to the "is_sublease" field.
+func (m *LeaseMutation) ResetIsSublease() {
+	m.is_sublease = nil
+}
+
+// SetSubleaseBilling sets the "sublease_billing" field.
+func (m *LeaseMutation) SetSubleaseBilling(lb lease.SubleaseBilling) {
+	m.sublease_billing = &lb
+}
+
+// SubleaseBilling returns the value of the "sublease_billing" field in the mutation.
+func (m *LeaseMutation) SubleaseBilling() (r lease.SubleaseBilling, exists bool) {
+	v := m.sublease_billing
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubleaseBilling returns the old "sublease_billing" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldSubleaseBilling(ctx context.Context) (v lease.SubleaseBilling, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubleaseBilling is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubleaseBilling requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubleaseBilling: %w", err)
+	}
+	return oldValue.SubleaseBilling, nil
+}
+
+// ResetSubleaseBilling resets all changes to the "sublease_billing" field.
+func (m *LeaseMutation) ResetSubleaseBilling() {
+	m.sublease_billing = nil
+}
+
 // SetSigningMethod sets the "signing_method" field.
 func (m *LeaseMutation) SetSigningMethod(lm lease.SigningMethod) {
 	m.signing_method = &lm
@@ -9672,82 +11979,58 @@ func (m *LeaseMutation) ResetDocumentID() {
 	delete(m.clearedFields, lease.FieldDocumentID)
 }
 
-// SetUnitID sets the "unit" edge to the Unit entity by id.
-func (m *LeaseMutation) SetUnitID(id uuid.UUID) {
-	m.unit = &id
+// AddLeaseSpaceIDs adds the "lease_spaces" edge to the LeaseSpace entity by ids.
+func (m *LeaseMutation) AddLeaseSpaceIDs(ids ...uuid.UUID) {
+	if m.lease_spaces == nil {
+		m.lease_spaces = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.lease_spaces[ids[i]] = struct{}{}
+	}
 }
 
-// ClearUnit clears the "unit" edge to the Unit entity.
-func (m *LeaseMutation) ClearUnit() {
-	m.clearedunit = true
+// ClearLeaseSpaces clears the "lease_spaces" edge to the LeaseSpace entity.
+func (m *LeaseMutation) ClearLeaseSpaces() {
+	m.clearedlease_spaces = true
 }
 
-// UnitCleared reports if the "unit" edge to the Unit entity was cleared.
-func (m *LeaseMutation) UnitCleared() bool {
-	return m.clearedunit
+// LeaseSpacesCleared reports if the "lease_spaces" edge to the LeaseSpace entity was cleared.
+func (m *LeaseMutation) LeaseSpacesCleared() bool {
+	return m.clearedlease_spaces
 }
 
-// UnitID returns the "unit" edge ID in the mutation.
-func (m *LeaseMutation) UnitID() (id uuid.UUID, exists bool) {
-	if m.unit != nil {
-		return *m.unit, true
+// RemoveLeaseSpaceIDs removes the "lease_spaces" edge to the LeaseSpace entity by IDs.
+func (m *LeaseMutation) RemoveLeaseSpaceIDs(ids ...uuid.UUID) {
+	if m.removedlease_spaces == nil {
+		m.removedlease_spaces = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.lease_spaces, ids[i])
+		m.removedlease_spaces[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLeaseSpaces returns the removed IDs of the "lease_spaces" edge to the LeaseSpace entity.
+func (m *LeaseMutation) RemovedLeaseSpacesIDs() (ids []uuid.UUID) {
+	for id := range m.removedlease_spaces {
+		ids = append(ids, id)
 	}
 	return
 }
 
-// UnitIDs returns the "unit" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// UnitID instead. It exists only for internal usage by the builders.
-func (m *LeaseMutation) UnitIDs() (ids []uuid.UUID) {
-	if id := m.unit; id != nil {
-		ids = append(ids, *id)
+// LeaseSpacesIDs returns the "lease_spaces" edge IDs in the mutation.
+func (m *LeaseMutation) LeaseSpacesIDs() (ids []uuid.UUID) {
+	for id := range m.lease_spaces {
+		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetUnit resets all changes to the "unit" edge.
-func (m *LeaseMutation) ResetUnit() {
-	m.unit = nil
-	m.clearedunit = false
-}
-
-// SetOccupiedUnitID sets the "occupied_unit" edge to the Unit entity by id.
-func (m *LeaseMutation) SetOccupiedUnitID(id uuid.UUID) {
-	m.occupied_unit = &id
-}
-
-// ClearOccupiedUnit clears the "occupied_unit" edge to the Unit entity.
-func (m *LeaseMutation) ClearOccupiedUnit() {
-	m.clearedoccupied_unit = true
-}
-
-// OccupiedUnitCleared reports if the "occupied_unit" edge to the Unit entity was cleared.
-func (m *LeaseMutation) OccupiedUnitCleared() bool {
-	return m.clearedoccupied_unit
-}
-
-// OccupiedUnitID returns the "occupied_unit" edge ID in the mutation.
-func (m *LeaseMutation) OccupiedUnitID() (id uuid.UUID, exists bool) {
-	if m.occupied_unit != nil {
-		return *m.occupied_unit, true
-	}
-	return
-}
-
-// OccupiedUnitIDs returns the "occupied_unit" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// OccupiedUnitID instead. It exists only for internal usage by the builders.
-func (m *LeaseMutation) OccupiedUnitIDs() (ids []uuid.UUID) {
-	if id := m.occupied_unit; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetOccupiedUnit resets all changes to the "occupied_unit" edge.
-func (m *LeaseMutation) ResetOccupiedUnit() {
-	m.occupied_unit = nil
-	m.clearedoccupied_unit = false
+// ResetLeaseSpaces resets all changes to the "lease_spaces" edge.
+func (m *LeaseMutation) ResetLeaseSpaces() {
+	m.lease_spaces = nil
+	m.clearedlease_spaces = false
+	m.removedlease_spaces = nil
 }
 
 // AddTenantRoleIDs adds the "tenant_roles" edge to the PersonRole entity by ids.
@@ -9951,6 +12234,99 @@ func (m *LeaseMutation) ResetApplication() {
 	m.clearedapplication = false
 }
 
+// AddSubleaseIDs adds the "subleases" edge to the Lease entity by ids.
+func (m *LeaseMutation) AddSubleaseIDs(ids ...uuid.UUID) {
+	if m.subleases == nil {
+		m.subleases = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.subleases[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSubleases clears the "subleases" edge to the Lease entity.
+func (m *LeaseMutation) ClearSubleases() {
+	m.clearedsubleases = true
+}
+
+// SubleasesCleared reports if the "subleases" edge to the Lease entity was cleared.
+func (m *LeaseMutation) SubleasesCleared() bool {
+	return m.clearedsubleases
+}
+
+// RemoveSubleaseIDs removes the "subleases" edge to the Lease entity by IDs.
+func (m *LeaseMutation) RemoveSubleaseIDs(ids ...uuid.UUID) {
+	if m.removedsubleases == nil {
+		m.removedsubleases = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.subleases, ids[i])
+		m.removedsubleases[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSubleases returns the removed IDs of the "subleases" edge to the Lease entity.
+func (m *LeaseMutation) RemovedSubleasesIDs() (ids []uuid.UUID) {
+	for id := range m.removedsubleases {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SubleasesIDs returns the "subleases" edge IDs in the mutation.
+func (m *LeaseMutation) SubleasesIDs() (ids []uuid.UUID) {
+	for id := range m.subleases {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSubleases resets all changes to the "subleases" edge.
+func (m *LeaseMutation) ResetSubleases() {
+	m.subleases = nil
+	m.clearedsubleases = false
+	m.removedsubleases = nil
+}
+
+// SetParentLeaseID sets the "parent_lease" edge to the Lease entity by id.
+func (m *LeaseMutation) SetParentLeaseID(id uuid.UUID) {
+	m.parent_lease = &id
+}
+
+// ClearParentLease clears the "parent_lease" edge to the Lease entity.
+func (m *LeaseMutation) ClearParentLease() {
+	m.clearedparent_lease = true
+}
+
+// ParentLeaseCleared reports if the "parent_lease" edge to the Lease entity was cleared.
+func (m *LeaseMutation) ParentLeaseCleared() bool {
+	return m.clearedparent_lease
+}
+
+// ParentLeaseID returns the "parent_lease" edge ID in the mutation.
+func (m *LeaseMutation) ParentLeaseID() (id uuid.UUID, exists bool) {
+	if m.parent_lease != nil {
+		return *m.parent_lease, true
+	}
+	return
+}
+
+// ParentLeaseIDs returns the "parent_lease" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ParentLeaseID instead. It exists only for internal usage by the builders.
+func (m *LeaseMutation) ParentLeaseIDs() (ids []uuid.UUID) {
+	if id := m.parent_lease; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetParentLease resets all changes to the "parent_lease" edge.
+func (m *LeaseMutation) ResetParentLease() {
+	m.parent_lease = nil
+	m.clearedparent_lease = false
+}
+
 // Where appends a list predicates to the LeaseMutation builder.
 func (m *LeaseMutation) Where(ps ...predicate.Lease) {
 	m.predicates = append(m.predicates, ps...)
@@ -9985,7 +12361,7 @@ func (m *LeaseMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LeaseMutation) Fields() []string {
-	fields := make([]string, 0, 31)
+	fields := make([]string, 0, 46)
 	if m.created_at != nil {
 		fields = append(fields, lease.FieldCreatedAt)
 	}
@@ -10022,8 +12398,17 @@ func (m *LeaseMutation) Fields() []string {
 	if m.status != nil {
 		fields = append(fields, lease.FieldStatus)
 	}
+	if m.liability_type != nil {
+		fields = append(fields, lease.FieldLiabilityType)
+	}
 	if m.term != nil {
 		fields = append(fields, lease.FieldTerm)
+	}
+	if m.lease_commencement_date != nil {
+		fields = append(fields, lease.FieldLeaseCommencementDate)
+	}
+	if m.rent_commencement_date != nil {
+		fields = append(fields, lease.FieldRentCommencementDate)
 	}
 	if m.base_rent_amount_cents != nil {
 		fields = append(fields, lease.FieldBaseRentAmountCents)
@@ -10055,6 +12440,18 @@ func (m *LeaseMutation) Fields() []string {
 	if m.renewal_options != nil {
 		fields = append(fields, lease.FieldRenewalOptions)
 	}
+	if m.usage_charges != nil {
+		fields = append(fields, lease.FieldUsageCharges)
+	}
+	if m.percentage_rent != nil {
+		fields = append(fields, lease.FieldPercentageRent)
+	}
+	if m.expansion_rights != nil {
+		fields = append(fields, lease.FieldExpansionRights)
+	}
+	if m.contraction_rights != nil {
+		fields = append(fields, lease.FieldContractionRights)
+	}
 	if m.subsidy != nil {
 		fields = append(fields, lease.FieldSubsidy)
 	}
@@ -10069,6 +12466,30 @@ func (m *LeaseMutation) Fields() []string {
 	}
 	if m.notice_required_days != nil {
 		fields = append(fields, lease.FieldNoticeRequiredDays)
+	}
+	if m.check_in_time != nil {
+		fields = append(fields, lease.FieldCheckInTime)
+	}
+	if m.check_out_time != nil {
+		fields = append(fields, lease.FieldCheckOutTime)
+	}
+	if m.cleaning_fee_amount_cents != nil {
+		fields = append(fields, lease.FieldCleaningFeeAmountCents)
+	}
+	if m.cleaning_fee_currency != nil {
+		fields = append(fields, lease.FieldCleaningFeeCurrency)
+	}
+	if m.platform_booking_id != nil {
+		fields = append(fields, lease.FieldPlatformBookingID)
+	}
+	if m.membership_tier != nil {
+		fields = append(fields, lease.FieldMembershipTier)
+	}
+	if m.is_sublease != nil {
+		fields = append(fields, lease.FieldIsSublease)
+	}
+	if m.sublease_billing != nil {
+		fields = append(fields, lease.FieldSubleaseBilling)
 	}
 	if m.signing_method != nil {
 		fields = append(fields, lease.FieldSigningMethod)
@@ -10111,8 +12532,14 @@ func (m *LeaseMutation) Field(name string) (ent.Value, bool) {
 		return m.LeaseType()
 	case lease.FieldStatus:
 		return m.Status()
+	case lease.FieldLiabilityType:
+		return m.LiabilityType()
 	case lease.FieldTerm:
 		return m.Term()
+	case lease.FieldLeaseCommencementDate:
+		return m.LeaseCommencementDate()
+	case lease.FieldRentCommencementDate:
+		return m.RentCommencementDate()
 	case lease.FieldBaseRentAmountCents:
 		return m.BaseRentAmountCents()
 	case lease.FieldBaseRentCurrency:
@@ -10133,6 +12560,14 @@ func (m *LeaseMutation) Field(name string) (ent.Value, bool) {
 		return m.TenantImprovement()
 	case lease.FieldRenewalOptions:
 		return m.RenewalOptions()
+	case lease.FieldUsageCharges:
+		return m.UsageCharges()
+	case lease.FieldPercentageRent:
+		return m.PercentageRent()
+	case lease.FieldExpansionRights:
+		return m.ExpansionRights()
+	case lease.FieldContractionRights:
+		return m.ContractionRights()
 	case lease.FieldSubsidy:
 		return m.Subsidy()
 	case lease.FieldMoveInDate:
@@ -10143,6 +12578,22 @@ func (m *LeaseMutation) Field(name string) (ent.Value, bool) {
 		return m.NoticeDate()
 	case lease.FieldNoticeRequiredDays:
 		return m.NoticeRequiredDays()
+	case lease.FieldCheckInTime:
+		return m.CheckInTime()
+	case lease.FieldCheckOutTime:
+		return m.CheckOutTime()
+	case lease.FieldCleaningFeeAmountCents:
+		return m.CleaningFeeAmountCents()
+	case lease.FieldCleaningFeeCurrency:
+		return m.CleaningFeeCurrency()
+	case lease.FieldPlatformBookingID:
+		return m.PlatformBookingID()
+	case lease.FieldMembershipTier:
+		return m.MembershipTier()
+	case lease.FieldIsSublease:
+		return m.IsSublease()
+	case lease.FieldSubleaseBilling:
+		return m.SubleaseBilling()
 	case lease.FieldSigningMethod:
 		return m.SigningMethod()
 	case lease.FieldSignedAt:
@@ -10182,8 +12633,14 @@ func (m *LeaseMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLeaseType(ctx)
 	case lease.FieldStatus:
 		return m.OldStatus(ctx)
+	case lease.FieldLiabilityType:
+		return m.OldLiabilityType(ctx)
 	case lease.FieldTerm:
 		return m.OldTerm(ctx)
+	case lease.FieldLeaseCommencementDate:
+		return m.OldLeaseCommencementDate(ctx)
+	case lease.FieldRentCommencementDate:
+		return m.OldRentCommencementDate(ctx)
 	case lease.FieldBaseRentAmountCents:
 		return m.OldBaseRentAmountCents(ctx)
 	case lease.FieldBaseRentCurrency:
@@ -10204,6 +12661,14 @@ func (m *LeaseMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldTenantImprovement(ctx)
 	case lease.FieldRenewalOptions:
 		return m.OldRenewalOptions(ctx)
+	case lease.FieldUsageCharges:
+		return m.OldUsageCharges(ctx)
+	case lease.FieldPercentageRent:
+		return m.OldPercentageRent(ctx)
+	case lease.FieldExpansionRights:
+		return m.OldExpansionRights(ctx)
+	case lease.FieldContractionRights:
+		return m.OldContractionRights(ctx)
 	case lease.FieldSubsidy:
 		return m.OldSubsidy(ctx)
 	case lease.FieldMoveInDate:
@@ -10214,6 +12679,22 @@ func (m *LeaseMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldNoticeDate(ctx)
 	case lease.FieldNoticeRequiredDays:
 		return m.OldNoticeRequiredDays(ctx)
+	case lease.FieldCheckInTime:
+		return m.OldCheckInTime(ctx)
+	case lease.FieldCheckOutTime:
+		return m.OldCheckOutTime(ctx)
+	case lease.FieldCleaningFeeAmountCents:
+		return m.OldCleaningFeeAmountCents(ctx)
+	case lease.FieldCleaningFeeCurrency:
+		return m.OldCleaningFeeCurrency(ctx)
+	case lease.FieldPlatformBookingID:
+		return m.OldPlatformBookingID(ctx)
+	case lease.FieldMembershipTier:
+		return m.OldMembershipTier(ctx)
+	case lease.FieldIsSublease:
+		return m.OldIsSublease(ctx)
+	case lease.FieldSubleaseBilling:
+		return m.OldSubleaseBilling(ctx)
 	case lease.FieldSigningMethod:
 		return m.OldSigningMethod(ctx)
 	case lease.FieldSignedAt:
@@ -10313,12 +12794,33 @@ func (m *LeaseMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
+	case lease.FieldLiabilityType:
+		v, ok := value.(lease.LiabilityType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLiabilityType(v)
+		return nil
 	case lease.FieldTerm:
 		v, ok := value.(*types.DateRange)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTerm(v)
+		return nil
+	case lease.FieldLeaseCommencementDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeaseCommencementDate(v)
+		return nil
+	case lease.FieldRentCommencementDate:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRentCommencementDate(v)
 		return nil
 	case lease.FieldBaseRentAmountCents:
 		v, ok := value.(int64)
@@ -10390,6 +12892,34 @@ func (m *LeaseMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRenewalOptions(v)
 		return nil
+	case lease.FieldUsageCharges:
+		v, ok := value.([]types.UsageBasedCharge)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUsageCharges(v)
+		return nil
+	case lease.FieldPercentageRent:
+		v, ok := value.(*types.PercentageRent)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPercentageRent(v)
+		return nil
+	case lease.FieldExpansionRights:
+		v, ok := value.([]types.ExpansionRight)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpansionRights(v)
+		return nil
+	case lease.FieldContractionRights:
+		v, ok := value.([]types.ContractionRight)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContractionRights(v)
+		return nil
 	case lease.FieldSubsidy:
 		v, ok := value.(*types.SubsidyTerms)
 		if !ok {
@@ -10424,6 +12954,62 @@ func (m *LeaseMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetNoticeRequiredDays(v)
+		return nil
+	case lease.FieldCheckInTime:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCheckInTime(v)
+		return nil
+	case lease.FieldCheckOutTime:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCheckOutTime(v)
+		return nil
+	case lease.FieldCleaningFeeAmountCents:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCleaningFeeAmountCents(v)
+		return nil
+	case lease.FieldCleaningFeeCurrency:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCleaningFeeCurrency(v)
+		return nil
+	case lease.FieldPlatformBookingID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPlatformBookingID(v)
+		return nil
+	case lease.FieldMembershipTier:
+		v, ok := value.(lease.MembershipTier)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMembershipTier(v)
+		return nil
+	case lease.FieldIsSublease:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsSublease(v)
+		return nil
+	case lease.FieldSubleaseBilling:
+		v, ok := value.(lease.SubleaseBilling)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubleaseBilling(v)
 		return nil
 	case lease.FieldSigningMethod:
 		v, ok := value.(lease.SigningMethod)
@@ -10463,6 +13049,9 @@ func (m *LeaseMutation) AddedFields() []string {
 	if m.addnotice_required_days != nil {
 		fields = append(fields, lease.FieldNoticeRequiredDays)
 	}
+	if m.addcleaning_fee_amount_cents != nil {
+		fields = append(fields, lease.FieldCleaningFeeAmountCents)
+	}
 	return fields
 }
 
@@ -10477,6 +13066,8 @@ func (m *LeaseMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedSecurityDepositAmountCents()
 	case lease.FieldNoticeRequiredDays:
 		return m.AddedNoticeRequiredDays()
+	case lease.FieldCleaningFeeAmountCents:
+		return m.AddedCleaningFeeAmountCents()
 	}
 	return nil, false
 }
@@ -10507,6 +13098,13 @@ func (m *LeaseMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddNoticeRequiredDays(v)
 		return nil
+	case lease.FieldCleaningFeeAmountCents:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCleaningFeeAmountCents(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Lease numeric field %s", name)
 }
@@ -10523,6 +13121,12 @@ func (m *LeaseMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(lease.FieldGuarantorRoleIds) {
 		fields = append(fields, lease.FieldGuarantorRoleIds)
+	}
+	if m.FieldCleared(lease.FieldLeaseCommencementDate) {
+		fields = append(fields, lease.FieldLeaseCommencementDate)
+	}
+	if m.FieldCleared(lease.FieldRentCommencementDate) {
+		fields = append(fields, lease.FieldRentCommencementDate)
 	}
 	if m.FieldCleared(lease.FieldRentSchedule) {
 		fields = append(fields, lease.FieldRentSchedule)
@@ -10542,6 +13146,18 @@ func (m *LeaseMutation) ClearedFields() []string {
 	if m.FieldCleared(lease.FieldRenewalOptions) {
 		fields = append(fields, lease.FieldRenewalOptions)
 	}
+	if m.FieldCleared(lease.FieldUsageCharges) {
+		fields = append(fields, lease.FieldUsageCharges)
+	}
+	if m.FieldCleared(lease.FieldPercentageRent) {
+		fields = append(fields, lease.FieldPercentageRent)
+	}
+	if m.FieldCleared(lease.FieldExpansionRights) {
+		fields = append(fields, lease.FieldExpansionRights)
+	}
+	if m.FieldCleared(lease.FieldContractionRights) {
+		fields = append(fields, lease.FieldContractionRights)
+	}
 	if m.FieldCleared(lease.FieldSubsidy) {
 		fields = append(fields, lease.FieldSubsidy)
 	}
@@ -10553,6 +13169,24 @@ func (m *LeaseMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(lease.FieldNoticeDate) {
 		fields = append(fields, lease.FieldNoticeDate)
+	}
+	if m.FieldCleared(lease.FieldCheckInTime) {
+		fields = append(fields, lease.FieldCheckInTime)
+	}
+	if m.FieldCleared(lease.FieldCheckOutTime) {
+		fields = append(fields, lease.FieldCheckOutTime)
+	}
+	if m.FieldCleared(lease.FieldCleaningFeeAmountCents) {
+		fields = append(fields, lease.FieldCleaningFeeAmountCents)
+	}
+	if m.FieldCleared(lease.FieldCleaningFeeCurrency) {
+		fields = append(fields, lease.FieldCleaningFeeCurrency)
+	}
+	if m.FieldCleared(lease.FieldPlatformBookingID) {
+		fields = append(fields, lease.FieldPlatformBookingID)
+	}
+	if m.FieldCleared(lease.FieldMembershipTier) {
+		fields = append(fields, lease.FieldMembershipTier)
 	}
 	if m.FieldCleared(lease.FieldSigningMethod) {
 		fields = append(fields, lease.FieldSigningMethod)
@@ -10586,6 +13220,12 @@ func (m *LeaseMutation) ClearField(name string) error {
 	case lease.FieldGuarantorRoleIds:
 		m.ClearGuarantorRoleIds()
 		return nil
+	case lease.FieldLeaseCommencementDate:
+		m.ClearLeaseCommencementDate()
+		return nil
+	case lease.FieldRentCommencementDate:
+		m.ClearRentCommencementDate()
+		return nil
 	case lease.FieldRentSchedule:
 		m.ClearRentSchedule()
 		return nil
@@ -10604,6 +13244,18 @@ func (m *LeaseMutation) ClearField(name string) error {
 	case lease.FieldRenewalOptions:
 		m.ClearRenewalOptions()
 		return nil
+	case lease.FieldUsageCharges:
+		m.ClearUsageCharges()
+		return nil
+	case lease.FieldPercentageRent:
+		m.ClearPercentageRent()
+		return nil
+	case lease.FieldExpansionRights:
+		m.ClearExpansionRights()
+		return nil
+	case lease.FieldContractionRights:
+		m.ClearContractionRights()
+		return nil
 	case lease.FieldSubsidy:
 		m.ClearSubsidy()
 		return nil
@@ -10615,6 +13267,24 @@ func (m *LeaseMutation) ClearField(name string) error {
 		return nil
 	case lease.FieldNoticeDate:
 		m.ClearNoticeDate()
+		return nil
+	case lease.FieldCheckInTime:
+		m.ClearCheckInTime()
+		return nil
+	case lease.FieldCheckOutTime:
+		m.ClearCheckOutTime()
+		return nil
+	case lease.FieldCleaningFeeAmountCents:
+		m.ClearCleaningFeeAmountCents()
+		return nil
+	case lease.FieldCleaningFeeCurrency:
+		m.ClearCleaningFeeCurrency()
+		return nil
+	case lease.FieldPlatformBookingID:
+		m.ClearPlatformBookingID()
+		return nil
+	case lease.FieldMembershipTier:
+		m.ClearMembershipTier()
 		return nil
 	case lease.FieldSigningMethod:
 		m.ClearSigningMethod()
@@ -10669,8 +13339,17 @@ func (m *LeaseMutation) ResetField(name string) error {
 	case lease.FieldStatus:
 		m.ResetStatus()
 		return nil
+	case lease.FieldLiabilityType:
+		m.ResetLiabilityType()
+		return nil
 	case lease.FieldTerm:
 		m.ResetTerm()
+		return nil
+	case lease.FieldLeaseCommencementDate:
+		m.ResetLeaseCommencementDate()
+		return nil
+	case lease.FieldRentCommencementDate:
+		m.ResetRentCommencementDate()
 		return nil
 	case lease.FieldBaseRentAmountCents:
 		m.ResetBaseRentAmountCents()
@@ -10702,6 +13381,18 @@ func (m *LeaseMutation) ResetField(name string) error {
 	case lease.FieldRenewalOptions:
 		m.ResetRenewalOptions()
 		return nil
+	case lease.FieldUsageCharges:
+		m.ResetUsageCharges()
+		return nil
+	case lease.FieldPercentageRent:
+		m.ResetPercentageRent()
+		return nil
+	case lease.FieldExpansionRights:
+		m.ResetExpansionRights()
+		return nil
+	case lease.FieldContractionRights:
+		m.ResetContractionRights()
+		return nil
 	case lease.FieldSubsidy:
 		m.ResetSubsidy()
 		return nil
@@ -10716,6 +13407,30 @@ func (m *LeaseMutation) ResetField(name string) error {
 		return nil
 	case lease.FieldNoticeRequiredDays:
 		m.ResetNoticeRequiredDays()
+		return nil
+	case lease.FieldCheckInTime:
+		m.ResetCheckInTime()
+		return nil
+	case lease.FieldCheckOutTime:
+		m.ResetCheckOutTime()
+		return nil
+	case lease.FieldCleaningFeeAmountCents:
+		m.ResetCleaningFeeAmountCents()
+		return nil
+	case lease.FieldCleaningFeeCurrency:
+		m.ResetCleaningFeeCurrency()
+		return nil
+	case lease.FieldPlatformBookingID:
+		m.ResetPlatformBookingID()
+		return nil
+	case lease.FieldMembershipTier:
+		m.ResetMembershipTier()
+		return nil
+	case lease.FieldIsSublease:
+		m.ResetIsSublease()
+		return nil
+	case lease.FieldSubleaseBilling:
+		m.ResetSubleaseBilling()
 		return nil
 	case lease.FieldSigningMethod:
 		m.ResetSigningMethod()
@@ -10732,12 +13447,9 @@ func (m *LeaseMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeaseMutation) AddedEdges() []string {
-	edges := make([]string, 0, 6)
-	if m.unit != nil {
-		edges = append(edges, lease.EdgeUnit)
-	}
-	if m.occupied_unit != nil {
-		edges = append(edges, lease.EdgeOccupiedUnit)
+	edges := make([]string, 0, 7)
+	if m.lease_spaces != nil {
+		edges = append(edges, lease.EdgeLeaseSpaces)
 	}
 	if m.tenant_roles != nil {
 		edges = append(edges, lease.EdgeTenantRoles)
@@ -10751,6 +13463,12 @@ func (m *LeaseMutation) AddedEdges() []string {
 	if m.application != nil {
 		edges = append(edges, lease.EdgeApplication)
 	}
+	if m.subleases != nil {
+		edges = append(edges, lease.EdgeSubleases)
+	}
+	if m.parent_lease != nil {
+		edges = append(edges, lease.EdgeParentLease)
+	}
 	return edges
 }
 
@@ -10758,14 +13476,12 @@ func (m *LeaseMutation) AddedEdges() []string {
 // name in this mutation.
 func (m *LeaseMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case lease.EdgeUnit:
-		if id := m.unit; id != nil {
-			return []ent.Value{*id}
+	case lease.EdgeLeaseSpaces:
+		ids := make([]ent.Value, 0, len(m.lease_spaces))
+		for id := range m.lease_spaces {
+			ids = append(ids, id)
 		}
-	case lease.EdgeOccupiedUnit:
-		if id := m.occupied_unit; id != nil {
-			return []ent.Value{*id}
-		}
+		return ids
 	case lease.EdgeTenantRoles:
 		ids := make([]ent.Value, 0, len(m.tenant_roles))
 		for id := range m.tenant_roles {
@@ -10788,13 +13504,26 @@ func (m *LeaseMutation) AddedIDs(name string) []ent.Value {
 		if id := m.application; id != nil {
 			return []ent.Value{*id}
 		}
+	case lease.EdgeSubleases:
+		ids := make([]ent.Value, 0, len(m.subleases))
+		for id := range m.subleases {
+			ids = append(ids, id)
+		}
+		return ids
+	case lease.EdgeParentLease:
+		if id := m.parent_lease; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeaseMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
+	if m.removedlease_spaces != nil {
+		edges = append(edges, lease.EdgeLeaseSpaces)
+	}
 	if m.removedtenant_roles != nil {
 		edges = append(edges, lease.EdgeTenantRoles)
 	}
@@ -10804,6 +13533,9 @@ func (m *LeaseMutation) RemovedEdges() []string {
 	if m.removedledger_entries != nil {
 		edges = append(edges, lease.EdgeLedgerEntries)
 	}
+	if m.removedsubleases != nil {
+		edges = append(edges, lease.EdgeSubleases)
+	}
 	return edges
 }
 
@@ -10811,6 +13543,12 @@ func (m *LeaseMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *LeaseMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
+	case lease.EdgeLeaseSpaces:
+		ids := make([]ent.Value, 0, len(m.removedlease_spaces))
+		for id := range m.removedlease_spaces {
+			ids = append(ids, id)
+		}
+		return ids
 	case lease.EdgeTenantRoles:
 		ids := make([]ent.Value, 0, len(m.removedtenant_roles))
 		for id := range m.removedtenant_roles {
@@ -10829,18 +13567,21 @@ func (m *LeaseMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lease.EdgeSubleases:
+		ids := make([]ent.Value, 0, len(m.removedsubleases))
+		for id := range m.removedsubleases {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeaseMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 6)
-	if m.clearedunit {
-		edges = append(edges, lease.EdgeUnit)
-	}
-	if m.clearedoccupied_unit {
-		edges = append(edges, lease.EdgeOccupiedUnit)
+	edges := make([]string, 0, 7)
+	if m.clearedlease_spaces {
+		edges = append(edges, lease.EdgeLeaseSpaces)
 	}
 	if m.clearedtenant_roles {
 		edges = append(edges, lease.EdgeTenantRoles)
@@ -10854,6 +13595,12 @@ func (m *LeaseMutation) ClearedEdges() []string {
 	if m.clearedapplication {
 		edges = append(edges, lease.EdgeApplication)
 	}
+	if m.clearedsubleases {
+		edges = append(edges, lease.EdgeSubleases)
+	}
+	if m.clearedparent_lease {
+		edges = append(edges, lease.EdgeParentLease)
+	}
 	return edges
 }
 
@@ -10861,10 +13608,8 @@ func (m *LeaseMutation) ClearedEdges() []string {
 // was cleared in this mutation.
 func (m *LeaseMutation) EdgeCleared(name string) bool {
 	switch name {
-	case lease.EdgeUnit:
-		return m.clearedunit
-	case lease.EdgeOccupiedUnit:
-		return m.clearedoccupied_unit
+	case lease.EdgeLeaseSpaces:
+		return m.clearedlease_spaces
 	case lease.EdgeTenantRoles:
 		return m.clearedtenant_roles
 	case lease.EdgeGuarantorRoles:
@@ -10873,6 +13618,10 @@ func (m *LeaseMutation) EdgeCleared(name string) bool {
 		return m.clearedledger_entries
 	case lease.EdgeApplication:
 		return m.clearedapplication
+	case lease.EdgeSubleases:
+		return m.clearedsubleases
+	case lease.EdgeParentLease:
+		return m.clearedparent_lease
 	}
 	return false
 }
@@ -10881,14 +13630,11 @@ func (m *LeaseMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *LeaseMutation) ClearEdge(name string) error {
 	switch name {
-	case lease.EdgeUnit:
-		m.ClearUnit()
-		return nil
-	case lease.EdgeOccupiedUnit:
-		m.ClearOccupiedUnit()
-		return nil
 	case lease.EdgeApplication:
 		m.ClearApplication()
+		return nil
+	case lease.EdgeParentLease:
+		m.ClearParentLease()
 		return nil
 	}
 	return fmt.Errorf("unknown Lease unique edge %s", name)
@@ -10898,11 +13644,8 @@ func (m *LeaseMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *LeaseMutation) ResetEdge(name string) error {
 	switch name {
-	case lease.EdgeUnit:
-		m.ResetUnit()
-		return nil
-	case lease.EdgeOccupiedUnit:
-		m.ResetOccupiedUnit()
+	case lease.EdgeLeaseSpaces:
+		m.ResetLeaseSpaces()
 		return nil
 	case lease.EdgeTenantRoles:
 		m.ResetTenantRoles()
@@ -10916,8 +13659,1109 @@ func (m *LeaseMutation) ResetEdge(name string) error {
 	case lease.EdgeApplication:
 		m.ResetApplication()
 		return nil
+	case lease.EdgeSubleases:
+		m.ResetSubleases()
+		return nil
+	case lease.EdgeParentLease:
+		m.ResetParentLease()
+		return nil
 	}
 	return fmt.Errorf("unknown Lease edge %s", name)
+}
+
+// LeaseSpaceMutation represents an operation that mutates the LeaseSpace nodes in the graph.
+type LeaseSpaceMutation struct {
+	config
+	op                       Op
+	typ                      string
+	id                       *uuid.UUID
+	created_at               *time.Time
+	updated_at               *time.Time
+	created_by               *string
+	updated_by               *string
+	source                   *leasespace.Source
+	correlation_id           *string
+	agent_goal_id            *string
+	is_primary               *bool
+	relationship             *leasespace.Relationship
+	effective                **types.DateRange
+	square_footage_leased    *float64
+	addsquare_footage_leased *float64
+	clearedFields            map[string]struct{}
+	lease                    *uuid.UUID
+	clearedlease             bool
+	space                    *uuid.UUID
+	clearedspace             bool
+	done                     bool
+	oldValue                 func(context.Context) (*LeaseSpace, error)
+	predicates               []predicate.LeaseSpace
+}
+
+var _ ent.Mutation = (*LeaseSpaceMutation)(nil)
+
+// leasespaceOption allows management of the mutation configuration using functional options.
+type leasespaceOption func(*LeaseSpaceMutation)
+
+// newLeaseSpaceMutation creates new mutation for the LeaseSpace entity.
+func newLeaseSpaceMutation(c config, op Op, opts ...leasespaceOption) *LeaseSpaceMutation {
+	m := &LeaseSpaceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeLeaseSpace,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withLeaseSpaceID sets the ID field of the mutation.
+func withLeaseSpaceID(id uuid.UUID) leasespaceOption {
+	return func(m *LeaseSpaceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *LeaseSpace
+		)
+		m.oldValue = func(ctx context.Context) (*LeaseSpace, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().LeaseSpace.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withLeaseSpace sets the old LeaseSpace of the mutation.
+func withLeaseSpace(node *LeaseSpace) leasespaceOption {
+	return func(m *LeaseSpaceMutation) {
+		m.oldValue = func(context.Context) (*LeaseSpace, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m LeaseSpaceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m LeaseSpaceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of LeaseSpace entities.
+func (m *LeaseSpaceMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *LeaseSpaceMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *LeaseSpaceMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().LeaseSpace.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *LeaseSpaceMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *LeaseSpaceMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *LeaseSpaceMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *LeaseSpaceMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *LeaseSpaceMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *LeaseSpaceMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (m *LeaseSpaceMutation) SetCreatedBy(s string) {
+	m.created_by = &s
+}
+
+// CreatedBy returns the value of the "created_by" field in the mutation.
+func (m *LeaseSpaceMutation) CreatedBy() (r string, exists bool) {
+	v := m.created_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedBy returns the old "created_by" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldCreatedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedBy: %w", err)
+	}
+	return oldValue.CreatedBy, nil
+}
+
+// ResetCreatedBy resets all changes to the "created_by" field.
+func (m *LeaseSpaceMutation) ResetCreatedBy() {
+	m.created_by = nil
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (m *LeaseSpaceMutation) SetUpdatedBy(s string) {
+	m.updated_by = &s
+}
+
+// UpdatedBy returns the value of the "updated_by" field in the mutation.
+func (m *LeaseSpaceMutation) UpdatedBy() (r string, exists bool) {
+	v := m.updated_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedBy returns the old "updated_by" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldUpdatedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedBy: %w", err)
+	}
+	return oldValue.UpdatedBy, nil
+}
+
+// ResetUpdatedBy resets all changes to the "updated_by" field.
+func (m *LeaseSpaceMutation) ResetUpdatedBy() {
+	m.updated_by = nil
+}
+
+// SetSource sets the "source" field.
+func (m *LeaseSpaceMutation) SetSource(l leasespace.Source) {
+	m.source = &l
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *LeaseSpaceMutation) Source() (r leasespace.Source, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldSource(ctx context.Context) (v leasespace.Source, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *LeaseSpaceMutation) ResetSource() {
+	m.source = nil
+}
+
+// SetCorrelationID sets the "correlation_id" field.
+func (m *LeaseSpaceMutation) SetCorrelationID(s string) {
+	m.correlation_id = &s
+}
+
+// CorrelationID returns the value of the "correlation_id" field in the mutation.
+func (m *LeaseSpaceMutation) CorrelationID() (r string, exists bool) {
+	v := m.correlation_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCorrelationID returns the old "correlation_id" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldCorrelationID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCorrelationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCorrelationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCorrelationID: %w", err)
+	}
+	return oldValue.CorrelationID, nil
+}
+
+// ClearCorrelationID clears the value of the "correlation_id" field.
+func (m *LeaseSpaceMutation) ClearCorrelationID() {
+	m.correlation_id = nil
+	m.clearedFields[leasespace.FieldCorrelationID] = struct{}{}
+}
+
+// CorrelationIDCleared returns if the "correlation_id" field was cleared in this mutation.
+func (m *LeaseSpaceMutation) CorrelationIDCleared() bool {
+	_, ok := m.clearedFields[leasespace.FieldCorrelationID]
+	return ok
+}
+
+// ResetCorrelationID resets all changes to the "correlation_id" field.
+func (m *LeaseSpaceMutation) ResetCorrelationID() {
+	m.correlation_id = nil
+	delete(m.clearedFields, leasespace.FieldCorrelationID)
+}
+
+// SetAgentGoalID sets the "agent_goal_id" field.
+func (m *LeaseSpaceMutation) SetAgentGoalID(s string) {
+	m.agent_goal_id = &s
+}
+
+// AgentGoalID returns the value of the "agent_goal_id" field in the mutation.
+func (m *LeaseSpaceMutation) AgentGoalID() (r string, exists bool) {
+	v := m.agent_goal_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAgentGoalID returns the old "agent_goal_id" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldAgentGoalID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAgentGoalID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAgentGoalID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAgentGoalID: %w", err)
+	}
+	return oldValue.AgentGoalID, nil
+}
+
+// ClearAgentGoalID clears the value of the "agent_goal_id" field.
+func (m *LeaseSpaceMutation) ClearAgentGoalID() {
+	m.agent_goal_id = nil
+	m.clearedFields[leasespace.FieldAgentGoalID] = struct{}{}
+}
+
+// AgentGoalIDCleared returns if the "agent_goal_id" field was cleared in this mutation.
+func (m *LeaseSpaceMutation) AgentGoalIDCleared() bool {
+	_, ok := m.clearedFields[leasespace.FieldAgentGoalID]
+	return ok
+}
+
+// ResetAgentGoalID resets all changes to the "agent_goal_id" field.
+func (m *LeaseSpaceMutation) ResetAgentGoalID() {
+	m.agent_goal_id = nil
+	delete(m.clearedFields, leasespace.FieldAgentGoalID)
+}
+
+// SetIsPrimary sets the "is_primary" field.
+func (m *LeaseSpaceMutation) SetIsPrimary(b bool) {
+	m.is_primary = &b
+}
+
+// IsPrimary returns the value of the "is_primary" field in the mutation.
+func (m *LeaseSpaceMutation) IsPrimary() (r bool, exists bool) {
+	v := m.is_primary
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsPrimary returns the old "is_primary" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldIsPrimary(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsPrimary is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsPrimary requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsPrimary: %w", err)
+	}
+	return oldValue.IsPrimary, nil
+}
+
+// ResetIsPrimary resets all changes to the "is_primary" field.
+func (m *LeaseSpaceMutation) ResetIsPrimary() {
+	m.is_primary = nil
+}
+
+// SetRelationship sets the "relationship" field.
+func (m *LeaseSpaceMutation) SetRelationship(l leasespace.Relationship) {
+	m.relationship = &l
+}
+
+// Relationship returns the value of the "relationship" field in the mutation.
+func (m *LeaseSpaceMutation) Relationship() (r leasespace.Relationship, exists bool) {
+	v := m.relationship
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRelationship returns the old "relationship" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldRelationship(ctx context.Context) (v leasespace.Relationship, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRelationship is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRelationship requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRelationship: %w", err)
+	}
+	return oldValue.Relationship, nil
+}
+
+// ResetRelationship resets all changes to the "relationship" field.
+func (m *LeaseSpaceMutation) ResetRelationship() {
+	m.relationship = nil
+}
+
+// SetEffective sets the "effective" field.
+func (m *LeaseSpaceMutation) SetEffective(tr *types.DateRange) {
+	m.effective = &tr
+}
+
+// Effective returns the value of the "effective" field in the mutation.
+func (m *LeaseSpaceMutation) Effective() (r *types.DateRange, exists bool) {
+	v := m.effective
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEffective returns the old "effective" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldEffective(ctx context.Context) (v *types.DateRange, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEffective is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEffective requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEffective: %w", err)
+	}
+	return oldValue.Effective, nil
+}
+
+// ResetEffective resets all changes to the "effective" field.
+func (m *LeaseSpaceMutation) ResetEffective() {
+	m.effective = nil
+}
+
+// SetSquareFootageLeased sets the "square_footage_leased" field.
+func (m *LeaseSpaceMutation) SetSquareFootageLeased(f float64) {
+	m.square_footage_leased = &f
+	m.addsquare_footage_leased = nil
+}
+
+// SquareFootageLeased returns the value of the "square_footage_leased" field in the mutation.
+func (m *LeaseSpaceMutation) SquareFootageLeased() (r float64, exists bool) {
+	v := m.square_footage_leased
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSquareFootageLeased returns the old "square_footage_leased" field's value of the LeaseSpace entity.
+// If the LeaseSpace object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseSpaceMutation) OldSquareFootageLeased(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSquareFootageLeased is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSquareFootageLeased requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSquareFootageLeased: %w", err)
+	}
+	return oldValue.SquareFootageLeased, nil
+}
+
+// AddSquareFootageLeased adds f to the "square_footage_leased" field.
+func (m *LeaseSpaceMutation) AddSquareFootageLeased(f float64) {
+	if m.addsquare_footage_leased != nil {
+		*m.addsquare_footage_leased += f
+	} else {
+		m.addsquare_footage_leased = &f
+	}
+}
+
+// AddedSquareFootageLeased returns the value that was added to the "square_footage_leased" field in this mutation.
+func (m *LeaseSpaceMutation) AddedSquareFootageLeased() (r float64, exists bool) {
+	v := m.addsquare_footage_leased
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSquareFootageLeased clears the value of the "square_footage_leased" field.
+func (m *LeaseSpaceMutation) ClearSquareFootageLeased() {
+	m.square_footage_leased = nil
+	m.addsquare_footage_leased = nil
+	m.clearedFields[leasespace.FieldSquareFootageLeased] = struct{}{}
+}
+
+// SquareFootageLeasedCleared returns if the "square_footage_leased" field was cleared in this mutation.
+func (m *LeaseSpaceMutation) SquareFootageLeasedCleared() bool {
+	_, ok := m.clearedFields[leasespace.FieldSquareFootageLeased]
+	return ok
+}
+
+// ResetSquareFootageLeased resets all changes to the "square_footage_leased" field.
+func (m *LeaseSpaceMutation) ResetSquareFootageLeased() {
+	m.square_footage_leased = nil
+	m.addsquare_footage_leased = nil
+	delete(m.clearedFields, leasespace.FieldSquareFootageLeased)
+}
+
+// SetLeaseID sets the "lease" edge to the Lease entity by id.
+func (m *LeaseSpaceMutation) SetLeaseID(id uuid.UUID) {
+	m.lease = &id
+}
+
+// ClearLease clears the "lease" edge to the Lease entity.
+func (m *LeaseSpaceMutation) ClearLease() {
+	m.clearedlease = true
+}
+
+// LeaseCleared reports if the "lease" edge to the Lease entity was cleared.
+func (m *LeaseSpaceMutation) LeaseCleared() bool {
+	return m.clearedlease
+}
+
+// LeaseID returns the "lease" edge ID in the mutation.
+func (m *LeaseSpaceMutation) LeaseID() (id uuid.UUID, exists bool) {
+	if m.lease != nil {
+		return *m.lease, true
+	}
+	return
+}
+
+// LeaseIDs returns the "lease" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeaseID instead. It exists only for internal usage by the builders.
+func (m *LeaseSpaceMutation) LeaseIDs() (ids []uuid.UUID) {
+	if id := m.lease; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLease resets all changes to the "lease" edge.
+func (m *LeaseSpaceMutation) ResetLease() {
+	m.lease = nil
+	m.clearedlease = false
+}
+
+// SetSpaceID sets the "space" edge to the Space entity by id.
+func (m *LeaseSpaceMutation) SetSpaceID(id uuid.UUID) {
+	m.space = &id
+}
+
+// ClearSpace clears the "space" edge to the Space entity.
+func (m *LeaseSpaceMutation) ClearSpace() {
+	m.clearedspace = true
+}
+
+// SpaceCleared reports if the "space" edge to the Space entity was cleared.
+func (m *LeaseSpaceMutation) SpaceCleared() bool {
+	return m.clearedspace
+}
+
+// SpaceID returns the "space" edge ID in the mutation.
+func (m *LeaseSpaceMutation) SpaceID() (id uuid.UUID, exists bool) {
+	if m.space != nil {
+		return *m.space, true
+	}
+	return
+}
+
+// SpaceIDs returns the "space" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SpaceID instead. It exists only for internal usage by the builders.
+func (m *LeaseSpaceMutation) SpaceIDs() (ids []uuid.UUID) {
+	if id := m.space; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSpace resets all changes to the "space" edge.
+func (m *LeaseSpaceMutation) ResetSpace() {
+	m.space = nil
+	m.clearedspace = false
+}
+
+// Where appends a list predicates to the LeaseSpaceMutation builder.
+func (m *LeaseSpaceMutation) Where(ps ...predicate.LeaseSpace) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the LeaseSpaceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *LeaseSpaceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.LeaseSpace, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *LeaseSpaceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *LeaseSpaceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (LeaseSpace).
+func (m *LeaseSpaceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *LeaseSpaceMutation) Fields() []string {
+	fields := make([]string, 0, 11)
+	if m.created_at != nil {
+		fields = append(fields, leasespace.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, leasespace.FieldUpdatedAt)
+	}
+	if m.created_by != nil {
+		fields = append(fields, leasespace.FieldCreatedBy)
+	}
+	if m.updated_by != nil {
+		fields = append(fields, leasespace.FieldUpdatedBy)
+	}
+	if m.source != nil {
+		fields = append(fields, leasespace.FieldSource)
+	}
+	if m.correlation_id != nil {
+		fields = append(fields, leasespace.FieldCorrelationID)
+	}
+	if m.agent_goal_id != nil {
+		fields = append(fields, leasespace.FieldAgentGoalID)
+	}
+	if m.is_primary != nil {
+		fields = append(fields, leasespace.FieldIsPrimary)
+	}
+	if m.relationship != nil {
+		fields = append(fields, leasespace.FieldRelationship)
+	}
+	if m.effective != nil {
+		fields = append(fields, leasespace.FieldEffective)
+	}
+	if m.square_footage_leased != nil {
+		fields = append(fields, leasespace.FieldSquareFootageLeased)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *LeaseSpaceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case leasespace.FieldCreatedAt:
+		return m.CreatedAt()
+	case leasespace.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case leasespace.FieldCreatedBy:
+		return m.CreatedBy()
+	case leasespace.FieldUpdatedBy:
+		return m.UpdatedBy()
+	case leasespace.FieldSource:
+		return m.Source()
+	case leasespace.FieldCorrelationID:
+		return m.CorrelationID()
+	case leasespace.FieldAgentGoalID:
+		return m.AgentGoalID()
+	case leasespace.FieldIsPrimary:
+		return m.IsPrimary()
+	case leasespace.FieldRelationship:
+		return m.Relationship()
+	case leasespace.FieldEffective:
+		return m.Effective()
+	case leasespace.FieldSquareFootageLeased:
+		return m.SquareFootageLeased()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *LeaseSpaceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case leasespace.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case leasespace.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case leasespace.FieldCreatedBy:
+		return m.OldCreatedBy(ctx)
+	case leasespace.FieldUpdatedBy:
+		return m.OldUpdatedBy(ctx)
+	case leasespace.FieldSource:
+		return m.OldSource(ctx)
+	case leasespace.FieldCorrelationID:
+		return m.OldCorrelationID(ctx)
+	case leasespace.FieldAgentGoalID:
+		return m.OldAgentGoalID(ctx)
+	case leasespace.FieldIsPrimary:
+		return m.OldIsPrimary(ctx)
+	case leasespace.FieldRelationship:
+		return m.OldRelationship(ctx)
+	case leasespace.FieldEffective:
+		return m.OldEffective(ctx)
+	case leasespace.FieldSquareFootageLeased:
+		return m.OldSquareFootageLeased(ctx)
+	}
+	return nil, fmt.Errorf("unknown LeaseSpace field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeaseSpaceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case leasespace.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case leasespace.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case leasespace.FieldCreatedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedBy(v)
+		return nil
+	case leasespace.FieldUpdatedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedBy(v)
+		return nil
+	case leasespace.FieldSource:
+		v, ok := value.(leasespace.Source)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case leasespace.FieldCorrelationID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCorrelationID(v)
+		return nil
+	case leasespace.FieldAgentGoalID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAgentGoalID(v)
+		return nil
+	case leasespace.FieldIsPrimary:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsPrimary(v)
+		return nil
+	case leasespace.FieldRelationship:
+		v, ok := value.(leasespace.Relationship)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRelationship(v)
+		return nil
+	case leasespace.FieldEffective:
+		v, ok := value.(*types.DateRange)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEffective(v)
+		return nil
+	case leasespace.FieldSquareFootageLeased:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSquareFootageLeased(v)
+		return nil
+	}
+	return fmt.Errorf("unknown LeaseSpace field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *LeaseSpaceMutation) AddedFields() []string {
+	var fields []string
+	if m.addsquare_footage_leased != nil {
+		fields = append(fields, leasespace.FieldSquareFootageLeased)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *LeaseSpaceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case leasespace.FieldSquareFootageLeased:
+		return m.AddedSquareFootageLeased()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeaseSpaceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case leasespace.FieldSquareFootageLeased:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSquareFootageLeased(v)
+		return nil
+	}
+	return fmt.Errorf("unknown LeaseSpace numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *LeaseSpaceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(leasespace.FieldCorrelationID) {
+		fields = append(fields, leasespace.FieldCorrelationID)
+	}
+	if m.FieldCleared(leasespace.FieldAgentGoalID) {
+		fields = append(fields, leasespace.FieldAgentGoalID)
+	}
+	if m.FieldCleared(leasespace.FieldSquareFootageLeased) {
+		fields = append(fields, leasespace.FieldSquareFootageLeased)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *LeaseSpaceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *LeaseSpaceMutation) ClearField(name string) error {
+	switch name {
+	case leasespace.FieldCorrelationID:
+		m.ClearCorrelationID()
+		return nil
+	case leasespace.FieldAgentGoalID:
+		m.ClearAgentGoalID()
+		return nil
+	case leasespace.FieldSquareFootageLeased:
+		m.ClearSquareFootageLeased()
+		return nil
+	}
+	return fmt.Errorf("unknown LeaseSpace nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *LeaseSpaceMutation) ResetField(name string) error {
+	switch name {
+	case leasespace.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case leasespace.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case leasespace.FieldCreatedBy:
+		m.ResetCreatedBy()
+		return nil
+	case leasespace.FieldUpdatedBy:
+		m.ResetUpdatedBy()
+		return nil
+	case leasespace.FieldSource:
+		m.ResetSource()
+		return nil
+	case leasespace.FieldCorrelationID:
+		m.ResetCorrelationID()
+		return nil
+	case leasespace.FieldAgentGoalID:
+		m.ResetAgentGoalID()
+		return nil
+	case leasespace.FieldIsPrimary:
+		m.ResetIsPrimary()
+		return nil
+	case leasespace.FieldRelationship:
+		m.ResetRelationship()
+		return nil
+	case leasespace.FieldEffective:
+		m.ResetEffective()
+		return nil
+	case leasespace.FieldSquareFootageLeased:
+		m.ResetSquareFootageLeased()
+		return nil
+	}
+	return fmt.Errorf("unknown LeaseSpace field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *LeaseSpaceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.lease != nil {
+		edges = append(edges, leasespace.EdgeLease)
+	}
+	if m.space != nil {
+		edges = append(edges, leasespace.EdgeSpace)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *LeaseSpaceMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case leasespace.EdgeLease:
+		if id := m.lease; id != nil {
+			return []ent.Value{*id}
+		}
+	case leasespace.EdgeSpace:
+		if id := m.space; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *LeaseSpaceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *LeaseSpaceMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *LeaseSpaceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedlease {
+		edges = append(edges, leasespace.EdgeLease)
+	}
+	if m.clearedspace {
+		edges = append(edges, leasespace.EdgeSpace)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *LeaseSpaceMutation) EdgeCleared(name string) bool {
+	switch name {
+	case leasespace.EdgeLease:
+		return m.clearedlease
+	case leasespace.EdgeSpace:
+		return m.clearedspace
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *LeaseSpaceMutation) ClearEdge(name string) error {
+	switch name {
+	case leasespace.EdgeLease:
+		m.ClearLease()
+		return nil
+	case leasespace.EdgeSpace:
+		m.ClearSpace()
+		return nil
+	}
+	return fmt.Errorf("unknown LeaseSpace unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *LeaseSpaceMutation) ResetEdge(name string) error {
+	switch name {
+	case leasespace.EdgeLease:
+		m.ResetLease()
+		return nil
+	case leasespace.EdgeSpace:
+		m.ResetSpace()
+		return nil
+	}
+	return fmt.Errorf("unknown LeaseSpace edge %s", name)
 }
 
 // LedgerEntryMutation represents an operation that mutates the LedgerEntry nodes in the graph.
@@ -10942,7 +14786,6 @@ type LedgerEntryMutation struct {
 	description            *string
 	charge_code            *string
 	memo                   *string
-	unit_id                *string
 	bank_account_id        *string
 	bank_transaction_id    *string
 	reconciled             *bool
@@ -10958,6 +14801,8 @@ type LedgerEntryMutation struct {
 	clearedaccount         bool
 	property               *uuid.UUID
 	clearedproperty        bool
+	space                  *uuid.UUID
+	clearedspace           bool
 	person                 *uuid.UUID
 	clearedperson          bool
 	done                   bool
@@ -11668,55 +15513,6 @@ func (m *LedgerEntryMutation) ResetMemo() {
 	delete(m.clearedFields, ledgerentry.FieldMemo)
 }
 
-// SetUnitID sets the "unit_id" field.
-func (m *LedgerEntryMutation) SetUnitID(s string) {
-	m.unit_id = &s
-}
-
-// UnitID returns the value of the "unit_id" field in the mutation.
-func (m *LedgerEntryMutation) UnitID() (r string, exists bool) {
-	v := m.unit_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUnitID returns the old "unit_id" field's value of the LedgerEntry entity.
-// If the LedgerEntry object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *LedgerEntryMutation) OldUnitID(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUnitID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUnitID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUnitID: %w", err)
-	}
-	return oldValue.UnitID, nil
-}
-
-// ClearUnitID clears the value of the "unit_id" field.
-func (m *LedgerEntryMutation) ClearUnitID() {
-	m.unit_id = nil
-	m.clearedFields[ledgerentry.FieldUnitID] = struct{}{}
-}
-
-// UnitIDCleared returns if the "unit_id" field was cleared in this mutation.
-func (m *LedgerEntryMutation) UnitIDCleared() bool {
-	_, ok := m.clearedFields[ledgerentry.FieldUnitID]
-	return ok
-}
-
-// ResetUnitID resets all changes to the "unit_id" field.
-func (m *LedgerEntryMutation) ResetUnitID() {
-	m.unit_id = nil
-	delete(m.clearedFields, ledgerentry.FieldUnitID)
-}
-
 // SetBankAccountID sets the "bank_account_id" field.
 func (m *LedgerEntryMutation) SetBankAccountID(s string) {
 	m.bank_account_id = &s
@@ -12154,6 +15950,45 @@ func (m *LedgerEntryMutation) ResetProperty() {
 	m.clearedproperty = false
 }
 
+// SetSpaceID sets the "space" edge to the Space entity by id.
+func (m *LedgerEntryMutation) SetSpaceID(id uuid.UUID) {
+	m.space = &id
+}
+
+// ClearSpace clears the "space" edge to the Space entity.
+func (m *LedgerEntryMutation) ClearSpace() {
+	m.clearedspace = true
+}
+
+// SpaceCleared reports if the "space" edge to the Space entity was cleared.
+func (m *LedgerEntryMutation) SpaceCleared() bool {
+	return m.clearedspace
+}
+
+// SpaceID returns the "space" edge ID in the mutation.
+func (m *LedgerEntryMutation) SpaceID() (id uuid.UUID, exists bool) {
+	if m.space != nil {
+		return *m.space, true
+	}
+	return
+}
+
+// SpaceIDs returns the "space" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SpaceID instead. It exists only for internal usage by the builders.
+func (m *LedgerEntryMutation) SpaceIDs() (ids []uuid.UUID) {
+	if id := m.space; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSpace resets all changes to the "space" edge.
+func (m *LedgerEntryMutation) ResetSpace() {
+	m.space = nil
+	m.clearedspace = false
+}
+
 // SetPersonID sets the "person" edge to the Person entity by id.
 func (m *LedgerEntryMutation) SetPersonID(id uuid.UUID) {
 	m.person = &id
@@ -12227,7 +16062,7 @@ func (m *LedgerEntryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LedgerEntryMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 21)
 	if m.created_at != nil {
 		fields = append(fields, ledgerentry.FieldCreatedAt)
 	}
@@ -12272,9 +16107,6 @@ func (m *LedgerEntryMutation) Fields() []string {
 	}
 	if m.memo != nil {
 		fields = append(fields, ledgerentry.FieldMemo)
-	}
-	if m.unit_id != nil {
-		fields = append(fields, ledgerentry.FieldUnitID)
 	}
 	if m.bank_account_id != nil {
 		fields = append(fields, ledgerentry.FieldBankAccountID)
@@ -12332,8 +16164,6 @@ func (m *LedgerEntryMutation) Field(name string) (ent.Value, bool) {
 		return m.ChargeCode()
 	case ledgerentry.FieldMemo:
 		return m.Memo()
-	case ledgerentry.FieldUnitID:
-		return m.UnitID()
 	case ledgerentry.FieldBankAccountID:
 		return m.BankAccountID()
 	case ledgerentry.FieldBankTransactionID:
@@ -12385,8 +16215,6 @@ func (m *LedgerEntryMutation) OldField(ctx context.Context, name string) (ent.Va
 		return m.OldChargeCode(ctx)
 	case ledgerentry.FieldMemo:
 		return m.OldMemo(ctx)
-	case ledgerentry.FieldUnitID:
-		return m.OldUnitID(ctx)
 	case ledgerentry.FieldBankAccountID:
 		return m.OldBankAccountID(ctx)
 	case ledgerentry.FieldBankTransactionID:
@@ -12513,13 +16341,6 @@ func (m *LedgerEntryMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetMemo(v)
 		return nil
-	case ledgerentry.FieldUnitID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUnitID(v)
-		return nil
 	case ledgerentry.FieldBankAccountID:
 		v, ok := value.(string)
 		if !ok {
@@ -12616,9 +16437,6 @@ func (m *LedgerEntryMutation) ClearedFields() []string {
 	if m.FieldCleared(ledgerentry.FieldMemo) {
 		fields = append(fields, ledgerentry.FieldMemo)
 	}
-	if m.FieldCleared(ledgerentry.FieldUnitID) {
-		fields = append(fields, ledgerentry.FieldUnitID)
-	}
 	if m.FieldCleared(ledgerentry.FieldBankAccountID) {
 		fields = append(fields, ledgerentry.FieldBankAccountID)
 	}
@@ -12656,9 +16474,6 @@ func (m *LedgerEntryMutation) ClearField(name string) error {
 		return nil
 	case ledgerentry.FieldMemo:
 		m.ClearMemo()
-		return nil
-	case ledgerentry.FieldUnitID:
-		m.ClearUnitID()
 		return nil
 	case ledgerentry.FieldBankAccountID:
 		m.ClearBankAccountID()
@@ -12728,9 +16543,6 @@ func (m *LedgerEntryMutation) ResetField(name string) error {
 	case ledgerentry.FieldMemo:
 		m.ResetMemo()
 		return nil
-	case ledgerentry.FieldUnitID:
-		m.ResetUnitID()
-		return nil
 	case ledgerentry.FieldBankAccountID:
 		m.ResetBankAccountID()
 		return nil
@@ -12755,7 +16567,7 @@ func (m *LedgerEntryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LedgerEntryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.lease != nil {
 		edges = append(edges, ledgerentry.EdgeLease)
 	}
@@ -12767,6 +16579,9 @@ func (m *LedgerEntryMutation) AddedEdges() []string {
 	}
 	if m.property != nil {
 		edges = append(edges, ledgerentry.EdgeProperty)
+	}
+	if m.space != nil {
+		edges = append(edges, ledgerentry.EdgeSpace)
 	}
 	if m.person != nil {
 		edges = append(edges, ledgerentry.EdgePerson)
@@ -12794,6 +16609,10 @@ func (m *LedgerEntryMutation) AddedIDs(name string) []ent.Value {
 		if id := m.property; id != nil {
 			return []ent.Value{*id}
 		}
+	case ledgerentry.EdgeSpace:
+		if id := m.space; id != nil {
+			return []ent.Value{*id}
+		}
 	case ledgerentry.EdgePerson:
 		if id := m.person; id != nil {
 			return []ent.Value{*id}
@@ -12804,7 +16623,7 @@ func (m *LedgerEntryMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LedgerEntryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	return edges
 }
 
@@ -12816,7 +16635,7 @@ func (m *LedgerEntryMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LedgerEntryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.clearedlease {
 		edges = append(edges, ledgerentry.EdgeLease)
 	}
@@ -12828,6 +16647,9 @@ func (m *LedgerEntryMutation) ClearedEdges() []string {
 	}
 	if m.clearedproperty {
 		edges = append(edges, ledgerentry.EdgeProperty)
+	}
+	if m.clearedspace {
+		edges = append(edges, ledgerentry.EdgeSpace)
 	}
 	if m.clearedperson {
 		edges = append(edges, ledgerentry.EdgePerson)
@@ -12847,6 +16669,8 @@ func (m *LedgerEntryMutation) EdgeCleared(name string) bool {
 		return m.clearedaccount
 	case ledgerentry.EdgeProperty:
 		return m.clearedproperty
+	case ledgerentry.EdgeSpace:
+		return m.clearedspace
 	case ledgerentry.EdgePerson:
 		return m.clearedperson
 	}
@@ -12868,6 +16692,9 @@ func (m *LedgerEntryMutation) ClearEdge(name string) error {
 		return nil
 	case ledgerentry.EdgeProperty:
 		m.ClearProperty()
+		return nil
+	case ledgerentry.EdgeSpace:
+		m.ClearSpace()
 		return nil
 	case ledgerentry.EdgePerson:
 		m.ClearPerson()
@@ -12891,6 +16718,9 @@ func (m *LedgerEntryMutation) ResetEdge(name string) error {
 		return nil
 	case ledgerentry.EdgeProperty:
 		m.ResetProperty()
+		return nil
+	case ledgerentry.EdgeSpace:
+		m.ResetSpace()
 		return nil
 	case ledgerentry.EdgePerson:
 		m.ResetPerson()
@@ -14826,48 +18656,48 @@ func (m *OrganizationMutation) ResetEdge(name string) error {
 // PersonMutation represents an operation that mutates the Person nodes in the graph.
 type PersonMutation struct {
 	config
-	op                           Op
-	typ                          string
-	id                           *uuid.UUID
-	created_at                   *time.Time
-	updated_at                   *time.Time
-	created_by                   *string
-	updated_by                   *string
-	source                       *person.Source
-	correlation_id               *string
-	agent_goal_id                *string
-	first_name                   *string
-	last_name                    *string
-	display_name                 *string
-	date_of_birth                *time.Time
-	ssn_last_four                *string
-	contact_methods              *[]types.ContactMethod
-	appendcontact_methods        []types.ContactMethod
-	preferred_contact            *person.PreferredContact
-	language_preference          *string
-	timezone                     *string
-	do_not_contact               *bool
-	identity_verified            *bool
-	verification_method          *person.VerificationMethod
-	verified_at                  *time.Time
-	tags                         *[]string
-	appendtags                   []string
-	clearedFields                map[string]struct{}
-	roles                        map[uuid.UUID]struct{}
-	removedroles                 map[uuid.UUID]struct{}
-	clearedroles                 bool
-	organizations                map[uuid.UUID]struct{}
-	removedorganizations         map[uuid.UUID]struct{}
-	clearedorganizations         bool
-	person_ledger_entries        map[uuid.UUID]struct{}
-	removedperson_ledger_entries map[uuid.UUID]struct{}
-	clearedperson_ledger_entries bool
-	applications                 map[uuid.UUID]struct{}
-	removedapplications          map[uuid.UUID]struct{}
-	clearedapplications          bool
-	done                         bool
-	oldValue                     func(context.Context) (*Person, error)
-	predicates                   []predicate.Person
+	op                    Op
+	typ                   string
+	id                    *uuid.UUID
+	created_at            *time.Time
+	updated_at            *time.Time
+	created_by            *string
+	updated_by            *string
+	source                *person.Source
+	correlation_id        *string
+	agent_goal_id         *string
+	first_name            *string
+	last_name             *string
+	display_name          *string
+	date_of_birth         *time.Time
+	ssn_last_four         *string
+	contact_methods       *[]types.ContactMethod
+	appendcontact_methods []types.ContactMethod
+	preferred_contact     *person.PreferredContact
+	language_preference   *string
+	timezone              *string
+	do_not_contact        *bool
+	identity_verified     *bool
+	verification_method   *person.VerificationMethod
+	verified_at           *time.Time
+	tags                  *[]string
+	appendtags            []string
+	clearedFields         map[string]struct{}
+	roles                 map[uuid.UUID]struct{}
+	removedroles          map[uuid.UUID]struct{}
+	clearedroles          bool
+	organizations         map[uuid.UUID]struct{}
+	removedorganizations  map[uuid.UUID]struct{}
+	clearedorganizations  bool
+	ledger_entries        map[uuid.UUID]struct{}
+	removedledger_entries map[uuid.UUID]struct{}
+	clearedledger_entries bool
+	applications          map[uuid.UUID]struct{}
+	removedapplications   map[uuid.UUID]struct{}
+	clearedapplications   bool
+	done                  bool
+	oldValue              func(context.Context) (*Person, error)
+	predicates            []predicate.Person
 }
 
 var _ ent.Mutation = (*PersonMutation)(nil)
@@ -15973,58 +19803,58 @@ func (m *PersonMutation) ResetOrganizations() {
 	m.removedorganizations = nil
 }
 
-// AddPersonLedgerEntryIDs adds the "person_ledger_entries" edge to the LedgerEntry entity by ids.
-func (m *PersonMutation) AddPersonLedgerEntryIDs(ids ...uuid.UUID) {
-	if m.person_ledger_entries == nil {
-		m.person_ledger_entries = make(map[uuid.UUID]struct{})
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by ids.
+func (m *PersonMutation) AddLedgerEntryIDs(ids ...uuid.UUID) {
+	if m.ledger_entries == nil {
+		m.ledger_entries = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.person_ledger_entries[ids[i]] = struct{}{}
+		m.ledger_entries[ids[i]] = struct{}{}
 	}
 }
 
-// ClearPersonLedgerEntries clears the "person_ledger_entries" edge to the LedgerEntry entity.
-func (m *PersonMutation) ClearPersonLedgerEntries() {
-	m.clearedperson_ledger_entries = true
+// ClearLedgerEntries clears the "ledger_entries" edge to the LedgerEntry entity.
+func (m *PersonMutation) ClearLedgerEntries() {
+	m.clearedledger_entries = true
 }
 
-// PersonLedgerEntriesCleared reports if the "person_ledger_entries" edge to the LedgerEntry entity was cleared.
-func (m *PersonMutation) PersonLedgerEntriesCleared() bool {
-	return m.clearedperson_ledger_entries
+// LedgerEntriesCleared reports if the "ledger_entries" edge to the LedgerEntry entity was cleared.
+func (m *PersonMutation) LedgerEntriesCleared() bool {
+	return m.clearedledger_entries
 }
 
-// RemovePersonLedgerEntryIDs removes the "person_ledger_entries" edge to the LedgerEntry entity by IDs.
-func (m *PersonMutation) RemovePersonLedgerEntryIDs(ids ...uuid.UUID) {
-	if m.removedperson_ledger_entries == nil {
-		m.removedperson_ledger_entries = make(map[uuid.UUID]struct{})
+// RemoveLedgerEntryIDs removes the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (m *PersonMutation) RemoveLedgerEntryIDs(ids ...uuid.UUID) {
+	if m.removedledger_entries == nil {
+		m.removedledger_entries = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.person_ledger_entries, ids[i])
-		m.removedperson_ledger_entries[ids[i]] = struct{}{}
+		delete(m.ledger_entries, ids[i])
+		m.removedledger_entries[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedPersonLedgerEntries returns the removed IDs of the "person_ledger_entries" edge to the LedgerEntry entity.
-func (m *PersonMutation) RemovedPersonLedgerEntriesIDs() (ids []uuid.UUID) {
-	for id := range m.removedperson_ledger_entries {
+// RemovedLedgerEntries returns the removed IDs of the "ledger_entries" edge to the LedgerEntry entity.
+func (m *PersonMutation) RemovedLedgerEntriesIDs() (ids []uuid.UUID) {
+	for id := range m.removedledger_entries {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// PersonLedgerEntriesIDs returns the "person_ledger_entries" edge IDs in the mutation.
-func (m *PersonMutation) PersonLedgerEntriesIDs() (ids []uuid.UUID) {
-	for id := range m.person_ledger_entries {
+// LedgerEntriesIDs returns the "ledger_entries" edge IDs in the mutation.
+func (m *PersonMutation) LedgerEntriesIDs() (ids []uuid.UUID) {
+	for id := range m.ledger_entries {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetPersonLedgerEntries resets all changes to the "person_ledger_entries" edge.
-func (m *PersonMutation) ResetPersonLedgerEntries() {
-	m.person_ledger_entries = nil
-	m.clearedperson_ledger_entries = false
-	m.removedperson_ledger_entries = nil
+// ResetLedgerEntries resets all changes to the "ledger_entries" edge.
+func (m *PersonMutation) ResetLedgerEntries() {
+	m.ledger_entries = nil
+	m.clearedledger_entries = false
+	m.removedledger_entries = nil
 }
 
 // AddApplicationIDs adds the "applications" edge to the Application entity by ids.
@@ -16612,8 +20442,8 @@ func (m *PersonMutation) AddedEdges() []string {
 	if m.organizations != nil {
 		edges = append(edges, person.EdgeOrganizations)
 	}
-	if m.person_ledger_entries != nil {
-		edges = append(edges, person.EdgePersonLedgerEntries)
+	if m.ledger_entries != nil {
+		edges = append(edges, person.EdgeLedgerEntries)
 	}
 	if m.applications != nil {
 		edges = append(edges, person.EdgeApplications)
@@ -16637,9 +20467,9 @@ func (m *PersonMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case person.EdgePersonLedgerEntries:
-		ids := make([]ent.Value, 0, len(m.person_ledger_entries))
-		for id := range m.person_ledger_entries {
+	case person.EdgeLedgerEntries:
+		ids := make([]ent.Value, 0, len(m.ledger_entries))
+		for id := range m.ledger_entries {
 			ids = append(ids, id)
 		}
 		return ids
@@ -16662,8 +20492,8 @@ func (m *PersonMutation) RemovedEdges() []string {
 	if m.removedorganizations != nil {
 		edges = append(edges, person.EdgeOrganizations)
 	}
-	if m.removedperson_ledger_entries != nil {
-		edges = append(edges, person.EdgePersonLedgerEntries)
+	if m.removedledger_entries != nil {
+		edges = append(edges, person.EdgeLedgerEntries)
 	}
 	if m.removedapplications != nil {
 		edges = append(edges, person.EdgeApplications)
@@ -16687,9 +20517,9 @@ func (m *PersonMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case person.EdgePersonLedgerEntries:
-		ids := make([]ent.Value, 0, len(m.removedperson_ledger_entries))
-		for id := range m.removedperson_ledger_entries {
+	case person.EdgeLedgerEntries:
+		ids := make([]ent.Value, 0, len(m.removedledger_entries))
+		for id := range m.removedledger_entries {
 			ids = append(ids, id)
 		}
 		return ids
@@ -16712,8 +20542,8 @@ func (m *PersonMutation) ClearedEdges() []string {
 	if m.clearedorganizations {
 		edges = append(edges, person.EdgeOrganizations)
 	}
-	if m.clearedperson_ledger_entries {
-		edges = append(edges, person.EdgePersonLedgerEntries)
+	if m.clearedledger_entries {
+		edges = append(edges, person.EdgeLedgerEntries)
 	}
 	if m.clearedapplications {
 		edges = append(edges, person.EdgeApplications)
@@ -16729,8 +20559,8 @@ func (m *PersonMutation) EdgeCleared(name string) bool {
 		return m.clearedroles
 	case person.EdgeOrganizations:
 		return m.clearedorganizations
-	case person.EdgePersonLedgerEntries:
-		return m.clearedperson_ledger_entries
+	case person.EdgeLedgerEntries:
+		return m.clearedledger_entries
 	case person.EdgeApplications:
 		return m.clearedapplications
 	}
@@ -16755,8 +20585,8 @@ func (m *PersonMutation) ResetEdge(name string) error {
 	case person.EdgeOrganizations:
 		m.ResetOrganizations()
 		return nil
-	case person.EdgePersonLedgerEntries:
-		m.ResetPersonLedgerEntries()
+	case person.EdgeLedgerEntries:
+		m.ResetLedgerEntries()
 		return nil
 	case person.EdgeApplications:
 		m.ResetApplications()
@@ -18058,7 +21888,6 @@ type PortfolioMutation struct {
 	requires_trust_accounting     *bool
 	trust_bank_account_id         *string
 	status                        *portfolio.Status
-	default_late_fee_policy       *string
 	default_payment_methods       *[]string
 	appenddefault_payment_methods []string
 	fiscal_year_start_month       *int
@@ -18651,55 +22480,6 @@ func (m *PortfolioMutation) ResetStatus() {
 	m.status = nil
 }
 
-// SetDefaultLateFeePolicy sets the "default_late_fee_policy" field.
-func (m *PortfolioMutation) SetDefaultLateFeePolicy(s string) {
-	m.default_late_fee_policy = &s
-}
-
-// DefaultLateFeePolicy returns the value of the "default_late_fee_policy" field in the mutation.
-func (m *PortfolioMutation) DefaultLateFeePolicy() (r string, exists bool) {
-	v := m.default_late_fee_policy
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldDefaultLateFeePolicy returns the old "default_late_fee_policy" field's value of the Portfolio entity.
-// If the Portfolio object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PortfolioMutation) OldDefaultLateFeePolicy(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDefaultLateFeePolicy is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDefaultLateFeePolicy requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDefaultLateFeePolicy: %w", err)
-	}
-	return oldValue.DefaultLateFeePolicy, nil
-}
-
-// ClearDefaultLateFeePolicy clears the value of the "default_late_fee_policy" field.
-func (m *PortfolioMutation) ClearDefaultLateFeePolicy() {
-	m.default_late_fee_policy = nil
-	m.clearedFields[portfolio.FieldDefaultLateFeePolicy] = struct{}{}
-}
-
-// DefaultLateFeePolicyCleared returns if the "default_late_fee_policy" field was cleared in this mutation.
-func (m *PortfolioMutation) DefaultLateFeePolicyCleared() bool {
-	_, ok := m.clearedFields[portfolio.FieldDefaultLateFeePolicy]
-	return ok
-}
-
-// ResetDefaultLateFeePolicy resets all changes to the "default_late_fee_policy" field.
-func (m *PortfolioMutation) ResetDefaultLateFeePolicy() {
-	m.default_late_fee_policy = nil
-	delete(m.clearedFields, portfolio.FieldDefaultLateFeePolicy)
-}
-
 // SetDefaultPaymentMethods sets the "default_payment_methods" field.
 func (m *PortfolioMutation) SetDefaultPaymentMethods(s []string) {
 	m.default_payment_methods = &s
@@ -18987,7 +22767,7 @@ func (m *PortfolioMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PortfolioMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 14)
 	if m.created_at != nil {
 		fields = append(fields, portfolio.FieldCreatedAt)
 	}
@@ -19023,9 +22803,6 @@ func (m *PortfolioMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, portfolio.FieldStatus)
-	}
-	if m.default_late_fee_policy != nil {
-		fields = append(fields, portfolio.FieldDefaultLateFeePolicy)
 	}
 	if m.default_payment_methods != nil {
 		fields = append(fields, portfolio.FieldDefaultPaymentMethods)
@@ -19065,8 +22842,6 @@ func (m *PortfolioMutation) Field(name string) (ent.Value, bool) {
 		return m.TrustBankAccountID()
 	case portfolio.FieldStatus:
 		return m.Status()
-	case portfolio.FieldDefaultLateFeePolicy:
-		return m.DefaultLateFeePolicy()
 	case portfolio.FieldDefaultPaymentMethods:
 		return m.DefaultPaymentMethods()
 	case portfolio.FieldFiscalYearStartMonth:
@@ -19104,8 +22879,6 @@ func (m *PortfolioMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldTrustBankAccountID(ctx)
 	case portfolio.FieldStatus:
 		return m.OldStatus(ctx)
-	case portfolio.FieldDefaultLateFeePolicy:
-		return m.OldDefaultLateFeePolicy(ctx)
 	case portfolio.FieldDefaultPaymentMethods:
 		return m.OldDefaultPaymentMethods(ctx)
 	case portfolio.FieldFiscalYearStartMonth:
@@ -19203,13 +22976,6 @@ func (m *PortfolioMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetStatus(v)
 		return nil
-	case portfolio.FieldDefaultLateFeePolicy:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetDefaultLateFeePolicy(v)
-		return nil
 	case portfolio.FieldDefaultPaymentMethods:
 		v, ok := value.([]string)
 		if !ok {
@@ -19278,9 +23044,6 @@ func (m *PortfolioMutation) ClearedFields() []string {
 	if m.FieldCleared(portfolio.FieldTrustBankAccountID) {
 		fields = append(fields, portfolio.FieldTrustBankAccountID)
 	}
-	if m.FieldCleared(portfolio.FieldDefaultLateFeePolicy) {
-		fields = append(fields, portfolio.FieldDefaultLateFeePolicy)
-	}
 	if m.FieldCleared(portfolio.FieldDefaultPaymentMethods) {
 		fields = append(fields, portfolio.FieldDefaultPaymentMethods)
 	}
@@ -19306,9 +23069,6 @@ func (m *PortfolioMutation) ClearField(name string) error {
 		return nil
 	case portfolio.FieldTrustBankAccountID:
 		m.ClearTrustBankAccountID()
-		return nil
-	case portfolio.FieldDefaultLateFeePolicy:
-		m.ClearDefaultLateFeePolicy()
 		return nil
 	case portfolio.FieldDefaultPaymentMethods:
 		m.ClearDefaultPaymentMethods()
@@ -19356,9 +23116,6 @@ func (m *PortfolioMutation) ResetField(name string) error {
 		return nil
 	case portfolio.FieldStatus:
 		m.ResetStatus()
-		return nil
-	case portfolio.FieldDefaultLateFeePolicy:
-		m.ResetDefaultLateFeePolicy()
 		return nil
 	case portfolio.FieldDefaultPaymentMethods:
 		m.ResetDefaultPaymentMethods()
@@ -19493,57 +23250,60 @@ func (m *PortfolioMutation) ResetEdge(name string) error {
 // PropertyMutation represents an operation that mutates the Property nodes in the graph.
 type PropertyMutation struct {
 	config
-	op                             Op
-	typ                            string
-	id                             *uuid.UUID
-	created_at                     *time.Time
-	updated_at                     *time.Time
-	created_by                     *string
-	updated_by                     *string
-	source                         *property.Source
-	correlation_id                 *string
-	agent_goal_id                  *string
-	name                           *string
-	address                        **types.Address
-	property_type                  *property.PropertyType
-	status                         *property.Status
-	year_built                     *int
-	addyear_built                  *int
-	total_square_footage           *float64
-	addtotal_square_footage        *float64
-	total_units                    *int
-	addtotal_units                 *int
-	lot_size_sqft                  *float64
-	addlot_size_sqft               *float64
-	stories                        *int
-	addstories                     *int
-	parking_spaces                 *int
-	addparking_spaces              *int
-	jurisdiction_id                *string
-	rent_controlled                *bool
-	compliance_programs            *[]string
-	appendcompliance_programs      []string
-	requires_lead_disclosure       *bool
-	chart_of_accounts_id           *string
-	insurance_policy_number        *string
-	insurance_expiry               *time.Time
-	clearedFields                  map[string]struct{}
-	portfolio                      *uuid.UUID
-	clearedportfolio               bool
-	units                          map[uuid.UUID]struct{}
-	removedunits                   map[uuid.UUID]struct{}
-	clearedunits                   bool
-	bank_account                   *uuid.UUID
-	clearedbank_account            bool
-	property_ledger_entries        map[uuid.UUID]struct{}
-	removedproperty_ledger_entries map[uuid.UUID]struct{}
-	clearedproperty_ledger_entries bool
-	applications                   map[uuid.UUID]struct{}
-	removedapplications            map[uuid.UUID]struct{}
-	clearedapplications            bool
-	done                           bool
-	oldValue                       func(context.Context) (*Property, error)
-	predicates                     []predicate.Property
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	created_at                *time.Time
+	updated_at                *time.Time
+	created_by                *string
+	updated_by                *string
+	source                    *property.Source
+	correlation_id            *string
+	agent_goal_id             *string
+	name                      *string
+	address                   **types.Address
+	property_type             *property.PropertyType
+	status                    *property.Status
+	year_built                *int
+	addyear_built             *int
+	total_square_footage      *float64
+	addtotal_square_footage   *float64
+	total_spaces              *int
+	addtotal_spaces           *int
+	lot_size_sqft             *float64
+	addlot_size_sqft          *float64
+	stories                   *int
+	addstories                *int
+	parking_spaces            *int
+	addparking_spaces         *int
+	jurisdiction_id           *string
+	rent_controlled           *bool
+	compliance_programs       *[]string
+	appendcompliance_programs []string
+	requires_lead_disclosure  *bool
+	chart_of_accounts_id      *string
+	insurance_policy_number   *string
+	insurance_expiry          *time.Time
+	clearedFields             map[string]struct{}
+	portfolio                 *uuid.UUID
+	clearedportfolio          bool
+	buildings                 map[uuid.UUID]struct{}
+	removedbuildings          map[uuid.UUID]struct{}
+	clearedbuildings          bool
+	spaces                    map[uuid.UUID]struct{}
+	removedspaces             map[uuid.UUID]struct{}
+	clearedspaces             bool
+	bank_account              *uuid.UUID
+	clearedbank_account       bool
+	applications              map[uuid.UUID]struct{}
+	removedapplications       map[uuid.UUID]struct{}
+	clearedapplications       bool
+	ledger_entries            map[uuid.UUID]struct{}
+	removedledger_entries     map[uuid.UUID]struct{}
+	clearedledger_entries     bool
+	done                      bool
+	oldValue                  func(context.Context) (*Property, error)
+	predicates                []predicate.Property
 }
 
 var _ ent.Mutation = (*PropertyMutation)(nil)
@@ -20184,60 +23944,60 @@ func (m *PropertyMutation) ResetTotalSquareFootage() {
 	m.addtotal_square_footage = nil
 }
 
-// SetTotalUnits sets the "total_units" field.
-func (m *PropertyMutation) SetTotalUnits(i int) {
-	m.total_units = &i
-	m.addtotal_units = nil
+// SetTotalSpaces sets the "total_spaces" field.
+func (m *PropertyMutation) SetTotalSpaces(i int) {
+	m.total_spaces = &i
+	m.addtotal_spaces = nil
 }
 
-// TotalUnits returns the value of the "total_units" field in the mutation.
-func (m *PropertyMutation) TotalUnits() (r int, exists bool) {
-	v := m.total_units
+// TotalSpaces returns the value of the "total_spaces" field in the mutation.
+func (m *PropertyMutation) TotalSpaces() (r int, exists bool) {
+	v := m.total_spaces
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldTotalUnits returns the old "total_units" field's value of the Property entity.
+// OldTotalSpaces returns the old "total_spaces" field's value of the Property entity.
 // If the Property object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *PropertyMutation) OldTotalUnits(ctx context.Context) (v int, err error) {
+func (m *PropertyMutation) OldTotalSpaces(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTotalUnits is only allowed on UpdateOne operations")
+		return v, errors.New("OldTotalSpaces is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTotalUnits requires an ID field in the mutation")
+		return v, errors.New("OldTotalSpaces requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTotalUnits: %w", err)
+		return v, fmt.Errorf("querying old value for OldTotalSpaces: %w", err)
 	}
-	return oldValue.TotalUnits, nil
+	return oldValue.TotalSpaces, nil
 }
 
-// AddTotalUnits adds i to the "total_units" field.
-func (m *PropertyMutation) AddTotalUnits(i int) {
-	if m.addtotal_units != nil {
-		*m.addtotal_units += i
+// AddTotalSpaces adds i to the "total_spaces" field.
+func (m *PropertyMutation) AddTotalSpaces(i int) {
+	if m.addtotal_spaces != nil {
+		*m.addtotal_spaces += i
 	} else {
-		m.addtotal_units = &i
+		m.addtotal_spaces = &i
 	}
 }
 
-// AddedTotalUnits returns the value that was added to the "total_units" field in this mutation.
-func (m *PropertyMutation) AddedTotalUnits() (r int, exists bool) {
-	v := m.addtotal_units
+// AddedTotalSpaces returns the value that was added to the "total_spaces" field in this mutation.
+func (m *PropertyMutation) AddedTotalSpaces() (r int, exists bool) {
+	v := m.addtotal_spaces
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetTotalUnits resets all changes to the "total_units" field.
-func (m *PropertyMutation) ResetTotalUnits() {
-	m.total_units = nil
-	m.addtotal_units = nil
+// ResetTotalSpaces resets all changes to the "total_spaces" field.
+func (m *PropertyMutation) ResetTotalSpaces() {
+	m.total_spaces = nil
+	m.addtotal_spaces = nil
 }
 
 // SetLotSizeSqft sets the "lot_size_sqft" field.
@@ -20822,58 +24582,112 @@ func (m *PropertyMutation) ResetPortfolio() {
 	m.clearedportfolio = false
 }
 
-// AddUnitIDs adds the "units" edge to the Unit entity by ids.
-func (m *PropertyMutation) AddUnitIDs(ids ...uuid.UUID) {
-	if m.units == nil {
-		m.units = make(map[uuid.UUID]struct{})
+// AddBuildingIDs adds the "buildings" edge to the Building entity by ids.
+func (m *PropertyMutation) AddBuildingIDs(ids ...uuid.UUID) {
+	if m.buildings == nil {
+		m.buildings = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		m.units[ids[i]] = struct{}{}
+		m.buildings[ids[i]] = struct{}{}
 	}
 }
 
-// ClearUnits clears the "units" edge to the Unit entity.
-func (m *PropertyMutation) ClearUnits() {
-	m.clearedunits = true
+// ClearBuildings clears the "buildings" edge to the Building entity.
+func (m *PropertyMutation) ClearBuildings() {
+	m.clearedbuildings = true
 }
 
-// UnitsCleared reports if the "units" edge to the Unit entity was cleared.
-func (m *PropertyMutation) UnitsCleared() bool {
-	return m.clearedunits
+// BuildingsCleared reports if the "buildings" edge to the Building entity was cleared.
+func (m *PropertyMutation) BuildingsCleared() bool {
+	return m.clearedbuildings
 }
 
-// RemoveUnitIDs removes the "units" edge to the Unit entity by IDs.
-func (m *PropertyMutation) RemoveUnitIDs(ids ...uuid.UUID) {
-	if m.removedunits == nil {
-		m.removedunits = make(map[uuid.UUID]struct{})
+// RemoveBuildingIDs removes the "buildings" edge to the Building entity by IDs.
+func (m *PropertyMutation) RemoveBuildingIDs(ids ...uuid.UUID) {
+	if m.removedbuildings == nil {
+		m.removedbuildings = make(map[uuid.UUID]struct{})
 	}
 	for i := range ids {
-		delete(m.units, ids[i])
-		m.removedunits[ids[i]] = struct{}{}
+		delete(m.buildings, ids[i])
+		m.removedbuildings[ids[i]] = struct{}{}
 	}
 }
 
-// RemovedUnits returns the removed IDs of the "units" edge to the Unit entity.
-func (m *PropertyMutation) RemovedUnitsIDs() (ids []uuid.UUID) {
-	for id := range m.removedunits {
+// RemovedBuildings returns the removed IDs of the "buildings" edge to the Building entity.
+func (m *PropertyMutation) RemovedBuildingsIDs() (ids []uuid.UUID) {
+	for id := range m.removedbuildings {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// UnitsIDs returns the "units" edge IDs in the mutation.
-func (m *PropertyMutation) UnitsIDs() (ids []uuid.UUID) {
-	for id := range m.units {
+// BuildingsIDs returns the "buildings" edge IDs in the mutation.
+func (m *PropertyMutation) BuildingsIDs() (ids []uuid.UUID) {
+	for id := range m.buildings {
 		ids = append(ids, id)
 	}
 	return
 }
 
-// ResetUnits resets all changes to the "units" edge.
-func (m *PropertyMutation) ResetUnits() {
-	m.units = nil
-	m.clearedunits = false
-	m.removedunits = nil
+// ResetBuildings resets all changes to the "buildings" edge.
+func (m *PropertyMutation) ResetBuildings() {
+	m.buildings = nil
+	m.clearedbuildings = false
+	m.removedbuildings = nil
+}
+
+// AddSpaceIDs adds the "spaces" edge to the Space entity by ids.
+func (m *PropertyMutation) AddSpaceIDs(ids ...uuid.UUID) {
+	if m.spaces == nil {
+		m.spaces = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.spaces[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSpaces clears the "spaces" edge to the Space entity.
+func (m *PropertyMutation) ClearSpaces() {
+	m.clearedspaces = true
+}
+
+// SpacesCleared reports if the "spaces" edge to the Space entity was cleared.
+func (m *PropertyMutation) SpacesCleared() bool {
+	return m.clearedspaces
+}
+
+// RemoveSpaceIDs removes the "spaces" edge to the Space entity by IDs.
+func (m *PropertyMutation) RemoveSpaceIDs(ids ...uuid.UUID) {
+	if m.removedspaces == nil {
+		m.removedspaces = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.spaces, ids[i])
+		m.removedspaces[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSpaces returns the removed IDs of the "spaces" edge to the Space entity.
+func (m *PropertyMutation) RemovedSpacesIDs() (ids []uuid.UUID) {
+	for id := range m.removedspaces {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SpacesIDs returns the "spaces" edge IDs in the mutation.
+func (m *PropertyMutation) SpacesIDs() (ids []uuid.UUID) {
+	for id := range m.spaces {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSpaces resets all changes to the "spaces" edge.
+func (m *PropertyMutation) ResetSpaces() {
+	m.spaces = nil
+	m.clearedspaces = false
+	m.removedspaces = nil
 }
 
 // SetBankAccountID sets the "bank_account" edge to the BankAccount entity by id.
@@ -20913,60 +24727,6 @@ func (m *PropertyMutation) BankAccountIDs() (ids []uuid.UUID) {
 func (m *PropertyMutation) ResetBankAccount() {
 	m.bank_account = nil
 	m.clearedbank_account = false
-}
-
-// AddPropertyLedgerEntryIDs adds the "property_ledger_entries" edge to the LedgerEntry entity by ids.
-func (m *PropertyMutation) AddPropertyLedgerEntryIDs(ids ...uuid.UUID) {
-	if m.property_ledger_entries == nil {
-		m.property_ledger_entries = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.property_ledger_entries[ids[i]] = struct{}{}
-	}
-}
-
-// ClearPropertyLedgerEntries clears the "property_ledger_entries" edge to the LedgerEntry entity.
-func (m *PropertyMutation) ClearPropertyLedgerEntries() {
-	m.clearedproperty_ledger_entries = true
-}
-
-// PropertyLedgerEntriesCleared reports if the "property_ledger_entries" edge to the LedgerEntry entity was cleared.
-func (m *PropertyMutation) PropertyLedgerEntriesCleared() bool {
-	return m.clearedproperty_ledger_entries
-}
-
-// RemovePropertyLedgerEntryIDs removes the "property_ledger_entries" edge to the LedgerEntry entity by IDs.
-func (m *PropertyMutation) RemovePropertyLedgerEntryIDs(ids ...uuid.UUID) {
-	if m.removedproperty_ledger_entries == nil {
-		m.removedproperty_ledger_entries = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.property_ledger_entries, ids[i])
-		m.removedproperty_ledger_entries[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedPropertyLedgerEntries returns the removed IDs of the "property_ledger_entries" edge to the LedgerEntry entity.
-func (m *PropertyMutation) RemovedPropertyLedgerEntriesIDs() (ids []uuid.UUID) {
-	for id := range m.removedproperty_ledger_entries {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// PropertyLedgerEntriesIDs returns the "property_ledger_entries" edge IDs in the mutation.
-func (m *PropertyMutation) PropertyLedgerEntriesIDs() (ids []uuid.UUID) {
-	for id := range m.property_ledger_entries {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetPropertyLedgerEntries resets all changes to the "property_ledger_entries" edge.
-func (m *PropertyMutation) ResetPropertyLedgerEntries() {
-	m.property_ledger_entries = nil
-	m.clearedproperty_ledger_entries = false
-	m.removedproperty_ledger_entries = nil
 }
 
 // AddApplicationIDs adds the "applications" edge to the Application entity by ids.
@@ -21021,6 +24781,60 @@ func (m *PropertyMutation) ResetApplications() {
 	m.applications = nil
 	m.clearedapplications = false
 	m.removedapplications = nil
+}
+
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by ids.
+func (m *PropertyMutation) AddLedgerEntryIDs(ids ...uuid.UUID) {
+	if m.ledger_entries == nil {
+		m.ledger_entries = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.ledger_entries[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLedgerEntries clears the "ledger_entries" edge to the LedgerEntry entity.
+func (m *PropertyMutation) ClearLedgerEntries() {
+	m.clearedledger_entries = true
+}
+
+// LedgerEntriesCleared reports if the "ledger_entries" edge to the LedgerEntry entity was cleared.
+func (m *PropertyMutation) LedgerEntriesCleared() bool {
+	return m.clearedledger_entries
+}
+
+// RemoveLedgerEntryIDs removes the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (m *PropertyMutation) RemoveLedgerEntryIDs(ids ...uuid.UUID) {
+	if m.removedledger_entries == nil {
+		m.removedledger_entries = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.ledger_entries, ids[i])
+		m.removedledger_entries[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLedgerEntries returns the removed IDs of the "ledger_entries" edge to the LedgerEntry entity.
+func (m *PropertyMutation) RemovedLedgerEntriesIDs() (ids []uuid.UUID) {
+	for id := range m.removedledger_entries {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LedgerEntriesIDs returns the "ledger_entries" edge IDs in the mutation.
+func (m *PropertyMutation) LedgerEntriesIDs() (ids []uuid.UUID) {
+	for id := range m.ledger_entries {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLedgerEntries resets all changes to the "ledger_entries" edge.
+func (m *PropertyMutation) ResetLedgerEntries() {
+	m.ledger_entries = nil
+	m.clearedledger_entries = false
+	m.removedledger_entries = nil
 }
 
 // Where appends a list predicates to the PropertyMutation builder.
@@ -21097,8 +24911,8 @@ func (m *PropertyMutation) Fields() []string {
 	if m.total_square_footage != nil {
 		fields = append(fields, property.FieldTotalSquareFootage)
 	}
-	if m.total_units != nil {
-		fields = append(fields, property.FieldTotalUnits)
+	if m.total_spaces != nil {
+		fields = append(fields, property.FieldTotalSpaces)
 	}
 	if m.lot_size_sqft != nil {
 		fields = append(fields, property.FieldLotSizeSqft)
@@ -21164,8 +24978,8 @@ func (m *PropertyMutation) Field(name string) (ent.Value, bool) {
 		return m.YearBuilt()
 	case property.FieldTotalSquareFootage:
 		return m.TotalSquareFootage()
-	case property.FieldTotalUnits:
-		return m.TotalUnits()
+	case property.FieldTotalSpaces:
+		return m.TotalSpaces()
 	case property.FieldLotSizeSqft:
 		return m.LotSizeSqft()
 	case property.FieldStories:
@@ -21221,8 +25035,8 @@ func (m *PropertyMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldYearBuilt(ctx)
 	case property.FieldTotalSquareFootage:
 		return m.OldTotalSquareFootage(ctx)
-	case property.FieldTotalUnits:
-		return m.OldTotalUnits(ctx)
+	case property.FieldTotalSpaces:
+		return m.OldTotalSpaces(ctx)
 	case property.FieldLotSizeSqft:
 		return m.OldLotSizeSqft(ctx)
 	case property.FieldStories:
@@ -21343,12 +25157,12 @@ func (m *PropertyMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTotalSquareFootage(v)
 		return nil
-	case property.FieldTotalUnits:
+	case property.FieldTotalSpaces:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetTotalUnits(v)
+		m.SetTotalSpaces(v)
 		return nil
 	case property.FieldLotSizeSqft:
 		v, ok := value.(float64)
@@ -21434,8 +25248,8 @@ func (m *PropertyMutation) AddedFields() []string {
 	if m.addtotal_square_footage != nil {
 		fields = append(fields, property.FieldTotalSquareFootage)
 	}
-	if m.addtotal_units != nil {
-		fields = append(fields, property.FieldTotalUnits)
+	if m.addtotal_spaces != nil {
+		fields = append(fields, property.FieldTotalSpaces)
 	}
 	if m.addlot_size_sqft != nil {
 		fields = append(fields, property.FieldLotSizeSqft)
@@ -21458,8 +25272,8 @@ func (m *PropertyMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedYearBuilt()
 	case property.FieldTotalSquareFootage:
 		return m.AddedTotalSquareFootage()
-	case property.FieldTotalUnits:
-		return m.AddedTotalUnits()
+	case property.FieldTotalSpaces:
+		return m.AddedTotalSpaces()
 	case property.FieldLotSizeSqft:
 		return m.AddedLotSizeSqft()
 	case property.FieldStories:
@@ -21489,12 +25303,12 @@ func (m *PropertyMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddTotalSquareFootage(v)
 		return nil
-	case property.FieldTotalUnits:
+	case property.FieldTotalSpaces:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.AddTotalUnits(v)
+		m.AddTotalSpaces(v)
 		return nil
 	case property.FieldLotSizeSqft:
 		v, ok := value.(float64)
@@ -21646,8 +25460,8 @@ func (m *PropertyMutation) ResetField(name string) error {
 	case property.FieldTotalSquareFootage:
 		m.ResetTotalSquareFootage()
 		return nil
-	case property.FieldTotalUnits:
-		m.ResetTotalUnits()
+	case property.FieldTotalSpaces:
+		m.ResetTotalSpaces()
 		return nil
 	case property.FieldLotSizeSqft:
 		m.ResetLotSizeSqft()
@@ -21685,21 +25499,24 @@ func (m *PropertyMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PropertyMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.portfolio != nil {
 		edges = append(edges, property.EdgePortfolio)
 	}
-	if m.units != nil {
-		edges = append(edges, property.EdgeUnits)
+	if m.buildings != nil {
+		edges = append(edges, property.EdgeBuildings)
+	}
+	if m.spaces != nil {
+		edges = append(edges, property.EdgeSpaces)
 	}
 	if m.bank_account != nil {
 		edges = append(edges, property.EdgeBankAccount)
 	}
-	if m.property_ledger_entries != nil {
-		edges = append(edges, property.EdgePropertyLedgerEntries)
-	}
 	if m.applications != nil {
 		edges = append(edges, property.EdgeApplications)
+	}
+	if m.ledger_entries != nil {
+		edges = append(edges, property.EdgeLedgerEntries)
 	}
 	return edges
 }
@@ -21712,9 +25529,15 @@ func (m *PropertyMutation) AddedIDs(name string) []ent.Value {
 		if id := m.portfolio; id != nil {
 			return []ent.Value{*id}
 		}
-	case property.EdgeUnits:
-		ids := make([]ent.Value, 0, len(m.units))
-		for id := range m.units {
+	case property.EdgeBuildings:
+		ids := make([]ent.Value, 0, len(m.buildings))
+		for id := range m.buildings {
+			ids = append(ids, id)
+		}
+		return ids
+	case property.EdgeSpaces:
+		ids := make([]ent.Value, 0, len(m.spaces))
+		for id := range m.spaces {
 			ids = append(ids, id)
 		}
 		return ids
@@ -21722,15 +25545,15 @@ func (m *PropertyMutation) AddedIDs(name string) []ent.Value {
 		if id := m.bank_account; id != nil {
 			return []ent.Value{*id}
 		}
-	case property.EdgePropertyLedgerEntries:
-		ids := make([]ent.Value, 0, len(m.property_ledger_entries))
-		for id := range m.property_ledger_entries {
-			ids = append(ids, id)
-		}
-		return ids
 	case property.EdgeApplications:
 		ids := make([]ent.Value, 0, len(m.applications))
 		for id := range m.applications {
+			ids = append(ids, id)
+		}
+		return ids
+	case property.EdgeLedgerEntries:
+		ids := make([]ent.Value, 0, len(m.ledger_entries))
+		for id := range m.ledger_entries {
 			ids = append(ids, id)
 		}
 		return ids
@@ -21740,15 +25563,18 @@ func (m *PropertyMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PropertyMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
-	if m.removedunits != nil {
-		edges = append(edges, property.EdgeUnits)
+	edges := make([]string, 0, 6)
+	if m.removedbuildings != nil {
+		edges = append(edges, property.EdgeBuildings)
 	}
-	if m.removedproperty_ledger_entries != nil {
-		edges = append(edges, property.EdgePropertyLedgerEntries)
+	if m.removedspaces != nil {
+		edges = append(edges, property.EdgeSpaces)
 	}
 	if m.removedapplications != nil {
 		edges = append(edges, property.EdgeApplications)
+	}
+	if m.removedledger_entries != nil {
+		edges = append(edges, property.EdgeLedgerEntries)
 	}
 	return edges
 }
@@ -21757,15 +25583,15 @@ func (m *PropertyMutation) RemovedEdges() []string {
 // the given name in this mutation.
 func (m *PropertyMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case property.EdgeUnits:
-		ids := make([]ent.Value, 0, len(m.removedunits))
-		for id := range m.removedunits {
+	case property.EdgeBuildings:
+		ids := make([]ent.Value, 0, len(m.removedbuildings))
+		for id := range m.removedbuildings {
 			ids = append(ids, id)
 		}
 		return ids
-	case property.EdgePropertyLedgerEntries:
-		ids := make([]ent.Value, 0, len(m.removedproperty_ledger_entries))
-		for id := range m.removedproperty_ledger_entries {
+	case property.EdgeSpaces:
+		ids := make([]ent.Value, 0, len(m.removedspaces))
+		for id := range m.removedspaces {
 			ids = append(ids, id)
 		}
 		return ids
@@ -21775,27 +25601,36 @@ func (m *PropertyMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case property.EdgeLedgerEntries:
+		ids := make([]ent.Value, 0, len(m.removedledger_entries))
+		for id := range m.removedledger_entries {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PropertyMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.clearedportfolio {
 		edges = append(edges, property.EdgePortfolio)
 	}
-	if m.clearedunits {
-		edges = append(edges, property.EdgeUnits)
+	if m.clearedbuildings {
+		edges = append(edges, property.EdgeBuildings)
+	}
+	if m.clearedspaces {
+		edges = append(edges, property.EdgeSpaces)
 	}
 	if m.clearedbank_account {
 		edges = append(edges, property.EdgeBankAccount)
 	}
-	if m.clearedproperty_ledger_entries {
-		edges = append(edges, property.EdgePropertyLedgerEntries)
-	}
 	if m.clearedapplications {
 		edges = append(edges, property.EdgeApplications)
+	}
+	if m.clearedledger_entries {
+		edges = append(edges, property.EdgeLedgerEntries)
 	}
 	return edges
 }
@@ -21806,14 +25641,16 @@ func (m *PropertyMutation) EdgeCleared(name string) bool {
 	switch name {
 	case property.EdgePortfolio:
 		return m.clearedportfolio
-	case property.EdgeUnits:
-		return m.clearedunits
+	case property.EdgeBuildings:
+		return m.clearedbuildings
+	case property.EdgeSpaces:
+		return m.clearedspaces
 	case property.EdgeBankAccount:
 		return m.clearedbank_account
-	case property.EdgePropertyLedgerEntries:
-		return m.clearedproperty_ledger_entries
 	case property.EdgeApplications:
 		return m.clearedapplications
+	case property.EdgeLedgerEntries:
+		return m.clearedledger_entries
 	}
 	return false
 }
@@ -21839,17 +25676,20 @@ func (m *PropertyMutation) ResetEdge(name string) error {
 	case property.EdgePortfolio:
 		m.ResetPortfolio()
 		return nil
-	case property.EdgeUnits:
-		m.ResetUnits()
+	case property.EdgeBuildings:
+		m.ResetBuildings()
+		return nil
+	case property.EdgeSpaces:
+		m.ResetSpaces()
 		return nil
 	case property.EdgeBankAccount:
 		m.ResetBankAccount()
 		return nil
-	case property.EdgePropertyLedgerEntries:
-		m.ResetPropertyLedgerEntries()
-		return nil
 	case property.EdgeApplications:
 		m.ResetApplications()
+		return nil
+	case property.EdgeLedgerEntries:
+		m.ResetLedgerEntries()
 		return nil
 	}
 	return fmt.Errorf("unknown Property edge %s", name)
@@ -23673,68 +27513,81 @@ func (m *ReconciliationMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Reconciliation edge %s", name)
 }
 
-// UnitMutation represents an operation that mutates the Unit nodes in the graph.
-type UnitMutation struct {
+// SpaceMutation represents an operation that mutates the Space nodes in the graph.
+type SpaceMutation struct {
 	config
-	op                          Op
-	typ                         string
-	id                          *uuid.UUID
-	created_at                  *time.Time
-	updated_at                  *time.Time
-	created_by                  *string
-	updated_by                  *string
-	source                      *unit.Source
-	correlation_id              *string
-	agent_goal_id               *string
-	unit_number                 *string
-	unit_type                   *unit.UnitType
-	status                      *unit.Status
-	square_footage              *float64
-	addsquare_footage           *float64
-	bedrooms                    *int
-	addbedrooms                 *int
-	bathrooms                   *float64
-	addbathrooms                *float64
-	floor                       *int
-	addfloor                    *int
-	amenities                   *[]string
-	appendamenities             []string
-	floor_plan                  *string
-	ada_accessible              *bool
-	pet_friendly                *bool
-	furnished                   *bool
-	market_rent_amount_cents    *int64
-	addmarket_rent_amount_cents *int64
-	market_rent_currency        *string
-	ami_restriction             *int
-	addami_restriction          *int
-	clearedFields               map[string]struct{}
-	property                    *uuid.UUID
-	clearedproperty             bool
-	leases                      map[uuid.UUID]struct{}
-	removedleases               map[uuid.UUID]struct{}
-	clearedleases               bool
-	active_lease                *uuid.UUID
-	clearedactive_lease         bool
-	applications                map[uuid.UUID]struct{}
-	removedapplications         map[uuid.UUID]struct{}
-	clearedapplications         bool
-	done                        bool
-	oldValue                    func(context.Context) (*Unit, error)
-	predicates                  []predicate.Unit
+	op                               Op
+	typ                              string
+	id                               *uuid.UUID
+	created_at                       *time.Time
+	updated_at                       *time.Time
+	created_by                       *string
+	updated_by                       *string
+	source                           *space.Source
+	correlation_id                   *string
+	agent_goal_id                    *string
+	space_number                     *string
+	space_type                       *space.SpaceType
+	status                           *space.Status
+	leasable                         *bool
+	shared_with_parent               *bool
+	square_footage                   *float64
+	addsquare_footage                *float64
+	bedrooms                         *int
+	addbedrooms                      *int
+	bathrooms                        *float64
+	addbathrooms                     *float64
+	floor                            *int
+	addfloor                         *int
+	amenities                        *[]string
+	appendamenities                  []string
+	floor_plan                       *string
+	ada_accessible                   *bool
+	pet_friendly                     *bool
+	furnished                        *bool
+	specialized_infrastructure       *[]string
+	appendspecialized_infrastructure []string
+	market_rent_amount_cents         *int64
+	addmarket_rent_amount_cents      *int64
+	market_rent_currency             *string
+	ami_restriction                  *int
+	addami_restriction               *int
+	active_lease_id                  *string
+	clearedFields                    map[string]struct{}
+	property                         *uuid.UUID
+	clearedproperty                  bool
+	building                         *uuid.UUID
+	clearedbuilding                  bool
+	children                         map[uuid.UUID]struct{}
+	removedchildren                  map[uuid.UUID]struct{}
+	clearedchildren                  bool
+	parent_space                     *uuid.UUID
+	clearedparent_space              bool
+	applications                     map[uuid.UUID]struct{}
+	removedapplications              map[uuid.UUID]struct{}
+	clearedapplications              bool
+	lease_spaces                     map[uuid.UUID]struct{}
+	removedlease_spaces              map[uuid.UUID]struct{}
+	clearedlease_spaces              bool
+	ledger_entries                   map[uuid.UUID]struct{}
+	removedledger_entries            map[uuid.UUID]struct{}
+	clearedledger_entries            bool
+	done                             bool
+	oldValue                         func(context.Context) (*Space, error)
+	predicates                       []predicate.Space
 }
 
-var _ ent.Mutation = (*UnitMutation)(nil)
+var _ ent.Mutation = (*SpaceMutation)(nil)
 
-// unitOption allows management of the mutation configuration using functional options.
-type unitOption func(*UnitMutation)
+// spaceOption allows management of the mutation configuration using functional options.
+type spaceOption func(*SpaceMutation)
 
-// newUnitMutation creates new mutation for the Unit entity.
-func newUnitMutation(c config, op Op, opts ...unitOption) *UnitMutation {
-	m := &UnitMutation{
+// newSpaceMutation creates new mutation for the Space entity.
+func newSpaceMutation(c config, op Op, opts ...spaceOption) *SpaceMutation {
+	m := &SpaceMutation{
 		config:        c,
 		op:            op,
-		typ:           TypeUnit,
+		typ:           TypeSpace,
 		clearedFields: make(map[string]struct{}),
 	}
 	for _, opt := range opts {
@@ -23743,20 +27596,20 @@ func newUnitMutation(c config, op Op, opts ...unitOption) *UnitMutation {
 	return m
 }
 
-// withUnitID sets the ID field of the mutation.
-func withUnitID(id uuid.UUID) unitOption {
-	return func(m *UnitMutation) {
+// withSpaceID sets the ID field of the mutation.
+func withSpaceID(id uuid.UUID) spaceOption {
+	return func(m *SpaceMutation) {
 		var (
 			err   error
 			once  sync.Once
-			value *Unit
+			value *Space
 		)
-		m.oldValue = func(ctx context.Context) (*Unit, error) {
+		m.oldValue = func(ctx context.Context) (*Space, error) {
 			once.Do(func() {
 				if m.done {
 					err = errors.New("querying old values post mutation is not allowed")
 				} else {
-					value, err = m.Client().Unit.Get(ctx, id)
+					value, err = m.Client().Space.Get(ctx, id)
 				}
 			})
 			return value, err
@@ -23765,10 +27618,10 @@ func withUnitID(id uuid.UUID) unitOption {
 	}
 }
 
-// withUnit sets the old Unit of the mutation.
-func withUnit(node *Unit) unitOption {
-	return func(m *UnitMutation) {
-		m.oldValue = func(context.Context) (*Unit, error) {
+// withSpace sets the old Space of the mutation.
+func withSpace(node *Space) spaceOption {
+	return func(m *SpaceMutation) {
+		m.oldValue = func(context.Context) (*Space, error) {
 			return node, nil
 		}
 		m.id = &node.ID
@@ -23777,7 +27630,7 @@ func withUnit(node *Unit) unitOption {
 
 // Client returns a new `ent.Client` from the mutation. If the mutation was
 // executed in a transaction (ent.Tx), a transactional client is returned.
-func (m UnitMutation) Client() *Client {
+func (m SpaceMutation) Client() *Client {
 	client := &Client{config: m.config}
 	client.init()
 	return client
@@ -23785,7 +27638,7 @@ func (m UnitMutation) Client() *Client {
 
 // Tx returns an `ent.Tx` for mutations that were executed in transactions;
 // it returns an error otherwise.
-func (m UnitMutation) Tx() (*Tx, error) {
+func (m SpaceMutation) Tx() (*Tx, error) {
 	if _, ok := m.driver.(*txDriver); !ok {
 		return nil, errors.New("ent: mutation is not running in a transaction")
 	}
@@ -23795,14 +27648,14 @@ func (m UnitMutation) Tx() (*Tx, error) {
 }
 
 // SetID sets the value of the id field. Note that this
-// operation is only accepted on creation of Unit entities.
-func (m *UnitMutation) SetID(id uuid.UUID) {
+// operation is only accepted on creation of Space entities.
+func (m *SpaceMutation) SetID(id uuid.UUID) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *UnitMutation) ID() (id uuid.UUID, exists bool) {
+func (m *SpaceMutation) ID() (id uuid.UUID, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -23813,7 +27666,7 @@ func (m *UnitMutation) ID() (id uuid.UUID, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *UnitMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+func (m *SpaceMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
@@ -23822,19 +27675,19 @@ func (m *UnitMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
-		return m.Client().Unit.Query().Where(m.predicates...).IDs(ctx)
+		return m.Client().Space.Query().Where(m.predicates...).IDs(ctx)
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (m *UnitMutation) SetCreatedAt(t time.Time) {
+func (m *SpaceMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
 }
 
 // CreatedAt returns the value of the "created_at" field in the mutation.
-func (m *UnitMutation) CreatedAt() (r time.Time, exists bool) {
+func (m *SpaceMutation) CreatedAt() (r time.Time, exists bool) {
 	v := m.created_at
 	if v == nil {
 		return
@@ -23842,10 +27695,10 @@ func (m *UnitMutation) CreatedAt() (r time.Time, exists bool) {
 	return *v, true
 }
 
-// OldCreatedAt returns the old "created_at" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldCreatedAt returns the old "created_at" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+func (m *SpaceMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
 	}
@@ -23860,17 +27713,17 @@ func (m *UnitMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error
 }
 
 // ResetCreatedAt resets all changes to the "created_at" field.
-func (m *UnitMutation) ResetCreatedAt() {
+func (m *SpaceMutation) ResetCreatedAt() {
 	m.created_at = nil
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (m *UnitMutation) SetUpdatedAt(t time.Time) {
+func (m *SpaceMutation) SetUpdatedAt(t time.Time) {
 	m.updated_at = &t
 }
 
 // UpdatedAt returns the value of the "updated_at" field in the mutation.
-func (m *UnitMutation) UpdatedAt() (r time.Time, exists bool) {
+func (m *SpaceMutation) UpdatedAt() (r time.Time, exists bool) {
 	v := m.updated_at
 	if v == nil {
 		return
@@ -23878,10 +27731,10 @@ func (m *UnitMutation) UpdatedAt() (r time.Time, exists bool) {
 	return *v, true
 }
 
-// OldUpdatedAt returns the old "updated_at" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldUpdatedAt returns the old "updated_at" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+func (m *SpaceMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
 	}
@@ -23896,17 +27749,17 @@ func (m *UnitMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error
 }
 
 // ResetUpdatedAt resets all changes to the "updated_at" field.
-func (m *UnitMutation) ResetUpdatedAt() {
+func (m *SpaceMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
 // SetCreatedBy sets the "created_by" field.
-func (m *UnitMutation) SetCreatedBy(s string) {
+func (m *SpaceMutation) SetCreatedBy(s string) {
 	m.created_by = &s
 }
 
 // CreatedBy returns the value of the "created_by" field in the mutation.
-func (m *UnitMutation) CreatedBy() (r string, exists bool) {
+func (m *SpaceMutation) CreatedBy() (r string, exists bool) {
 	v := m.created_by
 	if v == nil {
 		return
@@ -23914,10 +27767,10 @@ func (m *UnitMutation) CreatedBy() (r string, exists bool) {
 	return *v, true
 }
 
-// OldCreatedBy returns the old "created_by" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldCreatedBy returns the old "created_by" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldCreatedBy(ctx context.Context) (v string, err error) {
+func (m *SpaceMutation) OldCreatedBy(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
 	}
@@ -23932,17 +27785,17 @@ func (m *UnitMutation) OldCreatedBy(ctx context.Context) (v string, err error) {
 }
 
 // ResetCreatedBy resets all changes to the "created_by" field.
-func (m *UnitMutation) ResetCreatedBy() {
+func (m *SpaceMutation) ResetCreatedBy() {
 	m.created_by = nil
 }
 
 // SetUpdatedBy sets the "updated_by" field.
-func (m *UnitMutation) SetUpdatedBy(s string) {
+func (m *SpaceMutation) SetUpdatedBy(s string) {
 	m.updated_by = &s
 }
 
 // UpdatedBy returns the value of the "updated_by" field in the mutation.
-func (m *UnitMutation) UpdatedBy() (r string, exists bool) {
+func (m *SpaceMutation) UpdatedBy() (r string, exists bool) {
 	v := m.updated_by
 	if v == nil {
 		return
@@ -23950,10 +27803,10 @@ func (m *UnitMutation) UpdatedBy() (r string, exists bool) {
 	return *v, true
 }
 
-// OldUpdatedBy returns the old "updated_by" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldUpdatedBy returns the old "updated_by" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldUpdatedBy(ctx context.Context) (v string, err error) {
+func (m *SpaceMutation) OldUpdatedBy(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldUpdatedBy is only allowed on UpdateOne operations")
 	}
@@ -23968,17 +27821,17 @@ func (m *UnitMutation) OldUpdatedBy(ctx context.Context) (v string, err error) {
 }
 
 // ResetUpdatedBy resets all changes to the "updated_by" field.
-func (m *UnitMutation) ResetUpdatedBy() {
+func (m *SpaceMutation) ResetUpdatedBy() {
 	m.updated_by = nil
 }
 
 // SetSource sets the "source" field.
-func (m *UnitMutation) SetSource(u unit.Source) {
-	m.source = &u
+func (m *SpaceMutation) SetSource(s space.Source) {
+	m.source = &s
 }
 
 // Source returns the value of the "source" field in the mutation.
-func (m *UnitMutation) Source() (r unit.Source, exists bool) {
+func (m *SpaceMutation) Source() (r space.Source, exists bool) {
 	v := m.source
 	if v == nil {
 		return
@@ -23986,10 +27839,10 @@ func (m *UnitMutation) Source() (r unit.Source, exists bool) {
 	return *v, true
 }
 
-// OldSource returns the old "source" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldSource returns the old "source" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldSource(ctx context.Context) (v unit.Source, err error) {
+func (m *SpaceMutation) OldSource(ctx context.Context) (v space.Source, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSource is only allowed on UpdateOne operations")
 	}
@@ -24004,17 +27857,17 @@ func (m *UnitMutation) OldSource(ctx context.Context) (v unit.Source, err error)
 }
 
 // ResetSource resets all changes to the "source" field.
-func (m *UnitMutation) ResetSource() {
+func (m *SpaceMutation) ResetSource() {
 	m.source = nil
 }
 
 // SetCorrelationID sets the "correlation_id" field.
-func (m *UnitMutation) SetCorrelationID(s string) {
+func (m *SpaceMutation) SetCorrelationID(s string) {
 	m.correlation_id = &s
 }
 
 // CorrelationID returns the value of the "correlation_id" field in the mutation.
-func (m *UnitMutation) CorrelationID() (r string, exists bool) {
+func (m *SpaceMutation) CorrelationID() (r string, exists bool) {
 	v := m.correlation_id
 	if v == nil {
 		return
@@ -24022,10 +27875,10 @@ func (m *UnitMutation) CorrelationID() (r string, exists bool) {
 	return *v, true
 }
 
-// OldCorrelationID returns the old "correlation_id" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldCorrelationID returns the old "correlation_id" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldCorrelationID(ctx context.Context) (v *string, err error) {
+func (m *SpaceMutation) OldCorrelationID(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldCorrelationID is only allowed on UpdateOne operations")
 	}
@@ -24040,30 +27893,30 @@ func (m *UnitMutation) OldCorrelationID(ctx context.Context) (v *string, err err
 }
 
 // ClearCorrelationID clears the value of the "correlation_id" field.
-func (m *UnitMutation) ClearCorrelationID() {
+func (m *SpaceMutation) ClearCorrelationID() {
 	m.correlation_id = nil
-	m.clearedFields[unit.FieldCorrelationID] = struct{}{}
+	m.clearedFields[space.FieldCorrelationID] = struct{}{}
 }
 
 // CorrelationIDCleared returns if the "correlation_id" field was cleared in this mutation.
-func (m *UnitMutation) CorrelationIDCleared() bool {
-	_, ok := m.clearedFields[unit.FieldCorrelationID]
+func (m *SpaceMutation) CorrelationIDCleared() bool {
+	_, ok := m.clearedFields[space.FieldCorrelationID]
 	return ok
 }
 
 // ResetCorrelationID resets all changes to the "correlation_id" field.
-func (m *UnitMutation) ResetCorrelationID() {
+func (m *SpaceMutation) ResetCorrelationID() {
 	m.correlation_id = nil
-	delete(m.clearedFields, unit.FieldCorrelationID)
+	delete(m.clearedFields, space.FieldCorrelationID)
 }
 
 // SetAgentGoalID sets the "agent_goal_id" field.
-func (m *UnitMutation) SetAgentGoalID(s string) {
+func (m *SpaceMutation) SetAgentGoalID(s string) {
 	m.agent_goal_id = &s
 }
 
 // AgentGoalID returns the value of the "agent_goal_id" field in the mutation.
-func (m *UnitMutation) AgentGoalID() (r string, exists bool) {
+func (m *SpaceMutation) AgentGoalID() (r string, exists bool) {
 	v := m.agent_goal_id
 	if v == nil {
 		return
@@ -24071,10 +27924,10 @@ func (m *UnitMutation) AgentGoalID() (r string, exists bool) {
 	return *v, true
 }
 
-// OldAgentGoalID returns the old "agent_goal_id" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldAgentGoalID returns the old "agent_goal_id" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldAgentGoalID(ctx context.Context) (v *string, err error) {
+func (m *SpaceMutation) OldAgentGoalID(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAgentGoalID is only allowed on UpdateOne operations")
 	}
@@ -24089,102 +27942,102 @@ func (m *UnitMutation) OldAgentGoalID(ctx context.Context) (v *string, err error
 }
 
 // ClearAgentGoalID clears the value of the "agent_goal_id" field.
-func (m *UnitMutation) ClearAgentGoalID() {
+func (m *SpaceMutation) ClearAgentGoalID() {
 	m.agent_goal_id = nil
-	m.clearedFields[unit.FieldAgentGoalID] = struct{}{}
+	m.clearedFields[space.FieldAgentGoalID] = struct{}{}
 }
 
 // AgentGoalIDCleared returns if the "agent_goal_id" field was cleared in this mutation.
-func (m *UnitMutation) AgentGoalIDCleared() bool {
-	_, ok := m.clearedFields[unit.FieldAgentGoalID]
+func (m *SpaceMutation) AgentGoalIDCleared() bool {
+	_, ok := m.clearedFields[space.FieldAgentGoalID]
 	return ok
 }
 
 // ResetAgentGoalID resets all changes to the "agent_goal_id" field.
-func (m *UnitMutation) ResetAgentGoalID() {
+func (m *SpaceMutation) ResetAgentGoalID() {
 	m.agent_goal_id = nil
-	delete(m.clearedFields, unit.FieldAgentGoalID)
+	delete(m.clearedFields, space.FieldAgentGoalID)
 }
 
-// SetUnitNumber sets the "unit_number" field.
-func (m *UnitMutation) SetUnitNumber(s string) {
-	m.unit_number = &s
+// SetSpaceNumber sets the "space_number" field.
+func (m *SpaceMutation) SetSpaceNumber(s string) {
+	m.space_number = &s
 }
 
-// UnitNumber returns the value of the "unit_number" field in the mutation.
-func (m *UnitMutation) UnitNumber() (r string, exists bool) {
-	v := m.unit_number
+// SpaceNumber returns the value of the "space_number" field in the mutation.
+func (m *SpaceMutation) SpaceNumber() (r string, exists bool) {
+	v := m.space_number
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUnitNumber returns the old "unit_number" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldSpaceNumber returns the old "space_number" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldUnitNumber(ctx context.Context) (v string, err error) {
+func (m *SpaceMutation) OldSpaceNumber(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUnitNumber is only allowed on UpdateOne operations")
+		return v, errors.New("OldSpaceNumber is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUnitNumber requires an ID field in the mutation")
+		return v, errors.New("OldSpaceNumber requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUnitNumber: %w", err)
+		return v, fmt.Errorf("querying old value for OldSpaceNumber: %w", err)
 	}
-	return oldValue.UnitNumber, nil
+	return oldValue.SpaceNumber, nil
 }
 
-// ResetUnitNumber resets all changes to the "unit_number" field.
-func (m *UnitMutation) ResetUnitNumber() {
-	m.unit_number = nil
+// ResetSpaceNumber resets all changes to the "space_number" field.
+func (m *SpaceMutation) ResetSpaceNumber() {
+	m.space_number = nil
 }
 
-// SetUnitType sets the "unit_type" field.
-func (m *UnitMutation) SetUnitType(ut unit.UnitType) {
-	m.unit_type = &ut
+// SetSpaceType sets the "space_type" field.
+func (m *SpaceMutation) SetSpaceType(st space.SpaceType) {
+	m.space_type = &st
 }
 
-// UnitType returns the value of the "unit_type" field in the mutation.
-func (m *UnitMutation) UnitType() (r unit.UnitType, exists bool) {
-	v := m.unit_type
+// SpaceType returns the value of the "space_type" field in the mutation.
+func (m *SpaceMutation) SpaceType() (r space.SpaceType, exists bool) {
+	v := m.space_type
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUnitType returns the old "unit_type" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldSpaceType returns the old "space_type" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldUnitType(ctx context.Context) (v unit.UnitType, err error) {
+func (m *SpaceMutation) OldSpaceType(ctx context.Context) (v space.SpaceType, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUnitType is only allowed on UpdateOne operations")
+		return v, errors.New("OldSpaceType is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUnitType requires an ID field in the mutation")
+		return v, errors.New("OldSpaceType requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUnitType: %w", err)
+		return v, fmt.Errorf("querying old value for OldSpaceType: %w", err)
 	}
-	return oldValue.UnitType, nil
+	return oldValue.SpaceType, nil
 }
 
-// ResetUnitType resets all changes to the "unit_type" field.
-func (m *UnitMutation) ResetUnitType() {
-	m.unit_type = nil
+// ResetSpaceType resets all changes to the "space_type" field.
+func (m *SpaceMutation) ResetSpaceType() {
+	m.space_type = nil
 }
 
 // SetStatus sets the "status" field.
-func (m *UnitMutation) SetStatus(u unit.Status) {
-	m.status = &u
+func (m *SpaceMutation) SetStatus(s space.Status) {
+	m.status = &s
 }
 
 // Status returns the value of the "status" field in the mutation.
-func (m *UnitMutation) Status() (r unit.Status, exists bool) {
+func (m *SpaceMutation) Status() (r space.Status, exists bool) {
 	v := m.status
 	if v == nil {
 		return
@@ -24192,10 +28045,10 @@ func (m *UnitMutation) Status() (r unit.Status, exists bool) {
 	return *v, true
 }
 
-// OldStatus returns the old "status" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldStatus returns the old "status" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldStatus(ctx context.Context) (v unit.Status, err error) {
+func (m *SpaceMutation) OldStatus(ctx context.Context) (v space.Status, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
 	}
@@ -24210,18 +28063,90 @@ func (m *UnitMutation) OldStatus(ctx context.Context) (v unit.Status, err error)
 }
 
 // ResetStatus resets all changes to the "status" field.
-func (m *UnitMutation) ResetStatus() {
+func (m *SpaceMutation) ResetStatus() {
 	m.status = nil
 }
 
+// SetLeasable sets the "leasable" field.
+func (m *SpaceMutation) SetLeasable(b bool) {
+	m.leasable = &b
+}
+
+// Leasable returns the value of the "leasable" field in the mutation.
+func (m *SpaceMutation) Leasable() (r bool, exists bool) {
+	v := m.leasable
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeasable returns the old "leasable" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SpaceMutation) OldLeasable(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeasable is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeasable requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeasable: %w", err)
+	}
+	return oldValue.Leasable, nil
+}
+
+// ResetLeasable resets all changes to the "leasable" field.
+func (m *SpaceMutation) ResetLeasable() {
+	m.leasable = nil
+}
+
+// SetSharedWithParent sets the "shared_with_parent" field.
+func (m *SpaceMutation) SetSharedWithParent(b bool) {
+	m.shared_with_parent = &b
+}
+
+// SharedWithParent returns the value of the "shared_with_parent" field in the mutation.
+func (m *SpaceMutation) SharedWithParent() (r bool, exists bool) {
+	v := m.shared_with_parent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSharedWithParent returns the old "shared_with_parent" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SpaceMutation) OldSharedWithParent(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSharedWithParent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSharedWithParent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSharedWithParent: %w", err)
+	}
+	return oldValue.SharedWithParent, nil
+}
+
+// ResetSharedWithParent resets all changes to the "shared_with_parent" field.
+func (m *SpaceMutation) ResetSharedWithParent() {
+	m.shared_with_parent = nil
+}
+
 // SetSquareFootage sets the "square_footage" field.
-func (m *UnitMutation) SetSquareFootage(f float64) {
+func (m *SpaceMutation) SetSquareFootage(f float64) {
 	m.square_footage = &f
 	m.addsquare_footage = nil
 }
 
 // SquareFootage returns the value of the "square_footage" field in the mutation.
-func (m *UnitMutation) SquareFootage() (r float64, exists bool) {
+func (m *SpaceMutation) SquareFootage() (r float64, exists bool) {
 	v := m.square_footage
 	if v == nil {
 		return
@@ -24229,10 +28154,10 @@ func (m *UnitMutation) SquareFootage() (r float64, exists bool) {
 	return *v, true
 }
 
-// OldSquareFootage returns the old "square_footage" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldSquareFootage returns the old "square_footage" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldSquareFootage(ctx context.Context) (v float64, err error) {
+func (m *SpaceMutation) OldSquareFootage(ctx context.Context) (v float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldSquareFootage is only allowed on UpdateOne operations")
 	}
@@ -24247,7 +28172,7 @@ func (m *UnitMutation) OldSquareFootage(ctx context.Context) (v float64, err err
 }
 
 // AddSquareFootage adds f to the "square_footage" field.
-func (m *UnitMutation) AddSquareFootage(f float64) {
+func (m *SpaceMutation) AddSquareFootage(f float64) {
 	if m.addsquare_footage != nil {
 		*m.addsquare_footage += f
 	} else {
@@ -24256,7 +28181,7 @@ func (m *UnitMutation) AddSquareFootage(f float64) {
 }
 
 // AddedSquareFootage returns the value that was added to the "square_footage" field in this mutation.
-func (m *UnitMutation) AddedSquareFootage() (r float64, exists bool) {
+func (m *SpaceMutation) AddedSquareFootage() (r float64, exists bool) {
 	v := m.addsquare_footage
 	if v == nil {
 		return
@@ -24265,19 +28190,19 @@ func (m *UnitMutation) AddedSquareFootage() (r float64, exists bool) {
 }
 
 // ResetSquareFootage resets all changes to the "square_footage" field.
-func (m *UnitMutation) ResetSquareFootage() {
+func (m *SpaceMutation) ResetSquareFootage() {
 	m.square_footage = nil
 	m.addsquare_footage = nil
 }
 
 // SetBedrooms sets the "bedrooms" field.
-func (m *UnitMutation) SetBedrooms(i int) {
+func (m *SpaceMutation) SetBedrooms(i int) {
 	m.bedrooms = &i
 	m.addbedrooms = nil
 }
 
 // Bedrooms returns the value of the "bedrooms" field in the mutation.
-func (m *UnitMutation) Bedrooms() (r int, exists bool) {
+func (m *SpaceMutation) Bedrooms() (r int, exists bool) {
 	v := m.bedrooms
 	if v == nil {
 		return
@@ -24285,10 +28210,10 @@ func (m *UnitMutation) Bedrooms() (r int, exists bool) {
 	return *v, true
 }
 
-// OldBedrooms returns the old "bedrooms" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldBedrooms returns the old "bedrooms" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldBedrooms(ctx context.Context) (v *int, err error) {
+func (m *SpaceMutation) OldBedrooms(ctx context.Context) (v *int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBedrooms is only allowed on UpdateOne operations")
 	}
@@ -24303,7 +28228,7 @@ func (m *UnitMutation) OldBedrooms(ctx context.Context) (v *int, err error) {
 }
 
 // AddBedrooms adds i to the "bedrooms" field.
-func (m *UnitMutation) AddBedrooms(i int) {
+func (m *SpaceMutation) AddBedrooms(i int) {
 	if m.addbedrooms != nil {
 		*m.addbedrooms += i
 	} else {
@@ -24312,7 +28237,7 @@ func (m *UnitMutation) AddBedrooms(i int) {
 }
 
 // AddedBedrooms returns the value that was added to the "bedrooms" field in this mutation.
-func (m *UnitMutation) AddedBedrooms() (r int, exists bool) {
+func (m *SpaceMutation) AddedBedrooms() (r int, exists bool) {
 	v := m.addbedrooms
 	if v == nil {
 		return
@@ -24321,33 +28246,33 @@ func (m *UnitMutation) AddedBedrooms() (r int, exists bool) {
 }
 
 // ClearBedrooms clears the value of the "bedrooms" field.
-func (m *UnitMutation) ClearBedrooms() {
+func (m *SpaceMutation) ClearBedrooms() {
 	m.bedrooms = nil
 	m.addbedrooms = nil
-	m.clearedFields[unit.FieldBedrooms] = struct{}{}
+	m.clearedFields[space.FieldBedrooms] = struct{}{}
 }
 
 // BedroomsCleared returns if the "bedrooms" field was cleared in this mutation.
-func (m *UnitMutation) BedroomsCleared() bool {
-	_, ok := m.clearedFields[unit.FieldBedrooms]
+func (m *SpaceMutation) BedroomsCleared() bool {
+	_, ok := m.clearedFields[space.FieldBedrooms]
 	return ok
 }
 
 // ResetBedrooms resets all changes to the "bedrooms" field.
-func (m *UnitMutation) ResetBedrooms() {
+func (m *SpaceMutation) ResetBedrooms() {
 	m.bedrooms = nil
 	m.addbedrooms = nil
-	delete(m.clearedFields, unit.FieldBedrooms)
+	delete(m.clearedFields, space.FieldBedrooms)
 }
 
 // SetBathrooms sets the "bathrooms" field.
-func (m *UnitMutation) SetBathrooms(f float64) {
+func (m *SpaceMutation) SetBathrooms(f float64) {
 	m.bathrooms = &f
 	m.addbathrooms = nil
 }
 
 // Bathrooms returns the value of the "bathrooms" field in the mutation.
-func (m *UnitMutation) Bathrooms() (r float64, exists bool) {
+func (m *SpaceMutation) Bathrooms() (r float64, exists bool) {
 	v := m.bathrooms
 	if v == nil {
 		return
@@ -24355,10 +28280,10 @@ func (m *UnitMutation) Bathrooms() (r float64, exists bool) {
 	return *v, true
 }
 
-// OldBathrooms returns the old "bathrooms" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldBathrooms returns the old "bathrooms" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldBathrooms(ctx context.Context) (v *float64, err error) {
+func (m *SpaceMutation) OldBathrooms(ctx context.Context) (v *float64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldBathrooms is only allowed on UpdateOne operations")
 	}
@@ -24373,7 +28298,7 @@ func (m *UnitMutation) OldBathrooms(ctx context.Context) (v *float64, err error)
 }
 
 // AddBathrooms adds f to the "bathrooms" field.
-func (m *UnitMutation) AddBathrooms(f float64) {
+func (m *SpaceMutation) AddBathrooms(f float64) {
 	if m.addbathrooms != nil {
 		*m.addbathrooms += f
 	} else {
@@ -24382,7 +28307,7 @@ func (m *UnitMutation) AddBathrooms(f float64) {
 }
 
 // AddedBathrooms returns the value that was added to the "bathrooms" field in this mutation.
-func (m *UnitMutation) AddedBathrooms() (r float64, exists bool) {
+func (m *SpaceMutation) AddedBathrooms() (r float64, exists bool) {
 	v := m.addbathrooms
 	if v == nil {
 		return
@@ -24391,33 +28316,33 @@ func (m *UnitMutation) AddedBathrooms() (r float64, exists bool) {
 }
 
 // ClearBathrooms clears the value of the "bathrooms" field.
-func (m *UnitMutation) ClearBathrooms() {
+func (m *SpaceMutation) ClearBathrooms() {
 	m.bathrooms = nil
 	m.addbathrooms = nil
-	m.clearedFields[unit.FieldBathrooms] = struct{}{}
+	m.clearedFields[space.FieldBathrooms] = struct{}{}
 }
 
 // BathroomsCleared returns if the "bathrooms" field was cleared in this mutation.
-func (m *UnitMutation) BathroomsCleared() bool {
-	_, ok := m.clearedFields[unit.FieldBathrooms]
+func (m *SpaceMutation) BathroomsCleared() bool {
+	_, ok := m.clearedFields[space.FieldBathrooms]
 	return ok
 }
 
 // ResetBathrooms resets all changes to the "bathrooms" field.
-func (m *UnitMutation) ResetBathrooms() {
+func (m *SpaceMutation) ResetBathrooms() {
 	m.bathrooms = nil
 	m.addbathrooms = nil
-	delete(m.clearedFields, unit.FieldBathrooms)
+	delete(m.clearedFields, space.FieldBathrooms)
 }
 
 // SetFloor sets the "floor" field.
-func (m *UnitMutation) SetFloor(i int) {
+func (m *SpaceMutation) SetFloor(i int) {
 	m.floor = &i
 	m.addfloor = nil
 }
 
 // Floor returns the value of the "floor" field in the mutation.
-func (m *UnitMutation) Floor() (r int, exists bool) {
+func (m *SpaceMutation) Floor() (r int, exists bool) {
 	v := m.floor
 	if v == nil {
 		return
@@ -24425,10 +28350,10 @@ func (m *UnitMutation) Floor() (r int, exists bool) {
 	return *v, true
 }
 
-// OldFloor returns the old "floor" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldFloor returns the old "floor" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldFloor(ctx context.Context) (v *int, err error) {
+func (m *SpaceMutation) OldFloor(ctx context.Context) (v *int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFloor is only allowed on UpdateOne operations")
 	}
@@ -24443,7 +28368,7 @@ func (m *UnitMutation) OldFloor(ctx context.Context) (v *int, err error) {
 }
 
 // AddFloor adds i to the "floor" field.
-func (m *UnitMutation) AddFloor(i int) {
+func (m *SpaceMutation) AddFloor(i int) {
 	if m.addfloor != nil {
 		*m.addfloor += i
 	} else {
@@ -24452,7 +28377,7 @@ func (m *UnitMutation) AddFloor(i int) {
 }
 
 // AddedFloor returns the value that was added to the "floor" field in this mutation.
-func (m *UnitMutation) AddedFloor() (r int, exists bool) {
+func (m *SpaceMutation) AddedFloor() (r int, exists bool) {
 	v := m.addfloor
 	if v == nil {
 		return
@@ -24461,33 +28386,33 @@ func (m *UnitMutation) AddedFloor() (r int, exists bool) {
 }
 
 // ClearFloor clears the value of the "floor" field.
-func (m *UnitMutation) ClearFloor() {
+func (m *SpaceMutation) ClearFloor() {
 	m.floor = nil
 	m.addfloor = nil
-	m.clearedFields[unit.FieldFloor] = struct{}{}
+	m.clearedFields[space.FieldFloor] = struct{}{}
 }
 
 // FloorCleared returns if the "floor" field was cleared in this mutation.
-func (m *UnitMutation) FloorCleared() bool {
-	_, ok := m.clearedFields[unit.FieldFloor]
+func (m *SpaceMutation) FloorCleared() bool {
+	_, ok := m.clearedFields[space.FieldFloor]
 	return ok
 }
 
 // ResetFloor resets all changes to the "floor" field.
-func (m *UnitMutation) ResetFloor() {
+func (m *SpaceMutation) ResetFloor() {
 	m.floor = nil
 	m.addfloor = nil
-	delete(m.clearedFields, unit.FieldFloor)
+	delete(m.clearedFields, space.FieldFloor)
 }
 
 // SetAmenities sets the "amenities" field.
-func (m *UnitMutation) SetAmenities(s []string) {
+func (m *SpaceMutation) SetAmenities(s []string) {
 	m.amenities = &s
 	m.appendamenities = nil
 }
 
 // Amenities returns the value of the "amenities" field in the mutation.
-func (m *UnitMutation) Amenities() (r []string, exists bool) {
+func (m *SpaceMutation) Amenities() (r []string, exists bool) {
 	v := m.amenities
 	if v == nil {
 		return
@@ -24495,10 +28420,10 @@ func (m *UnitMutation) Amenities() (r []string, exists bool) {
 	return *v, true
 }
 
-// OldAmenities returns the old "amenities" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldAmenities returns the old "amenities" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldAmenities(ctx context.Context) (v []string, err error) {
+func (m *SpaceMutation) OldAmenities(ctx context.Context) (v []string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAmenities is only allowed on UpdateOne operations")
 	}
@@ -24513,12 +28438,12 @@ func (m *UnitMutation) OldAmenities(ctx context.Context) (v []string, err error)
 }
 
 // AppendAmenities adds s to the "amenities" field.
-func (m *UnitMutation) AppendAmenities(s []string) {
+func (m *SpaceMutation) AppendAmenities(s []string) {
 	m.appendamenities = append(m.appendamenities, s...)
 }
 
 // AppendedAmenities returns the list of values that were appended to the "amenities" field in this mutation.
-func (m *UnitMutation) AppendedAmenities() ([]string, bool) {
+func (m *SpaceMutation) AppendedAmenities() ([]string, bool) {
 	if len(m.appendamenities) == 0 {
 		return nil, false
 	}
@@ -24526,32 +28451,32 @@ func (m *UnitMutation) AppendedAmenities() ([]string, bool) {
 }
 
 // ClearAmenities clears the value of the "amenities" field.
-func (m *UnitMutation) ClearAmenities() {
+func (m *SpaceMutation) ClearAmenities() {
 	m.amenities = nil
 	m.appendamenities = nil
-	m.clearedFields[unit.FieldAmenities] = struct{}{}
+	m.clearedFields[space.FieldAmenities] = struct{}{}
 }
 
 // AmenitiesCleared returns if the "amenities" field was cleared in this mutation.
-func (m *UnitMutation) AmenitiesCleared() bool {
-	_, ok := m.clearedFields[unit.FieldAmenities]
+func (m *SpaceMutation) AmenitiesCleared() bool {
+	_, ok := m.clearedFields[space.FieldAmenities]
 	return ok
 }
 
 // ResetAmenities resets all changes to the "amenities" field.
-func (m *UnitMutation) ResetAmenities() {
+func (m *SpaceMutation) ResetAmenities() {
 	m.amenities = nil
 	m.appendamenities = nil
-	delete(m.clearedFields, unit.FieldAmenities)
+	delete(m.clearedFields, space.FieldAmenities)
 }
 
 // SetFloorPlan sets the "floor_plan" field.
-func (m *UnitMutation) SetFloorPlan(s string) {
+func (m *SpaceMutation) SetFloorPlan(s string) {
 	m.floor_plan = &s
 }
 
 // FloorPlan returns the value of the "floor_plan" field in the mutation.
-func (m *UnitMutation) FloorPlan() (r string, exists bool) {
+func (m *SpaceMutation) FloorPlan() (r string, exists bool) {
 	v := m.floor_plan
 	if v == nil {
 		return
@@ -24559,10 +28484,10 @@ func (m *UnitMutation) FloorPlan() (r string, exists bool) {
 	return *v, true
 }
 
-// OldFloorPlan returns the old "floor_plan" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldFloorPlan returns the old "floor_plan" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldFloorPlan(ctx context.Context) (v *string, err error) {
+func (m *SpaceMutation) OldFloorPlan(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFloorPlan is only allowed on UpdateOne operations")
 	}
@@ -24577,30 +28502,30 @@ func (m *UnitMutation) OldFloorPlan(ctx context.Context) (v *string, err error) 
 }
 
 // ClearFloorPlan clears the value of the "floor_plan" field.
-func (m *UnitMutation) ClearFloorPlan() {
+func (m *SpaceMutation) ClearFloorPlan() {
 	m.floor_plan = nil
-	m.clearedFields[unit.FieldFloorPlan] = struct{}{}
+	m.clearedFields[space.FieldFloorPlan] = struct{}{}
 }
 
 // FloorPlanCleared returns if the "floor_plan" field was cleared in this mutation.
-func (m *UnitMutation) FloorPlanCleared() bool {
-	_, ok := m.clearedFields[unit.FieldFloorPlan]
+func (m *SpaceMutation) FloorPlanCleared() bool {
+	_, ok := m.clearedFields[space.FieldFloorPlan]
 	return ok
 }
 
 // ResetFloorPlan resets all changes to the "floor_plan" field.
-func (m *UnitMutation) ResetFloorPlan() {
+func (m *SpaceMutation) ResetFloorPlan() {
 	m.floor_plan = nil
-	delete(m.clearedFields, unit.FieldFloorPlan)
+	delete(m.clearedFields, space.FieldFloorPlan)
 }
 
 // SetAdaAccessible sets the "ada_accessible" field.
-func (m *UnitMutation) SetAdaAccessible(b bool) {
+func (m *SpaceMutation) SetAdaAccessible(b bool) {
 	m.ada_accessible = &b
 }
 
 // AdaAccessible returns the value of the "ada_accessible" field in the mutation.
-func (m *UnitMutation) AdaAccessible() (r bool, exists bool) {
+func (m *SpaceMutation) AdaAccessible() (r bool, exists bool) {
 	v := m.ada_accessible
 	if v == nil {
 		return
@@ -24608,10 +28533,10 @@ func (m *UnitMutation) AdaAccessible() (r bool, exists bool) {
 	return *v, true
 }
 
-// OldAdaAccessible returns the old "ada_accessible" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldAdaAccessible returns the old "ada_accessible" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldAdaAccessible(ctx context.Context) (v bool, err error) {
+func (m *SpaceMutation) OldAdaAccessible(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAdaAccessible is only allowed on UpdateOne operations")
 	}
@@ -24626,17 +28551,17 @@ func (m *UnitMutation) OldAdaAccessible(ctx context.Context) (v bool, err error)
 }
 
 // ResetAdaAccessible resets all changes to the "ada_accessible" field.
-func (m *UnitMutation) ResetAdaAccessible() {
+func (m *SpaceMutation) ResetAdaAccessible() {
 	m.ada_accessible = nil
 }
 
 // SetPetFriendly sets the "pet_friendly" field.
-func (m *UnitMutation) SetPetFriendly(b bool) {
+func (m *SpaceMutation) SetPetFriendly(b bool) {
 	m.pet_friendly = &b
 }
 
 // PetFriendly returns the value of the "pet_friendly" field in the mutation.
-func (m *UnitMutation) PetFriendly() (r bool, exists bool) {
+func (m *SpaceMutation) PetFriendly() (r bool, exists bool) {
 	v := m.pet_friendly
 	if v == nil {
 		return
@@ -24644,10 +28569,10 @@ func (m *UnitMutation) PetFriendly() (r bool, exists bool) {
 	return *v, true
 }
 
-// OldPetFriendly returns the old "pet_friendly" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldPetFriendly returns the old "pet_friendly" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldPetFriendly(ctx context.Context) (v bool, err error) {
+func (m *SpaceMutation) OldPetFriendly(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPetFriendly is only allowed on UpdateOne operations")
 	}
@@ -24662,17 +28587,17 @@ func (m *UnitMutation) OldPetFriendly(ctx context.Context) (v bool, err error) {
 }
 
 // ResetPetFriendly resets all changes to the "pet_friendly" field.
-func (m *UnitMutation) ResetPetFriendly() {
+func (m *SpaceMutation) ResetPetFriendly() {
 	m.pet_friendly = nil
 }
 
 // SetFurnished sets the "furnished" field.
-func (m *UnitMutation) SetFurnished(b bool) {
+func (m *SpaceMutation) SetFurnished(b bool) {
 	m.furnished = &b
 }
 
 // Furnished returns the value of the "furnished" field in the mutation.
-func (m *UnitMutation) Furnished() (r bool, exists bool) {
+func (m *SpaceMutation) Furnished() (r bool, exists bool) {
 	v := m.furnished
 	if v == nil {
 		return
@@ -24680,10 +28605,10 @@ func (m *UnitMutation) Furnished() (r bool, exists bool) {
 	return *v, true
 }
 
-// OldFurnished returns the old "furnished" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldFurnished returns the old "furnished" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldFurnished(ctx context.Context) (v bool, err error) {
+func (m *SpaceMutation) OldFurnished(ctx context.Context) (v bool, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldFurnished is only allowed on UpdateOne operations")
 	}
@@ -24698,18 +28623,83 @@ func (m *UnitMutation) OldFurnished(ctx context.Context) (v bool, err error) {
 }
 
 // ResetFurnished resets all changes to the "furnished" field.
-func (m *UnitMutation) ResetFurnished() {
+func (m *SpaceMutation) ResetFurnished() {
 	m.furnished = nil
 }
 
+// SetSpecializedInfrastructure sets the "specialized_infrastructure" field.
+func (m *SpaceMutation) SetSpecializedInfrastructure(s []string) {
+	m.specialized_infrastructure = &s
+	m.appendspecialized_infrastructure = nil
+}
+
+// SpecializedInfrastructure returns the value of the "specialized_infrastructure" field in the mutation.
+func (m *SpaceMutation) SpecializedInfrastructure() (r []string, exists bool) {
+	v := m.specialized_infrastructure
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSpecializedInfrastructure returns the old "specialized_infrastructure" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SpaceMutation) OldSpecializedInfrastructure(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSpecializedInfrastructure is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSpecializedInfrastructure requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSpecializedInfrastructure: %w", err)
+	}
+	return oldValue.SpecializedInfrastructure, nil
+}
+
+// AppendSpecializedInfrastructure adds s to the "specialized_infrastructure" field.
+func (m *SpaceMutation) AppendSpecializedInfrastructure(s []string) {
+	m.appendspecialized_infrastructure = append(m.appendspecialized_infrastructure, s...)
+}
+
+// AppendedSpecializedInfrastructure returns the list of values that were appended to the "specialized_infrastructure" field in this mutation.
+func (m *SpaceMutation) AppendedSpecializedInfrastructure() ([]string, bool) {
+	if len(m.appendspecialized_infrastructure) == 0 {
+		return nil, false
+	}
+	return m.appendspecialized_infrastructure, true
+}
+
+// ClearSpecializedInfrastructure clears the value of the "specialized_infrastructure" field.
+func (m *SpaceMutation) ClearSpecializedInfrastructure() {
+	m.specialized_infrastructure = nil
+	m.appendspecialized_infrastructure = nil
+	m.clearedFields[space.FieldSpecializedInfrastructure] = struct{}{}
+}
+
+// SpecializedInfrastructureCleared returns if the "specialized_infrastructure" field was cleared in this mutation.
+func (m *SpaceMutation) SpecializedInfrastructureCleared() bool {
+	_, ok := m.clearedFields[space.FieldSpecializedInfrastructure]
+	return ok
+}
+
+// ResetSpecializedInfrastructure resets all changes to the "specialized_infrastructure" field.
+func (m *SpaceMutation) ResetSpecializedInfrastructure() {
+	m.specialized_infrastructure = nil
+	m.appendspecialized_infrastructure = nil
+	delete(m.clearedFields, space.FieldSpecializedInfrastructure)
+}
+
 // SetMarketRentAmountCents sets the "market_rent_amount_cents" field.
-func (m *UnitMutation) SetMarketRentAmountCents(i int64) {
+func (m *SpaceMutation) SetMarketRentAmountCents(i int64) {
 	m.market_rent_amount_cents = &i
 	m.addmarket_rent_amount_cents = nil
 }
 
 // MarketRentAmountCents returns the value of the "market_rent_amount_cents" field in the mutation.
-func (m *UnitMutation) MarketRentAmountCents() (r int64, exists bool) {
+func (m *SpaceMutation) MarketRentAmountCents() (r int64, exists bool) {
 	v := m.market_rent_amount_cents
 	if v == nil {
 		return
@@ -24717,10 +28707,10 @@ func (m *UnitMutation) MarketRentAmountCents() (r int64, exists bool) {
 	return *v, true
 }
 
-// OldMarketRentAmountCents returns the old "market_rent_amount_cents" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldMarketRentAmountCents returns the old "market_rent_amount_cents" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldMarketRentAmountCents(ctx context.Context) (v *int64, err error) {
+func (m *SpaceMutation) OldMarketRentAmountCents(ctx context.Context) (v *int64, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMarketRentAmountCents is only allowed on UpdateOne operations")
 	}
@@ -24735,7 +28725,7 @@ func (m *UnitMutation) OldMarketRentAmountCents(ctx context.Context) (v *int64, 
 }
 
 // AddMarketRentAmountCents adds i to the "market_rent_amount_cents" field.
-func (m *UnitMutation) AddMarketRentAmountCents(i int64) {
+func (m *SpaceMutation) AddMarketRentAmountCents(i int64) {
 	if m.addmarket_rent_amount_cents != nil {
 		*m.addmarket_rent_amount_cents += i
 	} else {
@@ -24744,7 +28734,7 @@ func (m *UnitMutation) AddMarketRentAmountCents(i int64) {
 }
 
 // AddedMarketRentAmountCents returns the value that was added to the "market_rent_amount_cents" field in this mutation.
-func (m *UnitMutation) AddedMarketRentAmountCents() (r int64, exists bool) {
+func (m *SpaceMutation) AddedMarketRentAmountCents() (r int64, exists bool) {
 	v := m.addmarket_rent_amount_cents
 	if v == nil {
 		return
@@ -24753,32 +28743,32 @@ func (m *UnitMutation) AddedMarketRentAmountCents() (r int64, exists bool) {
 }
 
 // ClearMarketRentAmountCents clears the value of the "market_rent_amount_cents" field.
-func (m *UnitMutation) ClearMarketRentAmountCents() {
+func (m *SpaceMutation) ClearMarketRentAmountCents() {
 	m.market_rent_amount_cents = nil
 	m.addmarket_rent_amount_cents = nil
-	m.clearedFields[unit.FieldMarketRentAmountCents] = struct{}{}
+	m.clearedFields[space.FieldMarketRentAmountCents] = struct{}{}
 }
 
 // MarketRentAmountCentsCleared returns if the "market_rent_amount_cents" field was cleared in this mutation.
-func (m *UnitMutation) MarketRentAmountCentsCleared() bool {
-	_, ok := m.clearedFields[unit.FieldMarketRentAmountCents]
+func (m *SpaceMutation) MarketRentAmountCentsCleared() bool {
+	_, ok := m.clearedFields[space.FieldMarketRentAmountCents]
 	return ok
 }
 
 // ResetMarketRentAmountCents resets all changes to the "market_rent_amount_cents" field.
-func (m *UnitMutation) ResetMarketRentAmountCents() {
+func (m *SpaceMutation) ResetMarketRentAmountCents() {
 	m.market_rent_amount_cents = nil
 	m.addmarket_rent_amount_cents = nil
-	delete(m.clearedFields, unit.FieldMarketRentAmountCents)
+	delete(m.clearedFields, space.FieldMarketRentAmountCents)
 }
 
 // SetMarketRentCurrency sets the "market_rent_currency" field.
-func (m *UnitMutation) SetMarketRentCurrency(s string) {
+func (m *SpaceMutation) SetMarketRentCurrency(s string) {
 	m.market_rent_currency = &s
 }
 
 // MarketRentCurrency returns the value of the "market_rent_currency" field in the mutation.
-func (m *UnitMutation) MarketRentCurrency() (r string, exists bool) {
+func (m *SpaceMutation) MarketRentCurrency() (r string, exists bool) {
 	v := m.market_rent_currency
 	if v == nil {
 		return
@@ -24786,10 +28776,10 @@ func (m *UnitMutation) MarketRentCurrency() (r string, exists bool) {
 	return *v, true
 }
 
-// OldMarketRentCurrency returns the old "market_rent_currency" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldMarketRentCurrency returns the old "market_rent_currency" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldMarketRentCurrency(ctx context.Context) (v *string, err error) {
+func (m *SpaceMutation) OldMarketRentCurrency(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMarketRentCurrency is only allowed on UpdateOne operations")
 	}
@@ -24804,31 +28794,31 @@ func (m *UnitMutation) OldMarketRentCurrency(ctx context.Context) (v *string, er
 }
 
 // ClearMarketRentCurrency clears the value of the "market_rent_currency" field.
-func (m *UnitMutation) ClearMarketRentCurrency() {
+func (m *SpaceMutation) ClearMarketRentCurrency() {
 	m.market_rent_currency = nil
-	m.clearedFields[unit.FieldMarketRentCurrency] = struct{}{}
+	m.clearedFields[space.FieldMarketRentCurrency] = struct{}{}
 }
 
 // MarketRentCurrencyCleared returns if the "market_rent_currency" field was cleared in this mutation.
-func (m *UnitMutation) MarketRentCurrencyCleared() bool {
-	_, ok := m.clearedFields[unit.FieldMarketRentCurrency]
+func (m *SpaceMutation) MarketRentCurrencyCleared() bool {
+	_, ok := m.clearedFields[space.FieldMarketRentCurrency]
 	return ok
 }
 
 // ResetMarketRentCurrency resets all changes to the "market_rent_currency" field.
-func (m *UnitMutation) ResetMarketRentCurrency() {
+func (m *SpaceMutation) ResetMarketRentCurrency() {
 	m.market_rent_currency = nil
-	delete(m.clearedFields, unit.FieldMarketRentCurrency)
+	delete(m.clearedFields, space.FieldMarketRentCurrency)
 }
 
 // SetAmiRestriction sets the "ami_restriction" field.
-func (m *UnitMutation) SetAmiRestriction(i int) {
+func (m *SpaceMutation) SetAmiRestriction(i int) {
 	m.ami_restriction = &i
 	m.addami_restriction = nil
 }
 
 // AmiRestriction returns the value of the "ami_restriction" field in the mutation.
-func (m *UnitMutation) AmiRestriction() (r int, exists bool) {
+func (m *SpaceMutation) AmiRestriction() (r int, exists bool) {
 	v := m.ami_restriction
 	if v == nil {
 		return
@@ -24836,10 +28826,10 @@ func (m *UnitMutation) AmiRestriction() (r int, exists bool) {
 	return *v, true
 }
 
-// OldAmiRestriction returns the old "ami_restriction" field's value of the Unit entity.
-// If the Unit object wasn't provided to the builder, the object is fetched from the database.
+// OldAmiRestriction returns the old "ami_restriction" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UnitMutation) OldAmiRestriction(ctx context.Context) (v *int, err error) {
+func (m *SpaceMutation) OldAmiRestriction(ctx context.Context) (v *int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAmiRestriction is only allowed on UpdateOne operations")
 	}
@@ -24854,7 +28844,7 @@ func (m *UnitMutation) OldAmiRestriction(ctx context.Context) (v *int, err error
 }
 
 // AddAmiRestriction adds i to the "ami_restriction" field.
-func (m *UnitMutation) AddAmiRestriction(i int) {
+func (m *SpaceMutation) AddAmiRestriction(i int) {
 	if m.addami_restriction != nil {
 		*m.addami_restriction += i
 	} else {
@@ -24863,7 +28853,7 @@ func (m *UnitMutation) AddAmiRestriction(i int) {
 }
 
 // AddedAmiRestriction returns the value that was added to the "ami_restriction" field in this mutation.
-func (m *UnitMutation) AddedAmiRestriction() (r int, exists bool) {
+func (m *SpaceMutation) AddedAmiRestriction() (r int, exists bool) {
 	v := m.addami_restriction
 	if v == nil {
 		return
@@ -24872,42 +28862,91 @@ func (m *UnitMutation) AddedAmiRestriction() (r int, exists bool) {
 }
 
 // ClearAmiRestriction clears the value of the "ami_restriction" field.
-func (m *UnitMutation) ClearAmiRestriction() {
+func (m *SpaceMutation) ClearAmiRestriction() {
 	m.ami_restriction = nil
 	m.addami_restriction = nil
-	m.clearedFields[unit.FieldAmiRestriction] = struct{}{}
+	m.clearedFields[space.FieldAmiRestriction] = struct{}{}
 }
 
 // AmiRestrictionCleared returns if the "ami_restriction" field was cleared in this mutation.
-func (m *UnitMutation) AmiRestrictionCleared() bool {
-	_, ok := m.clearedFields[unit.FieldAmiRestriction]
+func (m *SpaceMutation) AmiRestrictionCleared() bool {
+	_, ok := m.clearedFields[space.FieldAmiRestriction]
 	return ok
 }
 
 // ResetAmiRestriction resets all changes to the "ami_restriction" field.
-func (m *UnitMutation) ResetAmiRestriction() {
+func (m *SpaceMutation) ResetAmiRestriction() {
 	m.ami_restriction = nil
 	m.addami_restriction = nil
-	delete(m.clearedFields, unit.FieldAmiRestriction)
+	delete(m.clearedFields, space.FieldAmiRestriction)
+}
+
+// SetActiveLeaseID sets the "active_lease_id" field.
+func (m *SpaceMutation) SetActiveLeaseID(s string) {
+	m.active_lease_id = &s
+}
+
+// ActiveLeaseID returns the value of the "active_lease_id" field in the mutation.
+func (m *SpaceMutation) ActiveLeaseID() (r string, exists bool) {
+	v := m.active_lease_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActiveLeaseID returns the old "active_lease_id" field's value of the Space entity.
+// If the Space object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SpaceMutation) OldActiveLeaseID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActiveLeaseID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActiveLeaseID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActiveLeaseID: %w", err)
+	}
+	return oldValue.ActiveLeaseID, nil
+}
+
+// ClearActiveLeaseID clears the value of the "active_lease_id" field.
+func (m *SpaceMutation) ClearActiveLeaseID() {
+	m.active_lease_id = nil
+	m.clearedFields[space.FieldActiveLeaseID] = struct{}{}
+}
+
+// ActiveLeaseIDCleared returns if the "active_lease_id" field was cleared in this mutation.
+func (m *SpaceMutation) ActiveLeaseIDCleared() bool {
+	_, ok := m.clearedFields[space.FieldActiveLeaseID]
+	return ok
+}
+
+// ResetActiveLeaseID resets all changes to the "active_lease_id" field.
+func (m *SpaceMutation) ResetActiveLeaseID() {
+	m.active_lease_id = nil
+	delete(m.clearedFields, space.FieldActiveLeaseID)
 }
 
 // SetPropertyID sets the "property" edge to the Property entity by id.
-func (m *UnitMutation) SetPropertyID(id uuid.UUID) {
+func (m *SpaceMutation) SetPropertyID(id uuid.UUID) {
 	m.property = &id
 }
 
 // ClearProperty clears the "property" edge to the Property entity.
-func (m *UnitMutation) ClearProperty() {
+func (m *SpaceMutation) ClearProperty() {
 	m.clearedproperty = true
 }
 
 // PropertyCleared reports if the "property" edge to the Property entity was cleared.
-func (m *UnitMutation) PropertyCleared() bool {
+func (m *SpaceMutation) PropertyCleared() bool {
 	return m.clearedproperty
 }
 
 // PropertyID returns the "property" edge ID in the mutation.
-func (m *UnitMutation) PropertyID() (id uuid.UUID, exists bool) {
+func (m *SpaceMutation) PropertyID() (id uuid.UUID, exists bool) {
 	if m.property != nil {
 		return *m.property, true
 	}
@@ -24917,7 +28956,7 @@ func (m *UnitMutation) PropertyID() (id uuid.UUID, exists bool) {
 // PropertyIDs returns the "property" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
 // PropertyID instead. It exists only for internal usage by the builders.
-func (m *UnitMutation) PropertyIDs() (ids []uuid.UUID) {
+func (m *SpaceMutation) PropertyIDs() (ids []uuid.UUID) {
 	if id := m.property; id != nil {
 		ids = append(ids, *id)
 	}
@@ -24925,106 +28964,145 @@ func (m *UnitMutation) PropertyIDs() (ids []uuid.UUID) {
 }
 
 // ResetProperty resets all changes to the "property" edge.
-func (m *UnitMutation) ResetProperty() {
+func (m *SpaceMutation) ResetProperty() {
 	m.property = nil
 	m.clearedproperty = false
 }
 
-// AddLeaseIDs adds the "leases" edge to the Lease entity by ids.
-func (m *UnitMutation) AddLeaseIDs(ids ...uuid.UUID) {
-	if m.leases == nil {
-		m.leases = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.leases[ids[i]] = struct{}{}
-	}
+// SetBuildingID sets the "building" edge to the Building entity by id.
+func (m *SpaceMutation) SetBuildingID(id uuid.UUID) {
+	m.building = &id
 }
 
-// ClearLeases clears the "leases" edge to the Lease entity.
-func (m *UnitMutation) ClearLeases() {
-	m.clearedleases = true
+// ClearBuilding clears the "building" edge to the Building entity.
+func (m *SpaceMutation) ClearBuilding() {
+	m.clearedbuilding = true
 }
 
-// LeasesCleared reports if the "leases" edge to the Lease entity was cleared.
-func (m *UnitMutation) LeasesCleared() bool {
-	return m.clearedleases
+// BuildingCleared reports if the "building" edge to the Building entity was cleared.
+func (m *SpaceMutation) BuildingCleared() bool {
+	return m.clearedbuilding
 }
 
-// RemoveLeaseIDs removes the "leases" edge to the Lease entity by IDs.
-func (m *UnitMutation) RemoveLeaseIDs(ids ...uuid.UUID) {
-	if m.removedleases == nil {
-		m.removedleases = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.leases, ids[i])
-		m.removedleases[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedLeases returns the removed IDs of the "leases" edge to the Lease entity.
-func (m *UnitMutation) RemovedLeasesIDs() (ids []uuid.UUID) {
-	for id := range m.removedleases {
-		ids = append(ids, id)
+// BuildingID returns the "building" edge ID in the mutation.
+func (m *SpaceMutation) BuildingID() (id uuid.UUID, exists bool) {
+	if m.building != nil {
+		return *m.building, true
 	}
 	return
 }
 
-// LeasesIDs returns the "leases" edge IDs in the mutation.
-func (m *UnitMutation) LeasesIDs() (ids []uuid.UUID) {
-	for id := range m.leases {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetLeases resets all changes to the "leases" edge.
-func (m *UnitMutation) ResetLeases() {
-	m.leases = nil
-	m.clearedleases = false
-	m.removedleases = nil
-}
-
-// SetActiveLeaseID sets the "active_lease" edge to the Lease entity by id.
-func (m *UnitMutation) SetActiveLeaseID(id uuid.UUID) {
-	m.active_lease = &id
-}
-
-// ClearActiveLease clears the "active_lease" edge to the Lease entity.
-func (m *UnitMutation) ClearActiveLease() {
-	m.clearedactive_lease = true
-}
-
-// ActiveLeaseCleared reports if the "active_lease" edge to the Lease entity was cleared.
-func (m *UnitMutation) ActiveLeaseCleared() bool {
-	return m.clearedactive_lease
-}
-
-// ActiveLeaseID returns the "active_lease" edge ID in the mutation.
-func (m *UnitMutation) ActiveLeaseID() (id uuid.UUID, exists bool) {
-	if m.active_lease != nil {
-		return *m.active_lease, true
-	}
-	return
-}
-
-// ActiveLeaseIDs returns the "active_lease" edge IDs in the mutation.
+// BuildingIDs returns the "building" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ActiveLeaseID instead. It exists only for internal usage by the builders.
-func (m *UnitMutation) ActiveLeaseIDs() (ids []uuid.UUID) {
-	if id := m.active_lease; id != nil {
+// BuildingID instead. It exists only for internal usage by the builders.
+func (m *SpaceMutation) BuildingIDs() (ids []uuid.UUID) {
+	if id := m.building; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetActiveLease resets all changes to the "active_lease" edge.
-func (m *UnitMutation) ResetActiveLease() {
-	m.active_lease = nil
-	m.clearedactive_lease = false
+// ResetBuilding resets all changes to the "building" edge.
+func (m *SpaceMutation) ResetBuilding() {
+	m.building = nil
+	m.clearedbuilding = false
+}
+
+// AddChildIDs adds the "children" edge to the Space entity by ids.
+func (m *SpaceMutation) AddChildIDs(ids ...uuid.UUID) {
+	if m.children == nil {
+		m.children = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.children[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChildren clears the "children" edge to the Space entity.
+func (m *SpaceMutation) ClearChildren() {
+	m.clearedchildren = true
+}
+
+// ChildrenCleared reports if the "children" edge to the Space entity was cleared.
+func (m *SpaceMutation) ChildrenCleared() bool {
+	return m.clearedchildren
+}
+
+// RemoveChildIDs removes the "children" edge to the Space entity by IDs.
+func (m *SpaceMutation) RemoveChildIDs(ids ...uuid.UUID) {
+	if m.removedchildren == nil {
+		m.removedchildren = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.children, ids[i])
+		m.removedchildren[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChildren returns the removed IDs of the "children" edge to the Space entity.
+func (m *SpaceMutation) RemovedChildrenIDs() (ids []uuid.UUID) {
+	for id := range m.removedchildren {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChildrenIDs returns the "children" edge IDs in the mutation.
+func (m *SpaceMutation) ChildrenIDs() (ids []uuid.UUID) {
+	for id := range m.children {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChildren resets all changes to the "children" edge.
+func (m *SpaceMutation) ResetChildren() {
+	m.children = nil
+	m.clearedchildren = false
+	m.removedchildren = nil
+}
+
+// SetParentSpaceID sets the "parent_space" edge to the Space entity by id.
+func (m *SpaceMutation) SetParentSpaceID(id uuid.UUID) {
+	m.parent_space = &id
+}
+
+// ClearParentSpace clears the "parent_space" edge to the Space entity.
+func (m *SpaceMutation) ClearParentSpace() {
+	m.clearedparent_space = true
+}
+
+// ParentSpaceCleared reports if the "parent_space" edge to the Space entity was cleared.
+func (m *SpaceMutation) ParentSpaceCleared() bool {
+	return m.clearedparent_space
+}
+
+// ParentSpaceID returns the "parent_space" edge ID in the mutation.
+func (m *SpaceMutation) ParentSpaceID() (id uuid.UUID, exists bool) {
+	if m.parent_space != nil {
+		return *m.parent_space, true
+	}
+	return
+}
+
+// ParentSpaceIDs returns the "parent_space" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ParentSpaceID instead. It exists only for internal usage by the builders.
+func (m *SpaceMutation) ParentSpaceIDs() (ids []uuid.UUID) {
+	if id := m.parent_space; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetParentSpace resets all changes to the "parent_space" edge.
+func (m *SpaceMutation) ResetParentSpace() {
+	m.parent_space = nil
+	m.clearedparent_space = false
 }
 
 // AddApplicationIDs adds the "applications" edge to the Application entity by ids.
-func (m *UnitMutation) AddApplicationIDs(ids ...uuid.UUID) {
+func (m *SpaceMutation) AddApplicationIDs(ids ...uuid.UUID) {
 	if m.applications == nil {
 		m.applications = make(map[uuid.UUID]struct{})
 	}
@@ -25034,17 +29112,17 @@ func (m *UnitMutation) AddApplicationIDs(ids ...uuid.UUID) {
 }
 
 // ClearApplications clears the "applications" edge to the Application entity.
-func (m *UnitMutation) ClearApplications() {
+func (m *SpaceMutation) ClearApplications() {
 	m.clearedapplications = true
 }
 
 // ApplicationsCleared reports if the "applications" edge to the Application entity was cleared.
-func (m *UnitMutation) ApplicationsCleared() bool {
+func (m *SpaceMutation) ApplicationsCleared() bool {
 	return m.clearedapplications
 }
 
 // RemoveApplicationIDs removes the "applications" edge to the Application entity by IDs.
-func (m *UnitMutation) RemoveApplicationIDs(ids ...uuid.UUID) {
+func (m *SpaceMutation) RemoveApplicationIDs(ids ...uuid.UUID) {
 	if m.removedapplications == nil {
 		m.removedapplications = make(map[uuid.UUID]struct{})
 	}
@@ -25055,7 +29133,7 @@ func (m *UnitMutation) RemoveApplicationIDs(ids ...uuid.UUID) {
 }
 
 // RemovedApplications returns the removed IDs of the "applications" edge to the Application entity.
-func (m *UnitMutation) RemovedApplicationsIDs() (ids []uuid.UUID) {
+func (m *SpaceMutation) RemovedApplicationsIDs() (ids []uuid.UUID) {
 	for id := range m.removedapplications {
 		ids = append(ids, id)
 	}
@@ -25063,7 +29141,7 @@ func (m *UnitMutation) RemovedApplicationsIDs() (ids []uuid.UUID) {
 }
 
 // ApplicationsIDs returns the "applications" edge IDs in the mutation.
-func (m *UnitMutation) ApplicationsIDs() (ids []uuid.UUID) {
+func (m *SpaceMutation) ApplicationsIDs() (ids []uuid.UUID) {
 	for id := range m.applications {
 		ids = append(ids, id)
 	}
@@ -25071,21 +29149,129 @@ func (m *UnitMutation) ApplicationsIDs() (ids []uuid.UUID) {
 }
 
 // ResetApplications resets all changes to the "applications" edge.
-func (m *UnitMutation) ResetApplications() {
+func (m *SpaceMutation) ResetApplications() {
 	m.applications = nil
 	m.clearedapplications = false
 	m.removedapplications = nil
 }
 
-// Where appends a list predicates to the UnitMutation builder.
-func (m *UnitMutation) Where(ps ...predicate.Unit) {
+// AddLeaseSpaceIDs adds the "lease_spaces" edge to the LeaseSpace entity by ids.
+func (m *SpaceMutation) AddLeaseSpaceIDs(ids ...uuid.UUID) {
+	if m.lease_spaces == nil {
+		m.lease_spaces = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.lease_spaces[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLeaseSpaces clears the "lease_spaces" edge to the LeaseSpace entity.
+func (m *SpaceMutation) ClearLeaseSpaces() {
+	m.clearedlease_spaces = true
+}
+
+// LeaseSpacesCleared reports if the "lease_spaces" edge to the LeaseSpace entity was cleared.
+func (m *SpaceMutation) LeaseSpacesCleared() bool {
+	return m.clearedlease_spaces
+}
+
+// RemoveLeaseSpaceIDs removes the "lease_spaces" edge to the LeaseSpace entity by IDs.
+func (m *SpaceMutation) RemoveLeaseSpaceIDs(ids ...uuid.UUID) {
+	if m.removedlease_spaces == nil {
+		m.removedlease_spaces = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.lease_spaces, ids[i])
+		m.removedlease_spaces[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLeaseSpaces returns the removed IDs of the "lease_spaces" edge to the LeaseSpace entity.
+func (m *SpaceMutation) RemovedLeaseSpacesIDs() (ids []uuid.UUID) {
+	for id := range m.removedlease_spaces {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LeaseSpacesIDs returns the "lease_spaces" edge IDs in the mutation.
+func (m *SpaceMutation) LeaseSpacesIDs() (ids []uuid.UUID) {
+	for id := range m.lease_spaces {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLeaseSpaces resets all changes to the "lease_spaces" edge.
+func (m *SpaceMutation) ResetLeaseSpaces() {
+	m.lease_spaces = nil
+	m.clearedlease_spaces = false
+	m.removedlease_spaces = nil
+}
+
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by ids.
+func (m *SpaceMutation) AddLedgerEntryIDs(ids ...uuid.UUID) {
+	if m.ledger_entries == nil {
+		m.ledger_entries = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.ledger_entries[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLedgerEntries clears the "ledger_entries" edge to the LedgerEntry entity.
+func (m *SpaceMutation) ClearLedgerEntries() {
+	m.clearedledger_entries = true
+}
+
+// LedgerEntriesCleared reports if the "ledger_entries" edge to the LedgerEntry entity was cleared.
+func (m *SpaceMutation) LedgerEntriesCleared() bool {
+	return m.clearedledger_entries
+}
+
+// RemoveLedgerEntryIDs removes the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (m *SpaceMutation) RemoveLedgerEntryIDs(ids ...uuid.UUID) {
+	if m.removedledger_entries == nil {
+		m.removedledger_entries = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.ledger_entries, ids[i])
+		m.removedledger_entries[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLedgerEntries returns the removed IDs of the "ledger_entries" edge to the LedgerEntry entity.
+func (m *SpaceMutation) RemovedLedgerEntriesIDs() (ids []uuid.UUID) {
+	for id := range m.removedledger_entries {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LedgerEntriesIDs returns the "ledger_entries" edge IDs in the mutation.
+func (m *SpaceMutation) LedgerEntriesIDs() (ids []uuid.UUID) {
+	for id := range m.ledger_entries {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLedgerEntries resets all changes to the "ledger_entries" edge.
+func (m *SpaceMutation) ResetLedgerEntries() {
+	m.ledger_entries = nil
+	m.clearedledger_entries = false
+	m.removedledger_entries = nil
+}
+
+// Where appends a list predicates to the SpaceMutation builder.
+func (m *SpaceMutation) Where(ps ...predicate.Space) {
 	m.predicates = append(m.predicates, ps...)
 }
 
-// WhereP appends storage-level predicates to the UnitMutation builder. Using this method,
+// WhereP appends storage-level predicates to the SpaceMutation builder. Using this method,
 // users can use type-assertion to append predicates that do not depend on any generated package.
-func (m *UnitMutation) WhereP(ps ...func(*sql.Selector)) {
-	p := make([]predicate.Unit, len(ps))
+func (m *SpaceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Space, len(ps))
 	for i := range ps {
 		p[i] = ps[i]
 	}
@@ -25093,90 +29279,102 @@ func (m *UnitMutation) WhereP(ps ...func(*sql.Selector)) {
 }
 
 // Op returns the operation name.
-func (m *UnitMutation) Op() Op {
+func (m *SpaceMutation) Op() Op {
 	return m.op
 }
 
 // SetOp allows setting the mutation operation.
-func (m *UnitMutation) SetOp(op Op) {
+func (m *SpaceMutation) SetOp(op Op) {
 	m.op = op
 }
 
-// Type returns the node type of this mutation (Unit).
-func (m *UnitMutation) Type() string {
+// Type returns the node type of this mutation (Space).
+func (m *SpaceMutation) Type() string {
 	return m.typ
 }
 
 // Fields returns all fields that were changed during this mutation. Note that in
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
-func (m *UnitMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+func (m *SpaceMutation) Fields() []string {
+	fields := make([]string, 0, 26)
 	if m.created_at != nil {
-		fields = append(fields, unit.FieldCreatedAt)
+		fields = append(fields, space.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
-		fields = append(fields, unit.FieldUpdatedAt)
+		fields = append(fields, space.FieldUpdatedAt)
 	}
 	if m.created_by != nil {
-		fields = append(fields, unit.FieldCreatedBy)
+		fields = append(fields, space.FieldCreatedBy)
 	}
 	if m.updated_by != nil {
-		fields = append(fields, unit.FieldUpdatedBy)
+		fields = append(fields, space.FieldUpdatedBy)
 	}
 	if m.source != nil {
-		fields = append(fields, unit.FieldSource)
+		fields = append(fields, space.FieldSource)
 	}
 	if m.correlation_id != nil {
-		fields = append(fields, unit.FieldCorrelationID)
+		fields = append(fields, space.FieldCorrelationID)
 	}
 	if m.agent_goal_id != nil {
-		fields = append(fields, unit.FieldAgentGoalID)
+		fields = append(fields, space.FieldAgentGoalID)
 	}
-	if m.unit_number != nil {
-		fields = append(fields, unit.FieldUnitNumber)
+	if m.space_number != nil {
+		fields = append(fields, space.FieldSpaceNumber)
 	}
-	if m.unit_type != nil {
-		fields = append(fields, unit.FieldUnitType)
+	if m.space_type != nil {
+		fields = append(fields, space.FieldSpaceType)
 	}
 	if m.status != nil {
-		fields = append(fields, unit.FieldStatus)
+		fields = append(fields, space.FieldStatus)
+	}
+	if m.leasable != nil {
+		fields = append(fields, space.FieldLeasable)
+	}
+	if m.shared_with_parent != nil {
+		fields = append(fields, space.FieldSharedWithParent)
 	}
 	if m.square_footage != nil {
-		fields = append(fields, unit.FieldSquareFootage)
+		fields = append(fields, space.FieldSquareFootage)
 	}
 	if m.bedrooms != nil {
-		fields = append(fields, unit.FieldBedrooms)
+		fields = append(fields, space.FieldBedrooms)
 	}
 	if m.bathrooms != nil {
-		fields = append(fields, unit.FieldBathrooms)
+		fields = append(fields, space.FieldBathrooms)
 	}
 	if m.floor != nil {
-		fields = append(fields, unit.FieldFloor)
+		fields = append(fields, space.FieldFloor)
 	}
 	if m.amenities != nil {
-		fields = append(fields, unit.FieldAmenities)
+		fields = append(fields, space.FieldAmenities)
 	}
 	if m.floor_plan != nil {
-		fields = append(fields, unit.FieldFloorPlan)
+		fields = append(fields, space.FieldFloorPlan)
 	}
 	if m.ada_accessible != nil {
-		fields = append(fields, unit.FieldAdaAccessible)
+		fields = append(fields, space.FieldAdaAccessible)
 	}
 	if m.pet_friendly != nil {
-		fields = append(fields, unit.FieldPetFriendly)
+		fields = append(fields, space.FieldPetFriendly)
 	}
 	if m.furnished != nil {
-		fields = append(fields, unit.FieldFurnished)
+		fields = append(fields, space.FieldFurnished)
+	}
+	if m.specialized_infrastructure != nil {
+		fields = append(fields, space.FieldSpecializedInfrastructure)
 	}
 	if m.market_rent_amount_cents != nil {
-		fields = append(fields, unit.FieldMarketRentAmountCents)
+		fields = append(fields, space.FieldMarketRentAmountCents)
 	}
 	if m.market_rent_currency != nil {
-		fields = append(fields, unit.FieldMarketRentCurrency)
+		fields = append(fields, space.FieldMarketRentCurrency)
 	}
 	if m.ami_restriction != nil {
-		fields = append(fields, unit.FieldAmiRestriction)
+		fields = append(fields, space.FieldAmiRestriction)
+	}
+	if m.active_lease_id != nil {
+		fields = append(fields, space.FieldActiveLeaseID)
 	}
 	return fields
 }
@@ -25184,52 +29382,60 @@ func (m *UnitMutation) Fields() []string {
 // Field returns the value of a field with the given name. The second boolean
 // return value indicates that this field was not set, or was not defined in the
 // schema.
-func (m *UnitMutation) Field(name string) (ent.Value, bool) {
+func (m *SpaceMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case unit.FieldCreatedAt:
+	case space.FieldCreatedAt:
 		return m.CreatedAt()
-	case unit.FieldUpdatedAt:
+	case space.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case unit.FieldCreatedBy:
+	case space.FieldCreatedBy:
 		return m.CreatedBy()
-	case unit.FieldUpdatedBy:
+	case space.FieldUpdatedBy:
 		return m.UpdatedBy()
-	case unit.FieldSource:
+	case space.FieldSource:
 		return m.Source()
-	case unit.FieldCorrelationID:
+	case space.FieldCorrelationID:
 		return m.CorrelationID()
-	case unit.FieldAgentGoalID:
+	case space.FieldAgentGoalID:
 		return m.AgentGoalID()
-	case unit.FieldUnitNumber:
-		return m.UnitNumber()
-	case unit.FieldUnitType:
-		return m.UnitType()
-	case unit.FieldStatus:
+	case space.FieldSpaceNumber:
+		return m.SpaceNumber()
+	case space.FieldSpaceType:
+		return m.SpaceType()
+	case space.FieldStatus:
 		return m.Status()
-	case unit.FieldSquareFootage:
+	case space.FieldLeasable:
+		return m.Leasable()
+	case space.FieldSharedWithParent:
+		return m.SharedWithParent()
+	case space.FieldSquareFootage:
 		return m.SquareFootage()
-	case unit.FieldBedrooms:
+	case space.FieldBedrooms:
 		return m.Bedrooms()
-	case unit.FieldBathrooms:
+	case space.FieldBathrooms:
 		return m.Bathrooms()
-	case unit.FieldFloor:
+	case space.FieldFloor:
 		return m.Floor()
-	case unit.FieldAmenities:
+	case space.FieldAmenities:
 		return m.Amenities()
-	case unit.FieldFloorPlan:
+	case space.FieldFloorPlan:
 		return m.FloorPlan()
-	case unit.FieldAdaAccessible:
+	case space.FieldAdaAccessible:
 		return m.AdaAccessible()
-	case unit.FieldPetFriendly:
+	case space.FieldPetFriendly:
 		return m.PetFriendly()
-	case unit.FieldFurnished:
+	case space.FieldFurnished:
 		return m.Furnished()
-	case unit.FieldMarketRentAmountCents:
+	case space.FieldSpecializedInfrastructure:
+		return m.SpecializedInfrastructure()
+	case space.FieldMarketRentAmountCents:
 		return m.MarketRentAmountCents()
-	case unit.FieldMarketRentCurrency:
+	case space.FieldMarketRentCurrency:
 		return m.MarketRentCurrency()
-	case unit.FieldAmiRestriction:
+	case space.FieldAmiRestriction:
 		return m.AmiRestriction()
+	case space.FieldActiveLeaseID:
+		return m.ActiveLeaseID()
 	}
 	return nil, false
 }
@@ -25237,240 +29443,276 @@ func (m *UnitMutation) Field(name string) (ent.Value, bool) {
 // OldField returns the old value of the field from the database. An error is
 // returned if the mutation operation is not UpdateOne, or the query to the
 // database failed.
-func (m *UnitMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+func (m *SpaceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case unit.FieldCreatedAt:
+	case space.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
-	case unit.FieldUpdatedAt:
+	case space.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case unit.FieldCreatedBy:
+	case space.FieldCreatedBy:
 		return m.OldCreatedBy(ctx)
-	case unit.FieldUpdatedBy:
+	case space.FieldUpdatedBy:
 		return m.OldUpdatedBy(ctx)
-	case unit.FieldSource:
+	case space.FieldSource:
 		return m.OldSource(ctx)
-	case unit.FieldCorrelationID:
+	case space.FieldCorrelationID:
 		return m.OldCorrelationID(ctx)
-	case unit.FieldAgentGoalID:
+	case space.FieldAgentGoalID:
 		return m.OldAgentGoalID(ctx)
-	case unit.FieldUnitNumber:
-		return m.OldUnitNumber(ctx)
-	case unit.FieldUnitType:
-		return m.OldUnitType(ctx)
-	case unit.FieldStatus:
+	case space.FieldSpaceNumber:
+		return m.OldSpaceNumber(ctx)
+	case space.FieldSpaceType:
+		return m.OldSpaceType(ctx)
+	case space.FieldStatus:
 		return m.OldStatus(ctx)
-	case unit.FieldSquareFootage:
+	case space.FieldLeasable:
+		return m.OldLeasable(ctx)
+	case space.FieldSharedWithParent:
+		return m.OldSharedWithParent(ctx)
+	case space.FieldSquareFootage:
 		return m.OldSquareFootage(ctx)
-	case unit.FieldBedrooms:
+	case space.FieldBedrooms:
 		return m.OldBedrooms(ctx)
-	case unit.FieldBathrooms:
+	case space.FieldBathrooms:
 		return m.OldBathrooms(ctx)
-	case unit.FieldFloor:
+	case space.FieldFloor:
 		return m.OldFloor(ctx)
-	case unit.FieldAmenities:
+	case space.FieldAmenities:
 		return m.OldAmenities(ctx)
-	case unit.FieldFloorPlan:
+	case space.FieldFloorPlan:
 		return m.OldFloorPlan(ctx)
-	case unit.FieldAdaAccessible:
+	case space.FieldAdaAccessible:
 		return m.OldAdaAccessible(ctx)
-	case unit.FieldPetFriendly:
+	case space.FieldPetFriendly:
 		return m.OldPetFriendly(ctx)
-	case unit.FieldFurnished:
+	case space.FieldFurnished:
 		return m.OldFurnished(ctx)
-	case unit.FieldMarketRentAmountCents:
+	case space.FieldSpecializedInfrastructure:
+		return m.OldSpecializedInfrastructure(ctx)
+	case space.FieldMarketRentAmountCents:
 		return m.OldMarketRentAmountCents(ctx)
-	case unit.FieldMarketRentCurrency:
+	case space.FieldMarketRentCurrency:
 		return m.OldMarketRentCurrency(ctx)
-	case unit.FieldAmiRestriction:
+	case space.FieldAmiRestriction:
 		return m.OldAmiRestriction(ctx)
+	case space.FieldActiveLeaseID:
+		return m.OldActiveLeaseID(ctx)
 	}
-	return nil, fmt.Errorf("unknown Unit field %s", name)
+	return nil, fmt.Errorf("unknown Space field %s", name)
 }
 
 // SetField sets the value of a field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *UnitMutation) SetField(name string, value ent.Value) error {
+func (m *SpaceMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case unit.FieldCreatedAt:
+	case space.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCreatedAt(v)
 		return nil
-	case unit.FieldUpdatedAt:
+	case space.FieldUpdatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
 		return nil
-	case unit.FieldCreatedBy:
+	case space.FieldCreatedBy:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCreatedBy(v)
 		return nil
-	case unit.FieldUpdatedBy:
+	case space.FieldUpdatedBy:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedBy(v)
 		return nil
-	case unit.FieldSource:
-		v, ok := value.(unit.Source)
+	case space.FieldSource:
+		v, ok := value.(space.Source)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSource(v)
 		return nil
-	case unit.FieldCorrelationID:
+	case space.FieldCorrelationID:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCorrelationID(v)
 		return nil
-	case unit.FieldAgentGoalID:
+	case space.FieldAgentGoalID:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAgentGoalID(v)
 		return nil
-	case unit.FieldUnitNumber:
+	case space.FieldSpaceNumber:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetUnitNumber(v)
+		m.SetSpaceNumber(v)
 		return nil
-	case unit.FieldUnitType:
-		v, ok := value.(unit.UnitType)
+	case space.FieldSpaceType:
+		v, ok := value.(space.SpaceType)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetUnitType(v)
+		m.SetSpaceType(v)
 		return nil
-	case unit.FieldStatus:
-		v, ok := value.(unit.Status)
+	case space.FieldStatus:
+		v, ok := value.(space.Status)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
 		return nil
-	case unit.FieldSquareFootage:
+	case space.FieldLeasable:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeasable(v)
+		return nil
+	case space.FieldSharedWithParent:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSharedWithParent(v)
+		return nil
+	case space.FieldSquareFootage:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSquareFootage(v)
 		return nil
-	case unit.FieldBedrooms:
+	case space.FieldBedrooms:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBedrooms(v)
 		return nil
-	case unit.FieldBathrooms:
+	case space.FieldBathrooms:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBathrooms(v)
 		return nil
-	case unit.FieldFloor:
+	case space.FieldFloor:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetFloor(v)
 		return nil
-	case unit.FieldAmenities:
+	case space.FieldAmenities:
 		v, ok := value.([]string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAmenities(v)
 		return nil
-	case unit.FieldFloorPlan:
+	case space.FieldFloorPlan:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetFloorPlan(v)
 		return nil
-	case unit.FieldAdaAccessible:
+	case space.FieldAdaAccessible:
 		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAdaAccessible(v)
 		return nil
-	case unit.FieldPetFriendly:
+	case space.FieldPetFriendly:
 		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPetFriendly(v)
 		return nil
-	case unit.FieldFurnished:
+	case space.FieldFurnished:
 		v, ok := value.(bool)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetFurnished(v)
 		return nil
-	case unit.FieldMarketRentAmountCents:
+	case space.FieldSpecializedInfrastructure:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSpecializedInfrastructure(v)
+		return nil
+	case space.FieldMarketRentAmountCents:
 		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMarketRentAmountCents(v)
 		return nil
-	case unit.FieldMarketRentCurrency:
+	case space.FieldMarketRentCurrency:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetMarketRentCurrency(v)
 		return nil
-	case unit.FieldAmiRestriction:
+	case space.FieldAmiRestriction:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAmiRestriction(v)
 		return nil
+	case space.FieldActiveLeaseID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActiveLeaseID(v)
+		return nil
 	}
-	return fmt.Errorf("unknown Unit field %s", name)
+	return fmt.Errorf("unknown Space field %s", name)
 }
 
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
-func (m *UnitMutation) AddedFields() []string {
+func (m *SpaceMutation) AddedFields() []string {
 	var fields []string
 	if m.addsquare_footage != nil {
-		fields = append(fields, unit.FieldSquareFootage)
+		fields = append(fields, space.FieldSquareFootage)
 	}
 	if m.addbedrooms != nil {
-		fields = append(fields, unit.FieldBedrooms)
+		fields = append(fields, space.FieldBedrooms)
 	}
 	if m.addbathrooms != nil {
-		fields = append(fields, unit.FieldBathrooms)
+		fields = append(fields, space.FieldBathrooms)
 	}
 	if m.addfloor != nil {
-		fields = append(fields, unit.FieldFloor)
+		fields = append(fields, space.FieldFloor)
 	}
 	if m.addmarket_rent_amount_cents != nil {
-		fields = append(fields, unit.FieldMarketRentAmountCents)
+		fields = append(fields, space.FieldMarketRentAmountCents)
 	}
 	if m.addami_restriction != nil {
-		fields = append(fields, unit.FieldAmiRestriction)
+		fields = append(fields, space.FieldAmiRestriction)
 	}
 	return fields
 }
@@ -25478,19 +29720,19 @@ func (m *UnitMutation) AddedFields() []string {
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
-func (m *UnitMutation) AddedField(name string) (ent.Value, bool) {
+func (m *SpaceMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case unit.FieldSquareFootage:
+	case space.FieldSquareFootage:
 		return m.AddedSquareFootage()
-	case unit.FieldBedrooms:
+	case space.FieldBedrooms:
 		return m.AddedBedrooms()
-	case unit.FieldBathrooms:
+	case space.FieldBathrooms:
 		return m.AddedBathrooms()
-	case unit.FieldFloor:
+	case space.FieldFloor:
 		return m.AddedFloor()
-	case unit.FieldMarketRentAmountCents:
+	case space.FieldMarketRentAmountCents:
 		return m.AddedMarketRentAmountCents()
-	case unit.FieldAmiRestriction:
+	case space.FieldAmiRestriction:
 		return m.AddedAmiRestriction()
 	}
 	return nil, false
@@ -25499,44 +29741,44 @@ func (m *UnitMutation) AddedField(name string) (ent.Value, bool) {
 // AddField adds the value to the field with the given name. It returns an error if
 // the field is not defined in the schema, or if the type mismatched the field
 // type.
-func (m *UnitMutation) AddField(name string, value ent.Value) error {
+func (m *SpaceMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case unit.FieldSquareFootage:
+	case space.FieldSquareFootage:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddSquareFootage(v)
 		return nil
-	case unit.FieldBedrooms:
+	case space.FieldBedrooms:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddBedrooms(v)
 		return nil
-	case unit.FieldBathrooms:
+	case space.FieldBathrooms:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddBathrooms(v)
 		return nil
-	case unit.FieldFloor:
+	case space.FieldFloor:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddFloor(v)
 		return nil
-	case unit.FieldMarketRentAmountCents:
+	case space.FieldMarketRentAmountCents:
 		v, ok := value.(int64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddMarketRentAmountCents(v)
 		return nil
-	case unit.FieldAmiRestriction:
+	case space.FieldAmiRestriction:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
@@ -25544,204 +29786,253 @@ func (m *UnitMutation) AddField(name string, value ent.Value) error {
 		m.AddAmiRestriction(v)
 		return nil
 	}
-	return fmt.Errorf("unknown Unit numeric field %s", name)
+	return fmt.Errorf("unknown Space numeric field %s", name)
 }
 
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
-func (m *UnitMutation) ClearedFields() []string {
+func (m *SpaceMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(unit.FieldCorrelationID) {
-		fields = append(fields, unit.FieldCorrelationID)
+	if m.FieldCleared(space.FieldCorrelationID) {
+		fields = append(fields, space.FieldCorrelationID)
 	}
-	if m.FieldCleared(unit.FieldAgentGoalID) {
-		fields = append(fields, unit.FieldAgentGoalID)
+	if m.FieldCleared(space.FieldAgentGoalID) {
+		fields = append(fields, space.FieldAgentGoalID)
 	}
-	if m.FieldCleared(unit.FieldBedrooms) {
-		fields = append(fields, unit.FieldBedrooms)
+	if m.FieldCleared(space.FieldBedrooms) {
+		fields = append(fields, space.FieldBedrooms)
 	}
-	if m.FieldCleared(unit.FieldBathrooms) {
-		fields = append(fields, unit.FieldBathrooms)
+	if m.FieldCleared(space.FieldBathrooms) {
+		fields = append(fields, space.FieldBathrooms)
 	}
-	if m.FieldCleared(unit.FieldFloor) {
-		fields = append(fields, unit.FieldFloor)
+	if m.FieldCleared(space.FieldFloor) {
+		fields = append(fields, space.FieldFloor)
 	}
-	if m.FieldCleared(unit.FieldAmenities) {
-		fields = append(fields, unit.FieldAmenities)
+	if m.FieldCleared(space.FieldAmenities) {
+		fields = append(fields, space.FieldAmenities)
 	}
-	if m.FieldCleared(unit.FieldFloorPlan) {
-		fields = append(fields, unit.FieldFloorPlan)
+	if m.FieldCleared(space.FieldFloorPlan) {
+		fields = append(fields, space.FieldFloorPlan)
 	}
-	if m.FieldCleared(unit.FieldMarketRentAmountCents) {
-		fields = append(fields, unit.FieldMarketRentAmountCents)
+	if m.FieldCleared(space.FieldSpecializedInfrastructure) {
+		fields = append(fields, space.FieldSpecializedInfrastructure)
 	}
-	if m.FieldCleared(unit.FieldMarketRentCurrency) {
-		fields = append(fields, unit.FieldMarketRentCurrency)
+	if m.FieldCleared(space.FieldMarketRentAmountCents) {
+		fields = append(fields, space.FieldMarketRentAmountCents)
 	}
-	if m.FieldCleared(unit.FieldAmiRestriction) {
-		fields = append(fields, unit.FieldAmiRestriction)
+	if m.FieldCleared(space.FieldMarketRentCurrency) {
+		fields = append(fields, space.FieldMarketRentCurrency)
+	}
+	if m.FieldCleared(space.FieldAmiRestriction) {
+		fields = append(fields, space.FieldAmiRestriction)
+	}
+	if m.FieldCleared(space.FieldActiveLeaseID) {
+		fields = append(fields, space.FieldActiveLeaseID)
 	}
 	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
 // cleared in this mutation.
-func (m *UnitMutation) FieldCleared(name string) bool {
+func (m *SpaceMutation) FieldCleared(name string) bool {
 	_, ok := m.clearedFields[name]
 	return ok
 }
 
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
-func (m *UnitMutation) ClearField(name string) error {
+func (m *SpaceMutation) ClearField(name string) error {
 	switch name {
-	case unit.FieldCorrelationID:
+	case space.FieldCorrelationID:
 		m.ClearCorrelationID()
 		return nil
-	case unit.FieldAgentGoalID:
+	case space.FieldAgentGoalID:
 		m.ClearAgentGoalID()
 		return nil
-	case unit.FieldBedrooms:
+	case space.FieldBedrooms:
 		m.ClearBedrooms()
 		return nil
-	case unit.FieldBathrooms:
+	case space.FieldBathrooms:
 		m.ClearBathrooms()
 		return nil
-	case unit.FieldFloor:
+	case space.FieldFloor:
 		m.ClearFloor()
 		return nil
-	case unit.FieldAmenities:
+	case space.FieldAmenities:
 		m.ClearAmenities()
 		return nil
-	case unit.FieldFloorPlan:
+	case space.FieldFloorPlan:
 		m.ClearFloorPlan()
 		return nil
-	case unit.FieldMarketRentAmountCents:
+	case space.FieldSpecializedInfrastructure:
+		m.ClearSpecializedInfrastructure()
+		return nil
+	case space.FieldMarketRentAmountCents:
 		m.ClearMarketRentAmountCents()
 		return nil
-	case unit.FieldMarketRentCurrency:
+	case space.FieldMarketRentCurrency:
 		m.ClearMarketRentCurrency()
 		return nil
-	case unit.FieldAmiRestriction:
+	case space.FieldAmiRestriction:
 		m.ClearAmiRestriction()
 		return nil
+	case space.FieldActiveLeaseID:
+		m.ClearActiveLeaseID()
+		return nil
 	}
-	return fmt.Errorf("unknown Unit nullable field %s", name)
+	return fmt.Errorf("unknown Space nullable field %s", name)
 }
 
 // ResetField resets all changes in the mutation for the field with the given name.
 // It returns an error if the field is not defined in the schema.
-func (m *UnitMutation) ResetField(name string) error {
+func (m *SpaceMutation) ResetField(name string) error {
 	switch name {
-	case unit.FieldCreatedAt:
+	case space.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
-	case unit.FieldUpdatedAt:
+	case space.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
-	case unit.FieldCreatedBy:
+	case space.FieldCreatedBy:
 		m.ResetCreatedBy()
 		return nil
-	case unit.FieldUpdatedBy:
+	case space.FieldUpdatedBy:
 		m.ResetUpdatedBy()
 		return nil
-	case unit.FieldSource:
+	case space.FieldSource:
 		m.ResetSource()
 		return nil
-	case unit.FieldCorrelationID:
+	case space.FieldCorrelationID:
 		m.ResetCorrelationID()
 		return nil
-	case unit.FieldAgentGoalID:
+	case space.FieldAgentGoalID:
 		m.ResetAgentGoalID()
 		return nil
-	case unit.FieldUnitNumber:
-		m.ResetUnitNumber()
+	case space.FieldSpaceNumber:
+		m.ResetSpaceNumber()
 		return nil
-	case unit.FieldUnitType:
-		m.ResetUnitType()
+	case space.FieldSpaceType:
+		m.ResetSpaceType()
 		return nil
-	case unit.FieldStatus:
+	case space.FieldStatus:
 		m.ResetStatus()
 		return nil
-	case unit.FieldSquareFootage:
+	case space.FieldLeasable:
+		m.ResetLeasable()
+		return nil
+	case space.FieldSharedWithParent:
+		m.ResetSharedWithParent()
+		return nil
+	case space.FieldSquareFootage:
 		m.ResetSquareFootage()
 		return nil
-	case unit.FieldBedrooms:
+	case space.FieldBedrooms:
 		m.ResetBedrooms()
 		return nil
-	case unit.FieldBathrooms:
+	case space.FieldBathrooms:
 		m.ResetBathrooms()
 		return nil
-	case unit.FieldFloor:
+	case space.FieldFloor:
 		m.ResetFloor()
 		return nil
-	case unit.FieldAmenities:
+	case space.FieldAmenities:
 		m.ResetAmenities()
 		return nil
-	case unit.FieldFloorPlan:
+	case space.FieldFloorPlan:
 		m.ResetFloorPlan()
 		return nil
-	case unit.FieldAdaAccessible:
+	case space.FieldAdaAccessible:
 		m.ResetAdaAccessible()
 		return nil
-	case unit.FieldPetFriendly:
+	case space.FieldPetFriendly:
 		m.ResetPetFriendly()
 		return nil
-	case unit.FieldFurnished:
+	case space.FieldFurnished:
 		m.ResetFurnished()
 		return nil
-	case unit.FieldMarketRentAmountCents:
+	case space.FieldSpecializedInfrastructure:
+		m.ResetSpecializedInfrastructure()
+		return nil
+	case space.FieldMarketRentAmountCents:
 		m.ResetMarketRentAmountCents()
 		return nil
-	case unit.FieldMarketRentCurrency:
+	case space.FieldMarketRentCurrency:
 		m.ResetMarketRentCurrency()
 		return nil
-	case unit.FieldAmiRestriction:
+	case space.FieldAmiRestriction:
 		m.ResetAmiRestriction()
 		return nil
+	case space.FieldActiveLeaseID:
+		m.ResetActiveLeaseID()
+		return nil
 	}
-	return fmt.Errorf("unknown Unit field %s", name)
+	return fmt.Errorf("unknown Space field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
-func (m *UnitMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+func (m *SpaceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 7)
 	if m.property != nil {
-		edges = append(edges, unit.EdgeProperty)
+		edges = append(edges, space.EdgeProperty)
 	}
-	if m.leases != nil {
-		edges = append(edges, unit.EdgeLeases)
+	if m.building != nil {
+		edges = append(edges, space.EdgeBuilding)
 	}
-	if m.active_lease != nil {
-		edges = append(edges, unit.EdgeActiveLease)
+	if m.children != nil {
+		edges = append(edges, space.EdgeChildren)
+	}
+	if m.parent_space != nil {
+		edges = append(edges, space.EdgeParentSpace)
 	}
 	if m.applications != nil {
-		edges = append(edges, unit.EdgeApplications)
+		edges = append(edges, space.EdgeApplications)
+	}
+	if m.lease_spaces != nil {
+		edges = append(edges, space.EdgeLeaseSpaces)
+	}
+	if m.ledger_entries != nil {
+		edges = append(edges, space.EdgeLedgerEntries)
 	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
-func (m *UnitMutation) AddedIDs(name string) []ent.Value {
+func (m *SpaceMutation) AddedIDs(name string) []ent.Value {
 	switch name {
-	case unit.EdgeProperty:
+	case space.EdgeProperty:
 		if id := m.property; id != nil {
 			return []ent.Value{*id}
 		}
-	case unit.EdgeLeases:
-		ids := make([]ent.Value, 0, len(m.leases))
-		for id := range m.leases {
+	case space.EdgeBuilding:
+		if id := m.building; id != nil {
+			return []ent.Value{*id}
+		}
+	case space.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.children))
+		for id := range m.children {
 			ids = append(ids, id)
 		}
 		return ids
-	case unit.EdgeActiveLease:
-		if id := m.active_lease; id != nil {
+	case space.EdgeParentSpace:
+		if id := m.parent_space; id != nil {
 			return []ent.Value{*id}
 		}
-	case unit.EdgeApplications:
+	case space.EdgeApplications:
 		ids := make([]ent.Value, 0, len(m.applications))
 		for id := range m.applications {
+			ids = append(ids, id)
+		}
+		return ids
+	case space.EdgeLeaseSpaces:
+		ids := make([]ent.Value, 0, len(m.lease_spaces))
+		for id := range m.lease_spaces {
+			ids = append(ids, id)
+		}
+		return ids
+	case space.EdgeLedgerEntries:
+		ids := make([]ent.Value, 0, len(m.ledger_entries))
+		for id := range m.ledger_entries {
 			ids = append(ids, id)
 		}
 		return ids
@@ -25750,30 +30041,48 @@ func (m *UnitMutation) AddedIDs(name string) []ent.Value {
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
-func (m *UnitMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
-	if m.removedleases != nil {
-		edges = append(edges, unit.EdgeLeases)
+func (m *SpaceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 7)
+	if m.removedchildren != nil {
+		edges = append(edges, space.EdgeChildren)
 	}
 	if m.removedapplications != nil {
-		edges = append(edges, unit.EdgeApplications)
+		edges = append(edges, space.EdgeApplications)
+	}
+	if m.removedlease_spaces != nil {
+		edges = append(edges, space.EdgeLeaseSpaces)
+	}
+	if m.removedledger_entries != nil {
+		edges = append(edges, space.EdgeLedgerEntries)
 	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
-func (m *UnitMutation) RemovedIDs(name string) []ent.Value {
+func (m *SpaceMutation) RemovedIDs(name string) []ent.Value {
 	switch name {
-	case unit.EdgeLeases:
-		ids := make([]ent.Value, 0, len(m.removedleases))
-		for id := range m.removedleases {
+	case space.EdgeChildren:
+		ids := make([]ent.Value, 0, len(m.removedchildren))
+		for id := range m.removedchildren {
 			ids = append(ids, id)
 		}
 		return ids
-	case unit.EdgeApplications:
+	case space.EdgeApplications:
 		ids := make([]ent.Value, 0, len(m.removedapplications))
 		for id := range m.removedapplications {
+			ids = append(ids, id)
+		}
+		return ids
+	case space.EdgeLeaseSpaces:
+		ids := make([]ent.Value, 0, len(m.removedlease_spaces))
+		for id := range m.removedlease_spaces {
+			ids = append(ids, id)
+		}
+		return ids
+	case space.EdgeLedgerEntries:
+		ids := make([]ent.Value, 0, len(m.removedledger_entries))
+		for id := range m.removedledger_entries {
 			ids = append(ids, id)
 		}
 		return ids
@@ -25782,69 +30091,96 @@ func (m *UnitMutation) RemovedIDs(name string) []ent.Value {
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
-func (m *UnitMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+func (m *SpaceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 7)
 	if m.clearedproperty {
-		edges = append(edges, unit.EdgeProperty)
+		edges = append(edges, space.EdgeProperty)
 	}
-	if m.clearedleases {
-		edges = append(edges, unit.EdgeLeases)
+	if m.clearedbuilding {
+		edges = append(edges, space.EdgeBuilding)
 	}
-	if m.clearedactive_lease {
-		edges = append(edges, unit.EdgeActiveLease)
+	if m.clearedchildren {
+		edges = append(edges, space.EdgeChildren)
+	}
+	if m.clearedparent_space {
+		edges = append(edges, space.EdgeParentSpace)
 	}
 	if m.clearedapplications {
-		edges = append(edges, unit.EdgeApplications)
+		edges = append(edges, space.EdgeApplications)
+	}
+	if m.clearedlease_spaces {
+		edges = append(edges, space.EdgeLeaseSpaces)
+	}
+	if m.clearedledger_entries {
+		edges = append(edges, space.EdgeLedgerEntries)
 	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
-func (m *UnitMutation) EdgeCleared(name string) bool {
+func (m *SpaceMutation) EdgeCleared(name string) bool {
 	switch name {
-	case unit.EdgeProperty:
+	case space.EdgeProperty:
 		return m.clearedproperty
-	case unit.EdgeLeases:
-		return m.clearedleases
-	case unit.EdgeActiveLease:
-		return m.clearedactive_lease
-	case unit.EdgeApplications:
+	case space.EdgeBuilding:
+		return m.clearedbuilding
+	case space.EdgeChildren:
+		return m.clearedchildren
+	case space.EdgeParentSpace:
+		return m.clearedparent_space
+	case space.EdgeApplications:
 		return m.clearedapplications
+	case space.EdgeLeaseSpaces:
+		return m.clearedlease_spaces
+	case space.EdgeLedgerEntries:
+		return m.clearedledger_entries
 	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
-func (m *UnitMutation) ClearEdge(name string) error {
+func (m *SpaceMutation) ClearEdge(name string) error {
 	switch name {
-	case unit.EdgeProperty:
+	case space.EdgeProperty:
 		m.ClearProperty()
 		return nil
-	case unit.EdgeActiveLease:
-		m.ClearActiveLease()
+	case space.EdgeBuilding:
+		m.ClearBuilding()
+		return nil
+	case space.EdgeParentSpace:
+		m.ClearParentSpace()
 		return nil
 	}
-	return fmt.Errorf("unknown Unit unique edge %s", name)
+	return fmt.Errorf("unknown Space unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
-func (m *UnitMutation) ResetEdge(name string) error {
+func (m *SpaceMutation) ResetEdge(name string) error {
 	switch name {
-	case unit.EdgeProperty:
+	case space.EdgeProperty:
 		m.ResetProperty()
 		return nil
-	case unit.EdgeLeases:
-		m.ResetLeases()
+	case space.EdgeBuilding:
+		m.ResetBuilding()
 		return nil
-	case unit.EdgeActiveLease:
-		m.ResetActiveLease()
+	case space.EdgeChildren:
+		m.ResetChildren()
 		return nil
-	case unit.EdgeApplications:
+	case space.EdgeParentSpace:
+		m.ResetParentSpace()
+		return nil
+	case space.EdgeApplications:
 		m.ResetApplications()
 		return nil
+	case space.EdgeLeaseSpaces:
+		m.ResetLeaseSpaces()
+		return nil
+	case space.EdgeLedgerEntries:
+		m.ResetLedgerEntries()
+		return nil
 	}
-	return fmt.Errorf("unknown Unit edge %s", name)
+	return fmt.Errorf("unknown Space edge %s", name)
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/lease"
 	"github.com/matthewbaird/ontology/ent/person"
 	"github.com/matthewbaird/ontology/ent/property"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // Application is the model entity for the Application schema.
@@ -39,7 +39,7 @@ type Application struct {
 	// If source == 'agent', which goal triggered this change
 	AgentGoalID *string `json:"agent_goal_id,omitempty"`
 	// ApplicantPersonID holds the value of the "applicant_person_id" field.
-	ApplicantPersonID string `json:"applicant_person_id,omitempty"`
+	ApplicantPersonID uuid.UUID `json:"applicant_person_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status application.Status `json:"status,omitempty"`
 	// DesiredMoveIn holds the value of the "desired_move_in" field.
@@ -75,29 +75,48 @@ type Application struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ApplicationQuery when eager-loading is set.
 	Edges                 ApplicationEdges `json:"edges"`
-	application_applicant *uuid.UUID
-	application_property  *uuid.UUID
-	application_unit      *uuid.UUID
 	lease_application     *uuid.UUID
 	person_applications   *uuid.UUID
 	property_applications *uuid.UUID
-	unit_applications     *uuid.UUID
+	space_applications    *uuid.UUID
 	selectValues          sql.SelectValues
 }
 
 // ApplicationEdges holds the relations/edges for other nodes in the graph.
 type ApplicationEdges struct {
+	// Property receives Applications (inverse)
+	Property *Property `json:"property,omitempty"`
+	// Space receives Applications (inverse)
+	Space *Space `json:"space,omitempty"`
 	// Lease originated from Application (inverse)
 	ResultingLease *Lease `json:"resulting_lease,omitempty"`
 	// Application was submitted by Person
 	Applicant *Person `json:"applicant,omitempty"`
-	// Application is for Property
-	Property *Property `json:"property,omitempty"`
-	// Application is for specific Unit
-	Unit *Unit `json:"unit,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [4]bool
+}
+
+// PropertyOrErr returns the Property value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ApplicationEdges) PropertyOrErr() (*Property, error) {
+	if e.Property != nil {
+		return e.Property, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: property.Label}
+	}
+	return nil, &NotLoadedError{edge: "property"}
+}
+
+// SpaceOrErr returns the Space value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ApplicationEdges) SpaceOrErr() (*Space, error) {
+	if e.Space != nil {
+		return e.Space, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: space.Label}
+	}
+	return nil, &NotLoadedError{edge: "space"}
 }
 
 // ResultingLeaseOrErr returns the ResultingLease value or an error if the edge
@@ -105,7 +124,7 @@ type ApplicationEdges struct {
 func (e ApplicationEdges) ResultingLeaseOrErr() (*Lease, error) {
 	if e.ResultingLease != nil {
 		return e.ResultingLease, nil
-	} else if e.loadedTypes[0] {
+	} else if e.loadedTypes[2] {
 		return nil, &NotFoundError{label: lease.Label}
 	}
 	return nil, &NotLoadedError{edge: "resulting_lease"}
@@ -116,32 +135,10 @@ func (e ApplicationEdges) ResultingLeaseOrErr() (*Lease, error) {
 func (e ApplicationEdges) ApplicantOrErr() (*Person, error) {
 	if e.Applicant != nil {
 		return e.Applicant, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: person.Label}
 	}
 	return nil, &NotLoadedError{edge: "applicant"}
-}
-
-// PropertyOrErr returns the Property value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e ApplicationEdges) PropertyOrErr() (*Property, error) {
-	if e.Property != nil {
-		return e.Property, nil
-	} else if e.loadedTypes[2] {
-		return nil, &NotFoundError{label: property.Label}
-	}
-	return nil, &NotLoadedError{edge: "property"}
-}
-
-// UnitOrErr returns the Unit value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e ApplicationEdges) UnitOrErr() (*Unit, error) {
-	if e.Unit != nil {
-		return e.Unit, nil
-	} else if e.loadedTypes[3] {
-		return nil, &NotFoundError{label: unit.Label}
-	}
-	return nil, &NotLoadedError{edge: "unit"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -157,25 +154,19 @@ func (*Application) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case application.FieldDesiredLeaseTermMonths, application.FieldCreditScore, application.FieldApplicationFeeAmountCents:
 			values[i] = new(sql.NullInt64)
-		case application.FieldCreatedBy, application.FieldUpdatedBy, application.FieldSource, application.FieldCorrelationID, application.FieldAgentGoalID, application.FieldApplicantPersonID, application.FieldStatus, application.FieldScreeningRequestID, application.FieldDecisionBy, application.FieldDecisionReason, application.FieldApplicationFeeCurrency:
+		case application.FieldCreatedBy, application.FieldUpdatedBy, application.FieldSource, application.FieldCorrelationID, application.FieldAgentGoalID, application.FieldStatus, application.FieldScreeningRequestID, application.FieldDecisionBy, application.FieldDecisionReason, application.FieldApplicationFeeCurrency:
 			values[i] = new(sql.NullString)
 		case application.FieldCreatedAt, application.FieldUpdatedAt, application.FieldDesiredMoveIn, application.FieldScreeningCompleted, application.FieldDecisionAt:
 			values[i] = new(sql.NullTime)
-		case application.FieldID:
+		case application.FieldID, application.FieldApplicantPersonID:
 			values[i] = new(uuid.UUID)
-		case application.ForeignKeys[0]: // application_applicant
+		case application.ForeignKeys[0]: // lease_application
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case application.ForeignKeys[1]: // application_property
+		case application.ForeignKeys[1]: // person_applications
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case application.ForeignKeys[2]: // application_unit
+		case application.ForeignKeys[2]: // property_applications
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case application.ForeignKeys[3]: // lease_application
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case application.ForeignKeys[4]: // person_applications
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case application.ForeignKeys[5]: // property_applications
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case application.ForeignKeys[6]: // unit_applications
+		case application.ForeignKeys[3]: // space_applications
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -243,10 +234,10 @@ func (_m *Application) assignValues(columns []string, values []any) error {
 				*_m.AgentGoalID = value.String
 			}
 		case application.FieldApplicantPersonID:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field applicant_person_id", values[i])
-			} else if value.Valid {
-				_m.ApplicantPersonID = value.String
+			} else if value != nil {
+				_m.ApplicantPersonID = *value
 			}
 		case application.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -355,52 +346,31 @@ func (_m *Application) assignValues(columns []string, values []any) error {
 			}
 		case application.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field application_applicant", values[i])
-			} else if value.Valid {
-				_m.application_applicant = new(uuid.UUID)
-				*_m.application_applicant = *value.S.(*uuid.UUID)
-			}
-		case application.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field application_property", values[i])
-			} else if value.Valid {
-				_m.application_property = new(uuid.UUID)
-				*_m.application_property = *value.S.(*uuid.UUID)
-			}
-		case application.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field application_unit", values[i])
-			} else if value.Valid {
-				_m.application_unit = new(uuid.UUID)
-				*_m.application_unit = *value.S.(*uuid.UUID)
-			}
-		case application.ForeignKeys[3]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field lease_application", values[i])
 			} else if value.Valid {
 				_m.lease_application = new(uuid.UUID)
 				*_m.lease_application = *value.S.(*uuid.UUID)
 			}
-		case application.ForeignKeys[4]:
+		case application.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field person_applications", values[i])
 			} else if value.Valid {
 				_m.person_applications = new(uuid.UUID)
 				*_m.person_applications = *value.S.(*uuid.UUID)
 			}
-		case application.ForeignKeys[5]:
+		case application.ForeignKeys[2]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field property_applications", values[i])
 			} else if value.Valid {
 				_m.property_applications = new(uuid.UUID)
 				*_m.property_applications = *value.S.(*uuid.UUID)
 			}
-		case application.ForeignKeys[6]:
+		case application.ForeignKeys[3]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field unit_applications", values[i])
+				return fmt.Errorf("unexpected type %T for field space_applications", values[i])
 			} else if value.Valid {
-				_m.unit_applications = new(uuid.UUID)
-				*_m.unit_applications = *value.S.(*uuid.UUID)
+				_m.space_applications = new(uuid.UUID)
+				*_m.space_applications = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -415,6 +385,16 @@ func (_m *Application) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
+// QueryProperty queries the "property" edge of the Application entity.
+func (_m *Application) QueryProperty() *PropertyQuery {
+	return NewApplicationClient(_m.config).QueryProperty(_m)
+}
+
+// QuerySpace queries the "space" edge of the Application entity.
+func (_m *Application) QuerySpace() *SpaceQuery {
+	return NewApplicationClient(_m.config).QuerySpace(_m)
+}
+
 // QueryResultingLease queries the "resulting_lease" edge of the Application entity.
 func (_m *Application) QueryResultingLease() *LeaseQuery {
 	return NewApplicationClient(_m.config).QueryResultingLease(_m)
@@ -423,16 +403,6 @@ func (_m *Application) QueryResultingLease() *LeaseQuery {
 // QueryApplicant queries the "applicant" edge of the Application entity.
 func (_m *Application) QueryApplicant() *PersonQuery {
 	return NewApplicationClient(_m.config).QueryApplicant(_m)
-}
-
-// QueryProperty queries the "property" edge of the Application entity.
-func (_m *Application) QueryProperty() *PropertyQuery {
-	return NewApplicationClient(_m.config).QueryProperty(_m)
-}
-
-// QueryUnit queries the "unit" edge of the Application entity.
-func (_m *Application) QueryUnit() *UnitQuery {
-	return NewApplicationClient(_m.config).QueryUnit(_m)
 }
 
 // Update returns a builder for updating this Application.
@@ -484,7 +454,7 @@ func (_m *Application) String() string {
 	}
 	builder.WriteString(", ")
 	builder.WriteString("applicant_person_id=")
-	builder.WriteString(_m.ApplicantPersonID)
+	builder.WriteString(fmt.Sprintf("%v", _m.ApplicantPersonID))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

@@ -1,4 +1,4 @@
-.PHONY: validate entgen entgenerate apigen bufgen generate ci-check clean serve
+.PHONY: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen generate ci-check clean serve
 
 # Validate CUE ontology
 validate:
@@ -12,16 +12,32 @@ entgen:
 entgenerate:
 	go generate ./ent
 
+# Generate HTTP handlers and routes from CUE ontology + apigen.cue
+handlergen:
+	go run ./cmd/handlergen
+
 # Generate proto files from CUE ontology
 apigen:
 	go run ./cmd/apigen
 
-# Run buf to generate Go/TS stubs from proto files
-bufgen:
-	buf generate
+# Generate event type constants + catalog from CUE ontology
+eventgen:
+	go run ./cmd/eventgen
+
+# Generate OPA/Rego policy scaffolds from CUE ontology
+authzgen:
+	go run ./cmd/authzgen
+
+# Generate ONTOLOGY.md, TOOLS.md, propeller-tools.json from CUE ontology
+agentgen:
+	go run ./cmd/agentgen
+
+# Generate OpenAPI 3.1 spec from CUE ontology + apigen.cue
+openapigen:
+	go run ./cmd/openapigen
 
 # Full generation pipeline
-generate: validate entgen entgenerate apigen bufgen
+generate: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen
 
 # CI check: verify generated code matches ontology (no drift)
 ci-check: generate

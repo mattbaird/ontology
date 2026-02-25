@@ -101,9 +101,9 @@ func TotalSquareFootage(v float64) predicate.Property {
 	return predicate.Property(sql.FieldEQ(FieldTotalSquareFootage, v))
 }
 
-// TotalUnits applies equality check predicate on the "total_units" field. It's identical to TotalUnitsEQ.
-func TotalUnits(v int) predicate.Property {
-	return predicate.Property(sql.FieldEQ(FieldTotalUnits, v))
+// TotalSpaces applies equality check predicate on the "total_spaces" field. It's identical to TotalSpacesEQ.
+func TotalSpaces(v int) predicate.Property {
+	return predicate.Property(sql.FieldEQ(FieldTotalSpaces, v))
 }
 
 // LotSizeSqft applies equality check predicate on the "lot_size_sqft" field. It's identical to LotSizeSqftEQ.
@@ -716,44 +716,44 @@ func TotalSquareFootageLTE(v float64) predicate.Property {
 	return predicate.Property(sql.FieldLTE(FieldTotalSquareFootage, v))
 }
 
-// TotalUnitsEQ applies the EQ predicate on the "total_units" field.
-func TotalUnitsEQ(v int) predicate.Property {
-	return predicate.Property(sql.FieldEQ(FieldTotalUnits, v))
+// TotalSpacesEQ applies the EQ predicate on the "total_spaces" field.
+func TotalSpacesEQ(v int) predicate.Property {
+	return predicate.Property(sql.FieldEQ(FieldTotalSpaces, v))
 }
 
-// TotalUnitsNEQ applies the NEQ predicate on the "total_units" field.
-func TotalUnitsNEQ(v int) predicate.Property {
-	return predicate.Property(sql.FieldNEQ(FieldTotalUnits, v))
+// TotalSpacesNEQ applies the NEQ predicate on the "total_spaces" field.
+func TotalSpacesNEQ(v int) predicate.Property {
+	return predicate.Property(sql.FieldNEQ(FieldTotalSpaces, v))
 }
 
-// TotalUnitsIn applies the In predicate on the "total_units" field.
-func TotalUnitsIn(vs ...int) predicate.Property {
-	return predicate.Property(sql.FieldIn(FieldTotalUnits, vs...))
+// TotalSpacesIn applies the In predicate on the "total_spaces" field.
+func TotalSpacesIn(vs ...int) predicate.Property {
+	return predicate.Property(sql.FieldIn(FieldTotalSpaces, vs...))
 }
 
-// TotalUnitsNotIn applies the NotIn predicate on the "total_units" field.
-func TotalUnitsNotIn(vs ...int) predicate.Property {
-	return predicate.Property(sql.FieldNotIn(FieldTotalUnits, vs...))
+// TotalSpacesNotIn applies the NotIn predicate on the "total_spaces" field.
+func TotalSpacesNotIn(vs ...int) predicate.Property {
+	return predicate.Property(sql.FieldNotIn(FieldTotalSpaces, vs...))
 }
 
-// TotalUnitsGT applies the GT predicate on the "total_units" field.
-func TotalUnitsGT(v int) predicate.Property {
-	return predicate.Property(sql.FieldGT(FieldTotalUnits, v))
+// TotalSpacesGT applies the GT predicate on the "total_spaces" field.
+func TotalSpacesGT(v int) predicate.Property {
+	return predicate.Property(sql.FieldGT(FieldTotalSpaces, v))
 }
 
-// TotalUnitsGTE applies the GTE predicate on the "total_units" field.
-func TotalUnitsGTE(v int) predicate.Property {
-	return predicate.Property(sql.FieldGTE(FieldTotalUnits, v))
+// TotalSpacesGTE applies the GTE predicate on the "total_spaces" field.
+func TotalSpacesGTE(v int) predicate.Property {
+	return predicate.Property(sql.FieldGTE(FieldTotalSpaces, v))
 }
 
-// TotalUnitsLT applies the LT predicate on the "total_units" field.
-func TotalUnitsLT(v int) predicate.Property {
-	return predicate.Property(sql.FieldLT(FieldTotalUnits, v))
+// TotalSpacesLT applies the LT predicate on the "total_spaces" field.
+func TotalSpacesLT(v int) predicate.Property {
+	return predicate.Property(sql.FieldLT(FieldTotalSpaces, v))
 }
 
-// TotalUnitsLTE applies the LTE predicate on the "total_units" field.
-func TotalUnitsLTE(v int) predicate.Property {
-	return predicate.Property(sql.FieldLTE(FieldTotalUnits, v))
+// TotalSpacesLTE applies the LTE predicate on the "total_spaces" field.
+func TotalSpacesLTE(v int) predicate.Property {
+	return predicate.Property(sql.FieldLTE(FieldTotalSpaces, v))
 }
 
 // LotSizeSqftEQ applies the EQ predicate on the "lot_size_sqft" field.
@@ -1234,21 +1234,44 @@ func HasPortfolioWith(preds ...predicate.Portfolio) predicate.Property {
 	})
 }
 
-// HasUnits applies the HasEdge predicate on the "units" edge.
-func HasUnits() predicate.Property {
+// HasBuildings applies the HasEdge predicate on the "buildings" edge.
+func HasBuildings() predicate.Property {
 	return predicate.Property(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, UnitsTable, UnitsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, BuildingsTable, BuildingsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasUnitsWith applies the HasEdge predicate on the "units" edge with a given conditions (other predicates).
-func HasUnitsWith(preds ...predicate.Unit) predicate.Property {
+// HasBuildingsWith applies the HasEdge predicate on the "buildings" edge with a given conditions (other predicates).
+func HasBuildingsWith(preds ...predicate.Building) predicate.Property {
 	return predicate.Property(func(s *sql.Selector) {
-		step := newUnitsStep()
+		step := newBuildingsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSpaces applies the HasEdge predicate on the "spaces" edge.
+func HasSpaces() predicate.Property {
+	return predicate.Property(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SpacesTable, SpacesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSpacesWith applies the HasEdge predicate on the "spaces" edge with a given conditions (other predicates).
+func HasSpacesWith(preds ...predicate.Space) predicate.Property {
+	return predicate.Property(func(s *sql.Selector) {
+		step := newSpacesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -1280,29 +1303,6 @@ func HasBankAccountWith(preds ...predicate.BankAccount) predicate.Property {
 	})
 }
 
-// HasPropertyLedgerEntries applies the HasEdge predicate on the "property_ledger_entries" edge.
-func HasPropertyLedgerEntries() predicate.Property {
-	return predicate.Property(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, PropertyLedgerEntriesTable, PropertyLedgerEntriesColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasPropertyLedgerEntriesWith applies the HasEdge predicate on the "property_ledger_entries" edge with a given conditions (other predicates).
-func HasPropertyLedgerEntriesWith(preds ...predicate.LedgerEntry) predicate.Property {
-	return predicate.Property(func(s *sql.Selector) {
-		step := newPropertyLedgerEntriesStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasApplications applies the HasEdge predicate on the "applications" edge.
 func HasApplications() predicate.Property {
 	return predicate.Property(func(s *sql.Selector) {
@@ -1318,6 +1318,29 @@ func HasApplications() predicate.Property {
 func HasApplicationsWith(preds ...predicate.Application) predicate.Property {
 	return predicate.Property(func(s *sql.Selector) {
 		step := newApplicationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasLedgerEntries applies the HasEdge predicate on the "ledger_entries" edge.
+func HasLedgerEntries() predicate.Property {
+	return predicate.Property(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LedgerEntriesTable, LedgerEntriesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLedgerEntriesWith applies the HasEdge predicate on the "ledger_entries" edge with a given conditions (other predicates).
+func HasLedgerEntriesWith(preds ...predicate.LedgerEntry) predicate.Property {
+	return predicate.Property(func(s *sql.Selector) {
+		step := newLedgerEntriesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

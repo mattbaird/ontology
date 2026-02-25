@@ -19,8 +19,10 @@ import (
 	"github.com/matthewbaird/ontology/ent/account"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/building"
 	"github.com/matthewbaird/ontology/ent/journalentry"
 	"github.com/matthewbaird/ontology/ent/lease"
+	"github.com/matthewbaird/ontology/ent/leasespace"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/organization"
 	"github.com/matthewbaird/ontology/ent/person"
@@ -28,7 +30,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/property"
 	"github.com/matthewbaird/ontology/ent/reconciliation"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // Client is the client that holds all ent builders.
@@ -42,10 +44,14 @@ type Client struct {
 	Application *ApplicationClient
 	// BankAccount is the client for interacting with the BankAccount builders.
 	BankAccount *BankAccountClient
+	// Building is the client for interacting with the Building builders.
+	Building *BuildingClient
 	// JournalEntry is the client for interacting with the JournalEntry builders.
 	JournalEntry *JournalEntryClient
 	// Lease is the client for interacting with the Lease builders.
 	Lease *LeaseClient
+	// LeaseSpace is the client for interacting with the LeaseSpace builders.
+	LeaseSpace *LeaseSpaceClient
 	// LedgerEntry is the client for interacting with the LedgerEntry builders.
 	LedgerEntry *LedgerEntryClient
 	// Organization is the client for interacting with the Organization builders.
@@ -60,8 +66,8 @@ type Client struct {
 	Property *PropertyClient
 	// Reconciliation is the client for interacting with the Reconciliation builders.
 	Reconciliation *ReconciliationClient
-	// Unit is the client for interacting with the Unit builders.
-	Unit *UnitClient
+	// Space is the client for interacting with the Space builders.
+	Space *SpaceClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -76,8 +82,10 @@ func (c *Client) init() {
 	c.Account = NewAccountClient(c.config)
 	c.Application = NewApplicationClient(c.config)
 	c.BankAccount = NewBankAccountClient(c.config)
+	c.Building = NewBuildingClient(c.config)
 	c.JournalEntry = NewJournalEntryClient(c.config)
 	c.Lease = NewLeaseClient(c.config)
+	c.LeaseSpace = NewLeaseSpaceClient(c.config)
 	c.LedgerEntry = NewLedgerEntryClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.Person = NewPersonClient(c.config)
@@ -85,7 +93,7 @@ func (c *Client) init() {
 	c.Portfolio = NewPortfolioClient(c.config)
 	c.Property = NewPropertyClient(c.config)
 	c.Reconciliation = NewReconciliationClient(c.config)
-	c.Unit = NewUnitClient(c.config)
+	c.Space = NewSpaceClient(c.config)
 }
 
 type (
@@ -181,8 +189,10 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Account:        NewAccountClient(cfg),
 		Application:    NewApplicationClient(cfg),
 		BankAccount:    NewBankAccountClient(cfg),
+		Building:       NewBuildingClient(cfg),
 		JournalEntry:   NewJournalEntryClient(cfg),
 		Lease:          NewLeaseClient(cfg),
+		LeaseSpace:     NewLeaseSpaceClient(cfg),
 		LedgerEntry:    NewLedgerEntryClient(cfg),
 		Organization:   NewOrganizationClient(cfg),
 		Person:         NewPersonClient(cfg),
@@ -190,7 +200,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Portfolio:      NewPortfolioClient(cfg),
 		Property:       NewPropertyClient(cfg),
 		Reconciliation: NewReconciliationClient(cfg),
-		Unit:           NewUnitClient(cfg),
+		Space:          NewSpaceClient(cfg),
 	}, nil
 }
 
@@ -213,8 +223,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Account:        NewAccountClient(cfg),
 		Application:    NewApplicationClient(cfg),
 		BankAccount:    NewBankAccountClient(cfg),
+		Building:       NewBuildingClient(cfg),
 		JournalEntry:   NewJournalEntryClient(cfg),
 		Lease:          NewLeaseClient(cfg),
+		LeaseSpace:     NewLeaseSpaceClient(cfg),
 		LedgerEntry:    NewLedgerEntryClient(cfg),
 		Organization:   NewOrganizationClient(cfg),
 		Person:         NewPersonClient(cfg),
@@ -222,7 +234,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Portfolio:      NewPortfolioClient(cfg),
 		Property:       NewPropertyClient(cfg),
 		Reconciliation: NewReconciliationClient(cfg),
-		Unit:           NewUnitClient(cfg),
+		Space:          NewSpaceClient(cfg),
 	}, nil
 }
 
@@ -252,9 +264,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Account, c.Application, c.BankAccount, c.JournalEntry, c.Lease, c.LedgerEntry,
-		c.Organization, c.Person, c.PersonRole, c.Portfolio, c.Property,
-		c.Reconciliation, c.Unit,
+		c.Account, c.Application, c.BankAccount, c.Building, c.JournalEntry, c.Lease,
+		c.LeaseSpace, c.LedgerEntry, c.Organization, c.Person, c.PersonRole,
+		c.Portfolio, c.Property, c.Reconciliation, c.Space,
 	} {
 		n.Use(hooks...)
 	}
@@ -264,9 +276,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Account, c.Application, c.BankAccount, c.JournalEntry, c.Lease, c.LedgerEntry,
-		c.Organization, c.Person, c.PersonRole, c.Portfolio, c.Property,
-		c.Reconciliation, c.Unit,
+		c.Account, c.Application, c.BankAccount, c.Building, c.JournalEntry, c.Lease,
+		c.LeaseSpace, c.LedgerEntry, c.Organization, c.Person, c.PersonRole,
+		c.Portfolio, c.Property, c.Reconciliation, c.Space,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -281,10 +293,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Application.mutate(ctx, m)
 	case *BankAccountMutation:
 		return c.BankAccount.mutate(ctx, m)
+	case *BuildingMutation:
+		return c.Building.mutate(ctx, m)
 	case *JournalEntryMutation:
 		return c.JournalEntry.mutate(ctx, m)
 	case *LeaseMutation:
 		return c.Lease.mutate(ctx, m)
+	case *LeaseSpaceMutation:
+		return c.LeaseSpace.mutate(ctx, m)
 	case *LedgerEntryMutation:
 		return c.LedgerEntry.mutate(ctx, m)
 	case *OrganizationMutation:
@@ -299,8 +315,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Property.mutate(ctx, m)
 	case *ReconciliationMutation:
 		return c.Reconciliation.mutate(ctx, m)
-	case *UnitMutation:
-		return c.Unit.mutate(ctx, m)
+	case *SpaceMutation:
+		return c.Space.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -611,6 +627,38 @@ func (c *ApplicationClient) GetX(ctx context.Context, id uuid.UUID) *Application
 	return obj
 }
 
+// QueryProperty queries the property edge of a Application.
+func (c *ApplicationClient) QueryProperty(_m *Application) *PropertyQuery {
+	query := (&PropertyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(application.Table, application.FieldID, id),
+			sqlgraph.To(property.Table, property.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, application.PropertyTable, application.PropertyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySpace queries the space edge of a Application.
+func (c *ApplicationClient) QuerySpace(_m *Application) *SpaceQuery {
+	query := (&SpaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(application.Table, application.FieldID, id),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, application.SpaceTable, application.SpaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryResultingLease queries the resulting_lease edge of a Application.
 func (c *ApplicationClient) QueryResultingLease(_m *Application) *LeaseQuery {
 	query := (&LeaseClient{config: c.config}).Query()
@@ -636,38 +684,6 @@ func (c *ApplicationClient) QueryApplicant(_m *Application) *PersonQuery {
 			sqlgraph.From(application.Table, application.FieldID, id),
 			sqlgraph.To(person.Table, person.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, application.ApplicantTable, application.ApplicantColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryProperty queries the property edge of a Application.
-func (c *ApplicationClient) QueryProperty(_m *Application) *PropertyQuery {
-	query := (&PropertyClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(application.Table, application.FieldID, id),
-			sqlgraph.To(property.Table, property.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, application.PropertyTable, application.PropertyColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryUnit queries the unit edge of a Application.
-func (c *ApplicationClient) QueryUnit(_m *Application) *UnitQuery {
-	query := (&UnitClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(application.Table, application.FieldID, id),
-			sqlgraph.To(unit.Table, unit.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, application.UnitTable, application.UnitColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -894,6 +910,171 @@ func (c *BankAccountClient) mutate(ctx context.Context, m *BankAccountMutation) 
 		return (&BankAccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown BankAccount mutation op: %q", m.Op())
+	}
+}
+
+// BuildingClient is a client for the Building schema.
+type BuildingClient struct {
+	config
+}
+
+// NewBuildingClient returns a client for the Building from the given config.
+func NewBuildingClient(c config) *BuildingClient {
+	return &BuildingClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `building.Hooks(f(g(h())))`.
+func (c *BuildingClient) Use(hooks ...Hook) {
+	c.hooks.Building = append(c.hooks.Building, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `building.Intercept(f(g(h())))`.
+func (c *BuildingClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Building = append(c.inters.Building, interceptors...)
+}
+
+// Create returns a builder for creating a Building entity.
+func (c *BuildingClient) Create() *BuildingCreate {
+	mutation := newBuildingMutation(c.config, OpCreate)
+	return &BuildingCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Building entities.
+func (c *BuildingClient) CreateBulk(builders ...*BuildingCreate) *BuildingCreateBulk {
+	return &BuildingCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BuildingClient) MapCreateBulk(slice any, setFunc func(*BuildingCreate, int)) *BuildingCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BuildingCreateBulk{err: fmt.Errorf("calling to BuildingClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BuildingCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BuildingCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Building.
+func (c *BuildingClient) Update() *BuildingUpdate {
+	mutation := newBuildingMutation(c.config, OpUpdate)
+	return &BuildingUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BuildingClient) UpdateOne(_m *Building) *BuildingUpdateOne {
+	mutation := newBuildingMutation(c.config, OpUpdateOne, withBuilding(_m))
+	return &BuildingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BuildingClient) UpdateOneID(id uuid.UUID) *BuildingUpdateOne {
+	mutation := newBuildingMutation(c.config, OpUpdateOne, withBuildingID(id))
+	return &BuildingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Building.
+func (c *BuildingClient) Delete() *BuildingDelete {
+	mutation := newBuildingMutation(c.config, OpDelete)
+	return &BuildingDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BuildingClient) DeleteOne(_m *Building) *BuildingDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BuildingClient) DeleteOneID(id uuid.UUID) *BuildingDeleteOne {
+	builder := c.Delete().Where(building.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BuildingDeleteOne{builder}
+}
+
+// Query returns a query builder for Building.
+func (c *BuildingClient) Query() *BuildingQuery {
+	return &BuildingQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBuilding},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Building entity by its id.
+func (c *BuildingClient) Get(ctx context.Context, id uuid.UUID) (*Building, error) {
+	return c.Query().Where(building.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BuildingClient) GetX(ctx context.Context, id uuid.UUID) *Building {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryProperty queries the property edge of a Building.
+func (c *BuildingClient) QueryProperty(_m *Building) *PropertyQuery {
+	query := (&PropertyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(building.Table, building.FieldID, id),
+			sqlgraph.To(property.Table, property.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, building.PropertyTable, building.PropertyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySpaces queries the spaces edge of a Building.
+func (c *BuildingClient) QuerySpaces(_m *Building) *SpaceQuery {
+	query := (&SpaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(building.Table, building.FieldID, id),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, building.SpacesTable, building.SpacesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *BuildingClient) Hooks() []Hook {
+	return c.hooks.Building
+}
+
+// Interceptors returns the client interceptors.
+func (c *BuildingClient) Interceptors() []Interceptor {
+	return c.inters.Building
+}
+
+func (c *BuildingClient) mutate(ctx context.Context, m *BuildingMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BuildingCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BuildingUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BuildingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BuildingDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Building mutation op: %q", m.Op())
 	}
 }
 
@@ -1154,31 +1335,15 @@ func (c *LeaseClient) GetX(ctx context.Context, id uuid.UUID) *Lease {
 	return obj
 }
 
-// QueryUnit queries the unit edge of a Lease.
-func (c *LeaseClient) QueryUnit(_m *Lease) *UnitQuery {
-	query := (&UnitClient{config: c.config}).Query()
+// QueryLeaseSpaces queries the lease_spaces edge of a Lease.
+func (c *LeaseClient) QueryLeaseSpaces(_m *Lease) *LeaseSpaceQuery {
+	query := (&LeaseSpaceClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(lease.Table, lease.FieldID, id),
-			sqlgraph.To(unit.Table, unit.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, lease.UnitTable, lease.UnitColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryOccupiedUnit queries the occupied_unit edge of a Lease.
-func (c *LeaseClient) QueryOccupiedUnit(_m *Lease) *UnitQuery {
-	query := (&UnitClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(lease.Table, lease.FieldID, id),
-			sqlgraph.To(unit.Table, unit.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, lease.OccupiedUnitTable, lease.OccupiedUnitColumn),
+			sqlgraph.To(leasespace.Table, leasespace.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lease.LeaseSpacesTable, lease.LeaseSpacesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1250,6 +1415,38 @@ func (c *LeaseClient) QueryApplication(_m *Lease) *ApplicationQuery {
 	return query
 }
 
+// QuerySubleases queries the subleases edge of a Lease.
+func (c *LeaseClient) QuerySubleases(_m *Lease) *LeaseQuery {
+	query := (&LeaseClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lease.Table, lease.FieldID, id),
+			sqlgraph.To(lease.Table, lease.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lease.SubleasesTable, lease.SubleasesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParentLease queries the parent_lease edge of a Lease.
+func (c *LeaseClient) QueryParentLease(_m *Lease) *LeaseQuery {
+	query := (&LeaseClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lease.Table, lease.FieldID, id),
+			sqlgraph.To(lease.Table, lease.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, lease.ParentLeaseTable, lease.ParentLeaseColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LeaseClient) Hooks() []Hook {
 	return c.hooks.Lease
@@ -1272,6 +1469,171 @@ func (c *LeaseClient) mutate(ctx context.Context, m *LeaseMutation) (Value, erro
 		return (&LeaseDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Lease mutation op: %q", m.Op())
+	}
+}
+
+// LeaseSpaceClient is a client for the LeaseSpace schema.
+type LeaseSpaceClient struct {
+	config
+}
+
+// NewLeaseSpaceClient returns a client for the LeaseSpace from the given config.
+func NewLeaseSpaceClient(c config) *LeaseSpaceClient {
+	return &LeaseSpaceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `leasespace.Hooks(f(g(h())))`.
+func (c *LeaseSpaceClient) Use(hooks ...Hook) {
+	c.hooks.LeaseSpace = append(c.hooks.LeaseSpace, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `leasespace.Intercept(f(g(h())))`.
+func (c *LeaseSpaceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LeaseSpace = append(c.inters.LeaseSpace, interceptors...)
+}
+
+// Create returns a builder for creating a LeaseSpace entity.
+func (c *LeaseSpaceClient) Create() *LeaseSpaceCreate {
+	mutation := newLeaseSpaceMutation(c.config, OpCreate)
+	return &LeaseSpaceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LeaseSpace entities.
+func (c *LeaseSpaceClient) CreateBulk(builders ...*LeaseSpaceCreate) *LeaseSpaceCreateBulk {
+	return &LeaseSpaceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LeaseSpaceClient) MapCreateBulk(slice any, setFunc func(*LeaseSpaceCreate, int)) *LeaseSpaceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LeaseSpaceCreateBulk{err: fmt.Errorf("calling to LeaseSpaceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LeaseSpaceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LeaseSpaceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LeaseSpace.
+func (c *LeaseSpaceClient) Update() *LeaseSpaceUpdate {
+	mutation := newLeaseSpaceMutation(c.config, OpUpdate)
+	return &LeaseSpaceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LeaseSpaceClient) UpdateOne(_m *LeaseSpace) *LeaseSpaceUpdateOne {
+	mutation := newLeaseSpaceMutation(c.config, OpUpdateOne, withLeaseSpace(_m))
+	return &LeaseSpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LeaseSpaceClient) UpdateOneID(id uuid.UUID) *LeaseSpaceUpdateOne {
+	mutation := newLeaseSpaceMutation(c.config, OpUpdateOne, withLeaseSpaceID(id))
+	return &LeaseSpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LeaseSpace.
+func (c *LeaseSpaceClient) Delete() *LeaseSpaceDelete {
+	mutation := newLeaseSpaceMutation(c.config, OpDelete)
+	return &LeaseSpaceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LeaseSpaceClient) DeleteOne(_m *LeaseSpace) *LeaseSpaceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LeaseSpaceClient) DeleteOneID(id uuid.UUID) *LeaseSpaceDeleteOne {
+	builder := c.Delete().Where(leasespace.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LeaseSpaceDeleteOne{builder}
+}
+
+// Query returns a query builder for LeaseSpace.
+func (c *LeaseSpaceClient) Query() *LeaseSpaceQuery {
+	return &LeaseSpaceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLeaseSpace},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LeaseSpace entity by its id.
+func (c *LeaseSpaceClient) Get(ctx context.Context, id uuid.UUID) (*LeaseSpace, error) {
+	return c.Query().Where(leasespace.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LeaseSpaceClient) GetX(ctx context.Context, id uuid.UUID) *LeaseSpace {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLease queries the lease edge of a LeaseSpace.
+func (c *LeaseSpaceClient) QueryLease(_m *LeaseSpace) *LeaseQuery {
+	query := (&LeaseClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leasespace.Table, leasespace.FieldID, id),
+			sqlgraph.To(lease.Table, lease.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, leasespace.LeaseTable, leasespace.LeaseColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySpace queries the space edge of a LeaseSpace.
+func (c *LeaseSpaceClient) QuerySpace(_m *LeaseSpace) *SpaceQuery {
+	query := (&SpaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leasespace.Table, leasespace.FieldID, id),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, leasespace.SpaceTable, leasespace.SpaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LeaseSpaceClient) Hooks() []Hook {
+	return c.hooks.LeaseSpace
+}
+
+// Interceptors returns the client interceptors.
+func (c *LeaseSpaceClient) Interceptors() []Interceptor {
+	return c.inters.LeaseSpace
+}
+
+func (c *LeaseSpaceClient) mutate(ctx context.Context, m *LeaseSpaceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LeaseSpaceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LeaseSpaceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LeaseSpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LeaseSpaceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LeaseSpace mutation op: %q", m.Op())
 	}
 }
 
@@ -1440,6 +1802,22 @@ func (c *LedgerEntryClient) QueryProperty(_m *LedgerEntry) *PropertyQuery {
 			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, id),
 			sqlgraph.To(property.Table, property.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, ledgerentry.PropertyTable, ledgerentry.PropertyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySpace queries the space edge of a LedgerEntry.
+func (c *LedgerEntryClient) QuerySpace(_m *LedgerEntry) *SpaceQuery {
+	query := (&SpaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(ledgerentry.Table, ledgerentry.FieldID, id),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ledgerentry.SpaceTable, ledgerentry.SpaceColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1825,15 +2203,15 @@ func (c *PersonClient) QueryOrganizations(_m *Person) *OrganizationQuery {
 	return query
 }
 
-// QueryPersonLedgerEntries queries the person_ledger_entries edge of a Person.
-func (c *PersonClient) QueryPersonLedgerEntries(_m *Person) *LedgerEntryQuery {
+// QueryLedgerEntries queries the ledger_entries edge of a Person.
+func (c *PersonClient) QueryLedgerEntries(_m *Person) *LedgerEntryQuery {
 	query := (&LedgerEntryClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(person.Table, person.FieldID, id),
 			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, person.PersonLedgerEntriesTable, person.PersonLedgerEntriesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, person.LedgerEntriesTable, person.LedgerEntriesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2221,7 +2599,8 @@ func (c *PortfolioClient) QueryTrustAccount(_m *Portfolio) *BankAccountQuery {
 
 // Hooks returns the client hooks.
 func (c *PortfolioClient) Hooks() []Hook {
-	return c.hooks.Portfolio
+	hooks := c.hooks.Portfolio
+	return append(hooks[:len(hooks):len(hooks)], portfolio.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -2368,15 +2747,31 @@ func (c *PropertyClient) QueryPortfolio(_m *Property) *PortfolioQuery {
 	return query
 }
 
-// QueryUnits queries the units edge of a Property.
-func (c *PropertyClient) QueryUnits(_m *Property) *UnitQuery {
-	query := (&UnitClient{config: c.config}).Query()
+// QueryBuildings queries the buildings edge of a Property.
+func (c *PropertyClient) QueryBuildings(_m *Property) *BuildingQuery {
+	query := (&BuildingClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(property.Table, property.FieldID, id),
-			sqlgraph.To(unit.Table, unit.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, property.UnitsTable, property.UnitsColumn),
+			sqlgraph.To(building.Table, building.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, property.BuildingsTable, property.BuildingsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySpaces queries the spaces edge of a Property.
+func (c *PropertyClient) QuerySpaces(_m *Property) *SpaceQuery {
+	query := (&SpaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(property.Table, property.FieldID, id),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, property.SpacesTable, property.SpacesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2400,22 +2795,6 @@ func (c *PropertyClient) QueryBankAccount(_m *Property) *BankAccountQuery {
 	return query
 }
 
-// QueryPropertyLedgerEntries queries the property_ledger_entries edge of a Property.
-func (c *PropertyClient) QueryPropertyLedgerEntries(_m *Property) *LedgerEntryQuery {
-	query := (&LedgerEntryClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(property.Table, property.FieldID, id),
-			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, property.PropertyLedgerEntriesTable, property.PropertyLedgerEntriesColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryApplications queries the applications edge of a Property.
 func (c *PropertyClient) QueryApplications(_m *Property) *ApplicationQuery {
 	query := (&ApplicationClient{config: c.config}).Query()
@@ -2432,9 +2811,26 @@ func (c *PropertyClient) QueryApplications(_m *Property) *ApplicationQuery {
 	return query
 }
 
+// QueryLedgerEntries queries the ledger_entries edge of a Property.
+func (c *PropertyClient) QueryLedgerEntries(_m *Property) *LedgerEntryQuery {
+	query := (&LedgerEntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(property.Table, property.FieldID, id),
+			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, property.LedgerEntriesTable, property.LedgerEntriesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PropertyClient) Hooks() []Hook {
-	return c.hooks.Property
+	hooks := c.hooks.Property
+	return append(hooks[:len(hooks):len(hooks)], property.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -2606,107 +3002,107 @@ func (c *ReconciliationClient) mutate(ctx context.Context, m *ReconciliationMuta
 	}
 }
 
-// UnitClient is a client for the Unit schema.
-type UnitClient struct {
+// SpaceClient is a client for the Space schema.
+type SpaceClient struct {
 	config
 }
 
-// NewUnitClient returns a client for the Unit from the given config.
-func NewUnitClient(c config) *UnitClient {
-	return &UnitClient{config: c}
+// NewSpaceClient returns a client for the Space from the given config.
+func NewSpaceClient(c config) *SpaceClient {
+	return &SpaceClient{config: c}
 }
 
 // Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `unit.Hooks(f(g(h())))`.
-func (c *UnitClient) Use(hooks ...Hook) {
-	c.hooks.Unit = append(c.hooks.Unit, hooks...)
+// A call to `Use(f, g, h)` equals to `space.Hooks(f(g(h())))`.
+func (c *SpaceClient) Use(hooks ...Hook) {
+	c.hooks.Space = append(c.hooks.Space, hooks...)
 }
 
 // Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `unit.Intercept(f(g(h())))`.
-func (c *UnitClient) Intercept(interceptors ...Interceptor) {
-	c.inters.Unit = append(c.inters.Unit, interceptors...)
+// A call to `Intercept(f, g, h)` equals to `space.Intercept(f(g(h())))`.
+func (c *SpaceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Space = append(c.inters.Space, interceptors...)
 }
 
-// Create returns a builder for creating a Unit entity.
-func (c *UnitClient) Create() *UnitCreate {
-	mutation := newUnitMutation(c.config, OpCreate)
-	return &UnitCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Create returns a builder for creating a Space entity.
+func (c *SpaceClient) Create() *SpaceCreate {
+	mutation := newSpaceMutation(c.config, OpCreate)
+	return &SpaceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// CreateBulk returns a builder for creating a bulk of Unit entities.
-func (c *UnitClient) CreateBulk(builders ...*UnitCreate) *UnitCreateBulk {
-	return &UnitCreateBulk{config: c.config, builders: builders}
+// CreateBulk returns a builder for creating a bulk of Space entities.
+func (c *SpaceClient) CreateBulk(builders ...*SpaceCreate) *SpaceCreateBulk {
+	return &SpaceCreateBulk{config: c.config, builders: builders}
 }
 
 // MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
 // a builder and applies setFunc on it.
-func (c *UnitClient) MapCreateBulk(slice any, setFunc func(*UnitCreate, int)) *UnitCreateBulk {
+func (c *SpaceClient) MapCreateBulk(slice any, setFunc func(*SpaceCreate, int)) *SpaceCreateBulk {
 	rv := reflect.ValueOf(slice)
 	if rv.Kind() != reflect.Slice {
-		return &UnitCreateBulk{err: fmt.Errorf("calling to UnitClient.MapCreateBulk with wrong type %T, need slice", slice)}
+		return &SpaceCreateBulk{err: fmt.Errorf("calling to SpaceClient.MapCreateBulk with wrong type %T, need slice", slice)}
 	}
-	builders := make([]*UnitCreate, rv.Len())
+	builders := make([]*SpaceCreate, rv.Len())
 	for i := 0; i < rv.Len(); i++ {
 		builders[i] = c.Create()
 		setFunc(builders[i], i)
 	}
-	return &UnitCreateBulk{config: c.config, builders: builders}
+	return &SpaceCreateBulk{config: c.config, builders: builders}
 }
 
-// Update returns an update builder for Unit.
-func (c *UnitClient) Update() *UnitUpdate {
-	mutation := newUnitMutation(c.config, OpUpdate)
-	return &UnitUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Update returns an update builder for Space.
+func (c *SpaceClient) Update() *SpaceUpdate {
+	mutation := newSpaceMutation(c.config, OpUpdate)
+	return &SpaceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *UnitClient) UpdateOne(_m *Unit) *UnitUpdateOne {
-	mutation := newUnitMutation(c.config, OpUpdateOne, withUnit(_m))
-	return &UnitUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *SpaceClient) UpdateOne(_m *Space) *SpaceUpdateOne {
+	mutation := newSpaceMutation(c.config, OpUpdateOne, withSpace(_m))
+	return &SpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *UnitClient) UpdateOneID(id uuid.UUID) *UnitUpdateOne {
-	mutation := newUnitMutation(c.config, OpUpdateOne, withUnitID(id))
-	return &UnitUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+func (c *SpaceClient) UpdateOneID(id uuid.UUID) *SpaceUpdateOne {
+	mutation := newSpaceMutation(c.config, OpUpdateOne, withSpaceID(id))
+	return &SpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
-// Delete returns a delete builder for Unit.
-func (c *UnitClient) Delete() *UnitDelete {
-	mutation := newUnitMutation(c.config, OpDelete)
-	return &UnitDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+// Delete returns a delete builder for Space.
+func (c *SpaceClient) Delete() *SpaceDelete {
+	mutation := newSpaceMutation(c.config, OpDelete)
+	return &SpaceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *UnitClient) DeleteOne(_m *Unit) *UnitDeleteOne {
+func (c *SpaceClient) DeleteOne(_m *Space) *SpaceDeleteOne {
 	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *UnitClient) DeleteOneID(id uuid.UUID) *UnitDeleteOne {
-	builder := c.Delete().Where(unit.ID(id))
+func (c *SpaceClient) DeleteOneID(id uuid.UUID) *SpaceDeleteOne {
+	builder := c.Delete().Where(space.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
-	return &UnitDeleteOne{builder}
+	return &SpaceDeleteOne{builder}
 }
 
-// Query returns a query builder for Unit.
-func (c *UnitClient) Query() *UnitQuery {
-	return &UnitQuery{
+// Query returns a query builder for Space.
+func (c *SpaceClient) Query() *SpaceQuery {
+	return &SpaceQuery{
 		config: c.config,
-		ctx:    &QueryContext{Type: TypeUnit},
+		ctx:    &QueryContext{Type: TypeSpace},
 		inters: c.Interceptors(),
 	}
 }
 
-// Get returns a Unit entity by its id.
-func (c *UnitClient) Get(ctx context.Context, id uuid.UUID) (*Unit, error) {
-	return c.Query().Where(unit.ID(id)).Only(ctx)
+// Get returns a Space entity by its id.
+func (c *SpaceClient) Get(ctx context.Context, id uuid.UUID) (*Space, error) {
+	return c.Query().Where(space.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *UnitClient) GetX(ctx context.Context, id uuid.UUID) *Unit {
+func (c *SpaceClient) GetX(ctx context.Context, id uuid.UUID) *Space {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
@@ -2714,15 +3110,15 @@ func (c *UnitClient) GetX(ctx context.Context, id uuid.UUID) *Unit {
 	return obj
 }
 
-// QueryProperty queries the property edge of a Unit.
-func (c *UnitClient) QueryProperty(_m *Unit) *PropertyQuery {
+// QueryProperty queries the property edge of a Space.
+func (c *SpaceClient) QueryProperty(_m *Space) *PropertyQuery {
 	query := (&PropertyClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(unit.Table, unit.FieldID, id),
+			sqlgraph.From(space.Table, space.FieldID, id),
 			sqlgraph.To(property.Table, property.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, unit.PropertyTable, unit.PropertyColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, space.PropertyTable, space.PropertyColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2730,15 +3126,15 @@ func (c *UnitClient) QueryProperty(_m *Unit) *PropertyQuery {
 	return query
 }
 
-// QueryLeases queries the leases edge of a Unit.
-func (c *UnitClient) QueryLeases(_m *Unit) *LeaseQuery {
-	query := (&LeaseClient{config: c.config}).Query()
+// QueryBuilding queries the building edge of a Space.
+func (c *SpaceClient) QueryBuilding(_m *Space) *BuildingQuery {
+	query := (&BuildingClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(unit.Table, unit.FieldID, id),
-			sqlgraph.To(lease.Table, lease.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, unit.LeasesTable, unit.LeasesColumn),
+			sqlgraph.From(space.Table, space.FieldID, id),
+			sqlgraph.To(building.Table, building.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, space.BuildingTable, space.BuildingColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2746,15 +3142,15 @@ func (c *UnitClient) QueryLeases(_m *Unit) *LeaseQuery {
 	return query
 }
 
-// QueryActiveLease queries the active_lease edge of a Unit.
-func (c *UnitClient) QueryActiveLease(_m *Unit) *LeaseQuery {
-	query := (&LeaseClient{config: c.config}).Query()
+// QueryChildren queries the children edge of a Space.
+func (c *SpaceClient) QueryChildren(_m *Space) *SpaceQuery {
+	query := (&SpaceClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(unit.Table, unit.FieldID, id),
-			sqlgraph.To(lease.Table, lease.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, unit.ActiveLeaseTable, unit.ActiveLeaseColumn),
+			sqlgraph.From(space.Table, space.FieldID, id),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, space.ChildrenTable, space.ChildrenColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2762,15 +3158,63 @@ func (c *UnitClient) QueryActiveLease(_m *Unit) *LeaseQuery {
 	return query
 }
 
-// QueryApplications queries the applications edge of a Unit.
-func (c *UnitClient) QueryApplications(_m *Unit) *ApplicationQuery {
+// QueryParentSpace queries the parent_space edge of a Space.
+func (c *SpaceClient) QueryParentSpace(_m *Space) *SpaceQuery {
+	query := (&SpaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(space.Table, space.FieldID, id),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, space.ParentSpaceTable, space.ParentSpaceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryApplications queries the applications edge of a Space.
+func (c *SpaceClient) QueryApplications(_m *Space) *ApplicationQuery {
 	query := (&ApplicationClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
-			sqlgraph.From(unit.Table, unit.FieldID, id),
+			sqlgraph.From(space.Table, space.FieldID, id),
 			sqlgraph.To(application.Table, application.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, unit.ApplicationsTable, unit.ApplicationsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, space.ApplicationsTable, space.ApplicationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLeaseSpaces queries the lease_spaces edge of a Space.
+func (c *SpaceClient) QueryLeaseSpaces(_m *Space) *LeaseSpaceQuery {
+	query := (&LeaseSpaceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(space.Table, space.FieldID, id),
+			sqlgraph.To(leasespace.Table, leasespace.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, space.LeaseSpacesTable, space.LeaseSpacesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLedgerEntries queries the ledger_entries edge of a Space.
+func (c *SpaceClient) QueryLedgerEntries(_m *Space) *LedgerEntryQuery {
+	query := (&LedgerEntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(space.Table, space.FieldID, id),
+			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, space.LedgerEntriesTable, space.LedgerEntriesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2779,40 +3223,41 @@ func (c *UnitClient) QueryApplications(_m *Unit) *ApplicationQuery {
 }
 
 // Hooks returns the client hooks.
-func (c *UnitClient) Hooks() []Hook {
-	return c.hooks.Unit
+func (c *SpaceClient) Hooks() []Hook {
+	hooks := c.hooks.Space
+	return append(hooks[:len(hooks):len(hooks)], space.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
-func (c *UnitClient) Interceptors() []Interceptor {
-	return c.inters.Unit
+func (c *SpaceClient) Interceptors() []Interceptor {
+	return c.inters.Space
 }
 
-func (c *UnitClient) mutate(ctx context.Context, m *UnitMutation) (Value, error) {
+func (c *SpaceClient) mutate(ctx context.Context, m *SpaceMutation) (Value, error) {
 	switch m.Op() {
 	case OpCreate:
-		return (&UnitCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&SpaceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdate:
-		return (&UnitUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&SpaceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpUpdateOne:
-		return (&UnitUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+		return (&SpaceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
 	case OpDelete, OpDeleteOne:
-		return (&UnitDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+		return (&SpaceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
-		return nil, fmt.Errorf("ent: unknown Unit mutation op: %q", m.Op())
+		return nil, fmt.Errorf("ent: unknown Space mutation op: %q", m.Op())
 	}
 }
 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Account, Application, BankAccount, JournalEntry, Lease, LedgerEntry,
-		Organization, Person, PersonRole, Portfolio, Property, Reconciliation,
-		Unit []ent.Hook
+		Account, Application, BankAccount, Building, JournalEntry, Lease, LeaseSpace,
+		LedgerEntry, Organization, Person, PersonRole, Portfolio, Property,
+		Reconciliation, Space []ent.Hook
 	}
 	inters struct {
-		Account, Application, BankAccount, JournalEntry, Lease, LedgerEntry,
-		Organization, Person, PersonRole, Portfolio, Property, Reconciliation,
-		Unit []ent.Interceptor
+		Account, Application, BankAccount, Building, JournalEntry, Lease, LeaseSpace,
+		LedgerEntry, Organization, Person, PersonRole, Portfolio, Property,
+		Reconciliation, Space []ent.Interceptor
 	}
 )

@@ -18,7 +18,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/person"
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // ApplicationUpdate is the builder for updating Application entities.
@@ -123,13 +123,13 @@ func (_u *ApplicationUpdate) ClearAgentGoalID() *ApplicationUpdate {
 }
 
 // SetApplicantPersonID sets the "applicant_person_id" field.
-func (_u *ApplicationUpdate) SetApplicantPersonID(v string) *ApplicationUpdate {
+func (_u *ApplicationUpdate) SetApplicantPersonID(v uuid.UUID) *ApplicationUpdate {
 	_u.mutation.SetApplicantPersonID(v)
 	return _u
 }
 
 // SetNillableApplicantPersonID sets the "applicant_person_id" field if the given value is not nil.
-func (_u *ApplicationUpdate) SetNillableApplicantPersonID(v *string) *ApplicationUpdate {
+func (_u *ApplicationUpdate) SetNillableApplicantPersonID(v *uuid.UUID) *ApplicationUpdate {
 	if v != nil {
 		_u.SetApplicantPersonID(*v)
 	}
@@ -434,6 +434,44 @@ func (_u *ApplicationUpdate) SetNillableFeePaid(v *bool) *ApplicationUpdate {
 	return _u
 }
 
+// SetPropertyID sets the "property" edge to the Property entity by ID.
+func (_u *ApplicationUpdate) SetPropertyID(id uuid.UUID) *ApplicationUpdate {
+	_u.mutation.SetPropertyID(id)
+	return _u
+}
+
+// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
+func (_u *ApplicationUpdate) SetNillablePropertyID(id *uuid.UUID) *ApplicationUpdate {
+	if id != nil {
+		_u = _u.SetPropertyID(*id)
+	}
+	return _u
+}
+
+// SetProperty sets the "property" edge to the Property entity.
+func (_u *ApplicationUpdate) SetProperty(v *Property) *ApplicationUpdate {
+	return _u.SetPropertyID(v.ID)
+}
+
+// SetSpaceID sets the "space" edge to the Space entity by ID.
+func (_u *ApplicationUpdate) SetSpaceID(id uuid.UUID) *ApplicationUpdate {
+	_u.mutation.SetSpaceID(id)
+	return _u
+}
+
+// SetNillableSpaceID sets the "space" edge to the Space entity by ID if the given value is not nil.
+func (_u *ApplicationUpdate) SetNillableSpaceID(id *uuid.UUID) *ApplicationUpdate {
+	if id != nil {
+		_u = _u.SetSpaceID(*id)
+	}
+	return _u
+}
+
+// SetSpace sets the "space" edge to the Space entity.
+func (_u *ApplicationUpdate) SetSpace(v *Space) *ApplicationUpdate {
+	return _u.SetSpaceID(v.ID)
+}
+
 // SetResultingLeaseID sets the "resulting_lease" edge to the Lease entity by ID.
 func (_u *ApplicationUpdate) SetResultingLeaseID(id uuid.UUID) *ApplicationUpdate {
 	_u.mutation.SetResultingLeaseID(id)
@@ -464,39 +502,21 @@ func (_u *ApplicationUpdate) SetApplicant(v *Person) *ApplicationUpdate {
 	return _u.SetApplicantID(v.ID)
 }
 
-// SetPropertyID sets the "property" edge to the Property entity by ID.
-func (_u *ApplicationUpdate) SetPropertyID(id uuid.UUID) *ApplicationUpdate {
-	_u.mutation.SetPropertyID(id)
-	return _u
-}
-
-// SetProperty sets the "property" edge to the Property entity.
-func (_u *ApplicationUpdate) SetProperty(v *Property) *ApplicationUpdate {
-	return _u.SetPropertyID(v.ID)
-}
-
-// SetUnitID sets the "unit" edge to the Unit entity by ID.
-func (_u *ApplicationUpdate) SetUnitID(id uuid.UUID) *ApplicationUpdate {
-	_u.mutation.SetUnitID(id)
-	return _u
-}
-
-// SetNillableUnitID sets the "unit" edge to the Unit entity by ID if the given value is not nil.
-func (_u *ApplicationUpdate) SetNillableUnitID(id *uuid.UUID) *ApplicationUpdate {
-	if id != nil {
-		_u = _u.SetUnitID(*id)
-	}
-	return _u
-}
-
-// SetUnit sets the "unit" edge to the Unit entity.
-func (_u *ApplicationUpdate) SetUnit(v *Unit) *ApplicationUpdate {
-	return _u.SetUnitID(v.ID)
-}
-
 // Mutation returns the ApplicationMutation object of the builder.
 func (_u *ApplicationUpdate) Mutation() *ApplicationMutation {
 	return _u.mutation
+}
+
+// ClearProperty clears the "property" edge to the Property entity.
+func (_u *ApplicationUpdate) ClearProperty() *ApplicationUpdate {
+	_u.mutation.ClearProperty()
+	return _u
+}
+
+// ClearSpace clears the "space" edge to the Space entity.
+func (_u *ApplicationUpdate) ClearSpace() *ApplicationUpdate {
+	_u.mutation.ClearSpace()
+	return _u
 }
 
 // ClearResultingLease clears the "resulting_lease" edge to the Lease entity.
@@ -508,18 +528,6 @@ func (_u *ApplicationUpdate) ClearResultingLease() *ApplicationUpdate {
 // ClearApplicant clears the "applicant" edge to the Person entity.
 func (_u *ApplicationUpdate) ClearApplicant() *ApplicationUpdate {
 	_u.mutation.ClearApplicant()
-	return _u
-}
-
-// ClearProperty clears the "property" edge to the Property entity.
-func (_u *ApplicationUpdate) ClearProperty() *ApplicationUpdate {
-	_u.mutation.ClearProperty()
-	return _u
-}
-
-// ClearUnit clears the "unit" edge to the Unit entity.
-func (_u *ApplicationUpdate) ClearUnit() *ApplicationUpdate {
-	_u.mutation.ClearUnit()
 	return _u
 }
 
@@ -589,9 +597,6 @@ func (_u *ApplicationUpdate) check() error {
 	if _u.mutation.ApplicantCleared() && len(_u.mutation.ApplicantIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Application.applicant"`)
 	}
-	if _u.mutation.PropertyCleared() && len(_u.mutation.PropertyIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Application.property"`)
-	}
 	return nil
 }
 
@@ -630,9 +635,6 @@ func (_u *ApplicationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.AgentGoalIDCleared() {
 		_spec.ClearField(application.FieldAgentGoalID, field.TypeString)
-	}
-	if value, ok := _u.mutation.ApplicantPersonID(); ok {
-		_spec.SetField(application.FieldApplicantPersonID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(application.FieldStatus, field.TypeEnum, value)
@@ -723,6 +725,64 @@ func (_u *ApplicationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.FeePaid(); ok {
 		_spec.SetField(application.FieldFeePaid, field.TypeBool, value)
 	}
+	if _u.mutation.PropertyCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.PropertyTable,
+			Columns: []string{application.PropertyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PropertyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.PropertyTable,
+			Columns: []string{application.PropertyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SpaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.SpaceTable,
+			Columns: []string{application.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SpaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.SpaceTable,
+			Columns: []string{application.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.ResultingLeaseCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -774,64 +834,6 @@ func (_u *ApplicationUpdate) sqlSave(ctx context.Context) (_node int, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PropertyCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.PropertyTable,
-			Columns: []string{application.PropertyColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PropertyIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.PropertyTable,
-			Columns: []string{application.PropertyColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.UnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.UnitTable,
-			Columns: []string{application.UnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.UnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.UnitTable,
-			Columns: []string{application.UnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -948,13 +950,13 @@ func (_u *ApplicationUpdateOne) ClearAgentGoalID() *ApplicationUpdateOne {
 }
 
 // SetApplicantPersonID sets the "applicant_person_id" field.
-func (_u *ApplicationUpdateOne) SetApplicantPersonID(v string) *ApplicationUpdateOne {
+func (_u *ApplicationUpdateOne) SetApplicantPersonID(v uuid.UUID) *ApplicationUpdateOne {
 	_u.mutation.SetApplicantPersonID(v)
 	return _u
 }
 
 // SetNillableApplicantPersonID sets the "applicant_person_id" field if the given value is not nil.
-func (_u *ApplicationUpdateOne) SetNillableApplicantPersonID(v *string) *ApplicationUpdateOne {
+func (_u *ApplicationUpdateOne) SetNillableApplicantPersonID(v *uuid.UUID) *ApplicationUpdateOne {
 	if v != nil {
 		_u.SetApplicantPersonID(*v)
 	}
@@ -1259,6 +1261,44 @@ func (_u *ApplicationUpdateOne) SetNillableFeePaid(v *bool) *ApplicationUpdateOn
 	return _u
 }
 
+// SetPropertyID sets the "property" edge to the Property entity by ID.
+func (_u *ApplicationUpdateOne) SetPropertyID(id uuid.UUID) *ApplicationUpdateOne {
+	_u.mutation.SetPropertyID(id)
+	return _u
+}
+
+// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
+func (_u *ApplicationUpdateOne) SetNillablePropertyID(id *uuid.UUID) *ApplicationUpdateOne {
+	if id != nil {
+		_u = _u.SetPropertyID(*id)
+	}
+	return _u
+}
+
+// SetProperty sets the "property" edge to the Property entity.
+func (_u *ApplicationUpdateOne) SetProperty(v *Property) *ApplicationUpdateOne {
+	return _u.SetPropertyID(v.ID)
+}
+
+// SetSpaceID sets the "space" edge to the Space entity by ID.
+func (_u *ApplicationUpdateOne) SetSpaceID(id uuid.UUID) *ApplicationUpdateOne {
+	_u.mutation.SetSpaceID(id)
+	return _u
+}
+
+// SetNillableSpaceID sets the "space" edge to the Space entity by ID if the given value is not nil.
+func (_u *ApplicationUpdateOne) SetNillableSpaceID(id *uuid.UUID) *ApplicationUpdateOne {
+	if id != nil {
+		_u = _u.SetSpaceID(*id)
+	}
+	return _u
+}
+
+// SetSpace sets the "space" edge to the Space entity.
+func (_u *ApplicationUpdateOne) SetSpace(v *Space) *ApplicationUpdateOne {
+	return _u.SetSpaceID(v.ID)
+}
+
 // SetResultingLeaseID sets the "resulting_lease" edge to the Lease entity by ID.
 func (_u *ApplicationUpdateOne) SetResultingLeaseID(id uuid.UUID) *ApplicationUpdateOne {
 	_u.mutation.SetResultingLeaseID(id)
@@ -1289,39 +1329,21 @@ func (_u *ApplicationUpdateOne) SetApplicant(v *Person) *ApplicationUpdateOne {
 	return _u.SetApplicantID(v.ID)
 }
 
-// SetPropertyID sets the "property" edge to the Property entity by ID.
-func (_u *ApplicationUpdateOne) SetPropertyID(id uuid.UUID) *ApplicationUpdateOne {
-	_u.mutation.SetPropertyID(id)
-	return _u
-}
-
-// SetProperty sets the "property" edge to the Property entity.
-func (_u *ApplicationUpdateOne) SetProperty(v *Property) *ApplicationUpdateOne {
-	return _u.SetPropertyID(v.ID)
-}
-
-// SetUnitID sets the "unit" edge to the Unit entity by ID.
-func (_u *ApplicationUpdateOne) SetUnitID(id uuid.UUID) *ApplicationUpdateOne {
-	_u.mutation.SetUnitID(id)
-	return _u
-}
-
-// SetNillableUnitID sets the "unit" edge to the Unit entity by ID if the given value is not nil.
-func (_u *ApplicationUpdateOne) SetNillableUnitID(id *uuid.UUID) *ApplicationUpdateOne {
-	if id != nil {
-		_u = _u.SetUnitID(*id)
-	}
-	return _u
-}
-
-// SetUnit sets the "unit" edge to the Unit entity.
-func (_u *ApplicationUpdateOne) SetUnit(v *Unit) *ApplicationUpdateOne {
-	return _u.SetUnitID(v.ID)
-}
-
 // Mutation returns the ApplicationMutation object of the builder.
 func (_u *ApplicationUpdateOne) Mutation() *ApplicationMutation {
 	return _u.mutation
+}
+
+// ClearProperty clears the "property" edge to the Property entity.
+func (_u *ApplicationUpdateOne) ClearProperty() *ApplicationUpdateOne {
+	_u.mutation.ClearProperty()
+	return _u
+}
+
+// ClearSpace clears the "space" edge to the Space entity.
+func (_u *ApplicationUpdateOne) ClearSpace() *ApplicationUpdateOne {
+	_u.mutation.ClearSpace()
+	return _u
 }
 
 // ClearResultingLease clears the "resulting_lease" edge to the Lease entity.
@@ -1333,18 +1355,6 @@ func (_u *ApplicationUpdateOne) ClearResultingLease() *ApplicationUpdateOne {
 // ClearApplicant clears the "applicant" edge to the Person entity.
 func (_u *ApplicationUpdateOne) ClearApplicant() *ApplicationUpdateOne {
 	_u.mutation.ClearApplicant()
-	return _u
-}
-
-// ClearProperty clears the "property" edge to the Property entity.
-func (_u *ApplicationUpdateOne) ClearProperty() *ApplicationUpdateOne {
-	_u.mutation.ClearProperty()
-	return _u
-}
-
-// ClearUnit clears the "unit" edge to the Unit entity.
-func (_u *ApplicationUpdateOne) ClearUnit() *ApplicationUpdateOne {
-	_u.mutation.ClearUnit()
 	return _u
 }
 
@@ -1427,9 +1437,6 @@ func (_u *ApplicationUpdateOne) check() error {
 	if _u.mutation.ApplicantCleared() && len(_u.mutation.ApplicantIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Application.applicant"`)
 	}
-	if _u.mutation.PropertyCleared() && len(_u.mutation.PropertyIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Application.property"`)
-	}
 	return nil
 }
 
@@ -1485,9 +1492,6 @@ func (_u *ApplicationUpdateOne) sqlSave(ctx context.Context) (_node *Application
 	}
 	if _u.mutation.AgentGoalIDCleared() {
 		_spec.ClearField(application.FieldAgentGoalID, field.TypeString)
-	}
-	if value, ok := _u.mutation.ApplicantPersonID(); ok {
-		_spec.SetField(application.FieldApplicantPersonID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(application.FieldStatus, field.TypeEnum, value)
@@ -1578,6 +1582,64 @@ func (_u *ApplicationUpdateOne) sqlSave(ctx context.Context) (_node *Application
 	if value, ok := _u.mutation.FeePaid(); ok {
 		_spec.SetField(application.FieldFeePaid, field.TypeBool, value)
 	}
+	if _u.mutation.PropertyCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.PropertyTable,
+			Columns: []string{application.PropertyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PropertyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.PropertyTable,
+			Columns: []string{application.PropertyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SpaceCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.SpaceTable,
+			Columns: []string{application.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SpaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.SpaceTable,
+			Columns: []string{application.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _u.mutation.ResultingLeaseCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -1629,64 +1691,6 @@ func (_u *ApplicationUpdateOne) sqlSave(ctx context.Context) (_node *Application
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(person.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PropertyCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.PropertyTable,
-			Columns: []string{application.PropertyColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PropertyIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.PropertyTable,
-			Columns: []string{application.PropertyColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.UnitCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.UnitTable,
-			Columns: []string{application.UnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.UnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.UnitTable,
-			Columns: []string{application.UnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

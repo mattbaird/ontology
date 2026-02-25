@@ -64,16 +64,30 @@ const (
 	FieldApplicationFeeCurrency = "application_fee_currency"
 	// FieldFeePaid holds the string denoting the fee_paid field in the database.
 	FieldFeePaid = "fee_paid"
+	// EdgeProperty holds the string denoting the property edge name in mutations.
+	EdgeProperty = "property"
+	// EdgeSpace holds the string denoting the space edge name in mutations.
+	EdgeSpace = "space"
 	// EdgeResultingLease holds the string denoting the resulting_lease edge name in mutations.
 	EdgeResultingLease = "resulting_lease"
 	// EdgeApplicant holds the string denoting the applicant edge name in mutations.
 	EdgeApplicant = "applicant"
-	// EdgeProperty holds the string denoting the property edge name in mutations.
-	EdgeProperty = "property"
-	// EdgeUnit holds the string denoting the unit edge name in mutations.
-	EdgeUnit = "unit"
 	// Table holds the table name of the application in the database.
 	Table = "applications"
+	// PropertyTable is the table that holds the property relation/edge.
+	PropertyTable = "applications"
+	// PropertyInverseTable is the table name for the Property entity.
+	// It exists in this package in order to avoid circular dependency with the "property" package.
+	PropertyInverseTable = "properties"
+	// PropertyColumn is the table column denoting the property relation/edge.
+	PropertyColumn = "property_applications"
+	// SpaceTable is the table that holds the space relation/edge.
+	SpaceTable = "applications"
+	// SpaceInverseTable is the table name for the Space entity.
+	// It exists in this package in order to avoid circular dependency with the "space" package.
+	SpaceInverseTable = "spaces"
+	// SpaceColumn is the table column denoting the space relation/edge.
+	SpaceColumn = "space_applications"
 	// ResultingLeaseTable is the table that holds the resulting_lease relation/edge.
 	ResultingLeaseTable = "applications"
 	// ResultingLeaseInverseTable is the table name for the Lease entity.
@@ -87,21 +101,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "person" package.
 	ApplicantInverseTable = "persons"
 	// ApplicantColumn is the table column denoting the applicant relation/edge.
-	ApplicantColumn = "application_applicant"
-	// PropertyTable is the table that holds the property relation/edge.
-	PropertyTable = "applications"
-	// PropertyInverseTable is the table name for the Property entity.
-	// It exists in this package in order to avoid circular dependency with the "property" package.
-	PropertyInverseTable = "properties"
-	// PropertyColumn is the table column denoting the property relation/edge.
-	PropertyColumn = "application_property"
-	// UnitTable is the table that holds the unit relation/edge.
-	UnitTable = "applications"
-	// UnitInverseTable is the table name for the Unit entity.
-	// It exists in this package in order to avoid circular dependency with the "unit" package.
-	UnitInverseTable = "units"
-	// UnitColumn is the table column denoting the unit relation/edge.
-	UnitColumn = "application_unit"
+	ApplicantColumn = "applicant_person_id"
 )
 
 // Columns holds all SQL columns for application fields.
@@ -136,13 +136,10 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "applications"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"application_applicant",
-	"application_property",
-	"application_unit",
 	"lease_application",
 	"person_applications",
 	"property_applications",
-	"unit_applications",
+	"space_applications",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -363,6 +360,20 @@ func ByFeePaid(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFeePaid, opts...).ToFunc()
 }
 
+// ByPropertyField orders the results by property field.
+func ByPropertyField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPropertyStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// BySpaceField orders the results by space field.
+func BySpaceField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSpaceStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByResultingLeaseField orders the results by resulting_lease field.
 func ByResultingLeaseField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -376,19 +387,19 @@ func ByApplicantField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newApplicantStep(), sql.OrderByField(field, opts...))
 	}
 }
-
-// ByPropertyField orders the results by property field.
-func ByPropertyField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newPropertyStep(), sql.OrderByField(field, opts...))
-	}
+func newPropertyStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PropertyInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, PropertyTable, PropertyColumn),
+	)
 }
-
-// ByUnitField orders the results by unit field.
-func ByUnitField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newUnitStep(), sql.OrderByField(field, opts...))
-	}
+func newSpaceStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SpaceInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, SpaceTable, SpaceColumn),
+	)
 }
 func newResultingLeaseStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
@@ -402,19 +413,5 @@ func newApplicantStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ApplicantInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, ApplicantTable, ApplicantColumn),
-	)
-}
-func newPropertyStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(PropertyInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, PropertyTable, PropertyColumn),
-	)
-}
-func newUnitStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(UnitInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, UnitTable, UnitColumn),
 	)
 }

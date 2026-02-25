@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent"
 )
@@ -42,7 +43,7 @@ func decodeJSON(r *http.Request, v any) error {
 
 // parseUUID extracts and validates a UUID path parameter.
 func parseUUID(w http.ResponseWriter, r *http.Request, paramName string) (uuid.UUID, bool) {
-	raw := r.PathValue(paramName)
+	raw := chi.URLParam(r, paramName)
 	id, err := uuid.Parse(raw)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "INVALID_ID", "invalid UUID: "+raw)

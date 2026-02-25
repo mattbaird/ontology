@@ -21,7 +21,6 @@ import "time"
 	status: "active" | "inactive" | "onboarding" | "offboarding"
 
 	// Financial settings at portfolio level
-	default_late_fee_policy?: string // Reference to fee schedule
 	default_payment_methods?: [...("ach" | "credit_card" | "check" | "cash" | "money_order")]
 	fiscal_year_start_month: *1 | int & >=1 & <=12 // January default
 
@@ -44,14 +43,15 @@ import "time"
 	property_type: "single_family" | "multi_family" | "commercial_office" |
 		"commercial_retail" | "mixed_use" | "industrial" |
 		"affordable_housing" | "student_housing" | "senior_living" |
-		"vacation_rental" | "mobile_home_park"
+		"vacation_rental" | "mobile_home_park" |
+		"self_storage" | "coworking" | "data_center" | "medical_office"
 
 	status: "active" | "inactive" | "under_renovation" | "for_sale" | "onboarding"
 
 	// Physical
 	year_built:           int & >=1800 & <=2030
 	total_square_footage: float & >0
-	total_units:          int & >=1
+	total_spaces:         int & >=1
 	lot_size_sqft?:       float & >0
 	stories?:             int & >=1
 	parking_spaces?:      int & >=0
@@ -72,9 +72,9 @@ import "time"
 
 	// CONSTRAINTS:
 
-	// Single-family = exactly 1 unit
+	// Single-family = exactly 1 space
 	if property_type == "single_family" {
-		total_units: 1
+		total_spaces: 1
 	}
 
 	// Affordable housing MUST specify compliance programs
@@ -95,18 +95,54 @@ import "time"
 	audit: #AuditMetadata
 }
 
-// ─── Unit ────────────────────────────────────────────────────────────────────
+// ─── Building ────────────────────────────────────────────────────────────────
+// Optional grouping between Property and Space. Not all properties have
+// distinct buildings (e.g., single-family), but campuses and multi-building
+// complexes need this level.
 
-#Unit: {
+#Building: {
 	id:          string & !=""
 	property_id: string & !=""
-	unit_number: string & !="" // "101", "A", "Suite 200", etc.
+	name:        string & !=""
 
-	unit_type: "residential" | "commercial_office" | "commercial_retail" |
-		"storage" | "parking" | "common_area"
+	building_type: "residential" | "commercial" | "mixed_use" | "parking_structure" |
+		"industrial" | "storage" | "auxiliary"
+
+	address?: #Address
+
+	status: "active" | "inactive" | "under_renovation"
+
+	floors?:                       int & >=1
+	year_built?:                   int & >=1800 & <=2030
+	total_square_footage?:         float & >0
+	total_rentable_square_footage?: float & >0
+
+	audit: #AuditMetadata
+}
+
+// ─── Space ──────────────────────────────────────────────────────────────────
+// A leasable (or non-leasable) area within a property or building.
+// Replaces the former "Unit" entity with expanded capabilities.
+
+#Space: {
+	id:          string & !=""
+	property_id: string & !=""
+	space_number: string & !="" // "101", "A", "Suite 200", etc.
+
+	space_type: "residential_unit" | "commercial_office" | "commercial_retail" |
+		"storage" | "parking" | "common_area" |
+		"industrial" | "lot_pad" | "bed_space" | "desk_space"
 
 	status: "vacant" | "occupied" | "notice_given" | "make_ready" |
-		"down" | "model" | "reserved"
+		"down" | "model" | "reserved" | "owner_occupied"
+
+	// Hierarchy
+	building_id?:      string
+	parent_space_id?:  string
+
+	// Leasability
+	leasable:           bool | *true
+	shared_with_parent: bool | *false
 
 	// Physical
 	square_footage: float & >0
@@ -121,33 +157,44 @@ import "time"
 	pet_friendly:   bool | *true
 	furnished:      bool | *false
 
+	// Specialized infrastructure for commercial/industrial spaces
+	specialized_infrastructure?: [...("medical_plumbing" | "clean_room" | "high_voltage" | "loading_dock" | "commercial_kitchen" | "server_room" | "cold_storage" | "hazmat_ventilation" | "grease_trap" | "exhaust_hood")]
+
 	// Financial
 	market_rent?: #NonNegativeMoney
 
-	// Active lease — computed from relationship traversal
-	active_lease_id?: string
-
-	// For affordable housing — unit-level income restrictions
+	// For affordable housing — space-level income restrictions
 	ami_restriction?: int & >=0 & <=150 // % of Area Median Income
+
+	// Active lease (computed from LeaseSpace relationship traversal)
+	active_lease_id?: string
 
 	// CONSTRAINTS:
 
-	// Occupied units MUST have an active lease
-	if status == "occupied" {
-		active_lease_id: string & !=""
-	}
-
-	// Residential units should have bedroom/bathroom counts
-	if unit_type == "residential" {
+	// Residential spaces should have bedroom/bathroom counts
+	if space_type == "residential_unit" {
 		bedrooms:  int
 		bathrooms: float
 	}
 
-	// Parking/storage don't have bedrooms
-	if unit_type == "parking" || unit_type == "storage" {
+	// Parking/storage/lot_pad don't have bedrooms
+	if space_type == "parking" || space_type == "storage" || space_type == "lot_pad" {
 		bedrooms:  0 | *0
 		bathrooms: 0 | *0
 	}
+
+	// Common areas are not directly leasable
+	if space_type == "common_area" {
+		leasable: false
+	}
+
+	// Occupied spaces must have an active lease
+	if status == "occupied" {
+		active_lease_id: string & !=""
+	}
+
+	// CONSTRAINT: If parent_space_id is set, building_id should match parent's building_id
+	// (enforced at runtime via Ent hooks — cross-entity validation)
 
 	audit: #AuditMetadata
 }

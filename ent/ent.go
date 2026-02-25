@@ -15,8 +15,10 @@ import (
 	"github.com/matthewbaird/ontology/ent/account"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/building"
 	"github.com/matthewbaird/ontology/ent/journalentry"
 	"github.com/matthewbaird/ontology/ent/lease"
+	"github.com/matthewbaird/ontology/ent/leasespace"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/organization"
 	"github.com/matthewbaird/ontology/ent/person"
@@ -24,7 +26,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/property"
 	"github.com/matthewbaird/ontology/ent/reconciliation"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -88,8 +90,10 @@ func checkColumn(t, c string) error {
 			account.Table:        account.ValidColumn,
 			application.Table:    application.ValidColumn,
 			bankaccount.Table:    bankaccount.ValidColumn,
+			building.Table:       building.ValidColumn,
 			journalentry.Table:   journalentry.ValidColumn,
 			lease.Table:          lease.ValidColumn,
+			leasespace.Table:     leasespace.ValidColumn,
 			ledgerentry.Table:    ledgerentry.ValidColumn,
 			organization.Table:   organization.ValidColumn,
 			person.Table:         person.ValidColumn,
@@ -97,7 +101,7 @@ func checkColumn(t, c string) error {
 			portfolio.Table:      portfolio.ValidColumn,
 			property.Table:       property.ValidColumn,
 			reconciliation.Table: reconciliation.ValidColumn,
-			unit.Table:           unit.ValidColumn,
+			space.Table:          space.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

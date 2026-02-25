@@ -17,14 +17,21 @@ package propeller
 	eviction:                ["terminated"]
 }
 
-#UnitTransitions: {
-	vacant:       ["occupied", "make_ready", "down", "model", "reserved"]
-	occupied:     ["notice_given"]
-	notice_given: ["make_ready", "occupied"] // Can rescind notice
-	make_ready:   ["vacant", "down"]
-	down:         ["make_ready", "vacant"]
-	model:        ["vacant", "occupied"]
-	reserved:     ["vacant", "occupied"]
+#SpaceTransitions: {
+	vacant:         ["occupied", "make_ready", "down", "model", "reserved"]
+	occupied:       ["notice_given"]
+	notice_given:   ["make_ready", "occupied"] // Can rescind notice
+	make_ready:     ["vacant", "down"]
+	down:           ["make_ready", "vacant"]
+	model:          ["vacant", "occupied"]
+	reserved:       ["vacant", "occupied"]
+	owner_occupied: ["vacant"]
+}
+
+#BuildingTransitions: {
+	active:           ["inactive", "under_renovation"]
+	inactive:         ["active"]
+	under_renovation: ["active"]
 }
 
 #ApplicationTransitions: {

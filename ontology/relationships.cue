@@ -29,16 +29,30 @@ relationships: [
 		semantic: "Portfolio uses BankAccount for trust funds", inverse_name: "trust_portfolio"},
 
 	// Property relationships
-	{from: "Property", to: "Unit", edge_name: "units", cardinality: "O2M",
-		semantic: "Property contains Units", inverse_name: "property"},
+	{from: "Property", to: "Building", edge_name: "buildings", cardinality: "O2M",
+		semantic: "Property contains Buildings", inverse_name: "property"},
+	{from: "Property", to: "Space", edge_name: "spaces", cardinality: "O2M",
+		semantic: "Property contains Spaces", inverse_name: "property"},
 	{from: "Property", to: "BankAccount", edge_name: "bank_account", cardinality: "M2O",
 		semantic: "Property uses BankAccount", inverse_name: "properties"},
+	{from: "Property", to: "Application", edge_name: "applications", cardinality: "O2M",
+		semantic: "Property receives Applications", inverse_name: "property"},
 
-	// Unit relationships
-	{from: "Unit", to: "Lease", edge_name: "leases", cardinality: "O2M",
-		semantic: "Unit has Leases over time", inverse_name: "unit"},
-	{from: "Unit", to: "Lease", edge_name: "active_lease", cardinality: "O2O",
-		semantic: "Unit has at most one active Lease", inverse_name: "occupied_unit"},
+	// Building relationships
+	{from: "Building", to: "Space", edge_name: "spaces", cardinality: "O2M",
+		semantic: "Building contains Spaces", inverse_name: "building"},
+
+	// Space relationships
+	{from: "Space", to: "Space", edge_name: "children", cardinality: "O2M",
+		semantic: "Space has child Spaces", inverse_name: "parent_space"},
+	{from: "Space", to: "Application", edge_name: "applications", cardinality: "O2M",
+		semantic: "Space receives Applications", inverse_name: "space"},
+
+	// LeaseSpace relationships (M2M join between Lease and Space)
+	{from: "LeaseSpace", to: "Lease", edge_name: "lease", cardinality: "M2O", required: true,
+		semantic: "LeaseSpace belongs to Lease", inverse_name: "lease_spaces"},
+	{from: "LeaseSpace", to: "Space", edge_name: "space", cardinality: "M2O", required: true,
+		semantic: "LeaseSpace references Space", inverse_name: "lease_spaces"},
 
 	// Lease relationships
 	{from: "Lease", to: "PersonRole", edge_name: "tenant_roles", cardinality: "M2M",
@@ -49,6 +63,8 @@ relationships: [
 		semantic: "Lease generates LedgerEntries", inverse_name: "lease"},
 	{from: "Lease", to: "Application", edge_name: "application", cardinality: "O2O",
 		semantic: "Lease originated from Application", inverse_name: "resulting_lease"},
+	{from: "Lease", to: "Lease", edge_name: "subleases", cardinality: "O2M",
+		semantic: "Lease has subleases", inverse_name: "parent_lease"},
 
 	// Person relationships
 	{from: "Person", to: "PersonRole", edge_name: "roles", cardinality: "O2M",
@@ -68,9 +84,11 @@ relationships: [
 	{from: "LedgerEntry", to: "Account", edge_name: "account", cardinality: "M2O", required: true,
 		semantic: "LedgerEntry posts to Account", inverse_name: "entries"},
 	{from: "LedgerEntry", to: "Property", edge_name: "property", cardinality: "M2O", required: true,
-		semantic: "LedgerEntry relates to Property", inverse_name: "property_ledger_entries"},
+		semantic: "LedgerEntry relates to Property", inverse_name: "ledger_entries"},
+	{from: "LedgerEntry", to: "Space", edge_name: "space", cardinality: "M2O",
+		semantic: "LedgerEntry relates to Space", inverse_name: "ledger_entries"},
 	{from: "LedgerEntry", to: "Person", edge_name: "person", cardinality: "M2O",
-		semantic: "LedgerEntry relates to Person", inverse_name: "person_ledger_entries"},
+		semantic: "LedgerEntry relates to Person", inverse_name: "ledger_entries"},
 	{from: "BankAccount", to: "Account", edge_name: "gl_account", cardinality: "M2O", required: true,
 		semantic: "BankAccount is tracked via GL Account", inverse_name: "bank_accounts"},
 	{from: "Reconciliation", to: "BankAccount", edge_name: "bank_account", cardinality: "M2O", required: true,
@@ -79,8 +97,4 @@ relationships: [
 	// Application relationships
 	{from: "Application", to: "Person", edge_name: "applicant", cardinality: "M2O", required: true,
 		semantic: "Application was submitted by Person", inverse_name: "applications"},
-	{from: "Application", to: "Property", edge_name: "property", cardinality: "M2O", required: true,
-		semantic: "Application is for Property", inverse_name: "applications"},
-	{from: "Application", to: "Unit", edge_name: "unit", cardinality: "M2O",
-		semantic: "Application is for specific Unit", inverse_name: "applications"},
 ]

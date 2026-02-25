@@ -15,11 +15,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/building"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 	"github.com/matthewbaird/ontology/internal/types"
 )
 
@@ -214,24 +215,24 @@ func (_u *PropertyUpdate) AddTotalSquareFootage(v float64) *PropertyUpdate {
 	return _u
 }
 
-// SetTotalUnits sets the "total_units" field.
-func (_u *PropertyUpdate) SetTotalUnits(v int) *PropertyUpdate {
-	_u.mutation.ResetTotalUnits()
-	_u.mutation.SetTotalUnits(v)
+// SetTotalSpaces sets the "total_spaces" field.
+func (_u *PropertyUpdate) SetTotalSpaces(v int) *PropertyUpdate {
+	_u.mutation.ResetTotalSpaces()
+	_u.mutation.SetTotalSpaces(v)
 	return _u
 }
 
-// SetNillableTotalUnits sets the "total_units" field if the given value is not nil.
-func (_u *PropertyUpdate) SetNillableTotalUnits(v *int) *PropertyUpdate {
+// SetNillableTotalSpaces sets the "total_spaces" field if the given value is not nil.
+func (_u *PropertyUpdate) SetNillableTotalSpaces(v *int) *PropertyUpdate {
 	if v != nil {
-		_u.SetTotalUnits(*v)
+		_u.SetTotalSpaces(*v)
 	}
 	return _u
 }
 
-// AddTotalUnits adds value to the "total_units" field.
-func (_u *PropertyUpdate) AddTotalUnits(v int) *PropertyUpdate {
-	_u.mutation.AddTotalUnits(v)
+// AddTotalSpaces adds value to the "total_spaces" field.
+func (_u *PropertyUpdate) AddTotalSpaces(v int) *PropertyUpdate {
+	_u.mutation.AddTotalSpaces(v)
 	return _u
 }
 
@@ -461,19 +462,34 @@ func (_u *PropertyUpdate) SetPortfolio(v *Portfolio) *PropertyUpdate {
 	return _u.SetPortfolioID(v.ID)
 }
 
-// AddUnitIDs adds the "units" edge to the Unit entity by IDs.
-func (_u *PropertyUpdate) AddUnitIDs(ids ...uuid.UUID) *PropertyUpdate {
-	_u.mutation.AddUnitIDs(ids...)
+// AddBuildingIDs adds the "buildings" edge to the Building entity by IDs.
+func (_u *PropertyUpdate) AddBuildingIDs(ids ...uuid.UUID) *PropertyUpdate {
+	_u.mutation.AddBuildingIDs(ids...)
 	return _u
 }
 
-// AddUnits adds the "units" edges to the Unit entity.
-func (_u *PropertyUpdate) AddUnits(v ...*Unit) *PropertyUpdate {
+// AddBuildings adds the "buildings" edges to the Building entity.
+func (_u *PropertyUpdate) AddBuildings(v ...*Building) *PropertyUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddUnitIDs(ids...)
+	return _u.AddBuildingIDs(ids...)
+}
+
+// AddSpaceIDs adds the "spaces" edge to the Space entity by IDs.
+func (_u *PropertyUpdate) AddSpaceIDs(ids ...uuid.UUID) *PropertyUpdate {
+	_u.mutation.AddSpaceIDs(ids...)
+	return _u
+}
+
+// AddSpaces adds the "spaces" edges to the Space entity.
+func (_u *PropertyUpdate) AddSpaces(v ...*Space) *PropertyUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSpaceIDs(ids...)
 }
 
 // SetBankAccountID sets the "bank_account" edge to the BankAccount entity by ID.
@@ -495,21 +511,6 @@ func (_u *PropertyUpdate) SetBankAccount(v *BankAccount) *PropertyUpdate {
 	return _u.SetBankAccountID(v.ID)
 }
 
-// AddPropertyLedgerEntryIDs adds the "property_ledger_entries" edge to the LedgerEntry entity by IDs.
-func (_u *PropertyUpdate) AddPropertyLedgerEntryIDs(ids ...uuid.UUID) *PropertyUpdate {
-	_u.mutation.AddPropertyLedgerEntryIDs(ids...)
-	return _u
-}
-
-// AddPropertyLedgerEntries adds the "property_ledger_entries" edges to the LedgerEntry entity.
-func (_u *PropertyUpdate) AddPropertyLedgerEntries(v ...*LedgerEntry) *PropertyUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddPropertyLedgerEntryIDs(ids...)
-}
-
 // AddApplicationIDs adds the "applications" edge to the Application entity by IDs.
 func (_u *PropertyUpdate) AddApplicationIDs(ids ...uuid.UUID) *PropertyUpdate {
 	_u.mutation.AddApplicationIDs(ids...)
@@ -525,6 +526,21 @@ func (_u *PropertyUpdate) AddApplications(v ...*Application) *PropertyUpdate {
 	return _u.AddApplicationIDs(ids...)
 }
 
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (_u *PropertyUpdate) AddLedgerEntryIDs(ids ...uuid.UUID) *PropertyUpdate {
+	_u.mutation.AddLedgerEntryIDs(ids...)
+	return _u
+}
+
+// AddLedgerEntries adds the "ledger_entries" edges to the LedgerEntry entity.
+func (_u *PropertyUpdate) AddLedgerEntries(v ...*LedgerEntry) *PropertyUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLedgerEntryIDs(ids...)
+}
+
 // Mutation returns the PropertyMutation object of the builder.
 func (_u *PropertyUpdate) Mutation() *PropertyMutation {
 	return _u.mutation
@@ -536,52 +552,52 @@ func (_u *PropertyUpdate) ClearPortfolio() *PropertyUpdate {
 	return _u
 }
 
-// ClearUnits clears all "units" edges to the Unit entity.
-func (_u *PropertyUpdate) ClearUnits() *PropertyUpdate {
-	_u.mutation.ClearUnits()
+// ClearBuildings clears all "buildings" edges to the Building entity.
+func (_u *PropertyUpdate) ClearBuildings() *PropertyUpdate {
+	_u.mutation.ClearBuildings()
 	return _u
 }
 
-// RemoveUnitIDs removes the "units" edge to Unit entities by IDs.
-func (_u *PropertyUpdate) RemoveUnitIDs(ids ...uuid.UUID) *PropertyUpdate {
-	_u.mutation.RemoveUnitIDs(ids...)
+// RemoveBuildingIDs removes the "buildings" edge to Building entities by IDs.
+func (_u *PropertyUpdate) RemoveBuildingIDs(ids ...uuid.UUID) *PropertyUpdate {
+	_u.mutation.RemoveBuildingIDs(ids...)
 	return _u
 }
 
-// RemoveUnits removes "units" edges to Unit entities.
-func (_u *PropertyUpdate) RemoveUnits(v ...*Unit) *PropertyUpdate {
+// RemoveBuildings removes "buildings" edges to Building entities.
+func (_u *PropertyUpdate) RemoveBuildings(v ...*Building) *PropertyUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveUnitIDs(ids...)
+	return _u.RemoveBuildingIDs(ids...)
+}
+
+// ClearSpaces clears all "spaces" edges to the Space entity.
+func (_u *PropertyUpdate) ClearSpaces() *PropertyUpdate {
+	_u.mutation.ClearSpaces()
+	return _u
+}
+
+// RemoveSpaceIDs removes the "spaces" edge to Space entities by IDs.
+func (_u *PropertyUpdate) RemoveSpaceIDs(ids ...uuid.UUID) *PropertyUpdate {
+	_u.mutation.RemoveSpaceIDs(ids...)
+	return _u
+}
+
+// RemoveSpaces removes "spaces" edges to Space entities.
+func (_u *PropertyUpdate) RemoveSpaces(v ...*Space) *PropertyUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSpaceIDs(ids...)
 }
 
 // ClearBankAccount clears the "bank_account" edge to the BankAccount entity.
 func (_u *PropertyUpdate) ClearBankAccount() *PropertyUpdate {
 	_u.mutation.ClearBankAccount()
 	return _u
-}
-
-// ClearPropertyLedgerEntries clears all "property_ledger_entries" edges to the LedgerEntry entity.
-func (_u *PropertyUpdate) ClearPropertyLedgerEntries() *PropertyUpdate {
-	_u.mutation.ClearPropertyLedgerEntries()
-	return _u
-}
-
-// RemovePropertyLedgerEntryIDs removes the "property_ledger_entries" edge to LedgerEntry entities by IDs.
-func (_u *PropertyUpdate) RemovePropertyLedgerEntryIDs(ids ...uuid.UUID) *PropertyUpdate {
-	_u.mutation.RemovePropertyLedgerEntryIDs(ids...)
-	return _u
-}
-
-// RemovePropertyLedgerEntries removes "property_ledger_entries" edges to LedgerEntry entities.
-func (_u *PropertyUpdate) RemovePropertyLedgerEntries(v ...*LedgerEntry) *PropertyUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemovePropertyLedgerEntryIDs(ids...)
 }
 
 // ClearApplications clears all "applications" edges to the Application entity.
@@ -605,9 +621,32 @@ func (_u *PropertyUpdate) RemoveApplications(v ...*Application) *PropertyUpdate 
 	return _u.RemoveApplicationIDs(ids...)
 }
 
+// ClearLedgerEntries clears all "ledger_entries" edges to the LedgerEntry entity.
+func (_u *PropertyUpdate) ClearLedgerEntries() *PropertyUpdate {
+	_u.mutation.ClearLedgerEntries()
+	return _u
+}
+
+// RemoveLedgerEntryIDs removes the "ledger_entries" edge to LedgerEntry entities by IDs.
+func (_u *PropertyUpdate) RemoveLedgerEntryIDs(ids ...uuid.UUID) *PropertyUpdate {
+	_u.mutation.RemoveLedgerEntryIDs(ids...)
+	return _u
+}
+
+// RemoveLedgerEntries removes "ledger_entries" edges to LedgerEntry entities.
+func (_u *PropertyUpdate) RemoveLedgerEntries(v ...*LedgerEntry) *PropertyUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLedgerEntryIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *PropertyUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -634,11 +673,15 @@ func (_u *PropertyUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *PropertyUpdate) defaults() {
+func (_u *PropertyUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if property.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized property.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := property.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -731,11 +774,11 @@ func (_u *PropertyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedTotalSquareFootage(); ok {
 		_spec.AddField(property.FieldTotalSquareFootage, field.TypeFloat64, value)
 	}
-	if value, ok := _u.mutation.TotalUnits(); ok {
-		_spec.SetField(property.FieldTotalUnits, field.TypeInt, value)
+	if value, ok := _u.mutation.TotalSpaces(); ok {
+		_spec.SetField(property.FieldTotalSpaces, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.AddedTotalUnits(); ok {
-		_spec.AddField(property.FieldTotalUnits, field.TypeInt, value)
+	if value, ok := _u.mutation.AddedTotalSpaces(); ok {
+		_spec.AddField(property.FieldTotalSpaces, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.LotSizeSqft(); ok {
 		_spec.SetField(property.FieldLotSizeSqft, field.TypeFloat64, value)
@@ -834,28 +877,28 @@ func (_u *PropertyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.UnitsCleared() {
+	if _u.mutation.BuildingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   property.UnitsTable,
-			Columns: []string{property.UnitsColumn},
+			Table:   property.BuildingsTable,
+			Columns: []string{property.BuildingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(building.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedUnitsIDs(); len(nodes) > 0 && !_u.mutation.UnitsCleared() {
+	if nodes := _u.mutation.RemovedBuildingsIDs(); len(nodes) > 0 && !_u.mutation.BuildingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   property.UnitsTable,
-			Columns: []string{property.UnitsColumn},
+			Table:   property.BuildingsTable,
+			Columns: []string{property.BuildingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(building.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -863,15 +906,60 @@ func (_u *PropertyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.UnitsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.BuildingsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   property.UnitsTable,
-			Columns: []string{property.UnitsColumn},
+			Table:   property.BuildingsTable,
+			Columns: []string{property.BuildingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(building.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SpacesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.SpacesTable,
+			Columns: []string{property.SpacesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSpacesIDs(); len(nodes) > 0 && !_u.mutation.SpacesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.SpacesTable,
+			Columns: []string{property.SpacesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SpacesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.SpacesTable,
+			Columns: []string{property.SpacesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -901,51 +989,6 @@ func (_u *PropertyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bankaccount.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PropertyLedgerEntriesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   property.PropertyLedgerEntriesTable,
-			Columns: []string{property.PropertyLedgerEntriesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedPropertyLedgerEntriesIDs(); len(nodes) > 0 && !_u.mutation.PropertyLedgerEntriesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   property.PropertyLedgerEntriesTable,
-			Columns: []string{property.PropertyLedgerEntriesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PropertyLedgerEntriesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   property.PropertyLedgerEntriesTable,
-			Columns: []string{property.PropertyLedgerEntriesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -991,6 +1034,51 @@ func (_u *PropertyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(application.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LedgerEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.LedgerEntriesTable,
+			Columns: []string{property.LedgerEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLedgerEntriesIDs(); len(nodes) > 0 && !_u.mutation.LedgerEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.LedgerEntriesTable,
+			Columns: []string{property.LedgerEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LedgerEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.LedgerEntriesTable,
+			Columns: []string{property.LedgerEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1196,24 +1284,24 @@ func (_u *PropertyUpdateOne) AddTotalSquareFootage(v float64) *PropertyUpdateOne
 	return _u
 }
 
-// SetTotalUnits sets the "total_units" field.
-func (_u *PropertyUpdateOne) SetTotalUnits(v int) *PropertyUpdateOne {
-	_u.mutation.ResetTotalUnits()
-	_u.mutation.SetTotalUnits(v)
+// SetTotalSpaces sets the "total_spaces" field.
+func (_u *PropertyUpdateOne) SetTotalSpaces(v int) *PropertyUpdateOne {
+	_u.mutation.ResetTotalSpaces()
+	_u.mutation.SetTotalSpaces(v)
 	return _u
 }
 
-// SetNillableTotalUnits sets the "total_units" field if the given value is not nil.
-func (_u *PropertyUpdateOne) SetNillableTotalUnits(v *int) *PropertyUpdateOne {
+// SetNillableTotalSpaces sets the "total_spaces" field if the given value is not nil.
+func (_u *PropertyUpdateOne) SetNillableTotalSpaces(v *int) *PropertyUpdateOne {
 	if v != nil {
-		_u.SetTotalUnits(*v)
+		_u.SetTotalSpaces(*v)
 	}
 	return _u
 }
 
-// AddTotalUnits adds value to the "total_units" field.
-func (_u *PropertyUpdateOne) AddTotalUnits(v int) *PropertyUpdateOne {
-	_u.mutation.AddTotalUnits(v)
+// AddTotalSpaces adds value to the "total_spaces" field.
+func (_u *PropertyUpdateOne) AddTotalSpaces(v int) *PropertyUpdateOne {
+	_u.mutation.AddTotalSpaces(v)
 	return _u
 }
 
@@ -1443,19 +1531,34 @@ func (_u *PropertyUpdateOne) SetPortfolio(v *Portfolio) *PropertyUpdateOne {
 	return _u.SetPortfolioID(v.ID)
 }
 
-// AddUnitIDs adds the "units" edge to the Unit entity by IDs.
-func (_u *PropertyUpdateOne) AddUnitIDs(ids ...uuid.UUID) *PropertyUpdateOne {
-	_u.mutation.AddUnitIDs(ids...)
+// AddBuildingIDs adds the "buildings" edge to the Building entity by IDs.
+func (_u *PropertyUpdateOne) AddBuildingIDs(ids ...uuid.UUID) *PropertyUpdateOne {
+	_u.mutation.AddBuildingIDs(ids...)
 	return _u
 }
 
-// AddUnits adds the "units" edges to the Unit entity.
-func (_u *PropertyUpdateOne) AddUnits(v ...*Unit) *PropertyUpdateOne {
+// AddBuildings adds the "buildings" edges to the Building entity.
+func (_u *PropertyUpdateOne) AddBuildings(v ...*Building) *PropertyUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddUnitIDs(ids...)
+	return _u.AddBuildingIDs(ids...)
+}
+
+// AddSpaceIDs adds the "spaces" edge to the Space entity by IDs.
+func (_u *PropertyUpdateOne) AddSpaceIDs(ids ...uuid.UUID) *PropertyUpdateOne {
+	_u.mutation.AddSpaceIDs(ids...)
+	return _u
+}
+
+// AddSpaces adds the "spaces" edges to the Space entity.
+func (_u *PropertyUpdateOne) AddSpaces(v ...*Space) *PropertyUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSpaceIDs(ids...)
 }
 
 // SetBankAccountID sets the "bank_account" edge to the BankAccount entity by ID.
@@ -1477,21 +1580,6 @@ func (_u *PropertyUpdateOne) SetBankAccount(v *BankAccount) *PropertyUpdateOne {
 	return _u.SetBankAccountID(v.ID)
 }
 
-// AddPropertyLedgerEntryIDs adds the "property_ledger_entries" edge to the LedgerEntry entity by IDs.
-func (_u *PropertyUpdateOne) AddPropertyLedgerEntryIDs(ids ...uuid.UUID) *PropertyUpdateOne {
-	_u.mutation.AddPropertyLedgerEntryIDs(ids...)
-	return _u
-}
-
-// AddPropertyLedgerEntries adds the "property_ledger_entries" edges to the LedgerEntry entity.
-func (_u *PropertyUpdateOne) AddPropertyLedgerEntries(v ...*LedgerEntry) *PropertyUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddPropertyLedgerEntryIDs(ids...)
-}
-
 // AddApplicationIDs adds the "applications" edge to the Application entity by IDs.
 func (_u *PropertyUpdateOne) AddApplicationIDs(ids ...uuid.UUID) *PropertyUpdateOne {
 	_u.mutation.AddApplicationIDs(ids...)
@@ -1507,6 +1595,21 @@ func (_u *PropertyUpdateOne) AddApplications(v ...*Application) *PropertyUpdateO
 	return _u.AddApplicationIDs(ids...)
 }
 
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (_u *PropertyUpdateOne) AddLedgerEntryIDs(ids ...uuid.UUID) *PropertyUpdateOne {
+	_u.mutation.AddLedgerEntryIDs(ids...)
+	return _u
+}
+
+// AddLedgerEntries adds the "ledger_entries" edges to the LedgerEntry entity.
+func (_u *PropertyUpdateOne) AddLedgerEntries(v ...*LedgerEntry) *PropertyUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLedgerEntryIDs(ids...)
+}
+
 // Mutation returns the PropertyMutation object of the builder.
 func (_u *PropertyUpdateOne) Mutation() *PropertyMutation {
 	return _u.mutation
@@ -1518,52 +1621,52 @@ func (_u *PropertyUpdateOne) ClearPortfolio() *PropertyUpdateOne {
 	return _u
 }
 
-// ClearUnits clears all "units" edges to the Unit entity.
-func (_u *PropertyUpdateOne) ClearUnits() *PropertyUpdateOne {
-	_u.mutation.ClearUnits()
+// ClearBuildings clears all "buildings" edges to the Building entity.
+func (_u *PropertyUpdateOne) ClearBuildings() *PropertyUpdateOne {
+	_u.mutation.ClearBuildings()
 	return _u
 }
 
-// RemoveUnitIDs removes the "units" edge to Unit entities by IDs.
-func (_u *PropertyUpdateOne) RemoveUnitIDs(ids ...uuid.UUID) *PropertyUpdateOne {
-	_u.mutation.RemoveUnitIDs(ids...)
+// RemoveBuildingIDs removes the "buildings" edge to Building entities by IDs.
+func (_u *PropertyUpdateOne) RemoveBuildingIDs(ids ...uuid.UUID) *PropertyUpdateOne {
+	_u.mutation.RemoveBuildingIDs(ids...)
 	return _u
 }
 
-// RemoveUnits removes "units" edges to Unit entities.
-func (_u *PropertyUpdateOne) RemoveUnits(v ...*Unit) *PropertyUpdateOne {
+// RemoveBuildings removes "buildings" edges to Building entities.
+func (_u *PropertyUpdateOne) RemoveBuildings(v ...*Building) *PropertyUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveUnitIDs(ids...)
+	return _u.RemoveBuildingIDs(ids...)
+}
+
+// ClearSpaces clears all "spaces" edges to the Space entity.
+func (_u *PropertyUpdateOne) ClearSpaces() *PropertyUpdateOne {
+	_u.mutation.ClearSpaces()
+	return _u
+}
+
+// RemoveSpaceIDs removes the "spaces" edge to Space entities by IDs.
+func (_u *PropertyUpdateOne) RemoveSpaceIDs(ids ...uuid.UUID) *PropertyUpdateOne {
+	_u.mutation.RemoveSpaceIDs(ids...)
+	return _u
+}
+
+// RemoveSpaces removes "spaces" edges to Space entities.
+func (_u *PropertyUpdateOne) RemoveSpaces(v ...*Space) *PropertyUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSpaceIDs(ids...)
 }
 
 // ClearBankAccount clears the "bank_account" edge to the BankAccount entity.
 func (_u *PropertyUpdateOne) ClearBankAccount() *PropertyUpdateOne {
 	_u.mutation.ClearBankAccount()
 	return _u
-}
-
-// ClearPropertyLedgerEntries clears all "property_ledger_entries" edges to the LedgerEntry entity.
-func (_u *PropertyUpdateOne) ClearPropertyLedgerEntries() *PropertyUpdateOne {
-	_u.mutation.ClearPropertyLedgerEntries()
-	return _u
-}
-
-// RemovePropertyLedgerEntryIDs removes the "property_ledger_entries" edge to LedgerEntry entities by IDs.
-func (_u *PropertyUpdateOne) RemovePropertyLedgerEntryIDs(ids ...uuid.UUID) *PropertyUpdateOne {
-	_u.mutation.RemovePropertyLedgerEntryIDs(ids...)
-	return _u
-}
-
-// RemovePropertyLedgerEntries removes "property_ledger_entries" edges to LedgerEntry entities.
-func (_u *PropertyUpdateOne) RemovePropertyLedgerEntries(v ...*LedgerEntry) *PropertyUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemovePropertyLedgerEntryIDs(ids...)
 }
 
 // ClearApplications clears all "applications" edges to the Application entity.
@@ -1587,6 +1690,27 @@ func (_u *PropertyUpdateOne) RemoveApplications(v ...*Application) *PropertyUpda
 	return _u.RemoveApplicationIDs(ids...)
 }
 
+// ClearLedgerEntries clears all "ledger_entries" edges to the LedgerEntry entity.
+func (_u *PropertyUpdateOne) ClearLedgerEntries() *PropertyUpdateOne {
+	_u.mutation.ClearLedgerEntries()
+	return _u
+}
+
+// RemoveLedgerEntryIDs removes the "ledger_entries" edge to LedgerEntry entities by IDs.
+func (_u *PropertyUpdateOne) RemoveLedgerEntryIDs(ids ...uuid.UUID) *PropertyUpdateOne {
+	_u.mutation.RemoveLedgerEntryIDs(ids...)
+	return _u
+}
+
+// RemoveLedgerEntries removes "ledger_entries" edges to LedgerEntry entities.
+func (_u *PropertyUpdateOne) RemoveLedgerEntries(v ...*LedgerEntry) *PropertyUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLedgerEntryIDs(ids...)
+}
+
 // Where appends a list predicates to the PropertyUpdate builder.
 func (_u *PropertyUpdateOne) Where(ps ...predicate.Property) *PropertyUpdateOne {
 	_u.mutation.Where(ps...)
@@ -1602,7 +1726,9 @@ func (_u *PropertyUpdateOne) Select(field string, fields ...string) *PropertyUpd
 
 // Save executes the query and returns the updated Property entity.
 func (_u *PropertyUpdateOne) Save(ctx context.Context) (*Property, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -1629,11 +1755,15 @@ func (_u *PropertyUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *PropertyUpdateOne) defaults() {
+func (_u *PropertyUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if property.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized property.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := property.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1743,11 +1873,11 @@ func (_u *PropertyUpdateOne) sqlSave(ctx context.Context) (_node *Property, err 
 	if value, ok := _u.mutation.AddedTotalSquareFootage(); ok {
 		_spec.AddField(property.FieldTotalSquareFootage, field.TypeFloat64, value)
 	}
-	if value, ok := _u.mutation.TotalUnits(); ok {
-		_spec.SetField(property.FieldTotalUnits, field.TypeInt, value)
+	if value, ok := _u.mutation.TotalSpaces(); ok {
+		_spec.SetField(property.FieldTotalSpaces, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.AddedTotalUnits(); ok {
-		_spec.AddField(property.FieldTotalUnits, field.TypeInt, value)
+	if value, ok := _u.mutation.AddedTotalSpaces(); ok {
+		_spec.AddField(property.FieldTotalSpaces, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.LotSizeSqft(); ok {
 		_spec.SetField(property.FieldLotSizeSqft, field.TypeFloat64, value)
@@ -1846,28 +1976,28 @@ func (_u *PropertyUpdateOne) sqlSave(ctx context.Context) (_node *Property, err 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.UnitsCleared() {
+	if _u.mutation.BuildingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   property.UnitsTable,
-			Columns: []string{property.UnitsColumn},
+			Table:   property.BuildingsTable,
+			Columns: []string{property.BuildingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(building.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedUnitsIDs(); len(nodes) > 0 && !_u.mutation.UnitsCleared() {
+	if nodes := _u.mutation.RemovedBuildingsIDs(); len(nodes) > 0 && !_u.mutation.BuildingsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   property.UnitsTable,
-			Columns: []string{property.UnitsColumn},
+			Table:   property.BuildingsTable,
+			Columns: []string{property.BuildingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(building.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1875,15 +2005,60 @@ func (_u *PropertyUpdateOne) sqlSave(ctx context.Context) (_node *Property, err 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.UnitsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.BuildingsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   property.UnitsTable,
-			Columns: []string{property.UnitsColumn},
+			Table:   property.BuildingsTable,
+			Columns: []string{property.BuildingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(building.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SpacesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.SpacesTable,
+			Columns: []string{property.SpacesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSpacesIDs(); len(nodes) > 0 && !_u.mutation.SpacesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.SpacesTable,
+			Columns: []string{property.SpacesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SpacesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.SpacesTable,
+			Columns: []string{property.SpacesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1913,51 +2088,6 @@ func (_u *PropertyUpdateOne) sqlSave(ctx context.Context) (_node *Property, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(bankaccount.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.PropertyLedgerEntriesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   property.PropertyLedgerEntriesTable,
-			Columns: []string{property.PropertyLedgerEntriesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedPropertyLedgerEntriesIDs(); len(nodes) > 0 && !_u.mutation.PropertyLedgerEntriesCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   property.PropertyLedgerEntriesTable,
-			Columns: []string{property.PropertyLedgerEntriesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.PropertyLedgerEntriesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   property.PropertyLedgerEntriesTable,
-			Columns: []string{property.PropertyLedgerEntriesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -2003,6 +2133,51 @@ func (_u *PropertyUpdateOne) sqlSave(ctx context.Context) (_node *Property, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(application.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LedgerEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.LedgerEntriesTable,
+			Columns: []string{property.LedgerEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLedgerEntriesIDs(); len(nodes) > 0 && !_u.mutation.LedgerEntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.LedgerEntriesTable,
+			Columns: []string{property.LedgerEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LedgerEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.LedgerEntriesTable,
+			Columns: []string{property.LedgerEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

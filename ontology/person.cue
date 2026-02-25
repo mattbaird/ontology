@@ -16,7 +16,7 @@ import "time"
 	date_of_birth?: time.Time
 	ssn_last_four?: =~"^[0-9]{4}$"
 
-	contact_methods: [...#ContactMethod]
+	contact_methods: [#ContactMethod, ...#ContactMethod] // At least one required
 	preferred_contact: *"email" | "email" | "sms" | "phone" | "mail" | "portal"
 
 	// Communication preferences
@@ -73,9 +73,9 @@ import "time"
 	person_id: string & !=""
 	role_type: "tenant" | "owner" | "property_manager" | "maintenance_tech" |
 		"leasing_agent" | "accountant" | "vendor_contact" |
-		"guarantor" | "emergency_contact" | "authorized_occupant"
+		"guarantor" | "emergency_contact" | "authorized_occupant" | "co_signer"
 
-	scope_type: "organization" | "portfolio" | "property" | "unit" | "lease"
+	scope_type: "organization" | "portfolio" | "property" | "building" | "space" | "lease"
 	scope_id:   string & !=""
 
 	status: "active" | "inactive" | "pending" | "terminated"
@@ -99,6 +99,8 @@ import "time"
 	move_out_date?:   time.Time
 	pet_count?:       int & >=0
 	vehicle_count?:   int & >=0
+	occupancy_status: *"occupying" | "occupying" | "vacated" | "never_occupied"
+	liability_status: *"active" | "active" | "released" | "guarantor_only"
 }
 
 #OwnerAttributes: {

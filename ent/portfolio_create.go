@@ -136,20 +136,6 @@ func (_c *PortfolioCreate) SetStatus(v portfolio.Status) *PortfolioCreate {
 	return _c
 }
 
-// SetDefaultLateFeePolicy sets the "default_late_fee_policy" field.
-func (_c *PortfolioCreate) SetDefaultLateFeePolicy(v string) *PortfolioCreate {
-	_c.mutation.SetDefaultLateFeePolicy(v)
-	return _c
-}
-
-// SetNillableDefaultLateFeePolicy sets the "default_late_fee_policy" field if the given value is not nil.
-func (_c *PortfolioCreate) SetNillableDefaultLateFeePolicy(v *string) *PortfolioCreate {
-	if v != nil {
-		_c.SetDefaultLateFeePolicy(*v)
-	}
-	return _c
-}
-
 // SetDefaultPaymentMethods sets the "default_payment_methods" field.
 func (_c *PortfolioCreate) SetDefaultPaymentMethods(v []string) *PortfolioCreate {
 	_c.mutation.SetDefaultPaymentMethods(v)
@@ -228,7 +214,9 @@ func (_c *PortfolioCreate) Mutation() *PortfolioMutation {
 
 // Save creates the Portfolio in the database.
 func (_c *PortfolioCreate) Save(ctx context.Context) (*Portfolio, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -255,19 +243,29 @@ func (_c *PortfolioCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *PortfolioCreate) defaults() {
+func (_c *PortfolioCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if portfolio.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized portfolio.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := portfolio.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if portfolio.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized portfolio.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := portfolio.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if portfolio.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized portfolio.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := portfolio.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -412,10 +410,6 @@ func (_c *PortfolioCreate) createSpec() (*Portfolio, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(portfolio.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
-	}
-	if value, ok := _c.mutation.DefaultLateFeePolicy(); ok {
-		_spec.SetField(portfolio.FieldDefaultLateFeePolicy, field.TypeString, value)
-		_node.DefaultLateFeePolicy = &value
 	}
 	if value, ok := _c.mutation.DefaultPaymentMethods(); ok {
 		_spec.SetField(portfolio.FieldDefaultPaymentMethods, field.TypeJSON, value)

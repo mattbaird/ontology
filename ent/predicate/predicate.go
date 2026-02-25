@@ -15,11 +15,17 @@ type Application func(*sql.Selector)
 // BankAccount is the predicate function for bankaccount builders.
 type BankAccount func(*sql.Selector)
 
+// Building is the predicate function for building builders.
+type Building func(*sql.Selector)
+
 // JournalEntry is the predicate function for journalentry builders.
 type JournalEntry func(*sql.Selector)
 
 // Lease is the predicate function for lease builders.
 type Lease func(*sql.Selector)
+
+// LeaseSpace is the predicate function for leasespace builders.
+type LeaseSpace func(*sql.Selector)
 
 // LedgerEntry is the predicate function for ledgerentry builders.
 type LedgerEntry func(*sql.Selector)
@@ -42,5 +48,5 @@ type Property func(*sql.Selector)
 // Reconciliation is the predicate function for reconciliation builders.
 type Reconciliation func(*sql.Selector)
 
-// Unit is the predicate function for unit builders.
-type Unit func(*sql.Selector)
+// Space is the predicate function for space builders.
+type Space func(*sql.Selector)

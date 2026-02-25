@@ -30,7 +30,7 @@ func (Application) Mixin() []ent.Mixin {
 func (Application) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.String("applicant_person_id").SchemaType(map[string]string{"postgres": "varchar"}),
+		field.UUID("applicant_person_id", uuid.UUID{}),
 		field.Enum("status").Values("submitted", "screening", "under_review", "approved", "conditionally_approved", "denied", "withdrawn", "expired"),
 		field.Time("desired_move_in"),
 		field.Int("desired_lease_term_months"),
@@ -53,10 +53,10 @@ func (Application) Fields() []ent.Field {
 // Edges of the Application.
 func (Application) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.From("property", Property.Type).Ref("applications").Unique().Comment("Property receives Applications (inverse)"),
+		edge.From("space", Space.Type).Ref("applications").Unique().Comment("Space receives Applications (inverse)"),
 		edge.From("resulting_lease", Lease.Type).Ref("application").Unique().Comment("Lease originated from Application (inverse)"),
-		edge.To("applicant", Person.Type).Unique().Required().Comment("Application was submitted by Person"),
-		edge.To("property", Property.Type).Unique().Required().Comment("Application is for Property"),
-		edge.To("unit", Unit.Type).Unique().Comment("Application is for specific Unit"),
+		edge.To("applicant", Person.Type).Unique().Required().Field("applicant_person_id").Comment("Application was submitted by Person"),
 	}
 }
 

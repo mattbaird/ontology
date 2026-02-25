@@ -15,10 +15,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/lease"
+	"github.com/matthewbaird/ontology/ent/leasespace"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/personrole"
 	"github.com/matthewbaird/ontology/ent/predicate"
-	"github.com/matthewbaird/ontology/ent/unit"
 )
 
 // LeaseQuery is the builder for querying Lease entities.
@@ -28,12 +28,13 @@ type LeaseQuery struct {
 	order              []lease.OrderOption
 	inters             []Interceptor
 	predicates         []predicate.Lease
-	withUnit           *UnitQuery
-	withOccupiedUnit   *UnitQuery
+	withLeaseSpaces    *LeaseSpaceQuery
 	withTenantRoles    *PersonRoleQuery
 	withGuarantorRoles *PersonRoleQuery
 	withLedgerEntries  *LedgerEntryQuery
 	withApplication    *ApplicationQuery
+	withSubleases      *LeaseQuery
+	withParentLease    *LeaseQuery
 	withFKs            bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -71,9 +72,9 @@ func (_q *LeaseQuery) Order(o ...lease.OrderOption) *LeaseQuery {
 	return _q
 }
 
-// QueryUnit chains the current query on the "unit" edge.
-func (_q *LeaseQuery) QueryUnit() *UnitQuery {
-	query := (&UnitClient{config: _q.config}).Query()
+// QueryLeaseSpaces chains the current query on the "lease_spaces" edge.
+func (_q *LeaseQuery) QueryLeaseSpaces() *LeaseSpaceQuery {
+	query := (&LeaseSpaceClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -84,30 +85,8 @@ func (_q *LeaseQuery) QueryUnit() *UnitQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(lease.Table, lease.FieldID, selector),
-			sqlgraph.To(unit.Table, unit.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, lease.UnitTable, lease.UnitColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryOccupiedUnit chains the current query on the "occupied_unit" edge.
-func (_q *LeaseQuery) QueryOccupiedUnit() *UnitQuery {
-	query := (&UnitClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(lease.Table, lease.FieldID, selector),
-			sqlgraph.To(unit.Table, unit.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, lease.OccupiedUnitTable, lease.OccupiedUnitColumn),
+			sqlgraph.To(leasespace.Table, leasespace.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lease.LeaseSpacesTable, lease.LeaseSpacesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -196,6 +175,50 @@ func (_q *LeaseQuery) QueryApplication() *ApplicationQuery {
 			sqlgraph.From(lease.Table, lease.FieldID, selector),
 			sqlgraph.To(application.Table, application.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, lease.ApplicationTable, lease.ApplicationColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySubleases chains the current query on the "subleases" edge.
+func (_q *LeaseQuery) QuerySubleases() *LeaseQuery {
+	query := (&LeaseClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lease.Table, lease.FieldID, selector),
+			sqlgraph.To(lease.Table, lease.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lease.SubleasesTable, lease.SubleasesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryParentLease chains the current query on the "parent_lease" edge.
+func (_q *LeaseQuery) QueryParentLease() *LeaseQuery {
+	query := (&LeaseClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lease.Table, lease.FieldID, selector),
+			sqlgraph.To(lease.Table, lease.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, lease.ParentLeaseTable, lease.ParentLeaseColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -395,37 +418,27 @@ func (_q *LeaseQuery) Clone() *LeaseQuery {
 		order:              append([]lease.OrderOption{}, _q.order...),
 		inters:             append([]Interceptor{}, _q.inters...),
 		predicates:         append([]predicate.Lease{}, _q.predicates...),
-		withUnit:           _q.withUnit.Clone(),
-		withOccupiedUnit:   _q.withOccupiedUnit.Clone(),
+		withLeaseSpaces:    _q.withLeaseSpaces.Clone(),
 		withTenantRoles:    _q.withTenantRoles.Clone(),
 		withGuarantorRoles: _q.withGuarantorRoles.Clone(),
 		withLedgerEntries:  _q.withLedgerEntries.Clone(),
 		withApplication:    _q.withApplication.Clone(),
+		withSubleases:      _q.withSubleases.Clone(),
+		withParentLease:    _q.withParentLease.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithUnit tells the query-builder to eager-load the nodes that are connected to
-// the "unit" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *LeaseQuery) WithUnit(opts ...func(*UnitQuery)) *LeaseQuery {
-	query := (&UnitClient{config: _q.config}).Query()
+// WithLeaseSpaces tells the query-builder to eager-load the nodes that are connected to
+// the "lease_spaces" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeaseQuery) WithLeaseSpaces(opts ...func(*LeaseSpaceQuery)) *LeaseQuery {
+	query := (&LeaseSpaceClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withUnit = query
-	return _q
-}
-
-// WithOccupiedUnit tells the query-builder to eager-load the nodes that are connected to
-// the "occupied_unit" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *LeaseQuery) WithOccupiedUnit(opts ...func(*UnitQuery)) *LeaseQuery {
-	query := (&UnitClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withOccupiedUnit = query
+	_q.withLeaseSpaces = query
 	return _q
 }
 
@@ -470,6 +483,28 @@ func (_q *LeaseQuery) WithApplication(opts ...func(*ApplicationQuery)) *LeaseQue
 		opt(query)
 	}
 	_q.withApplication = query
+	return _q
+}
+
+// WithSubleases tells the query-builder to eager-load the nodes that are connected to
+// the "subleases" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeaseQuery) WithSubleases(opts ...func(*LeaseQuery)) *LeaseQuery {
+	query := (&LeaseClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSubleases = query
+	return _q
+}
+
+// WithParentLease tells the query-builder to eager-load the nodes that are connected to
+// the "parent_lease" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeaseQuery) WithParentLease(opts ...func(*LeaseQuery)) *LeaseQuery {
+	query := (&LeaseClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withParentLease = query
 	return _q
 }
 
@@ -552,16 +587,17 @@ func (_q *LeaseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lease,
 		nodes       = []*Lease{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [6]bool{
-			_q.withUnit != nil,
-			_q.withOccupiedUnit != nil,
+		loadedTypes = [7]bool{
+			_q.withLeaseSpaces != nil,
 			_q.withTenantRoles != nil,
 			_q.withGuarantorRoles != nil,
 			_q.withLedgerEntries != nil,
 			_q.withApplication != nil,
+			_q.withSubleases != nil,
+			_q.withParentLease != nil,
 		}
 	)
-	if _q.withUnit != nil || _q.withOccupiedUnit != nil {
+	if _q.withParentLease != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -585,15 +621,10 @@ func (_q *LeaseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lease,
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withUnit; query != nil {
-		if err := _q.loadUnit(ctx, query, nodes, nil,
-			func(n *Lease, e *Unit) { n.Edges.Unit = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withOccupiedUnit; query != nil {
-		if err := _q.loadOccupiedUnit(ctx, query, nodes, nil,
-			func(n *Lease, e *Unit) { n.Edges.OccupiedUnit = e }); err != nil {
+	if query := _q.withLeaseSpaces; query != nil {
+		if err := _q.loadLeaseSpaces(ctx, query, nodes,
+			func(n *Lease) { n.Edges.LeaseSpaces = []*LeaseSpace{} },
+			func(n *Lease, e *LeaseSpace) { n.Edges.LeaseSpaces = append(n.Edges.LeaseSpaces, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -624,70 +655,50 @@ func (_q *LeaseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lease,
 			return nil, err
 		}
 	}
+	if query := _q.withSubleases; query != nil {
+		if err := _q.loadSubleases(ctx, query, nodes,
+			func(n *Lease) { n.Edges.Subleases = []*Lease{} },
+			func(n *Lease, e *Lease) { n.Edges.Subleases = append(n.Edges.Subleases, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withParentLease; query != nil {
+		if err := _q.loadParentLease(ctx, query, nodes, nil,
+			func(n *Lease, e *Lease) { n.Edges.ParentLease = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
-func (_q *LeaseQuery) loadUnit(ctx context.Context, query *UnitQuery, nodes []*Lease, init func(*Lease), assign func(*Lease, *Unit)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Lease)
+func (_q *LeaseQuery) loadLeaseSpaces(ctx context.Context, query *LeaseSpaceQuery, nodes []*Lease, init func(*Lease), assign func(*Lease, *LeaseSpace)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Lease)
 	for i := range nodes {
-		if nodes[i].unit_leases == nil {
-			continue
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
-		fk := *nodes[i].unit_leases
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(unit.IDIn(ids...))
+	query.withFKs = true
+	query.Where(predicate.LeaseSpace(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(lease.LeaseSpacesColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.lease_lease_spaces
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "lease_lease_spaces" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "unit_leases" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "lease_lease_spaces" returned %v for node %v`, *fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *LeaseQuery) loadOccupiedUnit(ctx context.Context, query *UnitQuery, nodes []*Lease, init func(*Lease), assign func(*Lease, *Unit)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Lease)
-	for i := range nodes {
-		if nodes[i].unit_active_lease == nil {
-			continue
-		}
-		fk := *nodes[i].unit_active_lease
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(unit.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "unit_active_lease" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
+		assign(node, n)
 	}
 	return nil
 }
@@ -869,6 +880,69 @@ func (_q *LeaseQuery) loadApplication(ctx context.Context, query *ApplicationQue
 			return fmt.Errorf(`unexpected referenced foreign-key "lease_application" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeaseQuery) loadSubleases(ctx context.Context, query *LeaseQuery, nodes []*Lease, init func(*Lease), assign func(*Lease, *Lease)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Lease)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Lease(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(lease.SubleasesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.lease_subleases
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "lease_subleases" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "lease_subleases" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeaseQuery) loadParentLease(ctx context.Context, query *LeaseQuery, nodes []*Lease, init func(*Lease), assign func(*Lease, *Lease)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Lease)
+	for i := range nodes {
+		if nodes[i].lease_subleases == nil {
+			continue
+		}
+		fk := *nodes[i].lease_subleases
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(lease.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "lease_subleases" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }

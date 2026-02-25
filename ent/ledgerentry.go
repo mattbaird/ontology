@@ -16,6 +16,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/person"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // LedgerEntry is the model entity for the LedgerEntry schema.
@@ -54,8 +55,6 @@ type LedgerEntry struct {
 	ChargeCode string `json:"charge_code,omitempty"`
 	// Memo holds the value of the "memo" field.
 	Memo *string `json:"memo,omitempty"`
-	// UnitID holds the value of the "unit_id" field.
-	UnitID *string `json:"unit_id,omitempty"`
 	// BankAccountID holds the value of the "bank_account_id" field.
 	BankAccountID *string `json:"bank_account_id,omitempty"`
 	// BankTransactionID holds the value of the "bank_transaction_id" field.
@@ -70,17 +69,19 @@ type LedgerEntry struct {
 	AdjustsEntryID *string `json:"adjusts_entry_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LedgerEntryQuery when eager-loading is set.
-	Edges                            LedgerEntryEdges `json:"edges"`
-	account_entries                  *uuid.UUID
-	journal_entry_ledger_entries     *uuid.UUID
-	lease_ledger_entries             *uuid.UUID
-	ledger_entry_journal_entry       *uuid.UUID
-	ledger_entry_account             *uuid.UUID
-	ledger_entry_property            *uuid.UUID
-	ledger_entry_person              *uuid.UUID
-	person_person_ledger_entries     *uuid.UUID
-	property_property_ledger_entries *uuid.UUID
-	selectValues                     sql.SelectValues
+	Edges                        LedgerEntryEdges `json:"edges"`
+	account_entries              *uuid.UUID
+	journal_entry_ledger_entries *uuid.UUID
+	lease_ledger_entries         *uuid.UUID
+	ledger_entry_journal_entry   *uuid.UUID
+	ledger_entry_account         *uuid.UUID
+	ledger_entry_property        *uuid.UUID
+	ledger_entry_space           *uuid.UUID
+	ledger_entry_person          *uuid.UUID
+	person_ledger_entries        *uuid.UUID
+	property_ledger_entries      *uuid.UUID
+	space_ledger_entries         *uuid.UUID
+	selectValues                 sql.SelectValues
 }
 
 // LedgerEntryEdges holds the relations/edges for other nodes in the graph.
@@ -93,11 +94,13 @@ type LedgerEntryEdges struct {
 	Account *Account `json:"account,omitempty"`
 	// LedgerEntry relates to Property
 	Property *Property `json:"property,omitempty"`
+	// LedgerEntry relates to Space
+	Space *Space `json:"space,omitempty"`
 	// LedgerEntry relates to Person
 	Person *Person `json:"person,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // LeaseOrErr returns the Lease value or an error if the edge
@@ -144,12 +147,23 @@ func (e LedgerEntryEdges) PropertyOrErr() (*Property, error) {
 	return nil, &NotLoadedError{edge: "property"}
 }
 
+// SpaceOrErr returns the Space value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LedgerEntryEdges) SpaceOrErr() (*Space, error) {
+	if e.Space != nil {
+		return e.Space, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: space.Label}
+	}
+	return nil, &NotLoadedError{edge: "space"}
+}
+
 // PersonOrErr returns the Person value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e LedgerEntryEdges) PersonOrErr() (*Person, error) {
 	if e.Person != nil {
 		return e.Person, nil
-	} else if e.loadedTypes[4] {
+	} else if e.loadedTypes[5] {
 		return nil, &NotFoundError{label: person.Label}
 	}
 	return nil, &NotLoadedError{edge: "person"}
@@ -164,7 +178,7 @@ func (*LedgerEntry) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case ledgerentry.FieldAmountAmountCents:
 			values[i] = new(sql.NullInt64)
-		case ledgerentry.FieldCreatedBy, ledgerentry.FieldUpdatedBy, ledgerentry.FieldSource, ledgerentry.FieldCorrelationID, ledgerentry.FieldAgentGoalID, ledgerentry.FieldEntryType, ledgerentry.FieldAmountCurrency, ledgerentry.FieldDescription, ledgerentry.FieldChargeCode, ledgerentry.FieldMemo, ledgerentry.FieldUnitID, ledgerentry.FieldBankAccountID, ledgerentry.FieldBankTransactionID, ledgerentry.FieldReconciliationID, ledgerentry.FieldAdjustsEntryID:
+		case ledgerentry.FieldCreatedBy, ledgerentry.FieldUpdatedBy, ledgerentry.FieldSource, ledgerentry.FieldCorrelationID, ledgerentry.FieldAgentGoalID, ledgerentry.FieldEntryType, ledgerentry.FieldAmountCurrency, ledgerentry.FieldDescription, ledgerentry.FieldChargeCode, ledgerentry.FieldMemo, ledgerentry.FieldBankAccountID, ledgerentry.FieldBankTransactionID, ledgerentry.FieldReconciliationID, ledgerentry.FieldAdjustsEntryID:
 			values[i] = new(sql.NullString)
 		case ledgerentry.FieldCreatedAt, ledgerentry.FieldUpdatedAt, ledgerentry.FieldEffectiveDate, ledgerentry.FieldPostedDate, ledgerentry.FieldReconciledAt:
 			values[i] = new(sql.NullTime)
@@ -182,11 +196,15 @@ func (*LedgerEntry) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case ledgerentry.ForeignKeys[5]: // ledger_entry_property
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case ledgerentry.ForeignKeys[6]: // ledger_entry_person
+		case ledgerentry.ForeignKeys[6]: // ledger_entry_space
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case ledgerentry.ForeignKeys[7]: // person_person_ledger_entries
+		case ledgerentry.ForeignKeys[7]: // ledger_entry_person
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case ledgerentry.ForeignKeys[8]: // property_property_ledger_entries
+		case ledgerentry.ForeignKeys[8]: // person_ledger_entries
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case ledgerentry.ForeignKeys[9]: // property_ledger_entries
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case ledgerentry.ForeignKeys[10]: // space_ledger_entries
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -302,13 +320,6 @@ func (_m *LedgerEntry) assignValues(columns []string, values []any) error {
 				_m.Memo = new(string)
 				*_m.Memo = value.String
 			}
-		case ledgerentry.FieldUnitID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field unit_id", values[i])
-			} else if value.Valid {
-				_m.UnitID = new(string)
-				*_m.UnitID = value.String
-			}
 		case ledgerentry.FieldBankAccountID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field bank_account_id", values[i])
@@ -394,24 +405,38 @@ func (_m *LedgerEntry) assignValues(columns []string, values []any) error {
 			}
 		case ledgerentry.ForeignKeys[6]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field ledger_entry_space", values[i])
+			} else if value.Valid {
+				_m.ledger_entry_space = new(uuid.UUID)
+				*_m.ledger_entry_space = *value.S.(*uuid.UUID)
+			}
+		case ledgerentry.ForeignKeys[7]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field ledger_entry_person", values[i])
 			} else if value.Valid {
 				_m.ledger_entry_person = new(uuid.UUID)
 				*_m.ledger_entry_person = *value.S.(*uuid.UUID)
 			}
-		case ledgerentry.ForeignKeys[7]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field person_person_ledger_entries", values[i])
-			} else if value.Valid {
-				_m.person_person_ledger_entries = new(uuid.UUID)
-				*_m.person_person_ledger_entries = *value.S.(*uuid.UUID)
-			}
 		case ledgerentry.ForeignKeys[8]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field property_property_ledger_entries", values[i])
+				return fmt.Errorf("unexpected type %T for field person_ledger_entries", values[i])
 			} else if value.Valid {
-				_m.property_property_ledger_entries = new(uuid.UUID)
-				*_m.property_property_ledger_entries = *value.S.(*uuid.UUID)
+				_m.person_ledger_entries = new(uuid.UUID)
+				*_m.person_ledger_entries = *value.S.(*uuid.UUID)
+			}
+		case ledgerentry.ForeignKeys[9]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field property_ledger_entries", values[i])
+			} else if value.Valid {
+				_m.property_ledger_entries = new(uuid.UUID)
+				*_m.property_ledger_entries = *value.S.(*uuid.UUID)
+			}
+		case ledgerentry.ForeignKeys[10]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field space_ledger_entries", values[i])
+			} else if value.Valid {
+				_m.space_ledger_entries = new(uuid.UUID)
+				*_m.space_ledger_entries = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -444,6 +469,11 @@ func (_m *LedgerEntry) QueryAccount() *AccountQuery {
 // QueryProperty queries the "property" edge of the LedgerEntry entity.
 func (_m *LedgerEntry) QueryProperty() *PropertyQuery {
 	return NewLedgerEntryClient(_m.config).QueryProperty(_m)
+}
+
+// QuerySpace queries the "space" edge of the LedgerEntry entity.
+func (_m *LedgerEntry) QuerySpace() *SpaceQuery {
+	return NewLedgerEntryClient(_m.config).QuerySpace(_m)
 }
 
 // QueryPerson queries the "person" edge of the LedgerEntry entity.
@@ -522,11 +552,6 @@ func (_m *LedgerEntry) String() string {
 	builder.WriteString(", ")
 	if v := _m.Memo; v != nil {
 		builder.WriteString("memo=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	if v := _m.UnitID; v != nil {
-		builder.WriteString("unit_id=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

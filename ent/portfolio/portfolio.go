@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -40,8 +41,6 @@ const (
 	FieldTrustBankAccountID = "trust_bank_account_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldDefaultLateFeePolicy holds the string denoting the default_late_fee_policy field in the database.
-	FieldDefaultLateFeePolicy = "default_late_fee_policy"
 	// FieldDefaultPaymentMethods holds the string denoting the default_payment_methods field in the database.
 	FieldDefaultPaymentMethods = "default_payment_methods"
 	// FieldFiscalYearStartMonth holds the string denoting the fiscal_year_start_month field in the database.
@@ -92,7 +91,6 @@ var Columns = []string{
 	FieldRequiresTrustAccounting,
 	FieldTrustBankAccountID,
 	FieldStatus,
-	FieldDefaultLateFeePolicy,
 	FieldDefaultPaymentMethods,
 	FieldFiscalYearStartMonth,
 }
@@ -119,7 +117,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "github.com/matthewbaird/ontology/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -275,11 +279,6 @@ func ByTrustBankAccountID(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
-}
-
-// ByDefaultLateFeePolicy orders the results by the default_late_fee_policy field.
-func ByDefaultLateFeePolicy(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDefaultLateFeePolicy, opts...).ToFunc()
 }
 
 // ByFiscalYearStartMonth orders the results by the fiscal_year_start_month field.

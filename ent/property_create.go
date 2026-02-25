@@ -13,10 +13,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/building"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/property"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 	"github.com/matthewbaird/ontology/internal/types"
 )
 
@@ -137,9 +138,9 @@ func (_c *PropertyCreate) SetTotalSquareFootage(v float64) *PropertyCreate {
 	return _c
 }
 
-// SetTotalUnits sets the "total_units" field.
-func (_c *PropertyCreate) SetTotalUnits(v int) *PropertyCreate {
-	_c.mutation.SetTotalUnits(v)
+// SetTotalSpaces sets the "total_spaces" field.
+func (_c *PropertyCreate) SetTotalSpaces(v int) *PropertyCreate {
+	_c.mutation.SetTotalSpaces(v)
 	return _c
 }
 
@@ -300,19 +301,34 @@ func (_c *PropertyCreate) SetPortfolio(v *Portfolio) *PropertyCreate {
 	return _c.SetPortfolioID(v.ID)
 }
 
-// AddUnitIDs adds the "units" edge to the Unit entity by IDs.
-func (_c *PropertyCreate) AddUnitIDs(ids ...uuid.UUID) *PropertyCreate {
-	_c.mutation.AddUnitIDs(ids...)
+// AddBuildingIDs adds the "buildings" edge to the Building entity by IDs.
+func (_c *PropertyCreate) AddBuildingIDs(ids ...uuid.UUID) *PropertyCreate {
+	_c.mutation.AddBuildingIDs(ids...)
 	return _c
 }
 
-// AddUnits adds the "units" edges to the Unit entity.
-func (_c *PropertyCreate) AddUnits(v ...*Unit) *PropertyCreate {
+// AddBuildings adds the "buildings" edges to the Building entity.
+func (_c *PropertyCreate) AddBuildings(v ...*Building) *PropertyCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddUnitIDs(ids...)
+	return _c.AddBuildingIDs(ids...)
+}
+
+// AddSpaceIDs adds the "spaces" edge to the Space entity by IDs.
+func (_c *PropertyCreate) AddSpaceIDs(ids ...uuid.UUID) *PropertyCreate {
+	_c.mutation.AddSpaceIDs(ids...)
+	return _c
+}
+
+// AddSpaces adds the "spaces" edges to the Space entity.
+func (_c *PropertyCreate) AddSpaces(v ...*Space) *PropertyCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSpaceIDs(ids...)
 }
 
 // SetBankAccountID sets the "bank_account" edge to the BankAccount entity by ID.
@@ -334,21 +350,6 @@ func (_c *PropertyCreate) SetBankAccount(v *BankAccount) *PropertyCreate {
 	return _c.SetBankAccountID(v.ID)
 }
 
-// AddPropertyLedgerEntryIDs adds the "property_ledger_entries" edge to the LedgerEntry entity by IDs.
-func (_c *PropertyCreate) AddPropertyLedgerEntryIDs(ids ...uuid.UUID) *PropertyCreate {
-	_c.mutation.AddPropertyLedgerEntryIDs(ids...)
-	return _c
-}
-
-// AddPropertyLedgerEntries adds the "property_ledger_entries" edges to the LedgerEntry entity.
-func (_c *PropertyCreate) AddPropertyLedgerEntries(v ...*LedgerEntry) *PropertyCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddPropertyLedgerEntryIDs(ids...)
-}
-
 // AddApplicationIDs adds the "applications" edge to the Application entity by IDs.
 func (_c *PropertyCreate) AddApplicationIDs(ids ...uuid.UUID) *PropertyCreate {
 	_c.mutation.AddApplicationIDs(ids...)
@@ -364,6 +365,21 @@ func (_c *PropertyCreate) AddApplications(v ...*Application) *PropertyCreate {
 	return _c.AddApplicationIDs(ids...)
 }
 
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (_c *PropertyCreate) AddLedgerEntryIDs(ids ...uuid.UUID) *PropertyCreate {
+	_c.mutation.AddLedgerEntryIDs(ids...)
+	return _c
+}
+
+// AddLedgerEntries adds the "ledger_entries" edges to the LedgerEntry entity.
+func (_c *PropertyCreate) AddLedgerEntries(v ...*LedgerEntry) *PropertyCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddLedgerEntryIDs(ids...)
+}
+
 // Mutation returns the PropertyMutation object of the builder.
 func (_c *PropertyCreate) Mutation() *PropertyMutation {
 	return _c.mutation
@@ -371,7 +387,9 @@ func (_c *PropertyCreate) Mutation() *PropertyMutation {
 
 // Save creates the Property in the database.
 func (_c *PropertyCreate) Save(ctx context.Context) (*Property, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -398,12 +416,18 @@ func (_c *PropertyCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *PropertyCreate) defaults() {
+func (_c *PropertyCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if property.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized property.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := property.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if property.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized property.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := property.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
@@ -412,9 +436,13 @@ func (_c *PropertyCreate) defaults() {
 		_c.mutation.SetRentControlled(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if property.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized property.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := property.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -477,8 +505,8 @@ func (_c *PropertyCreate) check() error {
 	if _, ok := _c.mutation.TotalSquareFootage(); !ok {
 		return &ValidationError{Name: "total_square_footage", err: errors.New(`ent: missing required field "Property.total_square_footage"`)}
 	}
-	if _, ok := _c.mutation.TotalUnits(); !ok {
-		return &ValidationError{Name: "total_units", err: errors.New(`ent: missing required field "Property.total_units"`)}
+	if _, ok := _c.mutation.TotalSpaces(); !ok {
+		return &ValidationError{Name: "total_spaces", err: errors.New(`ent: missing required field "Property.total_spaces"`)}
 	}
 	if _, ok := _c.mutation.RentControlled(); !ok {
 		return &ValidationError{Name: "rent_controlled", err: errors.New(`ent: missing required field "Property.rent_controlled"`)}
@@ -573,9 +601,9 @@ func (_c *PropertyCreate) createSpec() (*Property, *sqlgraph.CreateSpec) {
 		_spec.SetField(property.FieldTotalSquareFootage, field.TypeFloat64, value)
 		_node.TotalSquareFootage = value
 	}
-	if value, ok := _c.mutation.TotalUnits(); ok {
-		_spec.SetField(property.FieldTotalUnits, field.TypeInt, value)
-		_node.TotalUnits = value
+	if value, ok := _c.mutation.TotalSpaces(); ok {
+		_spec.SetField(property.FieldTotalSpaces, field.TypeInt, value)
+		_node.TotalSpaces = value
 	}
 	if value, ok := _c.mutation.LotSizeSqft(); ok {
 		_spec.SetField(property.FieldLotSizeSqft, field.TypeFloat64, value)
@@ -634,15 +662,31 @@ func (_c *PropertyCreate) createSpec() (*Property, *sqlgraph.CreateSpec) {
 		_node.portfolio_properties = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.UnitsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.BuildingsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   property.UnitsTable,
-			Columns: []string{property.UnitsColumn},
+			Table:   property.BuildingsTable,
+			Columns: []string{property.BuildingsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(building.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SpacesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.SpacesTable,
+			Columns: []string{property.SpacesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -667,22 +711,6 @@ func (_c *PropertyCreate) createSpec() (*Property, *sqlgraph.CreateSpec) {
 		_node.property_bank_account = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.PropertyLedgerEntriesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   property.PropertyLedgerEntriesTable,
-			Columns: []string{property.PropertyLedgerEntriesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := _c.mutation.ApplicationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -692,6 +720,22 @@ func (_c *PropertyCreate) createSpec() (*Property, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(application.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.LedgerEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.LedgerEntriesTable,
+			Columns: []string{property.LedgerEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -45,7 +45,7 @@ func (w *GraphSyncWorker) HandleEvent(ctx context.Context, data []byte) error {
 	switch event.EntityType {
 	case "Person", "Organization", "PersonRole":
 		return w.syncPersonGraph(ctx, event)
-	case "Portfolio", "Property", "Unit":
+	case "Portfolio", "Property", "Building", "Space", "LeaseSpace":
 		return w.syncPropertyGraph(ctx, event)
 	case "Lease", "Application":
 		return w.syncLeaseGraph(ctx, event)

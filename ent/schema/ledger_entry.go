@@ -38,7 +38,6 @@ func (LedgerEntry) Fields() []ent.Field {
 		field.String("description").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("charge_code").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("memo").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("unit_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("bank_account_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("bank_transaction_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Bool("reconciled").Default(false),
@@ -55,6 +54,7 @@ func (LedgerEntry) Edges() []ent.Edge {
 		edge.To("journal_entry", JournalEntry.Type).Unique().Required().Comment("LedgerEntry belongs to JournalEntry"),
 		edge.To("account", Account.Type).Unique().Required().Comment("LedgerEntry posts to Account"),
 		edge.To("property", Property.Type).Unique().Required().Comment("LedgerEntry relates to Property"),
+		edge.To("space", Space.Type).Unique().Comment("LedgerEntry relates to Space"),
 		edge.To("person", Person.Type).Unique().Comment("LedgerEntry relates to Person"),
 	}
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/lease"
 	"github.com/matthewbaird/ontology/ent/person"
 	"github.com/matthewbaird/ontology/ent/property"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // ApplicationCreate is the builder for creating a Application entity.
@@ -100,7 +100,7 @@ func (_c *ApplicationCreate) SetNillableAgentGoalID(v *string) *ApplicationCreat
 }
 
 // SetApplicantPersonID sets the "applicant_person_id" field.
-func (_c *ApplicationCreate) SetApplicantPersonID(v string) *ApplicationCreate {
+func (_c *ApplicationCreate) SetApplicantPersonID(v uuid.UUID) *ApplicationCreate {
 	_c.mutation.SetApplicantPersonID(v)
 	return _c
 }
@@ -303,6 +303,44 @@ func (_c *ApplicationCreate) SetNillableID(v *uuid.UUID) *ApplicationCreate {
 	return _c
 }
 
+// SetPropertyID sets the "property" edge to the Property entity by ID.
+func (_c *ApplicationCreate) SetPropertyID(id uuid.UUID) *ApplicationCreate {
+	_c.mutation.SetPropertyID(id)
+	return _c
+}
+
+// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
+func (_c *ApplicationCreate) SetNillablePropertyID(id *uuid.UUID) *ApplicationCreate {
+	if id != nil {
+		_c = _c.SetPropertyID(*id)
+	}
+	return _c
+}
+
+// SetProperty sets the "property" edge to the Property entity.
+func (_c *ApplicationCreate) SetProperty(v *Property) *ApplicationCreate {
+	return _c.SetPropertyID(v.ID)
+}
+
+// SetSpaceID sets the "space" edge to the Space entity by ID.
+func (_c *ApplicationCreate) SetSpaceID(id uuid.UUID) *ApplicationCreate {
+	_c.mutation.SetSpaceID(id)
+	return _c
+}
+
+// SetNillableSpaceID sets the "space" edge to the Space entity by ID if the given value is not nil.
+func (_c *ApplicationCreate) SetNillableSpaceID(id *uuid.UUID) *ApplicationCreate {
+	if id != nil {
+		_c = _c.SetSpaceID(*id)
+	}
+	return _c
+}
+
+// SetSpace sets the "space" edge to the Space entity.
+func (_c *ApplicationCreate) SetSpace(v *Space) *ApplicationCreate {
+	return _c.SetSpaceID(v.ID)
+}
+
 // SetResultingLeaseID sets the "resulting_lease" edge to the Lease entity by ID.
 func (_c *ApplicationCreate) SetResultingLeaseID(id uuid.UUID) *ApplicationCreate {
 	_c.mutation.SetResultingLeaseID(id)
@@ -331,36 +369,6 @@ func (_c *ApplicationCreate) SetApplicantID(id uuid.UUID) *ApplicationCreate {
 // SetApplicant sets the "applicant" edge to the Person entity.
 func (_c *ApplicationCreate) SetApplicant(v *Person) *ApplicationCreate {
 	return _c.SetApplicantID(v.ID)
-}
-
-// SetPropertyID sets the "property" edge to the Property entity by ID.
-func (_c *ApplicationCreate) SetPropertyID(id uuid.UUID) *ApplicationCreate {
-	_c.mutation.SetPropertyID(id)
-	return _c
-}
-
-// SetProperty sets the "property" edge to the Property entity.
-func (_c *ApplicationCreate) SetProperty(v *Property) *ApplicationCreate {
-	return _c.SetPropertyID(v.ID)
-}
-
-// SetUnitID sets the "unit" edge to the Unit entity by ID.
-func (_c *ApplicationCreate) SetUnitID(id uuid.UUID) *ApplicationCreate {
-	_c.mutation.SetUnitID(id)
-	return _c
-}
-
-// SetNillableUnitID sets the "unit" edge to the Unit entity by ID if the given value is not nil.
-func (_c *ApplicationCreate) SetNillableUnitID(id *uuid.UUID) *ApplicationCreate {
-	if id != nil {
-		_c = _c.SetUnitID(*id)
-	}
-	return _c
-}
-
-// SetUnit sets the "unit" edge to the Unit entity.
-func (_c *ApplicationCreate) SetUnit(v *Unit) *ApplicationCreate {
-	return _c.SetUnitID(v.ID)
 }
 
 // Mutation returns the ApplicationMutation object of the builder.
@@ -500,9 +508,6 @@ func (_c *ApplicationCreate) check() error {
 	if len(_c.mutation.ApplicantIDs()) == 0 {
 		return &ValidationError{Name: "applicant", err: errors.New(`ent: missing required edge "Application.applicant"`)}
 	}
-	if len(_c.mutation.PropertyIDs()) == 0 {
-		return &ValidationError{Name: "property", err: errors.New(`ent: missing required edge "Application.property"`)}
-	}
 	return nil
 }
 
@@ -565,10 +570,6 @@ func (_c *ApplicationCreate) createSpec() (*Application, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.AgentGoalID(); ok {
 		_spec.SetField(application.FieldAgentGoalID, field.TypeString, value)
 		_node.AgentGoalID = &value
-	}
-	if value, ok := _c.mutation.ApplicantPersonID(); ok {
-		_spec.SetField(application.FieldApplicantPersonID, field.TypeString, value)
-		_node.ApplicantPersonID = value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(application.FieldStatus, field.TypeEnum, value)
@@ -634,6 +635,40 @@ func (_c *ApplicationCreate) createSpec() (*Application, *sqlgraph.CreateSpec) {
 		_spec.SetField(application.FieldFeePaid, field.TypeBool, value)
 		_node.FeePaid = value
 	}
+	if nodes := _c.mutation.PropertyIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.PropertyTable,
+			Columns: []string{application.PropertyColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.property_applications = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SpaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   application.SpaceTable,
+			Columns: []string{application.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.space_applications = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := _c.mutation.ResultingLeaseIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
@@ -665,41 +700,7 @@ func (_c *ApplicationCreate) createSpec() (*Application, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.application_applicant = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.PropertyIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.PropertyTable,
-			Columns: []string{application.PropertyColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(property.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.application_property = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.UnitIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   application.UnitTable,
-			Columns: []string{application.UnitColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(unit.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.application_unit = &nodes[0]
+		_node.ApplicantPersonID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

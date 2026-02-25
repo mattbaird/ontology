@@ -101,11 +101,6 @@ func TrustBankAccountID(v string) predicate.Portfolio {
 	return predicate.Portfolio(sql.FieldEQ(FieldTrustBankAccountID, v))
 }
 
-// DefaultLateFeePolicy applies equality check predicate on the "default_late_fee_policy" field. It's identical to DefaultLateFeePolicyEQ.
-func DefaultLateFeePolicy(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEQ(FieldDefaultLateFeePolicy, v))
-}
-
 // FiscalYearStartMonth applies equality check predicate on the "fiscal_year_start_month" field. It's identical to FiscalYearStartMonthEQ.
 func FiscalYearStartMonth(v int) predicate.Portfolio {
 	return predicate.Portfolio(sql.FieldEQ(FieldFiscalYearStartMonth, v))
@@ -679,81 +674,6 @@ func StatusIn(vs ...Status) predicate.Portfolio {
 // StatusNotIn applies the NotIn predicate on the "status" field.
 func StatusNotIn(vs ...Status) predicate.Portfolio {
 	return predicate.Portfolio(sql.FieldNotIn(FieldStatus, vs...))
-}
-
-// DefaultLateFeePolicyEQ applies the EQ predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyEQ(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEQ(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyNEQ applies the NEQ predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyNEQ(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNEQ(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyIn applies the In predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyIn(vs ...string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldIn(FieldDefaultLateFeePolicy, vs...))
-}
-
-// DefaultLateFeePolicyNotIn applies the NotIn predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyNotIn(vs ...string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNotIn(FieldDefaultLateFeePolicy, vs...))
-}
-
-// DefaultLateFeePolicyGT applies the GT predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyGT(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldGT(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyGTE applies the GTE predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyGTE(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldGTE(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyLT applies the LT predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyLT(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldLT(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyLTE applies the LTE predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyLTE(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldLTE(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyContains applies the Contains predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyContains(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldContains(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyHasPrefix applies the HasPrefix predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyHasPrefix(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldHasPrefix(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyHasSuffix applies the HasSuffix predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyHasSuffix(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldHasSuffix(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyIsNil applies the IsNil predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyIsNil() predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldIsNull(FieldDefaultLateFeePolicy))
-}
-
-// DefaultLateFeePolicyNotNil applies the NotNil predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyNotNil() predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNotNull(FieldDefaultLateFeePolicy))
-}
-
-// DefaultLateFeePolicyEqualFold applies the EqualFold predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyEqualFold(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEqualFold(FieldDefaultLateFeePolicy, v))
-}
-
-// DefaultLateFeePolicyContainsFold applies the ContainsFold predicate on the "default_late_fee_policy" field.
-func DefaultLateFeePolicyContainsFold(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldContainsFold(FieldDefaultLateFeePolicy, v))
 }
 
 // DefaultPaymentMethodsIsNil applies the IsNil predicate on the "default_payment_methods" field.

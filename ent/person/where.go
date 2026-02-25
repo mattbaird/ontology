@@ -1152,21 +1152,21 @@ func HasOrganizationsWith(preds ...predicate.Organization) predicate.Person {
 	})
 }
 
-// HasPersonLedgerEntries applies the HasEdge predicate on the "person_ledger_entries" edge.
-func HasPersonLedgerEntries() predicate.Person {
+// HasLedgerEntries applies the HasEdge predicate on the "ledger_entries" edge.
+func HasLedgerEntries() predicate.Person {
 	return predicate.Person(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, PersonLedgerEntriesTable, PersonLedgerEntriesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, LedgerEntriesTable, LedgerEntriesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasPersonLedgerEntriesWith applies the HasEdge predicate on the "person_ledger_entries" edge with a given conditions (other predicates).
-func HasPersonLedgerEntriesWith(preds ...predicate.LedgerEntry) predicate.Person {
+// HasLedgerEntriesWith applies the HasEdge predicate on the "ledger_entries" edge with a given conditions (other predicates).
+func HasLedgerEntriesWith(preds ...predicate.LedgerEntry) predicate.Person {
 	return predicate.Person(func(s *sql.Selector) {
-		step := newPersonLedgerEntriesStep()
+		step := newLedgerEntriesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

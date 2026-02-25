@@ -15,26 +15,28 @@ import (
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/building"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // PropertyQuery is the builder for querying Property entities.
 type PropertyQuery struct {
 	config
-	ctx                       *QueryContext
-	order                     []property.OrderOption
-	inters                    []Interceptor
-	predicates                []predicate.Property
-	withPortfolio             *PortfolioQuery
-	withUnits                 *UnitQuery
-	withBankAccount           *BankAccountQuery
-	withPropertyLedgerEntries *LedgerEntryQuery
-	withApplications          *ApplicationQuery
-	withFKs                   bool
+	ctx               *QueryContext
+	order             []property.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.Property
+	withPortfolio     *PortfolioQuery
+	withBuildings     *BuildingQuery
+	withSpaces        *SpaceQuery
+	withBankAccount   *BankAccountQuery
+	withApplications  *ApplicationQuery
+	withLedgerEntries *LedgerEntryQuery
+	withFKs           bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -93,9 +95,9 @@ func (_q *PropertyQuery) QueryPortfolio() *PortfolioQuery {
 	return query
 }
 
-// QueryUnits chains the current query on the "units" edge.
-func (_q *PropertyQuery) QueryUnits() *UnitQuery {
-	query := (&UnitClient{config: _q.config}).Query()
+// QueryBuildings chains the current query on the "buildings" edge.
+func (_q *PropertyQuery) QueryBuildings() *BuildingQuery {
+	query := (&BuildingClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -106,8 +108,30 @@ func (_q *PropertyQuery) QueryUnits() *UnitQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(property.Table, property.FieldID, selector),
-			sqlgraph.To(unit.Table, unit.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, property.UnitsTable, property.UnitsColumn),
+			sqlgraph.To(building.Table, building.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, property.BuildingsTable, property.BuildingsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySpaces chains the current query on the "spaces" edge.
+func (_q *PropertyQuery) QuerySpaces() *SpaceQuery {
+	query := (&SpaceClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(property.Table, property.FieldID, selector),
+			sqlgraph.To(space.Table, space.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, property.SpacesTable, property.SpacesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -137,28 +161,6 @@ func (_q *PropertyQuery) QueryBankAccount() *BankAccountQuery {
 	return query
 }
 
-// QueryPropertyLedgerEntries chains the current query on the "property_ledger_entries" edge.
-func (_q *PropertyQuery) QueryPropertyLedgerEntries() *LedgerEntryQuery {
-	query := (&LedgerEntryClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(property.Table, property.FieldID, selector),
-			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, property.PropertyLedgerEntriesTable, property.PropertyLedgerEntriesColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
 // QueryApplications chains the current query on the "applications" edge.
 func (_q *PropertyQuery) QueryApplications() *ApplicationQuery {
 	query := (&ApplicationClient{config: _q.config}).Query()
@@ -174,6 +176,28 @@ func (_q *PropertyQuery) QueryApplications() *ApplicationQuery {
 			sqlgraph.From(property.Table, property.FieldID, selector),
 			sqlgraph.To(application.Table, application.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, property.ApplicationsTable, property.ApplicationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryLedgerEntries chains the current query on the "ledger_entries" edge.
+func (_q *PropertyQuery) QueryLedgerEntries() *LedgerEntryQuery {
+	query := (&LedgerEntryClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(property.Table, property.FieldID, selector),
+			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, property.LedgerEntriesTable, property.LedgerEntriesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -368,16 +392,17 @@ func (_q *PropertyQuery) Clone() *PropertyQuery {
 		return nil
 	}
 	return &PropertyQuery{
-		config:                    _q.config,
-		ctx:                       _q.ctx.Clone(),
-		order:                     append([]property.OrderOption{}, _q.order...),
-		inters:                    append([]Interceptor{}, _q.inters...),
-		predicates:                append([]predicate.Property{}, _q.predicates...),
-		withPortfolio:             _q.withPortfolio.Clone(),
-		withUnits:                 _q.withUnits.Clone(),
-		withBankAccount:           _q.withBankAccount.Clone(),
-		withPropertyLedgerEntries: _q.withPropertyLedgerEntries.Clone(),
-		withApplications:          _q.withApplications.Clone(),
+		config:            _q.config,
+		ctx:               _q.ctx.Clone(),
+		order:             append([]property.OrderOption{}, _q.order...),
+		inters:            append([]Interceptor{}, _q.inters...),
+		predicates:        append([]predicate.Property{}, _q.predicates...),
+		withPortfolio:     _q.withPortfolio.Clone(),
+		withBuildings:     _q.withBuildings.Clone(),
+		withSpaces:        _q.withSpaces.Clone(),
+		withBankAccount:   _q.withBankAccount.Clone(),
+		withApplications:  _q.withApplications.Clone(),
+		withLedgerEntries: _q.withLedgerEntries.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -395,14 +420,25 @@ func (_q *PropertyQuery) WithPortfolio(opts ...func(*PortfolioQuery)) *PropertyQ
 	return _q
 }
 
-// WithUnits tells the query-builder to eager-load the nodes that are connected to
-// the "units" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *PropertyQuery) WithUnits(opts ...func(*UnitQuery)) *PropertyQuery {
-	query := (&UnitClient{config: _q.config}).Query()
+// WithBuildings tells the query-builder to eager-load the nodes that are connected to
+// the "buildings" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PropertyQuery) WithBuildings(opts ...func(*BuildingQuery)) *PropertyQuery {
+	query := (&BuildingClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withUnits = query
+	_q.withBuildings = query
+	return _q
+}
+
+// WithSpaces tells the query-builder to eager-load the nodes that are connected to
+// the "spaces" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PropertyQuery) WithSpaces(opts ...func(*SpaceQuery)) *PropertyQuery {
+	query := (&SpaceClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSpaces = query
 	return _q
 }
 
@@ -417,17 +453,6 @@ func (_q *PropertyQuery) WithBankAccount(opts ...func(*BankAccountQuery)) *Prope
 	return _q
 }
 
-// WithPropertyLedgerEntries tells the query-builder to eager-load the nodes that are connected to
-// the "property_ledger_entries" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *PropertyQuery) WithPropertyLedgerEntries(opts ...func(*LedgerEntryQuery)) *PropertyQuery {
-	query := (&LedgerEntryClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withPropertyLedgerEntries = query
-	return _q
-}
-
 // WithApplications tells the query-builder to eager-load the nodes that are connected to
 // the "applications" edge. The optional arguments are used to configure the query builder of the edge.
 func (_q *PropertyQuery) WithApplications(opts ...func(*ApplicationQuery)) *PropertyQuery {
@@ -436,6 +461,17 @@ func (_q *PropertyQuery) WithApplications(opts ...func(*ApplicationQuery)) *Prop
 		opt(query)
 	}
 	_q.withApplications = query
+	return _q
+}
+
+// WithLedgerEntries tells the query-builder to eager-load the nodes that are connected to
+// the "ledger_entries" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PropertyQuery) WithLedgerEntries(opts ...func(*LedgerEntryQuery)) *PropertyQuery {
+	query := (&LedgerEntryClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withLedgerEntries = query
 	return _q
 }
 
@@ -518,12 +554,13 @@ func (_q *PropertyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pro
 		nodes       = []*Property{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			_q.withPortfolio != nil,
-			_q.withUnits != nil,
+			_q.withBuildings != nil,
+			_q.withSpaces != nil,
 			_q.withBankAccount != nil,
-			_q.withPropertyLedgerEntries != nil,
 			_q.withApplications != nil,
+			_q.withLedgerEntries != nil,
 		}
 	)
 	if _q.withPortfolio != nil || _q.withBankAccount != nil {
@@ -556,10 +593,17 @@ func (_q *PropertyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pro
 			return nil, err
 		}
 	}
-	if query := _q.withUnits; query != nil {
-		if err := _q.loadUnits(ctx, query, nodes,
-			func(n *Property) { n.Edges.Units = []*Unit{} },
-			func(n *Property, e *Unit) { n.Edges.Units = append(n.Edges.Units, e) }); err != nil {
+	if query := _q.withBuildings; query != nil {
+		if err := _q.loadBuildings(ctx, query, nodes,
+			func(n *Property) { n.Edges.Buildings = []*Building{} },
+			func(n *Property, e *Building) { n.Edges.Buildings = append(n.Edges.Buildings, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSpaces; query != nil {
+		if err := _q.loadSpaces(ctx, query, nodes,
+			func(n *Property) { n.Edges.Spaces = []*Space{} },
+			func(n *Property, e *Space) { n.Edges.Spaces = append(n.Edges.Spaces, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -569,19 +613,17 @@ func (_q *PropertyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pro
 			return nil, err
 		}
 	}
-	if query := _q.withPropertyLedgerEntries; query != nil {
-		if err := _q.loadPropertyLedgerEntries(ctx, query, nodes,
-			func(n *Property) { n.Edges.PropertyLedgerEntries = []*LedgerEntry{} },
-			func(n *Property, e *LedgerEntry) {
-				n.Edges.PropertyLedgerEntries = append(n.Edges.PropertyLedgerEntries, e)
-			}); err != nil {
-			return nil, err
-		}
-	}
 	if query := _q.withApplications; query != nil {
 		if err := _q.loadApplications(ctx, query, nodes,
 			func(n *Property) { n.Edges.Applications = []*Application{} },
 			func(n *Property, e *Application) { n.Edges.Applications = append(n.Edges.Applications, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withLedgerEntries; query != nil {
+		if err := _q.loadLedgerEntries(ctx, query, nodes,
+			func(n *Property) { n.Edges.LedgerEntries = []*LedgerEntry{} },
+			func(n *Property, e *LedgerEntry) { n.Edges.LedgerEntries = append(n.Edges.LedgerEntries, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -620,7 +662,7 @@ func (_q *PropertyQuery) loadPortfolio(ctx context.Context, query *PortfolioQuer
 	}
 	return nil
 }
-func (_q *PropertyQuery) loadUnits(ctx context.Context, query *UnitQuery, nodes []*Property, init func(*Property), assign func(*Property, *Unit)) error {
+func (_q *PropertyQuery) loadBuildings(ctx context.Context, query *BuildingQuery, nodes []*Property, init func(*Property), assign func(*Property, *Building)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Property)
 	for i := range nodes {
@@ -631,21 +673,52 @@ func (_q *PropertyQuery) loadUnits(ctx context.Context, query *UnitQuery, nodes 
 		}
 	}
 	query.withFKs = true
-	query.Where(predicate.Unit(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(property.UnitsColumn), fks...))
+	query.Where(predicate.Building(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(property.BuildingsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.property_units
+		fk := n.property_buildings
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "property_units" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "property_buildings" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "property_units" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "property_buildings" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PropertyQuery) loadSpaces(ctx context.Context, query *SpaceQuery, nodes []*Property, init func(*Property), assign func(*Property, *Space)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Property)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Space(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(property.SpacesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.property_spaces
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "property_spaces" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "property_spaces" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -683,37 +756,6 @@ func (_q *PropertyQuery) loadBankAccount(ctx context.Context, query *BankAccount
 	}
 	return nil
 }
-func (_q *PropertyQuery) loadPropertyLedgerEntries(ctx context.Context, query *LedgerEntryQuery, nodes []*Property, init func(*Property), assign func(*Property, *LedgerEntry)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*Property)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.LedgerEntry(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(property.PropertyLedgerEntriesColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.property_property_ledger_entries
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "property_property_ledger_entries" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "property_property_ledger_entries" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
-	}
-	return nil
-}
 func (_q *PropertyQuery) loadApplications(ctx context.Context, query *ApplicationQuery, nodes []*Property, init func(*Property), assign func(*Property, *Application)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Property)
@@ -740,6 +782,37 @@ func (_q *PropertyQuery) loadApplications(ctx context.Context, query *Applicatio
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "property_applications" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PropertyQuery) loadLedgerEntries(ctx context.Context, query *LedgerEntryQuery, nodes []*Property, init func(*Property), assign func(*Property, *LedgerEntry)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Property)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.LedgerEntry(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(property.LedgerEntriesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.property_ledger_entries
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "property_ledger_entries" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "property_ledger_entries" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

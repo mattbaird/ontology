@@ -18,10 +18,14 @@ type Tx struct {
 	Application *ApplicationClient
 	// BankAccount is the client for interacting with the BankAccount builders.
 	BankAccount *BankAccountClient
+	// Building is the client for interacting with the Building builders.
+	Building *BuildingClient
 	// JournalEntry is the client for interacting with the JournalEntry builders.
 	JournalEntry *JournalEntryClient
 	// Lease is the client for interacting with the Lease builders.
 	Lease *LeaseClient
+	// LeaseSpace is the client for interacting with the LeaseSpace builders.
+	LeaseSpace *LeaseSpaceClient
 	// LedgerEntry is the client for interacting with the LedgerEntry builders.
 	LedgerEntry *LedgerEntryClient
 	// Organization is the client for interacting with the Organization builders.
@@ -36,8 +40,8 @@ type Tx struct {
 	Property *PropertyClient
 	// Reconciliation is the client for interacting with the Reconciliation builders.
 	Reconciliation *ReconciliationClient
-	// Unit is the client for interacting with the Unit builders.
-	Unit *UnitClient
+	// Space is the client for interacting with the Space builders.
+	Space *SpaceClient
 
 	// lazily loaded.
 	client     *Client
@@ -172,8 +176,10 @@ func (tx *Tx) init() {
 	tx.Account = NewAccountClient(tx.config)
 	tx.Application = NewApplicationClient(tx.config)
 	tx.BankAccount = NewBankAccountClient(tx.config)
+	tx.Building = NewBuildingClient(tx.config)
 	tx.JournalEntry = NewJournalEntryClient(tx.config)
 	tx.Lease = NewLeaseClient(tx.config)
+	tx.LeaseSpace = NewLeaseSpaceClient(tx.config)
 	tx.LedgerEntry = NewLedgerEntryClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.Person = NewPersonClient(tx.config)
@@ -181,7 +187,7 @@ func (tx *Tx) init() {
 	tx.Portfolio = NewPortfolioClient(tx.config)
 	tx.Property = NewPropertyClient(tx.config)
 	tx.Reconciliation = NewReconciliationClient(tx.config)
-	tx.Unit = NewUnitClient(tx.config)
+	tx.Space = NewSpaceClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

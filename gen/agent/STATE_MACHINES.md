@@ -25,6 +25,14 @@ Invalid transitions are rejected at the persistence layer.
 | frozen | active, closed |
 | closed | *(terminal)* |
 
+## Building
+
+| Current State | Valid Transitions |
+|---|---|
+| active | inactive, under_renovation |
+| inactive | active |
+| under_renovation | active |
+
 ## JournalEntry
 
 | Current State | Valid Transitions |
@@ -94,7 +102,7 @@ Invalid transitions are rejected at the persistence layer.
 | unbalanced | in_progress |
 | approved | *(terminal)* |
 
-## Unit
+## Space
 
 | Current State | Valid Transitions |
 |---|---|
@@ -105,4 +113,5 @@ Invalid transitions are rejected at the persistence layer.
 | down | make_ready, vacant |
 | model | vacant, occupied |
 | reserved | vacant, occupied |
+| owner_occupied | vacant |
 

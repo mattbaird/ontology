@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/lease"
-	"github.com/matthewbaird/ontology/ent/unit"
 	"github.com/matthewbaird/ontology/internal/types"
 )
 
@@ -47,8 +46,14 @@ type Lease struct {
 	LeaseType lease.LeaseType `json:"lease_type,omitempty"`
 	// Status holds the value of the "status" field.
 	Status lease.Status `json:"status,omitempty"`
+	// LiabilityType holds the value of the "liability_type" field.
+	LiabilityType lease.LiabilityType `json:"liability_type,omitempty"`
 	// Term holds the value of the "term" field.
 	Term *types.DateRange `json:"term,omitempty"`
+	// LeaseCommencementDate holds the value of the "lease_commencement_date" field.
+	LeaseCommencementDate *time.Time `json:"lease_commencement_date,omitempty"`
+	// RentCommencementDate holds the value of the "rent_commencement_date" field.
+	RentCommencementDate *time.Time `json:"rent_commencement_date,omitempty"`
 	// base_rent — amount in cents
 	BaseRentAmountCents int64 `json:"base_rent_amount_cents,omitempty"`
 	// base_rent — ISO 4217 currency code
@@ -69,6 +74,14 @@ type Lease struct {
 	TenantImprovement *types.TenantImprovement `json:"tenant_improvement,omitempty"`
 	// RenewalOptions holds the value of the "renewal_options" field.
 	RenewalOptions []types.RenewalOption `json:"renewal_options,omitempty"`
+	// UsageCharges holds the value of the "usage_charges" field.
+	UsageCharges []types.UsageBasedCharge `json:"usage_charges,omitempty"`
+	// PercentageRent holds the value of the "percentage_rent" field.
+	PercentageRent *types.PercentageRent `json:"percentage_rent,omitempty"`
+	// ExpansionRights holds the value of the "expansion_rights" field.
+	ExpansionRights []types.ExpansionRight `json:"expansion_rights,omitempty"`
+	// ContractionRights holds the value of the "contraction_rights" field.
+	ContractionRights []types.ContractionRight `json:"contraction_rights,omitempty"`
 	// Subsidy holds the value of the "subsidy" field.
 	Subsidy *types.SubsidyTerms `json:"subsidy,omitempty"`
 	// MoveInDate holds the value of the "move_in_date" field.
@@ -79,6 +92,22 @@ type Lease struct {
 	NoticeDate *time.Time `json:"notice_date,omitempty"`
 	// NoticeRequiredDays holds the value of the "notice_required_days" field.
 	NoticeRequiredDays int `json:"notice_required_days,omitempty"`
+	// CheckInTime holds the value of the "check_in_time" field.
+	CheckInTime *string `json:"check_in_time,omitempty"`
+	// CheckOutTime holds the value of the "check_out_time" field.
+	CheckOutTime *string `json:"check_out_time,omitempty"`
+	// cleaning_fee — amount in cents
+	CleaningFeeAmountCents *int64 `json:"cleaning_fee_amount_cents,omitempty"`
+	// cleaning_fee — ISO 4217 currency code
+	CleaningFeeCurrency *string `json:"cleaning_fee_currency,omitempty"`
+	// PlatformBookingID holds the value of the "platform_booking_id" field.
+	PlatformBookingID *string `json:"platform_booking_id,omitempty"`
+	// MembershipTier holds the value of the "membership_tier" field.
+	MembershipTier *lease.MembershipTier `json:"membership_tier,omitempty"`
+	// IsSublease holds the value of the "is_sublease" field.
+	IsSublease bool `json:"is_sublease,omitempty"`
+	// SubleaseBilling holds the value of the "sublease_billing" field.
+	SubleaseBilling lease.SubleaseBilling `json:"sublease_billing,omitempty"`
 	// SigningMethod holds the value of the "signing_method" field.
 	SigningMethod *lease.SigningMethod `json:"signing_method,omitempty"`
 	// SignedAt holds the value of the "signed_at" field.
@@ -87,18 +116,15 @@ type Lease struct {
 	DocumentID *string `json:"document_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LeaseQuery when eager-loading is set.
-	Edges             LeaseEdges `json:"edges"`
-	unit_leases       *uuid.UUID
-	unit_active_lease *uuid.UUID
-	selectValues      sql.SelectValues
+	Edges           LeaseEdges `json:"edges"`
+	lease_subleases *uuid.UUID
+	selectValues    sql.SelectValues
 }
 
 // LeaseEdges holds the relations/edges for other nodes in the graph.
 type LeaseEdges struct {
-	// Unit has Leases over time (inverse)
-	Unit *Unit `json:"unit,omitempty"`
-	// Unit has at most one active Lease (inverse)
-	OccupiedUnit *Unit `json:"occupied_unit,omitempty"`
+	// LeaseSpace belongs to Lease (inverse)
+	LeaseSpaces []*LeaseSpace `json:"lease_spaces,omitempty"`
 	// Lease is held by tenant PersonRoles
 	TenantRoles []*PersonRole `json:"tenant_roles,omitempty"`
 	// Lease is guaranteed by guarantor PersonRoles
@@ -107,37 +133,28 @@ type LeaseEdges struct {
 	LedgerEntries []*LedgerEntry `json:"ledger_entries,omitempty"`
 	// Lease originated from Application
 	Application *Application `json:"application,omitempty"`
+	// Lease has subleases
+	Subleases []*Lease `json:"subleases,omitempty"`
+	// Lease has subleases (inverse)
+	ParentLease *Lease `json:"parent_lease,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
-// UnitOrErr returns the Unit value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e LeaseEdges) UnitOrErr() (*Unit, error) {
-	if e.Unit != nil {
-		return e.Unit, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: unit.Label}
+// LeaseSpacesOrErr returns the LeaseSpaces value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeaseEdges) LeaseSpacesOrErr() ([]*LeaseSpace, error) {
+	if e.loadedTypes[0] {
+		return e.LeaseSpaces, nil
 	}
-	return nil, &NotLoadedError{edge: "unit"}
-}
-
-// OccupiedUnitOrErr returns the OccupiedUnit value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e LeaseEdges) OccupiedUnitOrErr() (*Unit, error) {
-	if e.OccupiedUnit != nil {
-		return e.OccupiedUnit, nil
-	} else if e.loadedTypes[1] {
-		return nil, &NotFoundError{label: unit.Label}
-	}
-	return nil, &NotLoadedError{edge: "occupied_unit"}
+	return nil, &NotLoadedError{edge: "lease_spaces"}
 }
 
 // TenantRolesOrErr returns the TenantRoles value or an error if the edge
 // was not loaded in eager-loading.
 func (e LeaseEdges) TenantRolesOrErr() ([]*PersonRole, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[1] {
 		return e.TenantRoles, nil
 	}
 	return nil, &NotLoadedError{edge: "tenant_roles"}
@@ -146,7 +163,7 @@ func (e LeaseEdges) TenantRolesOrErr() ([]*PersonRole, error) {
 // GuarantorRolesOrErr returns the GuarantorRoles value or an error if the edge
 // was not loaded in eager-loading.
 func (e LeaseEdges) GuarantorRolesOrErr() ([]*PersonRole, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[2] {
 		return e.GuarantorRoles, nil
 	}
 	return nil, &NotLoadedError{edge: "guarantor_roles"}
@@ -155,7 +172,7 @@ func (e LeaseEdges) GuarantorRolesOrErr() ([]*PersonRole, error) {
 // LedgerEntriesOrErr returns the LedgerEntries value or an error if the edge
 // was not loaded in eager-loading.
 func (e LeaseEdges) LedgerEntriesOrErr() ([]*LedgerEntry, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[3] {
 		return e.LedgerEntries, nil
 	}
 	return nil, &NotLoadedError{edge: "ledger_entries"}
@@ -166,10 +183,30 @@ func (e LeaseEdges) LedgerEntriesOrErr() ([]*LedgerEntry, error) {
 func (e LeaseEdges) ApplicationOrErr() (*Application, error) {
 	if e.Application != nil {
 		return e.Application, nil
-	} else if e.loadedTypes[5] {
+	} else if e.loadedTypes[4] {
 		return nil, &NotFoundError{label: application.Label}
 	}
 	return nil, &NotLoadedError{edge: "application"}
+}
+
+// SubleasesOrErr returns the Subleases value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeaseEdges) SubleasesOrErr() ([]*Lease, error) {
+	if e.loadedTypes[5] {
+		return e.Subleases, nil
+	}
+	return nil, &NotLoadedError{edge: "subleases"}
+}
+
+// ParentLeaseOrErr returns the ParentLease value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LeaseEdges) ParentLeaseOrErr() (*Lease, error) {
+	if e.ParentLease != nil {
+		return e.ParentLease, nil
+	} else if e.loadedTypes[6] {
+		return nil, &NotFoundError{label: lease.Label}
+	}
+	return nil, &NotLoadedError{edge: "parent_lease"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -177,19 +214,19 @@ func (*Lease) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case lease.FieldTenantRoleIds, lease.FieldGuarantorRoleIds, lease.FieldTerm, lease.FieldRentSchedule, lease.FieldRecurringCharges, lease.FieldLateFeePolicy, lease.FieldCamTerms, lease.FieldTenantImprovement, lease.FieldRenewalOptions, lease.FieldSubsidy:
+		case lease.FieldTenantRoleIds, lease.FieldGuarantorRoleIds, lease.FieldTerm, lease.FieldRentSchedule, lease.FieldRecurringCharges, lease.FieldLateFeePolicy, lease.FieldCamTerms, lease.FieldTenantImprovement, lease.FieldRenewalOptions, lease.FieldUsageCharges, lease.FieldPercentageRent, lease.FieldExpansionRights, lease.FieldContractionRights, lease.FieldSubsidy:
 			values[i] = new([]byte)
-		case lease.FieldBaseRentAmountCents, lease.FieldSecurityDepositAmountCents, lease.FieldNoticeRequiredDays:
+		case lease.FieldIsSublease:
+			values[i] = new(sql.NullBool)
+		case lease.FieldBaseRentAmountCents, lease.FieldSecurityDepositAmountCents, lease.FieldNoticeRequiredDays, lease.FieldCleaningFeeAmountCents:
 			values[i] = new(sql.NullInt64)
-		case lease.FieldCreatedBy, lease.FieldUpdatedBy, lease.FieldSource, lease.FieldCorrelationID, lease.FieldAgentGoalID, lease.FieldPropertyID, lease.FieldLeaseType, lease.FieldStatus, lease.FieldBaseRentCurrency, lease.FieldSecurityDepositCurrency, lease.FieldSigningMethod, lease.FieldDocumentID:
+		case lease.FieldCreatedBy, lease.FieldUpdatedBy, lease.FieldSource, lease.FieldCorrelationID, lease.FieldAgentGoalID, lease.FieldPropertyID, lease.FieldLeaseType, lease.FieldStatus, lease.FieldLiabilityType, lease.FieldBaseRentCurrency, lease.FieldSecurityDepositCurrency, lease.FieldCheckInTime, lease.FieldCheckOutTime, lease.FieldCleaningFeeCurrency, lease.FieldPlatformBookingID, lease.FieldMembershipTier, lease.FieldSubleaseBilling, lease.FieldSigningMethod, lease.FieldDocumentID:
 			values[i] = new(sql.NullString)
-		case lease.FieldCreatedAt, lease.FieldUpdatedAt, lease.FieldMoveInDate, lease.FieldMoveOutDate, lease.FieldNoticeDate, lease.FieldSignedAt:
+		case lease.FieldCreatedAt, lease.FieldUpdatedAt, lease.FieldLeaseCommencementDate, lease.FieldRentCommencementDate, lease.FieldMoveInDate, lease.FieldMoveOutDate, lease.FieldNoticeDate, lease.FieldSignedAt:
 			values[i] = new(sql.NullTime)
 		case lease.FieldID:
 			values[i] = new(uuid.UUID)
-		case lease.ForeignKeys[0]: // unit_leases
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case lease.ForeignKeys[1]: // unit_active_lease
+		case lease.ForeignKeys[0]: // lease_subleases
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -290,6 +327,12 @@ func (_m *Lease) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Status = lease.Status(value.String)
 			}
+		case lease.FieldLiabilityType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field liability_type", values[i])
+			} else if value.Valid {
+				_m.LiabilityType = lease.LiabilityType(value.String)
+			}
 		case lease.FieldTerm:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field term", values[i])
@@ -297,6 +340,20 @@ func (_m *Lease) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &_m.Term); err != nil {
 					return fmt.Errorf("unmarshal field term: %w", err)
 				}
+			}
+		case lease.FieldLeaseCommencementDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field lease_commencement_date", values[i])
+			} else if value.Valid {
+				_m.LeaseCommencementDate = new(time.Time)
+				*_m.LeaseCommencementDate = value.Time
+			}
+		case lease.FieldRentCommencementDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field rent_commencement_date", values[i])
+			} else if value.Valid {
+				_m.RentCommencementDate = new(time.Time)
+				*_m.RentCommencementDate = value.Time
 			}
 		case lease.FieldBaseRentAmountCents:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -370,6 +427,38 @@ func (_m *Lease) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field renewal_options: %w", err)
 				}
 			}
+		case lease.FieldUsageCharges:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field usage_charges", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.UsageCharges); err != nil {
+					return fmt.Errorf("unmarshal field usage_charges: %w", err)
+				}
+			}
+		case lease.FieldPercentageRent:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field percentage_rent", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.PercentageRent); err != nil {
+					return fmt.Errorf("unmarshal field percentage_rent: %w", err)
+				}
+			}
+		case lease.FieldExpansionRights:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field expansion_rights", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ExpansionRights); err != nil {
+					return fmt.Errorf("unmarshal field expansion_rights: %w", err)
+				}
+			}
+		case lease.FieldContractionRights:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field contraction_rights", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ContractionRights); err != nil {
+					return fmt.Errorf("unmarshal field contraction_rights: %w", err)
+				}
+			}
 		case lease.FieldSubsidy:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field subsidy", values[i])
@@ -405,6 +494,60 @@ func (_m *Lease) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.NoticeRequiredDays = int(value.Int64)
 			}
+		case lease.FieldCheckInTime:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field check_in_time", values[i])
+			} else if value.Valid {
+				_m.CheckInTime = new(string)
+				*_m.CheckInTime = value.String
+			}
+		case lease.FieldCheckOutTime:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field check_out_time", values[i])
+			} else if value.Valid {
+				_m.CheckOutTime = new(string)
+				*_m.CheckOutTime = value.String
+			}
+		case lease.FieldCleaningFeeAmountCents:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field cleaning_fee_amount_cents", values[i])
+			} else if value.Valid {
+				_m.CleaningFeeAmountCents = new(int64)
+				*_m.CleaningFeeAmountCents = value.Int64
+			}
+		case lease.FieldCleaningFeeCurrency:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field cleaning_fee_currency", values[i])
+			} else if value.Valid {
+				_m.CleaningFeeCurrency = new(string)
+				*_m.CleaningFeeCurrency = value.String
+			}
+		case lease.FieldPlatformBookingID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field platform_booking_id", values[i])
+			} else if value.Valid {
+				_m.PlatformBookingID = new(string)
+				*_m.PlatformBookingID = value.String
+			}
+		case lease.FieldMembershipTier:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field membership_tier", values[i])
+			} else if value.Valid {
+				_m.MembershipTier = new(lease.MembershipTier)
+				*_m.MembershipTier = lease.MembershipTier(value.String)
+			}
+		case lease.FieldIsSublease:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_sublease", values[i])
+			} else if value.Valid {
+				_m.IsSublease = value.Bool
+			}
+		case lease.FieldSubleaseBilling:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field sublease_billing", values[i])
+			} else if value.Valid {
+				_m.SubleaseBilling = lease.SubleaseBilling(value.String)
+			}
 		case lease.FieldSigningMethod:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field signing_method", values[i])
@@ -428,17 +571,10 @@ func (_m *Lease) assignValues(columns []string, values []any) error {
 			}
 		case lease.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field unit_leases", values[i])
+				return fmt.Errorf("unexpected type %T for field lease_subleases", values[i])
 			} else if value.Valid {
-				_m.unit_leases = new(uuid.UUID)
-				*_m.unit_leases = *value.S.(*uuid.UUID)
-			}
-		case lease.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field unit_active_lease", values[i])
-			} else if value.Valid {
-				_m.unit_active_lease = new(uuid.UUID)
-				*_m.unit_active_lease = *value.S.(*uuid.UUID)
+				_m.lease_subleases = new(uuid.UUID)
+				*_m.lease_subleases = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -453,14 +589,9 @@ func (_m *Lease) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryUnit queries the "unit" edge of the Lease entity.
-func (_m *Lease) QueryUnit() *UnitQuery {
-	return NewLeaseClient(_m.config).QueryUnit(_m)
-}
-
-// QueryOccupiedUnit queries the "occupied_unit" edge of the Lease entity.
-func (_m *Lease) QueryOccupiedUnit() *UnitQuery {
-	return NewLeaseClient(_m.config).QueryOccupiedUnit(_m)
+// QueryLeaseSpaces queries the "lease_spaces" edge of the Lease entity.
+func (_m *Lease) QueryLeaseSpaces() *LeaseSpaceQuery {
+	return NewLeaseClient(_m.config).QueryLeaseSpaces(_m)
 }
 
 // QueryTenantRoles queries the "tenant_roles" edge of the Lease entity.
@@ -481,6 +612,16 @@ func (_m *Lease) QueryLedgerEntries() *LedgerEntryQuery {
 // QueryApplication queries the "application" edge of the Lease entity.
 func (_m *Lease) QueryApplication() *ApplicationQuery {
 	return NewLeaseClient(_m.config).QueryApplication(_m)
+}
+
+// QuerySubleases queries the "subleases" edge of the Lease entity.
+func (_m *Lease) QuerySubleases() *LeaseQuery {
+	return NewLeaseClient(_m.config).QuerySubleases(_m)
+}
+
+// QueryParentLease queries the "parent_lease" edge of the Lease entity.
+func (_m *Lease) QueryParentLease() *LeaseQuery {
+	return NewLeaseClient(_m.config).QueryParentLease(_m)
 }
 
 // Update returns a builder for updating this Lease.
@@ -546,8 +687,21 @@ func (_m *Lease) String() string {
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
+	builder.WriteString("liability_type=")
+	builder.WriteString(fmt.Sprintf("%v", _m.LiabilityType))
+	builder.WriteString(", ")
 	builder.WriteString("term=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Term))
+	builder.WriteString(", ")
+	if v := _m.LeaseCommencementDate; v != nil {
+		builder.WriteString("lease_commencement_date=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.RentCommencementDate; v != nil {
+		builder.WriteString("rent_commencement_date=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("base_rent_amount_cents=")
 	builder.WriteString(fmt.Sprintf("%v", _m.BaseRentAmountCents))
@@ -579,6 +733,18 @@ func (_m *Lease) String() string {
 	builder.WriteString("renewal_options=")
 	builder.WriteString(fmt.Sprintf("%v", _m.RenewalOptions))
 	builder.WriteString(", ")
+	builder.WriteString("usage_charges=")
+	builder.WriteString(fmt.Sprintf("%v", _m.UsageCharges))
+	builder.WriteString(", ")
+	builder.WriteString("percentage_rent=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PercentageRent))
+	builder.WriteString(", ")
+	builder.WriteString("expansion_rights=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ExpansionRights))
+	builder.WriteString(", ")
+	builder.WriteString("contraction_rights=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ContractionRights))
+	builder.WriteString(", ")
 	builder.WriteString("subsidy=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Subsidy))
 	builder.WriteString(", ")
@@ -599,6 +765,42 @@ func (_m *Lease) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("notice_required_days=")
 	builder.WriteString(fmt.Sprintf("%v", _m.NoticeRequiredDays))
+	builder.WriteString(", ")
+	if v := _m.CheckInTime; v != nil {
+		builder.WriteString("check_in_time=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.CheckOutTime; v != nil {
+		builder.WriteString("check_out_time=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.CleaningFeeAmountCents; v != nil {
+		builder.WriteString("cleaning_fee_amount_cents=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.CleaningFeeCurrency; v != nil {
+		builder.WriteString("cleaning_fee_currency=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.PlatformBookingID; v != nil {
+		builder.WriteString("platform_booking_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.MembershipTier; v != nil {
+		builder.WriteString("membership_tier=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("is_sublease=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsSublease))
+	builder.WriteString(", ")
+	builder.WriteString("sublease_billing=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SubleaseBilling))
 	builder.WriteString(", ")
 	if v := _m.SigningMethod; v != nil {
 		builder.WriteString("signing_method=")

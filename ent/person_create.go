@@ -158,6 +158,14 @@ func (_c *PersonCreate) SetPreferredContact(v person.PreferredContact) *PersonCr
 	return _c
 }
 
+// SetNillablePreferredContact sets the "preferred_contact" field if the given value is not nil.
+func (_c *PersonCreate) SetNillablePreferredContact(v *person.PreferredContact) *PersonCreate {
+	if v != nil {
+		_c.SetPreferredContact(*v)
+	}
+	return _c
+}
+
 // SetLanguagePreference sets the "language_preference" field.
 func (_c *PersonCreate) SetLanguagePreference(v string) *PersonCreate {
 	_c.mutation.SetLanguagePreference(v)
@@ -284,19 +292,19 @@ func (_c *PersonCreate) AddOrganizations(v ...*Organization) *PersonCreate {
 	return _c.AddOrganizationIDs(ids...)
 }
 
-// AddPersonLedgerEntryIDs adds the "person_ledger_entries" edge to the LedgerEntry entity by IDs.
-func (_c *PersonCreate) AddPersonLedgerEntryIDs(ids ...uuid.UUID) *PersonCreate {
-	_c.mutation.AddPersonLedgerEntryIDs(ids...)
+// AddLedgerEntryIDs adds the "ledger_entries" edge to the LedgerEntry entity by IDs.
+func (_c *PersonCreate) AddLedgerEntryIDs(ids ...uuid.UUID) *PersonCreate {
+	_c.mutation.AddLedgerEntryIDs(ids...)
 	return _c
 }
 
-// AddPersonLedgerEntries adds the "person_ledger_entries" edges to the LedgerEntry entity.
-func (_c *PersonCreate) AddPersonLedgerEntries(v ...*LedgerEntry) *PersonCreate {
+// AddLedgerEntries adds the "ledger_entries" edges to the LedgerEntry entity.
+func (_c *PersonCreate) AddLedgerEntries(v ...*LedgerEntry) *PersonCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddPersonLedgerEntryIDs(ids...)
+	return _c.AddLedgerEntryIDs(ids...)
 }
 
 // AddApplicationIDs adds the "applications" edge to the Application entity by IDs.
@@ -356,6 +364,10 @@ func (_c *PersonCreate) defaults() {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := person.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
+	}
+	if _, ok := _c.mutation.PreferredContact(); !ok {
+		v := person.DefaultPreferredContact
+		_c.mutation.SetPreferredContact(v)
 	}
 	if _, ok := _c.mutation.DoNotContact(); !ok {
 		v := person.DefaultDoNotContact
@@ -588,12 +600,12 @@ func (_c *PersonCreate) createSpec() (*Person, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.PersonLedgerEntriesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.LedgerEntriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   person.PersonLedgerEntriesTable,
-			Columns: []string{person.PersonLedgerEntriesColumn},
+			Table:   person.LedgerEntriesTable,
+			Columns: []string{person.LedgerEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),

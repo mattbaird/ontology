@@ -46,13 +46,13 @@ type Account struct {
 	// AccountSubtype holds the value of the "account_subtype" field.
 	AccountSubtype account.AccountSubtype `json:"account_subtype,omitempty"`
 	// ParentAccountID holds the value of the "parent_account_id" field.
-	ParentAccountID *string `json:"parent_account_id,omitempty"`
+	ParentAccountID *uuid.UUID `json:"parent_account_id,omitempty"`
 	// Depth holds the value of the "depth" field.
 	Depth int `json:"depth,omitempty"`
 	// Dimensions holds the value of the "dimensions" field.
 	Dimensions *types.AccountDimensions `json:"dimensions,omitempty"`
 	// NormalBalance holds the value of the "normal_balance" field.
-	NormalBalance account.NormalBalance `json:"normal_balance,omitempty"`
+	NormalBalance string `json:"normal_balance,omitempty"`
 	// IsHeader holds the value of the "is_header" field.
 	IsHeader bool `json:"is_header,omitempty"`
 	// IsSystem holds the value of the "is_system" field.
@@ -64,7 +64,7 @@ type Account struct {
 	// IsTrustAccount holds the value of the "is_trust_account" field.
 	IsTrustAccount bool `json:"is_trust_account,omitempty"`
 	// TrustType holds the value of the "trust_type" field.
-	TrustType *account.TrustType `json:"trust_type,omitempty"`
+	TrustType *string `json:"trust_type,omitempty"`
 	// budget_amount — amount in cents
 	BudgetAmountAmountCents *int64 `json:"budget_amount_amount_cents,omitempty"`
 	// budget_amount — ISO 4217 currency code
@@ -136,13 +136,15 @@ func (*Account) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case account.FieldParentAccountID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case account.FieldDimensions:
 			values[i] = new([]byte)
 		case account.FieldIsHeader, account.FieldIsSystem, account.FieldAllowsDirectPosting, account.FieldIsTrustAccount:
 			values[i] = new(sql.NullBool)
 		case account.FieldDepth, account.FieldBudgetAmountAmountCents:
 			values[i] = new(sql.NullInt64)
-		case account.FieldCreatedBy, account.FieldUpdatedBy, account.FieldSource, account.FieldCorrelationID, account.FieldAgentGoalID, account.FieldAccountNumber, account.FieldName, account.FieldDescription, account.FieldAccountType, account.FieldAccountSubtype, account.FieldParentAccountID, account.FieldNormalBalance, account.FieldStatus, account.FieldTrustType, account.FieldBudgetAmountCurrency, account.FieldTaxLine:
+		case account.FieldCreatedBy, account.FieldUpdatedBy, account.FieldSource, account.FieldCorrelationID, account.FieldAgentGoalID, account.FieldAccountNumber, account.FieldName, account.FieldDescription, account.FieldAccountType, account.FieldAccountSubtype, account.FieldNormalBalance, account.FieldStatus, account.FieldTrustType, account.FieldBudgetAmountCurrency, account.FieldTaxLine:
 			values[i] = new(sql.NullString)
 		case account.FieldCreatedAt, account.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -247,11 +249,11 @@ func (_m *Account) assignValues(columns []string, values []any) error {
 				_m.AccountSubtype = account.AccountSubtype(value.String)
 			}
 		case account.FieldParentAccountID:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field parent_account_id", values[i])
 			} else if value.Valid {
-				_m.ParentAccountID = new(string)
-				*_m.ParentAccountID = value.String
+				_m.ParentAccountID = new(uuid.UUID)
+				*_m.ParentAccountID = *value.S.(*uuid.UUID)
 			}
 		case account.FieldDepth:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -271,7 +273,7 @@ func (_m *Account) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field normal_balance", values[i])
 			} else if value.Valid {
-				_m.NormalBalance = account.NormalBalance(value.String)
+				_m.NormalBalance = value.String
 			}
 		case account.FieldIsHeader:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -307,8 +309,8 @@ func (_m *Account) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field trust_type", values[i])
 			} else if value.Valid {
-				_m.TrustType = new(account.TrustType)
-				*_m.TrustType = account.TrustType(value.String)
+				_m.TrustType = new(string)
+				*_m.TrustType = value.String
 			}
 		case account.FieldBudgetAmountAmountCents:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -438,7 +440,7 @@ func (_m *Account) String() string {
 	builder.WriteString(", ")
 	if v := _m.ParentAccountID; v != nil {
 		builder.WriteString("parent_account_id=")
-		builder.WriteString(*v)
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("depth=")
@@ -448,7 +450,7 @@ func (_m *Account) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Dimensions))
 	builder.WriteString(", ")
 	builder.WriteString("normal_balance=")
-	builder.WriteString(fmt.Sprintf("%v", _m.NormalBalance))
+	builder.WriteString(_m.NormalBalance)
 	builder.WriteString(", ")
 	builder.WriteString("is_header=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsHeader))
@@ -467,7 +469,7 @@ func (_m *Account) String() string {
 	builder.WriteString(", ")
 	if v := _m.TrustType; v != nil {
 		builder.WriteString("trust_type=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
+		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	if v := _m.BudgetAmountAmountCents; v != nil {

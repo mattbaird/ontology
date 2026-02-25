@@ -137,13 +137,13 @@ func (_c *AccountCreate) SetAccountSubtype(v account.AccountSubtype) *AccountCre
 }
 
 // SetParentAccountID sets the "parent_account_id" field.
-func (_c *AccountCreate) SetParentAccountID(v string) *AccountCreate {
+func (_c *AccountCreate) SetParentAccountID(v uuid.UUID) *AccountCreate {
 	_c.mutation.SetParentAccountID(v)
 	return _c
 }
 
 // SetNillableParentAccountID sets the "parent_account_id" field if the given value is not nil.
-func (_c *AccountCreate) SetNillableParentAccountID(v *string) *AccountCreate {
+func (_c *AccountCreate) SetNillableParentAccountID(v *uuid.UUID) *AccountCreate {
 	if v != nil {
 		_c.SetParentAccountID(*v)
 	}
@@ -163,7 +163,7 @@ func (_c *AccountCreate) SetDimensions(v *types.AccountDimensions) *AccountCreat
 }
 
 // SetNormalBalance sets the "normal_balance" field.
-func (_c *AccountCreate) SetNormalBalance(v account.NormalBalance) *AccountCreate {
+func (_c *AccountCreate) SetNormalBalance(v string) *AccountCreate {
 	_c.mutation.SetNormalBalance(v)
 	return _c
 }
@@ -231,13 +231,13 @@ func (_c *AccountCreate) SetNillableIsTrustAccount(v *bool) *AccountCreate {
 }
 
 // SetTrustType sets the "trust_type" field.
-func (_c *AccountCreate) SetTrustType(v account.TrustType) *AccountCreate {
+func (_c *AccountCreate) SetTrustType(v string) *AccountCreate {
 	_c.mutation.SetTrustType(v)
 	return _c
 }
 
 // SetNillableTrustType sets the "trust_type" field if the given value is not nil.
-func (_c *AccountCreate) SetNillableTrustType(v *account.TrustType) *AccountCreate {
+func (_c *AccountCreate) SetNillableTrustType(v *string) *AccountCreate {
 	if v != nil {
 		_c.SetTrustType(*v)
 	}
@@ -493,11 +493,6 @@ func (_c *AccountCreate) check() error {
 	if _, ok := _c.mutation.NormalBalance(); !ok {
 		return &ValidationError{Name: "normal_balance", err: errors.New(`ent: missing required field "Account.normal_balance"`)}
 	}
-	if v, ok := _c.mutation.NormalBalance(); ok {
-		if err := account.NormalBalanceValidator(v); err != nil {
-			return &ValidationError{Name: "normal_balance", err: fmt.Errorf(`ent: validator failed for field "Account.normal_balance": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.IsHeader(); !ok {
 		return &ValidationError{Name: "is_header", err: errors.New(`ent: missing required field "Account.is_header"`)}
 	}
@@ -517,11 +512,6 @@ func (_c *AccountCreate) check() error {
 	}
 	if _, ok := _c.mutation.IsTrustAccount(); !ok {
 		return &ValidationError{Name: "is_trust_account", err: errors.New(`ent: missing required field "Account.is_trust_account"`)}
-	}
-	if v, ok := _c.mutation.TrustType(); ok {
-		if err := account.TrustTypeValidator(v); err != nil {
-			return &ValidationError{Name: "trust_type", err: fmt.Errorf(`ent: validator failed for field "Account.trust_type": %w`, err)}
-		}
 	}
 	if v, ok := _c.mutation.BudgetAmountCurrency(); ok {
 		if err := account.BudgetAmountCurrencyValidator(v); err != nil {
@@ -612,7 +602,7 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		_node.AccountSubtype = value
 	}
 	if value, ok := _c.mutation.ParentAccountID(); ok {
-		_spec.SetField(account.FieldParentAccountID, field.TypeString, value)
+		_spec.SetField(account.FieldParentAccountID, field.TypeUUID, value)
 		_node.ParentAccountID = &value
 	}
 	if value, ok := _c.mutation.Depth(); ok {
@@ -624,7 +614,7 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		_node.Dimensions = value
 	}
 	if value, ok := _c.mutation.NormalBalance(); ok {
-		_spec.SetField(account.FieldNormalBalance, field.TypeEnum, value)
+		_spec.SetField(account.FieldNormalBalance, field.TypeString, value)
 		_node.NormalBalance = value
 	}
 	if value, ok := _c.mutation.IsHeader(); ok {
@@ -648,7 +638,7 @@ func (_c *AccountCreate) createSpec() (*Account, *sqlgraph.CreateSpec) {
 		_node.IsTrustAccount = value
 	}
 	if value, ok := _c.mutation.TrustType(); ok {
-		_spec.SetField(account.FieldTrustType, field.TypeEnum, value)
+		_spec.SetField(account.FieldTrustType, field.TypeString, value)
 		_node.TrustType = &value
 	}
 	if value, ok := _c.mutation.BudgetAmountAmountCents(); ok {

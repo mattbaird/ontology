@@ -76,7 +76,7 @@ type PersonEdges struct {
 	// Person is affiliated with Organizations
 	Organizations []*Organization `json:"organizations,omitempty"`
 	// LedgerEntry relates to Person (inverse)
-	PersonLedgerEntries []*LedgerEntry `json:"person_ledger_entries,omitempty"`
+	LedgerEntries []*LedgerEntry `json:"ledger_entries,omitempty"`
 	// Application was submitted by Person (inverse)
 	Applications []*Application `json:"applications,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -102,13 +102,13 @@ func (e PersonEdges) OrganizationsOrErr() ([]*Organization, error) {
 	return nil, &NotLoadedError{edge: "organizations"}
 }
 
-// PersonLedgerEntriesOrErr returns the PersonLedgerEntries value or an error if the edge
+// LedgerEntriesOrErr returns the LedgerEntries value or an error if the edge
 // was not loaded in eager-loading.
-func (e PersonEdges) PersonLedgerEntriesOrErr() ([]*LedgerEntry, error) {
+func (e PersonEdges) LedgerEntriesOrErr() ([]*LedgerEntry, error) {
 	if e.loadedTypes[2] {
-		return e.PersonLedgerEntries, nil
+		return e.LedgerEntries, nil
 	}
-	return nil, &NotLoadedError{edge: "person_ledger_entries"}
+	return nil, &NotLoadedError{edge: "ledger_entries"}
 }
 
 // ApplicationsOrErr returns the Applications value or an error if the edge
@@ -316,9 +316,9 @@ func (_m *Person) QueryOrganizations() *OrganizationQuery {
 	return NewPersonClient(_m.config).QueryOrganizations(_m)
 }
 
-// QueryPersonLedgerEntries queries the "person_ledger_entries" edge of the Person entity.
-func (_m *Person) QueryPersonLedgerEntries() *LedgerEntryQuery {
-	return NewPersonClient(_m.config).QueryPersonLedgerEntries(_m)
+// QueryLedgerEntries queries the "ledger_entries" edge of the Person entity.
+func (_m *Person) QueryLedgerEntries() *LedgerEntryQuery {
+	return NewPersonClient(_m.config).QueryLedgerEntries(_m)
 }
 
 // QueryApplications queries the "applications" edge of the Person entity.

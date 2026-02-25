@@ -47,7 +47,8 @@ type EventTypeDef struct {
 // entityTransitionMap maps entity names to their CUE state machine definition names.
 var entityTransitionMap = map[string]string{
 	"Lease":          "#LeaseTransitions",
-	"Unit":           "#UnitTransitions",
+	"Space":          "#SpaceTransitions",
+	"Building":       "#BuildingTransitions",
 	"Application":    "#ApplicationTransitions",
 	"JournalEntry":   "#JournalEntryTransitions",
 	"Portfolio":      "#PortfolioTransitions",

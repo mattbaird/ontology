@@ -2,6 +2,9 @@
 package schema
 
 import (
+	"context"
+	"fmt"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -31,11 +34,11 @@ func (Property) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
 		field.String("name").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.JSON("address", &types.Address{}),
-		field.Enum("property_type").Values("single_family", "multi_family", "commercial_office", "commercial_retail", "mixed_use", "industrial", "affordable_housing", "student_housing", "senior_living", "vacation_rental", "mobile_home_park"),
+		field.Enum("property_type").Values("single_family", "multi_family", "commercial_office", "commercial_retail", "mixed_use", "industrial", "affordable_housing", "student_housing", "senior_living", "vacation_rental", "mobile_home_park", "self_storage", "coworking", "data_center", "medical_office"),
 		field.Enum("status").Values("active", "inactive", "under_renovation", "for_sale", "onboarding"),
 		field.Int("year_built"),
 		field.Float("total_square_footage"),
-		field.Int("total_units"),
+		field.Int("total_spaces"),
 		field.Float("lot_size_sqft").Optional().Nillable(),
 		field.Int("stories").Optional().Nillable(),
 		field.Int("parking_spaces").Optional().Nillable(),
@@ -53,10 +56,11 @@ func (Property) Fields() []ent.Field {
 func (Property) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("portfolio", Portfolio.Type).Ref("properties").Unique().Comment("Portfolio contains Properties (inverse)"),
-		edge.To("units", Unit.Type).Comment("Property contains Units"),
+		edge.To("buildings", Building.Type).Comment("Property contains Buildings"),
+		edge.To("spaces", Space.Type).Comment("Property contains Spaces"),
 		edge.To("bank_account", BankAccount.Type).Unique().Comment("Property uses BankAccount"),
-		edge.To("property_ledger_entries", LedgerEntry.Type).Comment("LedgerEntry relates to Property (inverse)"),
-		edge.To("applications", Application.Type).Comment("Application is for Property (inverse)"),
+		edge.To("applications", Application.Type).Comment("Property receives Applications"),
+		edge.To("ledger_entries", LedgerEntry.Type).Comment("LedgerEntry relates to Property (inverse)"),
 	}
 }
 
@@ -68,4 +72,82 @@ var ValidPropertyTransitions = map[string][]string{
 	"inactive":         {"active"},
 	"onboarding":       {"active"},
 	"under_renovation": {"active", "for_sale"},
+}
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (Property) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validatePropertyConstraints(),
+	}
+}
+
+func validatePropertyConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}
+			toString := func(v interface{}) string {
+				if v == nil {
+					return ""
+				}
+				switch s := v.(type) {
+				case string:
+					return s
+				case *string:
+					if s != nil {
+						return *s
+					}
+					return ""
+				}
+				return fmt.Sprint(v)
+			}
+
+			// single_family → total_spaces must be 1
+			if v, ok := getField("property_type"); ok && fmt.Sprint(v) == "single_family" {
+				if tu, ok := getField("total_spaces"); ok {
+					if tuInt, isInt := tu.(int); isInt && tuInt != 1 {
+						return nil, fmt.Errorf("single_family property must have total_spaces=1, got %d", tuInt)
+					}
+				}
+			}
+			// affordable_housing → compliance_programs must have ≥1 entry
+			if v, ok := getField("property_type"); ok && fmt.Sprint(v) == "affordable_housing" {
+				cp, cpOk := getField("compliance_programs")
+				if !cpOk && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("affordable_housing property must have at least one compliance_programs entry")
+				}
+				if cpOk {
+					if list, isList := cp.([]string); isList && len(list) == 0 {
+						return nil, fmt.Errorf("affordable_housing property must have at least one compliance_programs entry")
+					}
+				}
+			}
+			// rent_controlled == true → jurisdiction_id must be non-empty
+			if v, ok := getField("rent_controlled"); ok && fmt.Sprint(v) == "true" {
+				jid, jidOk := getField("jurisdiction_id")
+				if !jidOk || toString(jid) == "" {
+					return nil, fmt.Errorf("rent-controlled property must have jurisdiction_id set")
+				}
+			}
+			// year_built < 1978 → requires_lead_disclosure must be true
+			if v, ok := getField("year_built"); ok {
+				if yb, isInt := v.(int); isInt && yb < 1978 {
+					if rld, ok := getField("requires_lead_disclosure"); ok {
+						if fmt.Sprint(rld) != "true" {
+							return nil, fmt.Errorf("property built before 1978 must have requires_lead_disclosure=true")
+						}
+					}
+				}
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
 }

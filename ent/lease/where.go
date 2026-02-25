@@ -91,6 +91,16 @@ func PropertyID(v string) predicate.Lease {
 	return predicate.Lease(sql.FieldEQ(FieldPropertyID, v))
 }
 
+// LeaseCommencementDate applies equality check predicate on the "lease_commencement_date" field. It's identical to LeaseCommencementDateEQ.
+func LeaseCommencementDate(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldLeaseCommencementDate, v))
+}
+
+// RentCommencementDate applies equality check predicate on the "rent_commencement_date" field. It's identical to RentCommencementDateEQ.
+func RentCommencementDate(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldRentCommencementDate, v))
+}
+
 // BaseRentAmountCents applies equality check predicate on the "base_rent_amount_cents" field. It's identical to BaseRentAmountCentsEQ.
 func BaseRentAmountCents(v int64) predicate.Lease {
 	return predicate.Lease(sql.FieldEQ(FieldBaseRentAmountCents, v))
@@ -129,6 +139,36 @@ func NoticeDate(v time.Time) predicate.Lease {
 // NoticeRequiredDays applies equality check predicate on the "notice_required_days" field. It's identical to NoticeRequiredDaysEQ.
 func NoticeRequiredDays(v int) predicate.Lease {
 	return predicate.Lease(sql.FieldEQ(FieldNoticeRequiredDays, v))
+}
+
+// CheckInTime applies equality check predicate on the "check_in_time" field. It's identical to CheckInTimeEQ.
+func CheckInTime(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldCheckInTime, v))
+}
+
+// CheckOutTime applies equality check predicate on the "check_out_time" field. It's identical to CheckOutTimeEQ.
+func CheckOutTime(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldCheckOutTime, v))
+}
+
+// CleaningFeeAmountCents applies equality check predicate on the "cleaning_fee_amount_cents" field. It's identical to CleaningFeeAmountCentsEQ.
+func CleaningFeeAmountCents(v int64) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldCleaningFeeAmountCents, v))
+}
+
+// CleaningFeeCurrency applies equality check predicate on the "cleaning_fee_currency" field. It's identical to CleaningFeeCurrencyEQ.
+func CleaningFeeCurrency(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldCleaningFeeCurrency, v))
+}
+
+// PlatformBookingID applies equality check predicate on the "platform_booking_id" field. It's identical to PlatformBookingIDEQ.
+func PlatformBookingID(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldPlatformBookingID, v))
+}
+
+// IsSublease applies equality check predicate on the "is_sublease" field. It's identical to IsSubleaseEQ.
+func IsSublease(v bool) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldIsSublease, v))
 }
 
 // SignedAt applies equality check predicate on the "signed_at" field. It's identical to SignedAtEQ.
@@ -636,6 +676,126 @@ func StatusNotIn(vs ...Status) predicate.Lease {
 	return predicate.Lease(sql.FieldNotIn(FieldStatus, vs...))
 }
 
+// LiabilityTypeEQ applies the EQ predicate on the "liability_type" field.
+func LiabilityTypeEQ(v LiabilityType) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldLiabilityType, v))
+}
+
+// LiabilityTypeNEQ applies the NEQ predicate on the "liability_type" field.
+func LiabilityTypeNEQ(v LiabilityType) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldLiabilityType, v))
+}
+
+// LiabilityTypeIn applies the In predicate on the "liability_type" field.
+func LiabilityTypeIn(vs ...LiabilityType) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldLiabilityType, vs...))
+}
+
+// LiabilityTypeNotIn applies the NotIn predicate on the "liability_type" field.
+func LiabilityTypeNotIn(vs ...LiabilityType) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldLiabilityType, vs...))
+}
+
+// LeaseCommencementDateEQ applies the EQ predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateEQ(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldLeaseCommencementDate, v))
+}
+
+// LeaseCommencementDateNEQ applies the NEQ predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateNEQ(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldLeaseCommencementDate, v))
+}
+
+// LeaseCommencementDateIn applies the In predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateIn(vs ...time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldLeaseCommencementDate, vs...))
+}
+
+// LeaseCommencementDateNotIn applies the NotIn predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateNotIn(vs ...time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldLeaseCommencementDate, vs...))
+}
+
+// LeaseCommencementDateGT applies the GT predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateGT(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldGT(FieldLeaseCommencementDate, v))
+}
+
+// LeaseCommencementDateGTE applies the GTE predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateGTE(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldGTE(FieldLeaseCommencementDate, v))
+}
+
+// LeaseCommencementDateLT applies the LT predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateLT(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldLT(FieldLeaseCommencementDate, v))
+}
+
+// LeaseCommencementDateLTE applies the LTE predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateLTE(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldLTE(FieldLeaseCommencementDate, v))
+}
+
+// LeaseCommencementDateIsNil applies the IsNil predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldLeaseCommencementDate))
+}
+
+// LeaseCommencementDateNotNil applies the NotNil predicate on the "lease_commencement_date" field.
+func LeaseCommencementDateNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldLeaseCommencementDate))
+}
+
+// RentCommencementDateEQ applies the EQ predicate on the "rent_commencement_date" field.
+func RentCommencementDateEQ(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldRentCommencementDate, v))
+}
+
+// RentCommencementDateNEQ applies the NEQ predicate on the "rent_commencement_date" field.
+func RentCommencementDateNEQ(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldRentCommencementDate, v))
+}
+
+// RentCommencementDateIn applies the In predicate on the "rent_commencement_date" field.
+func RentCommencementDateIn(vs ...time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldRentCommencementDate, vs...))
+}
+
+// RentCommencementDateNotIn applies the NotIn predicate on the "rent_commencement_date" field.
+func RentCommencementDateNotIn(vs ...time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldRentCommencementDate, vs...))
+}
+
+// RentCommencementDateGT applies the GT predicate on the "rent_commencement_date" field.
+func RentCommencementDateGT(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldGT(FieldRentCommencementDate, v))
+}
+
+// RentCommencementDateGTE applies the GTE predicate on the "rent_commencement_date" field.
+func RentCommencementDateGTE(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldGTE(FieldRentCommencementDate, v))
+}
+
+// RentCommencementDateLT applies the LT predicate on the "rent_commencement_date" field.
+func RentCommencementDateLT(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldLT(FieldRentCommencementDate, v))
+}
+
+// RentCommencementDateLTE applies the LTE predicate on the "rent_commencement_date" field.
+func RentCommencementDateLTE(v time.Time) predicate.Lease {
+	return predicate.Lease(sql.FieldLTE(FieldRentCommencementDate, v))
+}
+
+// RentCommencementDateIsNil applies the IsNil predicate on the "rent_commencement_date" field.
+func RentCommencementDateIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldRentCommencementDate))
+}
+
+// RentCommencementDateNotNil applies the NotNil predicate on the "rent_commencement_date" field.
+func RentCommencementDateNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldRentCommencementDate))
+}
+
 // BaseRentAmountCentsEQ applies the EQ predicate on the "base_rent_amount_cents" field.
 func BaseRentAmountCentsEQ(v int64) predicate.Lease {
 	return predicate.Lease(sql.FieldEQ(FieldBaseRentAmountCents, v))
@@ -906,6 +1066,46 @@ func RenewalOptionsNotNil() predicate.Lease {
 	return predicate.Lease(sql.FieldNotNull(FieldRenewalOptions))
 }
 
+// UsageChargesIsNil applies the IsNil predicate on the "usage_charges" field.
+func UsageChargesIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldUsageCharges))
+}
+
+// UsageChargesNotNil applies the NotNil predicate on the "usage_charges" field.
+func UsageChargesNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldUsageCharges))
+}
+
+// PercentageRentIsNil applies the IsNil predicate on the "percentage_rent" field.
+func PercentageRentIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldPercentageRent))
+}
+
+// PercentageRentNotNil applies the NotNil predicate on the "percentage_rent" field.
+func PercentageRentNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldPercentageRent))
+}
+
+// ExpansionRightsIsNil applies the IsNil predicate on the "expansion_rights" field.
+func ExpansionRightsIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldExpansionRights))
+}
+
+// ExpansionRightsNotNil applies the NotNil predicate on the "expansion_rights" field.
+func ExpansionRightsNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldExpansionRights))
+}
+
+// ContractionRightsIsNil applies the IsNil predicate on the "contraction_rights" field.
+func ContractionRightsIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldContractionRights))
+}
+
+// ContractionRightsNotNil applies the NotNil predicate on the "contraction_rights" field.
+func ContractionRightsNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldContractionRights))
+}
+
 // SubsidyIsNil applies the IsNil predicate on the "subsidy" field.
 func SubsidyIsNil() predicate.Lease {
 	return predicate.Lease(sql.FieldIsNull(FieldSubsidy))
@@ -1106,6 +1306,416 @@ func NoticeRequiredDaysLTE(v int) predicate.Lease {
 	return predicate.Lease(sql.FieldLTE(FieldNoticeRequiredDays, v))
 }
 
+// CheckInTimeEQ applies the EQ predicate on the "check_in_time" field.
+func CheckInTimeEQ(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldCheckInTime, v))
+}
+
+// CheckInTimeNEQ applies the NEQ predicate on the "check_in_time" field.
+func CheckInTimeNEQ(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldCheckInTime, v))
+}
+
+// CheckInTimeIn applies the In predicate on the "check_in_time" field.
+func CheckInTimeIn(vs ...string) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldCheckInTime, vs...))
+}
+
+// CheckInTimeNotIn applies the NotIn predicate on the "check_in_time" field.
+func CheckInTimeNotIn(vs ...string) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldCheckInTime, vs...))
+}
+
+// CheckInTimeGT applies the GT predicate on the "check_in_time" field.
+func CheckInTimeGT(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldGT(FieldCheckInTime, v))
+}
+
+// CheckInTimeGTE applies the GTE predicate on the "check_in_time" field.
+func CheckInTimeGTE(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldGTE(FieldCheckInTime, v))
+}
+
+// CheckInTimeLT applies the LT predicate on the "check_in_time" field.
+func CheckInTimeLT(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldLT(FieldCheckInTime, v))
+}
+
+// CheckInTimeLTE applies the LTE predicate on the "check_in_time" field.
+func CheckInTimeLTE(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldLTE(FieldCheckInTime, v))
+}
+
+// CheckInTimeContains applies the Contains predicate on the "check_in_time" field.
+func CheckInTimeContains(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldContains(FieldCheckInTime, v))
+}
+
+// CheckInTimeHasPrefix applies the HasPrefix predicate on the "check_in_time" field.
+func CheckInTimeHasPrefix(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldHasPrefix(FieldCheckInTime, v))
+}
+
+// CheckInTimeHasSuffix applies the HasSuffix predicate on the "check_in_time" field.
+func CheckInTimeHasSuffix(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldHasSuffix(FieldCheckInTime, v))
+}
+
+// CheckInTimeIsNil applies the IsNil predicate on the "check_in_time" field.
+func CheckInTimeIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldCheckInTime))
+}
+
+// CheckInTimeNotNil applies the NotNil predicate on the "check_in_time" field.
+func CheckInTimeNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldCheckInTime))
+}
+
+// CheckInTimeEqualFold applies the EqualFold predicate on the "check_in_time" field.
+func CheckInTimeEqualFold(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEqualFold(FieldCheckInTime, v))
+}
+
+// CheckInTimeContainsFold applies the ContainsFold predicate on the "check_in_time" field.
+func CheckInTimeContainsFold(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldContainsFold(FieldCheckInTime, v))
+}
+
+// CheckOutTimeEQ applies the EQ predicate on the "check_out_time" field.
+func CheckOutTimeEQ(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeNEQ applies the NEQ predicate on the "check_out_time" field.
+func CheckOutTimeNEQ(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeIn applies the In predicate on the "check_out_time" field.
+func CheckOutTimeIn(vs ...string) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldCheckOutTime, vs...))
+}
+
+// CheckOutTimeNotIn applies the NotIn predicate on the "check_out_time" field.
+func CheckOutTimeNotIn(vs ...string) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldCheckOutTime, vs...))
+}
+
+// CheckOutTimeGT applies the GT predicate on the "check_out_time" field.
+func CheckOutTimeGT(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldGT(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeGTE applies the GTE predicate on the "check_out_time" field.
+func CheckOutTimeGTE(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldGTE(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeLT applies the LT predicate on the "check_out_time" field.
+func CheckOutTimeLT(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldLT(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeLTE applies the LTE predicate on the "check_out_time" field.
+func CheckOutTimeLTE(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldLTE(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeContains applies the Contains predicate on the "check_out_time" field.
+func CheckOutTimeContains(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldContains(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeHasPrefix applies the HasPrefix predicate on the "check_out_time" field.
+func CheckOutTimeHasPrefix(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldHasPrefix(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeHasSuffix applies the HasSuffix predicate on the "check_out_time" field.
+func CheckOutTimeHasSuffix(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldHasSuffix(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeIsNil applies the IsNil predicate on the "check_out_time" field.
+func CheckOutTimeIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldCheckOutTime))
+}
+
+// CheckOutTimeNotNil applies the NotNil predicate on the "check_out_time" field.
+func CheckOutTimeNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldCheckOutTime))
+}
+
+// CheckOutTimeEqualFold applies the EqualFold predicate on the "check_out_time" field.
+func CheckOutTimeEqualFold(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEqualFold(FieldCheckOutTime, v))
+}
+
+// CheckOutTimeContainsFold applies the ContainsFold predicate on the "check_out_time" field.
+func CheckOutTimeContainsFold(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldContainsFold(FieldCheckOutTime, v))
+}
+
+// CleaningFeeAmountCentsEQ applies the EQ predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsEQ(v int64) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldCleaningFeeAmountCents, v))
+}
+
+// CleaningFeeAmountCentsNEQ applies the NEQ predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsNEQ(v int64) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldCleaningFeeAmountCents, v))
+}
+
+// CleaningFeeAmountCentsIn applies the In predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsIn(vs ...int64) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldCleaningFeeAmountCents, vs...))
+}
+
+// CleaningFeeAmountCentsNotIn applies the NotIn predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsNotIn(vs ...int64) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldCleaningFeeAmountCents, vs...))
+}
+
+// CleaningFeeAmountCentsGT applies the GT predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsGT(v int64) predicate.Lease {
+	return predicate.Lease(sql.FieldGT(FieldCleaningFeeAmountCents, v))
+}
+
+// CleaningFeeAmountCentsGTE applies the GTE predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsGTE(v int64) predicate.Lease {
+	return predicate.Lease(sql.FieldGTE(FieldCleaningFeeAmountCents, v))
+}
+
+// CleaningFeeAmountCentsLT applies the LT predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsLT(v int64) predicate.Lease {
+	return predicate.Lease(sql.FieldLT(FieldCleaningFeeAmountCents, v))
+}
+
+// CleaningFeeAmountCentsLTE applies the LTE predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsLTE(v int64) predicate.Lease {
+	return predicate.Lease(sql.FieldLTE(FieldCleaningFeeAmountCents, v))
+}
+
+// CleaningFeeAmountCentsIsNil applies the IsNil predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldCleaningFeeAmountCents))
+}
+
+// CleaningFeeAmountCentsNotNil applies the NotNil predicate on the "cleaning_fee_amount_cents" field.
+func CleaningFeeAmountCentsNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldCleaningFeeAmountCents))
+}
+
+// CleaningFeeCurrencyEQ applies the EQ predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyEQ(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyNEQ applies the NEQ predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyNEQ(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyIn applies the In predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyIn(vs ...string) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldCleaningFeeCurrency, vs...))
+}
+
+// CleaningFeeCurrencyNotIn applies the NotIn predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyNotIn(vs ...string) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldCleaningFeeCurrency, vs...))
+}
+
+// CleaningFeeCurrencyGT applies the GT predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyGT(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldGT(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyGTE applies the GTE predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyGTE(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldGTE(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyLT applies the LT predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyLT(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldLT(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyLTE applies the LTE predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyLTE(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldLTE(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyContains applies the Contains predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyContains(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldContains(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyHasPrefix applies the HasPrefix predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyHasPrefix(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldHasPrefix(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyHasSuffix applies the HasSuffix predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyHasSuffix(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldHasSuffix(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyIsNil applies the IsNil predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldCleaningFeeCurrency))
+}
+
+// CleaningFeeCurrencyNotNil applies the NotNil predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldCleaningFeeCurrency))
+}
+
+// CleaningFeeCurrencyEqualFold applies the EqualFold predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyEqualFold(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEqualFold(FieldCleaningFeeCurrency, v))
+}
+
+// CleaningFeeCurrencyContainsFold applies the ContainsFold predicate on the "cleaning_fee_currency" field.
+func CleaningFeeCurrencyContainsFold(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldContainsFold(FieldCleaningFeeCurrency, v))
+}
+
+// PlatformBookingIDEQ applies the EQ predicate on the "platform_booking_id" field.
+func PlatformBookingIDEQ(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDNEQ applies the NEQ predicate on the "platform_booking_id" field.
+func PlatformBookingIDNEQ(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDIn applies the In predicate on the "platform_booking_id" field.
+func PlatformBookingIDIn(vs ...string) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldPlatformBookingID, vs...))
+}
+
+// PlatformBookingIDNotIn applies the NotIn predicate on the "platform_booking_id" field.
+func PlatformBookingIDNotIn(vs ...string) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldPlatformBookingID, vs...))
+}
+
+// PlatformBookingIDGT applies the GT predicate on the "platform_booking_id" field.
+func PlatformBookingIDGT(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldGT(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDGTE applies the GTE predicate on the "platform_booking_id" field.
+func PlatformBookingIDGTE(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldGTE(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDLT applies the LT predicate on the "platform_booking_id" field.
+func PlatformBookingIDLT(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldLT(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDLTE applies the LTE predicate on the "platform_booking_id" field.
+func PlatformBookingIDLTE(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldLTE(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDContains applies the Contains predicate on the "platform_booking_id" field.
+func PlatformBookingIDContains(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldContains(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDHasPrefix applies the HasPrefix predicate on the "platform_booking_id" field.
+func PlatformBookingIDHasPrefix(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldHasPrefix(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDHasSuffix applies the HasSuffix predicate on the "platform_booking_id" field.
+func PlatformBookingIDHasSuffix(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldHasSuffix(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDIsNil applies the IsNil predicate on the "platform_booking_id" field.
+func PlatformBookingIDIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldPlatformBookingID))
+}
+
+// PlatformBookingIDNotNil applies the NotNil predicate on the "platform_booking_id" field.
+func PlatformBookingIDNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldPlatformBookingID))
+}
+
+// PlatformBookingIDEqualFold applies the EqualFold predicate on the "platform_booking_id" field.
+func PlatformBookingIDEqualFold(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldEqualFold(FieldPlatformBookingID, v))
+}
+
+// PlatformBookingIDContainsFold applies the ContainsFold predicate on the "platform_booking_id" field.
+func PlatformBookingIDContainsFold(v string) predicate.Lease {
+	return predicate.Lease(sql.FieldContainsFold(FieldPlatformBookingID, v))
+}
+
+// MembershipTierEQ applies the EQ predicate on the "membership_tier" field.
+func MembershipTierEQ(v MembershipTier) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldMembershipTier, v))
+}
+
+// MembershipTierNEQ applies the NEQ predicate on the "membership_tier" field.
+func MembershipTierNEQ(v MembershipTier) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldMembershipTier, v))
+}
+
+// MembershipTierIn applies the In predicate on the "membership_tier" field.
+func MembershipTierIn(vs ...MembershipTier) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldMembershipTier, vs...))
+}
+
+// MembershipTierNotIn applies the NotIn predicate on the "membership_tier" field.
+func MembershipTierNotIn(vs ...MembershipTier) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldMembershipTier, vs...))
+}
+
+// MembershipTierIsNil applies the IsNil predicate on the "membership_tier" field.
+func MembershipTierIsNil() predicate.Lease {
+	return predicate.Lease(sql.FieldIsNull(FieldMembershipTier))
+}
+
+// MembershipTierNotNil applies the NotNil predicate on the "membership_tier" field.
+func MembershipTierNotNil() predicate.Lease {
+	return predicate.Lease(sql.FieldNotNull(FieldMembershipTier))
+}
+
+// IsSubleaseEQ applies the EQ predicate on the "is_sublease" field.
+func IsSubleaseEQ(v bool) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldIsSublease, v))
+}
+
+// IsSubleaseNEQ applies the NEQ predicate on the "is_sublease" field.
+func IsSubleaseNEQ(v bool) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldIsSublease, v))
+}
+
+// SubleaseBillingEQ applies the EQ predicate on the "sublease_billing" field.
+func SubleaseBillingEQ(v SubleaseBilling) predicate.Lease {
+	return predicate.Lease(sql.FieldEQ(FieldSubleaseBilling, v))
+}
+
+// SubleaseBillingNEQ applies the NEQ predicate on the "sublease_billing" field.
+func SubleaseBillingNEQ(v SubleaseBilling) predicate.Lease {
+	return predicate.Lease(sql.FieldNEQ(FieldSubleaseBilling, v))
+}
+
+// SubleaseBillingIn applies the In predicate on the "sublease_billing" field.
+func SubleaseBillingIn(vs ...SubleaseBilling) predicate.Lease {
+	return predicate.Lease(sql.FieldIn(FieldSubleaseBilling, vs...))
+}
+
+// SubleaseBillingNotIn applies the NotIn predicate on the "sublease_billing" field.
+func SubleaseBillingNotIn(vs ...SubleaseBilling) predicate.Lease {
+	return predicate.Lease(sql.FieldNotIn(FieldSubleaseBilling, vs...))
+}
+
 // SigningMethodEQ applies the EQ predicate on the "signing_method" field.
 func SigningMethodEQ(v SigningMethod) predicate.Lease {
 	return predicate.Lease(sql.FieldEQ(FieldSigningMethod, v))
@@ -1261,44 +1871,21 @@ func DocumentIDContainsFold(v string) predicate.Lease {
 	return predicate.Lease(sql.FieldContainsFold(FieldDocumentID, v))
 }
 
-// HasUnit applies the HasEdge predicate on the "unit" edge.
-func HasUnit() predicate.Lease {
+// HasLeaseSpaces applies the HasEdge predicate on the "lease_spaces" edge.
+func HasLeaseSpaces() predicate.Lease {
 	return predicate.Lease(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, UnitTable, UnitColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, LeaseSpacesTable, LeaseSpacesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasUnitWith applies the HasEdge predicate on the "unit" edge with a given conditions (other predicates).
-func HasUnitWith(preds ...predicate.Unit) predicate.Lease {
+// HasLeaseSpacesWith applies the HasEdge predicate on the "lease_spaces" edge with a given conditions (other predicates).
+func HasLeaseSpacesWith(preds ...predicate.LeaseSpace) predicate.Lease {
 	return predicate.Lease(func(s *sql.Selector) {
-		step := newUnitStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasOccupiedUnit applies the HasEdge predicate on the "occupied_unit" edge.
-func HasOccupiedUnit() predicate.Lease {
-	return predicate.Lease(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, OccupiedUnitTable, OccupiedUnitColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasOccupiedUnitWith applies the HasEdge predicate on the "occupied_unit" edge with a given conditions (other predicates).
-func HasOccupiedUnitWith(preds ...predicate.Unit) predicate.Lease {
-	return predicate.Lease(func(s *sql.Selector) {
-		step := newOccupiedUnitStep()
+		step := newLeaseSpacesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -1391,6 +1978,52 @@ func HasApplication() predicate.Lease {
 func HasApplicationWith(preds ...predicate.Application) predicate.Lease {
 	return predicate.Lease(func(s *sql.Selector) {
 		step := newApplicationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasSubleases applies the HasEdge predicate on the "subleases" edge.
+func HasSubleases() predicate.Lease {
+	return predicate.Lease(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SubleasesTable, SubleasesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSubleasesWith applies the HasEdge predicate on the "subleases" edge with a given conditions (other predicates).
+func HasSubleasesWith(preds ...predicate.Lease) predicate.Lease {
+	return predicate.Lease(func(s *sql.Selector) {
+		step := newSubleasesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasParentLease applies the HasEdge predicate on the "parent_lease" edge.
+func HasParentLease() predicate.Lease {
+	return predicate.Lease(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ParentLeaseTable, ParentLeaseColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasParentLeaseWith applies the HasEdge predicate on the "parent_lease" edge with a given conditions (other predicates).
+func HasParentLeaseWith(preds ...predicate.Lease) predicate.Lease {
+	return predicate.Lease(func(s *sql.Selector) {
+		step := newParentLeaseStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

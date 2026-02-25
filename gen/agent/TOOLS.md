@@ -175,33 +175,138 @@ Activate a property after onboarding
 - **Type:** transition
 - **Entity:** Property
 
-### `create_unit`
+### `create_building`
 
-Create a new unit within a property
+Create a new building
 
 - **Type:** create
-- **Entity:** Unit
+- **Entity:** Building
 
-### `get_unit`
+### `get_building`
 
-Get unit by ID
+Get building by ID
 
 - **Type:** get
-- **Entity:** Unit
+- **Entity:** Building
 
-### `list_units`
+### `list_buildings`
 
-List units with filtering
+List buildings
 
 - **Type:** list
-- **Entity:** Unit
+- **Entity:** Building
 
-### `update_unit`
+### `update_building`
 
-Update unit fields
+Update building
 
 - **Type:** update
-- **Entity:** Unit
+- **Entity:** Building
+
+### `deactivate_building`
+
+Deactivate a building
+
+- **Type:** transition
+- **Entity:** Building
+
+### `start_building_renovation`
+
+Start building renovation
+
+- **Type:** transition
+- **Entity:** Building
+
+### `activate_building`
+
+Activate a building
+
+- **Type:** transition
+- **Entity:** Building
+
+### `create_space`
+
+Create a new space within a property
+
+- **Type:** create
+- **Entity:** Space
+
+### `get_space`
+
+Get space by ID
+
+- **Type:** get
+- **Entity:** Space
+
+### `list_spaces`
+
+List spaces with filtering
+
+- **Type:** list
+- **Entity:** Space
+
+### `update_space`
+
+Update space fields
+
+- **Type:** update
+- **Entity:** Space
+
+### `occupy_space`
+
+Mark a space as occupied
+
+- **Type:** transition
+- **Entity:** Space
+
+### `record_space_notice`
+
+Record notice to vacate
+
+- **Type:** transition
+- **Entity:** Space
+
+### `rescind_space_notice`
+
+Rescind a notice to vacate
+
+- **Type:** transition
+- **Entity:** Space
+
+### `start_make_ready`
+
+Start make-ready process
+
+- **Type:** transition
+- **Entity:** Space
+
+### `mark_space_vacant`
+
+Mark a space as vacant
+
+- **Type:** transition
+- **Entity:** Space
+
+### `mark_space_down`
+
+Mark a space as down (out of service)
+
+- **Type:** transition
+- **Entity:** Space
+
+### `mark_space_model`
+
+Mark a space as a model unit
+
+- **Type:** transition
+- **Entity:** Space
+
+### `reserve_space`
+
+Reserve a space
+
+- **Type:** transition
+- **Entity:** Space
 
 ## LeaseService
 
@@ -247,9 +352,16 @@ Approve lease for signing
 - **Type:** transition
 - **Entity:** Lease
 
+### `send_for_signature`
+
+Send lease for electronic signature
+
+- **Type:** transition
+- **Entity:** Lease
+
 ### `activate_lease`
 
-Activate a signed lease. Side effects: Unit status -> occupied, security deposit charge created
+Activate a signed lease
 
 - **Type:** transition
 - **Entity:** Lease
@@ -263,17 +375,87 @@ Terminate a lease early. Requires reason for audit trail
 
 ### `renew_lease`
 
-Renew a lease. Creates a new lease entity for the renewal term
+Renew a lease
 
 - **Type:** transition
 - **Entity:** Lease
 
-### `start_eviction`
+### `initiate_eviction`
 
 Begin eviction process
 
 - **Type:** transition
 - **Entity:** Lease
+
+### `record_notice`
+
+Record tenant notice date
+
+- **Type:** transition
+- **Entity:** Lease
+
+### `search_leases`
+
+Search leases with advanced filters
+
+- **Type:** create
+- **Entity:** Lease
+
+### `get_lease_ledger`
+
+Get ledger entries for a lease
+
+- **Type:** get
+- **Entity:** Lease
+
+### `record_payment`
+
+Record a payment on a lease
+
+- **Type:** create
+- **Entity:** Lease
+
+### `post_charge`
+
+Post a charge to a lease
+
+- **Type:** create
+- **Entity:** Lease
+
+### `apply_credit`
+
+Apply a credit to a lease
+
+- **Type:** create
+- **Entity:** Lease
+
+### `create_lease_space`
+
+Create a lease-space association
+
+- **Type:** create
+- **Entity:** LeaseSpace
+
+### `get_lease_space`
+
+Get lease-space by ID
+
+- **Type:** get
+- **Entity:** LeaseSpace
+
+### `list_lease_spaces`
+
+List lease-space associations
+
+- **Type:** list
+- **Entity:** LeaseSpace
+
+### `update_lease_space`
+
+Update lease-space association
+
+- **Type:** update
+- **Entity:** LeaseSpace
 
 ### `create_application`
 
@@ -305,7 +487,7 @@ Approve a lease application
 
 ### `deny_application`
 
-Deny a lease application. Reason required for fair housing compliance
+Deny a lease application
 
 - **Type:** transition
 - **Entity:** Application
@@ -444,4 +626,34 @@ Approve a balanced reconciliation
 
 - **Type:** transition
 - **Entity:** Reconciliation
+
+## ActivityService
+
+### `get_entity_activity`
+
+Get chronological activity feed for any entity. Use as FIRST call when assessing an entity.
+
+- **Type:** get
+- **Entity:** ActivityEntry
+
+### `get_signal_summary`
+
+Get pre-aggregated signal summary for an entity with category breakdowns, sentiment, and escalations.
+
+- **Type:** get
+- **Entity:** ActivityEntry
+
+### `get_portfolio_signals`
+
+Batch screen multiple entities ranked by concern level. Use for portfolio-wide risk assessment.
+
+- **Type:** create
+- **Entity:** ActivityEntry
+
+### `search_activity`
+
+Full-text search across all activity streams by keyword.
+
+- **Type:** create
+- **Entity:** ActivityEntry
 

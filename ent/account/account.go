@@ -252,6 +252,7 @@ const (
 	AccountSubtypeRentalIncome            AccountSubtype = "rental_income"
 	AccountSubtypeOtherIncome             AccountSubtype = "other_income"
 	AccountSubtypeCamRecovery             AccountSubtype = "cam_recovery"
+	AccountSubtypePercentageRentIncome    AccountSubtype = "percentage_rent_income"
 	AccountSubtypeOperatingExpense        AccountSubtype = "operating_expense"
 	AccountSubtypeMaintenanceExpense      AccountSubtype = "maintenance_expense"
 	AccountSubtypeUtilityExpense          AccountSubtype = "utility_expense"
@@ -267,33 +268,10 @@ func (as AccountSubtype) String() string {
 // AccountSubtypeValidator is a validator for the "account_subtype" field enum values. It is called by the builders before save.
 func AccountSubtypeValidator(as AccountSubtype) error {
 	switch as {
-	case AccountSubtypeCash, AccountSubtypeAccountsReceivable, AccountSubtypePrepaid, AccountSubtypeFixedAsset, AccountSubtypeAccumulatedDepreciation, AccountSubtypeOtherAsset, AccountSubtypeAccountsPayable, AccountSubtypeAccruedLiability, AccountSubtypeUnearnedRevenue, AccountSubtypeSecurityDepositsHeld, AccountSubtypeOtherLiability, AccountSubtypeOwnersEquity, AccountSubtypeRetainedEarnings, AccountSubtypeDistributions, AccountSubtypeRentalIncome, AccountSubtypeOtherIncome, AccountSubtypeCamRecovery, AccountSubtypeOperatingExpense, AccountSubtypeMaintenanceExpense, AccountSubtypeUtilityExpense, AccountSubtypeManagementFeeExpense, AccountSubtypeDepreciationExpense, AccountSubtypeOtherExpense:
+	case AccountSubtypeCash, AccountSubtypeAccountsReceivable, AccountSubtypePrepaid, AccountSubtypeFixedAsset, AccountSubtypeAccumulatedDepreciation, AccountSubtypeOtherAsset, AccountSubtypeAccountsPayable, AccountSubtypeAccruedLiability, AccountSubtypeUnearnedRevenue, AccountSubtypeSecurityDepositsHeld, AccountSubtypeOtherLiability, AccountSubtypeOwnersEquity, AccountSubtypeRetainedEarnings, AccountSubtypeDistributions, AccountSubtypeRentalIncome, AccountSubtypeOtherIncome, AccountSubtypeCamRecovery, AccountSubtypePercentageRentIncome, AccountSubtypeOperatingExpense, AccountSubtypeMaintenanceExpense, AccountSubtypeUtilityExpense, AccountSubtypeManagementFeeExpense, AccountSubtypeDepreciationExpense, AccountSubtypeOtherExpense:
 		return nil
 	default:
 		return fmt.Errorf("account: invalid enum value for account_subtype field: %q", as)
-	}
-}
-
-// NormalBalance defines the type for the "normal_balance" enum field.
-type NormalBalance string
-
-// NormalBalance values.
-const (
-	NormalBalanceDebit  NormalBalance = "debit"
-	NormalBalanceCredit NormalBalance = "credit"
-)
-
-func (nb NormalBalance) String() string {
-	return string(nb)
-}
-
-// NormalBalanceValidator is a validator for the "normal_balance" field enum values. It is called by the builders before save.
-func NormalBalanceValidator(nb NormalBalance) error {
-	switch nb {
-	case NormalBalanceDebit, NormalBalanceCredit:
-		return nil
-	default:
-		return fmt.Errorf("account: invalid enum value for normal_balance field: %q", nb)
 	}
 }
 
@@ -318,30 +296,6 @@ func StatusValidator(s Status) error {
 		return nil
 	default:
 		return fmt.Errorf("account: invalid enum value for status field: %q", s)
-	}
-}
-
-// TrustType defines the type for the "trust_type" enum field.
-type TrustType string
-
-// TrustType values.
-const (
-	TrustTypeOperating       TrustType = "operating"
-	TrustTypeSecurityDeposit TrustType = "security_deposit"
-	TrustTypeEscrow          TrustType = "escrow"
-)
-
-func (tt TrustType) String() string {
-	return string(tt)
-}
-
-// TrustTypeValidator is a validator for the "trust_type" field enum values. It is called by the builders before save.
-func TrustTypeValidator(tt TrustType) error {
-	switch tt {
-	case TrustTypeOperating, TrustTypeSecurityDeposit, TrustTypeEscrow:
-		return nil
-	default:
-		return fmt.Errorf("account: invalid enum value for trust_type field: %q", tt)
 	}
 }
 

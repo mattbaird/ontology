@@ -36,12 +36,15 @@ import (
 
 // entityDef holds the parsed definition of a domain entity from CUE.
 type entityDef struct {
-	Name       string
-	Fields     []fieldDef
-	Edges      []edgeDef
-	Immutable  bool // LedgerEntry, JournalEntry
-	HasMachine bool
-	Machine    map[string][]string // status -> valid next statuses
+	Name               string
+	Fields             []fieldDef
+	Edges              []edgeDef
+	Immutable          bool // LedgerEntry, JournalEntry
+	HasMachine         bool
+	Machine            map[string][]string // status -> valid next statuses
+	EdgeField          map[string]string   // edge name -> field name (for .Field() binding)
+	HasConstraints     bool                // true if entity has cross-field constraints
+	ConstraintHookCode string              // pre-rendered Go code for Hooks() + validation function
 }
 
 // fieldDef holds the parsed definition of an entity field.
@@ -67,13 +70,14 @@ type fieldDef struct {
 
 // edgeDef holds the parsed definition of a relationship edge.
 type edgeDef struct {
-	Name        string
-	Target      string // Target entity type name
-	Type        string // "To" or "From"
-	Unique      bool
-	Required    bool
-	RefName     string // For "From" edges, the inverse edge name
-	Comment     string
+	Name         string
+	Target       string // Target entity type name
+	Type         string // "To" or "From"
+	Unique       bool
+	Required     bool
+	RefName      string // For "From" edges, the inverse edge name
+	Comment      string
+	FieldBinding string // If set, edge uses this field column via .Field()
 }
 
 // knownValueTypes maps CUE definition names to their Go type expressions.
@@ -95,10 +99,16 @@ var knownValueTypes = map[string]string{
 	"#AccountDimensions": "types.AccountDimensions",
 	"#JournalLine":       "types.JournalLine",
 	"#RoleAttributes":    "json.RawMessage",
-	"#TenantAttributes":  "types.TenantAttributes",
-	"#OwnerAttributes":   "types.OwnerAttributes",
-	"#ManagerAttributes": "types.ManagerAttributes",
+	"#TenantAttributes":    "types.TenantAttributes",
+	"#OwnerAttributes":     "types.OwnerAttributes",
+	"#ManagerAttributes":   "types.ManagerAttributes",
 	"#GuarantorAttributes": "types.GuarantorAttributes",
+	"#UsageBasedCharge":    "types.UsageBasedCharge",
+	"#PercentageRent":      "types.PercentageRent",
+	"#RentAdjustment":      "types.RentAdjustment",
+	"#ExpansionRight":      "types.ExpansionRight",
+	"#ContractionRight":    "types.ContractionRight",
+	"#CAMCategoryTerms":    "types.CAMCategoryTerms",
 }
 
 // moneyFieldNames are field names recognized as #Money that get flattened.
@@ -115,7 +125,8 @@ var immutableEntities = map[string]bool{
 // entityTransitionMap maps entity names to their CUE state machine definition names.
 var entityTransitionMap = map[string]string{
 	"Lease":          "#LeaseTransitions",
-	"Unit":           "#UnitTransitions",
+	"Space":          "#SpaceTransitions",
+	"Building":       "#BuildingTransitions",
 	"Application":    "#ApplicationTransitions",
 	"JournalEntry":   "#JournalEntryTransitions",
 	"Portfolio":      "#PortfolioTransitions",
@@ -182,6 +193,9 @@ func main() {
 	for _, ent := range entities {
 		removeFKFields(ent)
 	}
+
+	// Add cross-field constraint hooks
+	assignConstraints(entities)
 
 	// Generate Ent schema files
 	for _, ent := range entities {
@@ -340,6 +354,12 @@ func classifyField(name string, val cue.Value, optional bool) *fieldDef {
 	if isEnum(val) {
 		fd.EntType = "Enum"
 		fd.EnumValues = extractEnumValues(val)
+		// Check for default value on enum
+		if d, ok := val.Default(); ok {
+			if s, err := d.String(); err == nil {
+				fd.Default = s
+			}
+		}
 		return fd
 	}
 
@@ -782,30 +802,272 @@ func parseStateMachines(val cue.Value, entities map[string]*entityDef) {
 	}
 }
 
-// removeFKFields removes fields that conflict with edge-generated foreign keys.
-// For example, if an entity has both a "property_id" field and a "property" edge,
-// we remove the field since Ent creates the FK column from the edge.
+// removeFKFields handles the relationship between entity fields and edge foreign keys.
+// When an entity has a field like "property_id" AND a "property" edge, there are two cases:
+//  1. Simple name match (e.g., property_id matches edge "property"): remove the field,
+//     Ent auto-generates the FK column from the edge.
+//  2. Composite name match (e.g., applicant_person_id matches edge "applicant" → Person):
+//     keep the field, add .Field() to the edge so they share the same column.
 func removeFKFields(ent *entityDef) {
-	// Build a set of edge names that generate FK columns
-	edgeFKs := make(map[string]bool)
-	for _, e := range ent.Edges {
-		// "To" unique edges and "From" unique edges create FK columns
-		if e.Unique {
-			// The FK column name is typically {edge_name}_id or {target_snake}_id
-			edgeFKs[e.Name+"_id"] = true
-			edgeFKs[toSnake(e.Target)+"_id"] = true
+	if ent.EdgeField == nil {
+		ent.EdgeField = make(map[string]string)
+	}
+
+	type fkMatch struct {
+		fieldName string
+		edgeIdx   int
+		composite bool // true if matched via {edge}_{target}_id pattern
+	}
+
+	var matches []fkMatch
+	matched := make(map[string]bool) // field name -> matched
+
+	for i, e := range ent.Edges {
+		if !e.Unique {
+			continue
+		}
+		// Simple patterns: edge or target name + "_id"
+		simple := []string{e.Name + "_id", toSnake(e.Target) + "_id"}
+		// Composite pattern: {edge}_{target}_id
+		composite := e.Name + "_" + toSnake(e.Target) + "_id"
+
+		found := false
+		for _, cand := range simple {
+			for _, f := range ent.Fields {
+				if f.Name == cand && !matched[f.Name] {
+					matches = append(matches, fkMatch{fieldName: f.Name, edgeIdx: i, composite: false})
+					matched[f.Name] = true
+					found = true
+					break
+				}
+			}
+			if found {
+				break
+			}
+		}
+		if !found {
+			for _, f := range ent.Fields {
+				if f.Name == composite && !matched[f.Name] {
+					matches = append(matches, fkMatch{fieldName: f.Name, edgeIdx: i, composite: true})
+					matched[f.Name] = true
+					break
+				}
+			}
 		}
 	}
 
-	// Filter out fields that match FK column names
+	// Apply matches
+	removeFields := make(map[string]bool)
+	bindFields := make(map[string]bool)
+	for _, m := range matches {
+		if m.composite {
+			// Keep the field, bind edge to it via .Field()
+			ent.EdgeField[ent.Edges[m.edgeIdx].Name] = m.fieldName
+			ent.Edges[m.edgeIdx].FieldBinding = m.fieldName
+			bindFields[m.fieldName] = true
+		} else {
+			// Remove the field, Ent creates the FK column from the edge
+			removeFields[m.fieldName] = true
+		}
+	}
+
 	var filtered []fieldDef
 	for _, f := range ent.Fields {
-		if edgeFKs[f.Name] {
+		if removeFields[f.Name] {
 			continue
+		}
+		if bindFields[f.Name] {
+			// Change type to UUID since edge FK must match target's ID type
+			f.EntType = "UUID"
+			// Preserve original optionality from CUE
 		}
 		filtered = append(filtered, f)
 	}
 	ent.Fields = filtered
+}
+
+// assignConstraints attaches cross-field constraint hook code to entities that have them.
+// Constraints are hardcoded from CUE ontology conditional blocks — they change rarely,
+// and CUE vet catches any drift between the ontology and this map.
+func assignConstraints(entities map[string]*entityDef) {
+	for name, ent := range entities {
+		code := buildConstraintCode(name)
+		if code != "" {
+			ent.HasConstraints = true
+			ent.ConstraintHookCode = code
+		}
+	}
+}
+
+// buildConstraintCode returns pre-rendered Go source for cross-field constraint hooks,
+// or empty string if the entity has no constraints.
+func buildConstraintCode(entityName string) string {
+	// Common helper code shared by all constraint functions.
+	// getField returns the effective value: newly set in mutation or existing in DB.
+	const helperGetField = `
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}`
+
+	// toString handles both string and *string (nillable fields return *string from OldField).
+	const helperToString = `
+			toString := func(v interface{}) string {
+				if v == nil {
+					return ""
+				}
+				switch s := v.(type) {
+				case string:
+					return s
+				case *string:
+					if s != nil {
+						return *s
+					}
+					return ""
+				}
+				return fmt.Sprint(v)
+			}`
+
+	const helperToInt = `
+			toInt := func(v interface{}) (int, bool) {
+				switch i := v.(type) {
+				case int:
+					return i, true
+				case *int:
+					if i != nil {
+						return *i, true
+					}
+				}
+				return 0, false
+			}`
+
+	const helperToFloat = `
+			toFloat := func(v interface{}) (float64, bool) {
+				switch f := v.(type) {
+				case float64:
+					return f, true
+				case *float64:
+					if f != nil {
+						return *f, true
+					}
+				}
+				return 0, false
+			}`
+
+	wrap := func(name, helpers, checks string) string {
+		return fmt.Sprintf(`
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (%s) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validate%sConstraints(),
+	}
+}
+
+func validate%sConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {%s
+%s
+			return next.Mutate(ctx, m)
+		})
+	}
+}`, name, name, name, helpers, checks)
+	}
+
+	switch entityName {
+	case "Portfolio":
+		return wrap("Portfolio",
+			helperGetField+helperToString,
+			`
+			// requires_trust_accounting == true → trust_bank_account_id must be non-empty
+			if v, ok := getField("requires_trust_accounting"); ok && fmt.Sprint(v) == "true" {
+				tid, tidOk := getField("trust_bank_account_id")
+				if !tidOk || toString(tid) == "" {
+					return nil, fmt.Errorf("portfolio with requires_trust_accounting=true must have trust_bank_account_id set")
+				}
+			}`)
+
+	case "Property":
+		return wrap("Property",
+			helperGetField+helperToString,
+			`
+			// single_family → total_spaces must be 1
+			if v, ok := getField("property_type"); ok && fmt.Sprint(v) == "single_family" {
+				if tu, ok := getField("total_spaces"); ok {
+					if tuInt, isInt := tu.(int); isInt && tuInt != 1 {
+						return nil, fmt.Errorf("single_family property must have total_spaces=1, got %d", tuInt)
+					}
+				}
+			}
+			// affordable_housing → compliance_programs must have ≥1 entry
+			if v, ok := getField("property_type"); ok && fmt.Sprint(v) == "affordable_housing" {
+				cp, cpOk := getField("compliance_programs")
+				if !cpOk && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("affordable_housing property must have at least one compliance_programs entry")
+				}
+				if cpOk {
+					if list, isList := cp.([]string); isList && len(list) == 0 {
+						return nil, fmt.Errorf("affordable_housing property must have at least one compliance_programs entry")
+					}
+				}
+			}
+			// rent_controlled == true → jurisdiction_id must be non-empty
+			if v, ok := getField("rent_controlled"); ok && fmt.Sprint(v) == "true" {
+				jid, jidOk := getField("jurisdiction_id")
+				if !jidOk || toString(jid) == "" {
+					return nil, fmt.Errorf("rent-controlled property must have jurisdiction_id set")
+				}
+			}
+			// year_built < 1978 → requires_lead_disclosure must be true
+			if v, ok := getField("year_built"); ok {
+				if yb, isInt := v.(int); isInt && yb < 1978 {
+					if rld, ok := getField("requires_lead_disclosure"); ok {
+						if fmt.Sprint(rld) != "true" {
+							return nil, fmt.Errorf("property built before 1978 must have requires_lead_disclosure=true")
+						}
+					}
+				}
+			}`)
+
+	case "Space":
+		return wrap("Space",
+			helperGetField+helperToInt+helperToFloat,
+			`
+			// residential_unit → bedrooms and bathrooms must be set
+			if v, ok := getField("space_type"); ok && fmt.Sprint(v) == "residential_unit" {
+				if _, ok := getField("bedrooms"); !ok && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("residential_unit space must have bedrooms set")
+				}
+				if _, ok := getField("bathrooms"); !ok && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("residential_unit space must have bathrooms set")
+				}
+			}
+			// parking or storage → bedrooms == 0 and bathrooms == 0
+			if v, ok := getField("space_type"); ok {
+				st := fmt.Sprint(v)
+				if st == "parking" || st == "storage" {
+					if bd, ok := getField("bedrooms"); ok {
+						if bdInt, ok := toInt(bd); ok && bdInt != 0 {
+							return nil, fmt.Errorf("%s space must have bedrooms=0, got %d", st, bdInt)
+						}
+					}
+					if bt, ok := getField("bathrooms"); ok {
+						if btFloat, ok := toFloat(bt); ok && btFloat != 0 {
+							return nil, fmt.Errorf("%s space must have bathrooms=0, got %v", st, btFloat)
+						}
+					}
+				}
+			}`)
+
+	default:
+		return ""
+	}
 }
 
 // generateSchema renders an Ent schema Go file for the given entity.
@@ -932,6 +1194,10 @@ const schemaTemplate = `// Code generated by cmd/entgen from CUE ontology. DO NO
 package schema
 
 import (
+	{{- if .HasConstraints}}
+	"context"
+	"fmt"
+	{{- end}}
 	{{- if needsJSON .Fields}}
 	"encoding/json"
 	{{- end}}
@@ -987,9 +1253,11 @@ func ({{.Name}}) Fields() []ent.Field {
 {{- else if eq .EntType "Time"}}
 		field.Time("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}},
 {{- else if eq .EntType "Enum"}}
-		field.Enum("{{.Name}}").Values({{range $i, $v := .EnumValues}}{{if $i}}, {{end}}"{{$v}}"{{end}}){{if .Optional}}.Optional().Nillable(){{end}},
+		field.Enum("{{.Name}}").Values({{range $i, $v := .EnumValues}}{{if $i}}, {{end}}"{{$v}}"{{end}}){{if .Optional}}.Optional().Nillable(){{end}}{{if .Default}}.Default("{{.Default}}"){{end}},
 {{- else if eq .EntType "JSON"}}
 		field.JSON("{{.Name}}", {{.JSONType}}){{if .Optional}}.Optional(){{end}},
+{{- else if eq .EntType "UUID"}}
+		field.UUID("{{.Name}}", uuid.UUID{}){{if .Optional}}.Optional().Nillable(){{end}},
 {{- end}}
 {{- end}}
 	}
@@ -1001,7 +1269,7 @@ func ({{.Name}}) Edges() []ent.Edge {
 	return []ent.Edge{
 {{- range .Edges}}
 {{- if eq .Type "To"}}
-		edge.To("{{.Name}}", {{.Target}}.Type){{if .Unique}}.Unique(){{end}}{{if .Required}}.Required(){{end}}.Comment("{{.Comment}}"),
+		edge.To("{{.Name}}", {{.Target}}.Type){{if .Unique}}.Unique(){{end}}{{if .Required}}.Required(){{end}}{{if .FieldBinding}}.Field("{{.FieldBinding}}"){{end}}.Comment("{{.Comment}}"),
 {{- else}}
 		edge.From("{{.Name}}", {{.Target}}.Type).Ref("{{.RefName}}"){{if .Unique}}.Unique(){{end}}.Comment("{{.Comment}}"),
 {{- end}}
@@ -1020,6 +1288,9 @@ var Valid{{.Name}}Transitions = map[string][]string{
 	"{{$state}}": { {{- range $i, $target := index $.Machine $state}}{{if $i}}, {{end}}"{{$target}}"{{end}} },
 {{- end}}
 }
+{{- end}}
+{{- if .HasConstraints}}
+{{.ConstraintHookCode}}
 {{- end}}
 {{- if .Immutable}}
 

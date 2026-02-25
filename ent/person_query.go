@@ -24,14 +24,14 @@ import (
 // PersonQuery is the builder for querying Person entities.
 type PersonQuery struct {
 	config
-	ctx                     *QueryContext
-	order                   []person.OrderOption
-	inters                  []Interceptor
-	predicates              []predicate.Person
-	withRoles               *PersonRoleQuery
-	withOrganizations       *OrganizationQuery
-	withPersonLedgerEntries *LedgerEntryQuery
-	withApplications        *ApplicationQuery
+	ctx               *QueryContext
+	order             []person.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.Person
+	withRoles         *PersonRoleQuery
+	withOrganizations *OrganizationQuery
+	withLedgerEntries *LedgerEntryQuery
+	withApplications  *ApplicationQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -112,8 +112,8 @@ func (_q *PersonQuery) QueryOrganizations() *OrganizationQuery {
 	return query
 }
 
-// QueryPersonLedgerEntries chains the current query on the "person_ledger_entries" edge.
-func (_q *PersonQuery) QueryPersonLedgerEntries() *LedgerEntryQuery {
+// QueryLedgerEntries chains the current query on the "ledger_entries" edge.
+func (_q *PersonQuery) QueryLedgerEntries() *LedgerEntryQuery {
 	query := (&LedgerEntryClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -126,7 +126,7 @@ func (_q *PersonQuery) QueryPersonLedgerEntries() *LedgerEntryQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(person.Table, person.FieldID, selector),
 			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, person.PersonLedgerEntriesTable, person.PersonLedgerEntriesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, person.LedgerEntriesTable, person.LedgerEntriesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -343,15 +343,15 @@ func (_q *PersonQuery) Clone() *PersonQuery {
 		return nil
 	}
 	return &PersonQuery{
-		config:                  _q.config,
-		ctx:                     _q.ctx.Clone(),
-		order:                   append([]person.OrderOption{}, _q.order...),
-		inters:                  append([]Interceptor{}, _q.inters...),
-		predicates:              append([]predicate.Person{}, _q.predicates...),
-		withRoles:               _q.withRoles.Clone(),
-		withOrganizations:       _q.withOrganizations.Clone(),
-		withPersonLedgerEntries: _q.withPersonLedgerEntries.Clone(),
-		withApplications:        _q.withApplications.Clone(),
+		config:            _q.config,
+		ctx:               _q.ctx.Clone(),
+		order:             append([]person.OrderOption{}, _q.order...),
+		inters:            append([]Interceptor{}, _q.inters...),
+		predicates:        append([]predicate.Person{}, _q.predicates...),
+		withRoles:         _q.withRoles.Clone(),
+		withOrganizations: _q.withOrganizations.Clone(),
+		withLedgerEntries: _q.withLedgerEntries.Clone(),
+		withApplications:  _q.withApplications.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -380,14 +380,14 @@ func (_q *PersonQuery) WithOrganizations(opts ...func(*OrganizationQuery)) *Pers
 	return _q
 }
 
-// WithPersonLedgerEntries tells the query-builder to eager-load the nodes that are connected to
-// the "person_ledger_entries" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *PersonQuery) WithPersonLedgerEntries(opts ...func(*LedgerEntryQuery)) *PersonQuery {
+// WithLedgerEntries tells the query-builder to eager-load the nodes that are connected to
+// the "ledger_entries" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PersonQuery) WithLedgerEntries(opts ...func(*LedgerEntryQuery)) *PersonQuery {
 	query := (&LedgerEntryClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withPersonLedgerEntries = query
+	_q.withLedgerEntries = query
 	return _q
 }
 
@@ -483,7 +483,7 @@ func (_q *PersonQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Perso
 		loadedTypes = [4]bool{
 			_q.withRoles != nil,
 			_q.withOrganizations != nil,
-			_q.withPersonLedgerEntries != nil,
+			_q.withLedgerEntries != nil,
 			_q.withApplications != nil,
 		}
 	)
@@ -519,10 +519,10 @@ func (_q *PersonQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Perso
 			return nil, err
 		}
 	}
-	if query := _q.withPersonLedgerEntries; query != nil {
-		if err := _q.loadPersonLedgerEntries(ctx, query, nodes,
-			func(n *Person) { n.Edges.PersonLedgerEntries = []*LedgerEntry{} },
-			func(n *Person, e *LedgerEntry) { n.Edges.PersonLedgerEntries = append(n.Edges.PersonLedgerEntries, e) }); err != nil {
+	if query := _q.withLedgerEntries; query != nil {
+		if err := _q.loadLedgerEntries(ctx, query, nodes,
+			func(n *Person) { n.Edges.LedgerEntries = []*LedgerEntry{} },
+			func(n *Person, e *LedgerEntry) { n.Edges.LedgerEntries = append(n.Edges.LedgerEntries, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -628,7 +628,7 @@ func (_q *PersonQuery) loadOrganizations(ctx context.Context, query *Organizatio
 	}
 	return nil
 }
-func (_q *PersonQuery) loadPersonLedgerEntries(ctx context.Context, query *LedgerEntryQuery, nodes []*Person, init func(*Person), assign func(*Person, *LedgerEntry)) error {
+func (_q *PersonQuery) loadLedgerEntries(ctx context.Context, query *LedgerEntryQuery, nodes []*Person, init func(*Person), assign func(*Person, *LedgerEntry)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Person)
 	for i := range nodes {
@@ -640,20 +640,20 @@ func (_q *PersonQuery) loadPersonLedgerEntries(ctx context.Context, query *Ledge
 	}
 	query.withFKs = true
 	query.Where(predicate.LedgerEntry(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(person.PersonLedgerEntriesColumn), fks...))
+		s.Where(sql.InValues(s.C(person.LedgerEntriesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.person_person_ledger_entries
+		fk := n.person_ledger_entries
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "person_person_ledger_entries" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "person_ledger_entries" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "person_person_ledger_entries" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "person_ledger_entries" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

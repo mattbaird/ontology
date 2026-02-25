@@ -32,7 +32,7 @@ Fields:
 Fields:
 - `id`
 - `property_id`
-- `unit_id (optional)`
+- `space_id (optional)`
 - `applicant_person_id`
 - `status`
 - `desired_move_in`
@@ -70,6 +70,20 @@ Fields:
 - `trust_state (optional)`
 - `commingling_allowed`
 
+### Building
+
+Fields:
+- `id`
+- `property_id`
+- `name`
+- `building_type`
+- `address (optional)`
+- `status`
+- `floors (optional)`
+- `year_built (optional)`
+- `total_square_footage (optional)`
+- `total_rentable_square_footage (optional)`
+
 ### JournalEntry
 
 Fields:
@@ -93,13 +107,15 @@ Fields:
 
 Fields:
 - `id`
-- `unit_id`
 - `property_id`
 - `tenant_role_ids`
 - `guarantor_role_ids (optional)`
 - `lease_type`
 - `status`
+- `liability_type`
 - `term`
+- `lease_commencement_date (optional)`
+- `rent_commencement_date (optional)`
 - `base_rent`
 - `security_deposit`
 - `rent_schedule (optional)`
@@ -108,14 +124,37 @@ Fields:
 - `cam_terms (optional)`
 - `tenant_improvement (optional)`
 - `renewal_options (optional)`
+- `usage_charges (optional)`
+- `percentage_rent (optional)`
+- `expansion_rights (optional)`
+- `contraction_rights (optional)`
 - `subsidy (optional)`
 - `move_in_date (optional)`
 - `move_out_date (optional)`
 - `notice_date (optional)`
 - `notice_required_days`
+- `check_in_time (optional)`
+- `check_out_time (optional)`
+- `cleaning_fee (optional)`
+- `platform_booking_id (optional)`
+- `membership_tier (optional)`
+- `parent_lease_id (optional)`
+- `is_sublease`
+- `sublease_billing`
 - `signing_method (optional)`
 - `signed_at (optional)`
 - `document_id (optional)`
+
+### LeaseSpace
+
+Fields:
+- `id`
+- `lease_id`
+- `space_id`
+- `is_primary`
+- `relationship`
+- `effective`
+- `square_footage_leased (optional)`
 
 ### LedgerEntry
 
@@ -131,7 +170,7 @@ Fields:
 - `charge_code`
 - `memo (optional)`
 - `property_id`
-- `unit_id (optional)`
+- `space_id (optional)`
 - `lease_id (optional)`
 - `person_id (optional)`
 - `bank_account_id (optional)`
@@ -200,7 +239,6 @@ Fields:
 - `requires_trust_accounting`
 - `trust_bank_account_id (optional)`
 - `status`
-- `default_late_fee_policy (optional)`
 - `default_payment_methods (optional)`
 - `fiscal_year_start_month`
 
@@ -215,7 +253,7 @@ Fields:
 - `status`
 - `year_built`
 - `total_square_footage`
-- `total_units`
+- `total_spaces`
 - `lot_size_sqft (optional)`
 - `stories (optional)`
 - `parking_spaces (optional)`
@@ -246,14 +284,18 @@ Fields:
 - `approved_by (optional)`
 - `approved_at (optional)`
 
-### Unit
+### Space
 
 Fields:
 - `id`
 - `property_id`
-- `unit_number`
-- `unit_type`
+- `space_number`
+- `space_type`
 - `status`
+- `building_id (optional)`
+- `parent_space_id (optional)`
+- `leasable`
+- `shared_with_parent`
 - `square_footage`
 - `bedrooms (optional)`
 - `bathrooms (optional)`
@@ -263,23 +305,30 @@ Fields:
 - `ada_accessible`
 - `pet_friendly`
 - `furnished`
+- `specialized_infrastructure (optional)`
 - `market_rent (optional)`
-- `active_lease_id (optional)`
 - `ami_restriction (optional)`
+- `active_lease_id (optional)`
 
 ## Relationships
 
 - **Portfolio → Property** (O2M): Portfolio contains Properties
 - **Portfolio → Organization** (M2O): Portfolio is owned by Organization
 - **Portfolio → BankAccount** (O2O): Portfolio uses BankAccount for trust funds
-- **Property → Unit** (O2M): Property contains Units
+- **Property → Building** (O2M): Property contains Buildings
+- **Property → Space** (O2M): Property contains Spaces
 - **Property → BankAccount** (M2O): Property uses BankAccount
-- **Unit → Lease** (O2M): Unit has Leases over time
-- **Unit → Lease** (O2O): Unit has at most one active Lease
+- **Property → Application** (O2M): Property receives Applications
+- **Building → Space** (O2M): Building contains Spaces
+- **Space → Space** (O2M): Space has child Spaces
+- **Space → Application** (O2M): Space receives Applications
+- **LeaseSpace → Lease** (M2O): LeaseSpace belongs to Lease
+- **LeaseSpace → Space** (M2O): LeaseSpace references Space
 - **Lease → PersonRole** (M2M): Lease is held by tenant PersonRoles
 - **Lease → PersonRole** (M2M): Lease is guaranteed by guarantor PersonRoles
 - **Lease → LedgerEntry** (O2M): Lease generates LedgerEntries
 - **Lease → Application** (O2O): Lease originated from Application
+- **Lease → Lease** (O2M): Lease has subleases
 - **Person → PersonRole** (O2M): Person has Roles in various contexts
 - **Person → Organization** (M2M): Person is affiliated with Organizations
 - **Organization → Organization** (O2M): Organization has subsidiary Organizations
@@ -287,10 +336,9 @@ Fields:
 - **LedgerEntry → JournalEntry** (M2O): LedgerEntry belongs to JournalEntry
 - **LedgerEntry → Account** (M2O): LedgerEntry posts to Account
 - **LedgerEntry → Property** (M2O): LedgerEntry relates to Property
+- **LedgerEntry → Space** (M2O): LedgerEntry relates to Space
 - **LedgerEntry → Person** (M2O): LedgerEntry relates to Person
 - **BankAccount → Account** (M2O): BankAccount is tracked via GL Account
 - **Reconciliation → BankAccount** (M2O): Reconciliation is for BankAccount
 - **Application → Person** (M2O): Application was submitted by Person
-- **Application → Property** (M2O): Application is for Property
-- **Application → Unit** (M2O): Application is for specific Unit
 

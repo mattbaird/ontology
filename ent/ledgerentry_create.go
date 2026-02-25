@@ -17,6 +17,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/person"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // LedgerEntryCreate is the builder for creating a LedgerEntry entity.
@@ -160,20 +161,6 @@ func (_c *LedgerEntryCreate) SetMemo(v string) *LedgerEntryCreate {
 func (_c *LedgerEntryCreate) SetNillableMemo(v *string) *LedgerEntryCreate {
 	if v != nil {
 		_c.SetMemo(*v)
-	}
-	return _c
-}
-
-// SetUnitID sets the "unit_id" field.
-func (_c *LedgerEntryCreate) SetUnitID(v string) *LedgerEntryCreate {
-	_c.mutation.SetUnitID(v)
-	return _c
-}
-
-// SetNillableUnitID sets the "unit_id" field if the given value is not nil.
-func (_c *LedgerEntryCreate) SetNillableUnitID(v *string) *LedgerEntryCreate {
-	if v != nil {
-		_c.SetUnitID(*v)
 	}
 	return _c
 }
@@ -326,6 +313,25 @@ func (_c *LedgerEntryCreate) SetPropertyID(id uuid.UUID) *LedgerEntryCreate {
 // SetProperty sets the "property" edge to the Property entity.
 func (_c *LedgerEntryCreate) SetProperty(v *Property) *LedgerEntryCreate {
 	return _c.SetPropertyID(v.ID)
+}
+
+// SetSpaceID sets the "space" edge to the Space entity by ID.
+func (_c *LedgerEntryCreate) SetSpaceID(id uuid.UUID) *LedgerEntryCreate {
+	_c.mutation.SetSpaceID(id)
+	return _c
+}
+
+// SetNillableSpaceID sets the "space" edge to the Space entity by ID if the given value is not nil.
+func (_c *LedgerEntryCreate) SetNillableSpaceID(id *uuid.UUID) *LedgerEntryCreate {
+	if id != nil {
+		_c = _c.SetSpaceID(*id)
+	}
+	return _c
+}
+
+// SetSpace sets the "space" edge to the Space entity.
+func (_c *LedgerEntryCreate) SetSpace(v *Space) *LedgerEntryCreate {
+	return _c.SetSpaceID(v.ID)
 }
 
 // SetPersonID sets the "person" edge to the Person entity by ID.
@@ -574,10 +580,6 @@ func (_c *LedgerEntryCreate) createSpec() (*LedgerEntry, *sqlgraph.CreateSpec) {
 		_spec.SetField(ledgerentry.FieldMemo, field.TypeString, value)
 		_node.Memo = &value
 	}
-	if value, ok := _c.mutation.UnitID(); ok {
-		_spec.SetField(ledgerentry.FieldUnitID, field.TypeString, value)
-		_node.UnitID = &value
-	}
 	if value, ok := _c.mutation.BankAccountID(); ok {
 		_spec.SetField(ledgerentry.FieldBankAccountID, field.TypeString, value)
 		_node.BankAccountID = &value
@@ -668,6 +670,23 @@ func (_c *LedgerEntryCreate) createSpec() (*LedgerEntry, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.ledger_entry_property = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SpaceIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   ledgerentry.SpaceTable,
+			Columns: []string{ledgerentry.SpaceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(space.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ledger_entry_space = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.PersonIDs(); len(nodes) > 0 {

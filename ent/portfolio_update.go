@@ -197,26 +197,6 @@ func (_u *PortfolioUpdate) SetNillableStatus(v *portfolio.Status) *PortfolioUpda
 	return _u
 }
 
-// SetDefaultLateFeePolicy sets the "default_late_fee_policy" field.
-func (_u *PortfolioUpdate) SetDefaultLateFeePolicy(v string) *PortfolioUpdate {
-	_u.mutation.SetDefaultLateFeePolicy(v)
-	return _u
-}
-
-// SetNillableDefaultLateFeePolicy sets the "default_late_fee_policy" field if the given value is not nil.
-func (_u *PortfolioUpdate) SetNillableDefaultLateFeePolicy(v *string) *PortfolioUpdate {
-	if v != nil {
-		_u.SetDefaultLateFeePolicy(*v)
-	}
-	return _u
-}
-
-// ClearDefaultLateFeePolicy clears the value of the "default_late_fee_policy" field.
-func (_u *PortfolioUpdate) ClearDefaultLateFeePolicy() *PortfolioUpdate {
-	_u.mutation.ClearDefaultLateFeePolicy()
-	return _u
-}
-
 // SetDefaultPaymentMethods sets the "default_payment_methods" field.
 func (_u *PortfolioUpdate) SetDefaultPaymentMethods(v []string) *PortfolioUpdate {
 	_u.mutation.SetDefaultPaymentMethods(v)
@@ -341,7 +321,9 @@ func (_u *PortfolioUpdate) ClearTrustAccount() *PortfolioUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *PortfolioUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -368,11 +350,15 @@ func (_u *PortfolioUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *PortfolioUpdate) defaults() {
+func (_u *PortfolioUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if portfolio.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized portfolio.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := portfolio.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -461,12 +447,6 @@ func (_u *PortfolioUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(portfolio.FieldStatus, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.DefaultLateFeePolicy(); ok {
-		_spec.SetField(portfolio.FieldDefaultLateFeePolicy, field.TypeString, value)
-	}
-	if _u.mutation.DefaultLateFeePolicyCleared() {
-		_spec.ClearField(portfolio.FieldDefaultLateFeePolicy, field.TypeString)
 	}
 	if value, ok := _u.mutation.DefaultPaymentMethods(); ok {
 		_spec.SetField(portfolio.FieldDefaultPaymentMethods, field.TypeJSON, value)
@@ -772,26 +752,6 @@ func (_u *PortfolioUpdateOne) SetNillableStatus(v *portfolio.Status) *PortfolioU
 	return _u
 }
 
-// SetDefaultLateFeePolicy sets the "default_late_fee_policy" field.
-func (_u *PortfolioUpdateOne) SetDefaultLateFeePolicy(v string) *PortfolioUpdateOne {
-	_u.mutation.SetDefaultLateFeePolicy(v)
-	return _u
-}
-
-// SetNillableDefaultLateFeePolicy sets the "default_late_fee_policy" field if the given value is not nil.
-func (_u *PortfolioUpdateOne) SetNillableDefaultLateFeePolicy(v *string) *PortfolioUpdateOne {
-	if v != nil {
-		_u.SetDefaultLateFeePolicy(*v)
-	}
-	return _u
-}
-
-// ClearDefaultLateFeePolicy clears the value of the "default_late_fee_policy" field.
-func (_u *PortfolioUpdateOne) ClearDefaultLateFeePolicy() *PortfolioUpdateOne {
-	_u.mutation.ClearDefaultLateFeePolicy()
-	return _u
-}
-
 // SetDefaultPaymentMethods sets the "default_payment_methods" field.
 func (_u *PortfolioUpdateOne) SetDefaultPaymentMethods(v []string) *PortfolioUpdateOne {
 	_u.mutation.SetDefaultPaymentMethods(v)
@@ -929,7 +889,9 @@ func (_u *PortfolioUpdateOne) Select(field string, fields ...string) *PortfolioU
 
 // Save executes the query and returns the updated Portfolio entity.
 func (_u *PortfolioUpdateOne) Save(ctx context.Context) (*Portfolio, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -956,11 +918,15 @@ func (_u *PortfolioUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *PortfolioUpdateOne) defaults() {
+func (_u *PortfolioUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if portfolio.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized portfolio.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := portfolio.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1066,12 +1032,6 @@ func (_u *PortfolioUpdateOne) sqlSave(ctx context.Context) (_node *Portfolio, er
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(portfolio.FieldStatus, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.DefaultLateFeePolicy(); ok {
-		_spec.SetField(portfolio.FieldDefaultLateFeePolicy, field.TypeString, value)
-	}
-	if _u.mutation.DefaultLateFeePolicyCleared() {
-		_spec.ClearField(portfolio.FieldDefaultLateFeePolicy, field.TypeString)
 	}
 	if value, ok := _u.mutation.DefaultPaymentMethods(); ok {
 		_spec.SetField(portfolio.FieldDefaultPaymentMethods, field.TypeJSON, value)

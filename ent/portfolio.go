@@ -46,8 +46,6 @@ type Portfolio struct {
 	TrustBankAccountID *string `json:"trust_bank_account_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status portfolio.Status `json:"status,omitempty"`
-	// DefaultLateFeePolicy holds the value of the "default_late_fee_policy" field.
-	DefaultLateFeePolicy *string `json:"default_late_fee_policy,omitempty"`
 	// DefaultPaymentMethods holds the value of the "default_payment_methods" field.
 	DefaultPaymentMethods []string `json:"default_payment_methods,omitempty"`
 	// FiscalYearStartMonth holds the value of the "fiscal_year_start_month" field.
@@ -115,7 +113,7 @@ func (*Portfolio) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case portfolio.FieldFiscalYearStartMonth:
 			values[i] = new(sql.NullInt64)
-		case portfolio.FieldCreatedBy, portfolio.FieldUpdatedBy, portfolio.FieldSource, portfolio.FieldCorrelationID, portfolio.FieldAgentGoalID, portfolio.FieldName, portfolio.FieldManagementType, portfolio.FieldTrustBankAccountID, portfolio.FieldStatus, portfolio.FieldDefaultLateFeePolicy:
+		case portfolio.FieldCreatedBy, portfolio.FieldUpdatedBy, portfolio.FieldSource, portfolio.FieldCorrelationID, portfolio.FieldAgentGoalID, portfolio.FieldName, portfolio.FieldManagementType, portfolio.FieldTrustBankAccountID, portfolio.FieldStatus:
 			values[i] = new(sql.NullString)
 		case portfolio.FieldCreatedAt, portfolio.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -220,13 +218,6 @@ func (_m *Portfolio) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				_m.Status = portfolio.Status(value.String)
-			}
-		case portfolio.FieldDefaultLateFeePolicy:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field default_late_fee_policy", values[i])
-			} else if value.Valid {
-				_m.DefaultLateFeePolicy = new(string)
-				*_m.DefaultLateFeePolicy = value.String
 			}
 		case portfolio.FieldDefaultPaymentMethods:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -348,11 +339,6 @@ func (_m *Portfolio) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
-	builder.WriteString(", ")
-	if v := _m.DefaultLateFeePolicy; v != nil {
-		builder.WriteString("default_late_fee_policy=")
-		builder.WriteString(*v)
-	}
 	builder.WriteString(", ")
 	builder.WriteString("default_payment_methods=")
 	builder.WriteString(fmt.Sprintf("%v", _m.DefaultPaymentMethods))

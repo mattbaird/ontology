@@ -62,8 +62,8 @@ const (
 	EdgeRoles = "roles"
 	// EdgeOrganizations holds the string denoting the organizations edge name in mutations.
 	EdgeOrganizations = "organizations"
-	// EdgePersonLedgerEntries holds the string denoting the person_ledger_entries edge name in mutations.
-	EdgePersonLedgerEntries = "person_ledger_entries"
+	// EdgeLedgerEntries holds the string denoting the ledger_entries edge name in mutations.
+	EdgeLedgerEntries = "ledger_entries"
 	// EdgeApplications holds the string denoting the applications edge name in mutations.
 	EdgeApplications = "applications"
 	// Table holds the table name of the person in the database.
@@ -80,13 +80,13 @@ const (
 	// OrganizationsInverseTable is the table name for the Organization entity.
 	// It exists in this package in order to avoid circular dependency with the "organization" package.
 	OrganizationsInverseTable = "organizations"
-	// PersonLedgerEntriesTable is the table that holds the person_ledger_entries relation/edge.
-	PersonLedgerEntriesTable = "ledger_entries"
-	// PersonLedgerEntriesInverseTable is the table name for the LedgerEntry entity.
+	// LedgerEntriesTable is the table that holds the ledger_entries relation/edge.
+	LedgerEntriesTable = "ledger_entries"
+	// LedgerEntriesInverseTable is the table name for the LedgerEntry entity.
 	// It exists in this package in order to avoid circular dependency with the "ledgerentry" package.
-	PersonLedgerEntriesInverseTable = "ledger_entries"
-	// PersonLedgerEntriesColumn is the table column denoting the person_ledger_entries relation/edge.
-	PersonLedgerEntriesColumn = "person_person_ledger_entries"
+	LedgerEntriesInverseTable = "ledger_entries"
+	// LedgerEntriesColumn is the table column denoting the ledger_entries relation/edge.
+	LedgerEntriesColumn = "person_ledger_entries"
 	// ApplicationsTable is the table that holds the applications relation/edge.
 	ApplicationsTable = "applications"
 	// ApplicationsInverseTable is the table name for the Application entity.
@@ -185,6 +185,9 @@ func SourceValidator(s Source) error {
 
 // PreferredContact defines the type for the "preferred_contact" enum field.
 type PreferredContact string
+
+// PreferredContactEmail is the default value of the PreferredContact enum.
+const DefaultPreferredContact = PreferredContactEmail
 
 // PreferredContact values.
 const (
@@ -365,17 +368,17 @@ func ByOrganizations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByPersonLedgerEntriesCount orders the results by person_ledger_entries count.
-func ByPersonLedgerEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByLedgerEntriesCount orders the results by ledger_entries count.
+func ByLedgerEntriesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newPersonLedgerEntriesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newLedgerEntriesStep(), opts...)
 	}
 }
 
-// ByPersonLedgerEntries orders the results by person_ledger_entries terms.
-func ByPersonLedgerEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByLedgerEntries orders the results by ledger_entries terms.
+func ByLedgerEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newPersonLedgerEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newLedgerEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -406,11 +409,11 @@ func newOrganizationsStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2M, false, OrganizationsTable, OrganizationsPrimaryKey...),
 	)
 }
-func newPersonLedgerEntriesStep() *sqlgraph.Step {
+func newLedgerEntriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(PersonLedgerEntriesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, PersonLedgerEntriesTable, PersonLedgerEntriesColumn),
+		sqlgraph.To(LedgerEntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LedgerEntriesTable, LedgerEntriesColumn),
 	)
 }
 func newApplicationsStep() *sqlgraph.Step {

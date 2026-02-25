@@ -492,12 +492,12 @@
     }
   },
   {
-    "name": "create_unit",
-    "description": "Create a new unit within a property",
+    "name": "create_building",
+    "description": "Create a new building",
     "input_schema": {
       "properties": {
         "data": {
-          "description": "The Unit data to create",
+          "description": "The Building data to create",
           "type": "object"
         }
       },
@@ -508,12 +508,12 @@
     }
   },
   {
-    "name": "get_unit",
-    "description": "Get unit by ID",
+    "name": "get_building",
+    "description": "Get building by ID",
     "input_schema": {
       "properties": {
         "id": {
-          "description": "The UUID of the Unit to retrieve",
+          "description": "The UUID of the Building to retrieve",
           "type": "string"
         },
         "include": {
@@ -531,8 +531,8 @@
     }
   },
   {
-    "name": "list_units",
-    "description": "List units with filtering",
+    "name": "list_buildings",
+    "description": "List buildings",
     "input_schema": {
       "properties": {
         "filter": {
@@ -552,8 +552,8 @@
     }
   },
   {
-    "name": "update_unit",
-    "description": "Update unit fields",
+    "name": "update_building",
+    "description": "Update building",
     "input_schema": {
       "properties": {
         "data": {
@@ -561,7 +561,7 @@
           "type": "object"
         },
         "id": {
-          "description": "The UUID of the Unit to update",
+          "description": "The UUID of the Building to update",
           "type": "string"
         },
         "update_mask": {
@@ -575,6 +575,270 @@
       "required": [
         "id",
         "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "deactivate_building",
+    "description": "Deactivate a building",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Building to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "start_building_renovation",
+    "description": "Start building renovation",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Building to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "activate_building",
+    "description": "Activate a building",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Building to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_space",
+    "description": "Create a new space within a property",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Space data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_space",
+    "description": "Get space by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_spaces",
+    "description": "List spaces with filtering",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_space",
+    "description": "Update space fields",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the Space to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "occupy_space",
+    "description": "Mark a space as occupied",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "record_space_notice",
+    "description": "Record notice to vacate",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "rescind_space_notice",
+    "description": "Rescind a notice to vacate",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "start_make_ready",
+    "description": "Start make-ready process",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "mark_space_vacant",
+    "description": "Mark a space as vacant",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "mark_space_down",
+    "description": "Mark a space as down (out of service)",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "mark_space_model",
+    "description": "Mark a space as a model unit",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "reserve_space",
+    "description": "Reserve a space",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Space to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
       ],
       "type": "object"
     }
@@ -700,14 +964,26 @@
     }
   },
   {
-    "name": "activate_lease",
-    "description": "Activate a signed lease. Side effects: Unit status -\u003e occupied, security deposit charge created",
+    "name": "send_for_signature",
+    "description": "Send lease for electronic signature",
     "input_schema": {
       "properties": {
-        "confirmed_rent": {
-          "description": "Additional field: confirmed_rent",
+        "id": {
+          "description": "The UUID of the Lease to transition",
           "type": "string"
-        },
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "activate_lease",
+    "description": "Activate a signed lease",
+    "input_schema": {
+      "properties": {
         "id": {
           "description": "The UUID of the Lease to transition",
           "type": "string"
@@ -749,7 +1025,7 @@
   },
   {
     "name": "renew_lease",
-    "description": "Renew a lease. Creates a new lease entity for the renewal term",
+    "description": "Renew a lease",
     "input_schema": {
       "properties": {
         "id": {
@@ -764,21 +1040,208 @@
     }
   },
   {
-    "name": "start_eviction",
+    "name": "initiate_eviction",
     "description": "Begin eviction process",
     "input_schema": {
       "properties": {
         "id": {
           "description": "The UUID of the Lease to transition",
           "type": "string"
-        },
-        "reason": {
-          "description": "Additional field: reason",
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "record_notice",
+    "description": "Record tenant notice date",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Lease to transition",
           "type": "string"
         }
       },
       "required": [
         "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "search_leases",
+    "description": "Search leases with advanced filters",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Lease data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_lease_ledger",
+    "description": "Get ledger entries for a lease",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Lease to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "record_payment",
+    "description": "Record a payment on a lease",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Lease data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "post_charge",
+    "description": "Post a charge to a lease",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Lease data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "apply_credit",
+    "description": "Apply a credit to a lease",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Lease data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_lease_space",
+    "description": "Create a lease-space association",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The LeaseSpace data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_lease_space",
+    "description": "Get lease-space by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the LeaseSpace to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_lease_spaces",
+    "description": "List lease-space associations",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_lease_space",
+    "description": "Update lease-space association",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the LeaseSpace to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
       ],
       "type": "object"
     }
@@ -848,10 +1311,6 @@
     "description": "Approve a lease application",
     "input_schema": {
       "properties": {
-        "conditions": {
-          "description": "Additional field: conditions",
-          "type": "string"
-        },
         "id": {
           "description": "The UUID of the Application to transition",
           "type": "string"
@@ -865,15 +1324,11 @@
   },
   {
     "name": "deny_application",
-    "description": "Deny a lease application. Reason required for fair housing compliance",
+    "description": "Deny a lease application",
     "input_schema": {
       "properties": {
         "id": {
           "description": "The UUID of the Application to transition",
-          "type": "string"
-        },
-        "reason": {
-          "description": "Additional field: reason",
           "type": "string"
         }
       },
@@ -1080,10 +1535,6 @@
     "description": "Post a journal entry. Lines must balance (debits = credits)",
     "input_schema": {
       "properties": {
-        "approval_notes": {
-          "description": "Additional field: approval_notes",
-          "type": "string"
-        },
         "id": {
           "description": "The UUID of the JournalEntry to transition",
           "type": "string"
@@ -1102,10 +1553,6 @@
       "properties": {
         "id": {
           "description": "The UUID of the JournalEntry to transition",
-          "type": "string"
-        },
-        "reason": {
-          "description": "Additional field: reason",
           "type": "string"
         }
       },
@@ -1275,6 +1722,84 @@
       },
       "required": [
         "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_entity_activity",
+    "description": "Get chronological activity feed for any entity. Use as FIRST call when assessing an entity.",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the ActivityEntry to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_signal_summary",
+    "description": "Get pre-aggregated signal summary for an entity with category breakdowns, sentiment, and escalations.",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the ActivityEntry to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_portfolio_signals",
+    "description": "Batch screen multiple entities ranked by concern level. Use for portfolio-wide risk assessment.",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The ActivityEntry data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "search_activity",
+    "description": "Full-text search across all activity streams by keyword.",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The ActivityEntry data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
       ],
       "type": "object"
     }

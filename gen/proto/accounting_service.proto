@@ -309,7 +309,6 @@ message ListJournalEntriesResponse {
 
 message PostJournalEntryRequest {
   string id = 1;
-  string approval_notes = 2;
 }
 
 message PostJournalEntryResponse {
@@ -319,7 +318,6 @@ message PostJournalEntryResponse {
 
 message VoidJournalEntryRequest {
   string id = 1;
-  string reason = 2;
 }
 
 message VoidJournalEntryResponse {

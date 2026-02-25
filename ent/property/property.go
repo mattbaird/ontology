@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -42,8 +43,8 @@ const (
 	FieldYearBuilt = "year_built"
 	// FieldTotalSquareFootage holds the string denoting the total_square_footage field in the database.
 	FieldTotalSquareFootage = "total_square_footage"
-	// FieldTotalUnits holds the string denoting the total_units field in the database.
-	FieldTotalUnits = "total_units"
+	// FieldTotalSpaces holds the string denoting the total_spaces field in the database.
+	FieldTotalSpaces = "total_spaces"
 	// FieldLotSizeSqft holds the string denoting the lot_size_sqft field in the database.
 	FieldLotSizeSqft = "lot_size_sqft"
 	// FieldStories holds the string denoting the stories field in the database.
@@ -66,14 +67,16 @@ const (
 	FieldInsuranceExpiry = "insurance_expiry"
 	// EdgePortfolio holds the string denoting the portfolio edge name in mutations.
 	EdgePortfolio = "portfolio"
-	// EdgeUnits holds the string denoting the units edge name in mutations.
-	EdgeUnits = "units"
+	// EdgeBuildings holds the string denoting the buildings edge name in mutations.
+	EdgeBuildings = "buildings"
+	// EdgeSpaces holds the string denoting the spaces edge name in mutations.
+	EdgeSpaces = "spaces"
 	// EdgeBankAccount holds the string denoting the bank_account edge name in mutations.
 	EdgeBankAccount = "bank_account"
-	// EdgePropertyLedgerEntries holds the string denoting the property_ledger_entries edge name in mutations.
-	EdgePropertyLedgerEntries = "property_ledger_entries"
 	// EdgeApplications holds the string denoting the applications edge name in mutations.
 	EdgeApplications = "applications"
+	// EdgeLedgerEntries holds the string denoting the ledger_entries edge name in mutations.
+	EdgeLedgerEntries = "ledger_entries"
 	// Table holds the table name of the property in the database.
 	Table = "properties"
 	// PortfolioTable is the table that holds the portfolio relation/edge.
@@ -83,13 +86,20 @@ const (
 	PortfolioInverseTable = "portfolios"
 	// PortfolioColumn is the table column denoting the portfolio relation/edge.
 	PortfolioColumn = "portfolio_properties"
-	// UnitsTable is the table that holds the units relation/edge.
-	UnitsTable = "units"
-	// UnitsInverseTable is the table name for the Unit entity.
-	// It exists in this package in order to avoid circular dependency with the "unit" package.
-	UnitsInverseTable = "units"
-	// UnitsColumn is the table column denoting the units relation/edge.
-	UnitsColumn = "property_units"
+	// BuildingsTable is the table that holds the buildings relation/edge.
+	BuildingsTable = "buildings"
+	// BuildingsInverseTable is the table name for the Building entity.
+	// It exists in this package in order to avoid circular dependency with the "building" package.
+	BuildingsInverseTable = "buildings"
+	// BuildingsColumn is the table column denoting the buildings relation/edge.
+	BuildingsColumn = "property_buildings"
+	// SpacesTable is the table that holds the spaces relation/edge.
+	SpacesTable = "spaces"
+	// SpacesInverseTable is the table name for the Space entity.
+	// It exists in this package in order to avoid circular dependency with the "space" package.
+	SpacesInverseTable = "spaces"
+	// SpacesColumn is the table column denoting the spaces relation/edge.
+	SpacesColumn = "property_spaces"
 	// BankAccountTable is the table that holds the bank_account relation/edge.
 	BankAccountTable = "properties"
 	// BankAccountInverseTable is the table name for the BankAccount entity.
@@ -97,13 +107,6 @@ const (
 	BankAccountInverseTable = "bank_accounts"
 	// BankAccountColumn is the table column denoting the bank_account relation/edge.
 	BankAccountColumn = "property_bank_account"
-	// PropertyLedgerEntriesTable is the table that holds the property_ledger_entries relation/edge.
-	PropertyLedgerEntriesTable = "ledger_entries"
-	// PropertyLedgerEntriesInverseTable is the table name for the LedgerEntry entity.
-	// It exists in this package in order to avoid circular dependency with the "ledgerentry" package.
-	PropertyLedgerEntriesInverseTable = "ledger_entries"
-	// PropertyLedgerEntriesColumn is the table column denoting the property_ledger_entries relation/edge.
-	PropertyLedgerEntriesColumn = "property_property_ledger_entries"
 	// ApplicationsTable is the table that holds the applications relation/edge.
 	ApplicationsTable = "applications"
 	// ApplicationsInverseTable is the table name for the Application entity.
@@ -111,6 +114,13 @@ const (
 	ApplicationsInverseTable = "applications"
 	// ApplicationsColumn is the table column denoting the applications relation/edge.
 	ApplicationsColumn = "property_applications"
+	// LedgerEntriesTable is the table that holds the ledger_entries relation/edge.
+	LedgerEntriesTable = "ledger_entries"
+	// LedgerEntriesInverseTable is the table name for the LedgerEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "ledgerentry" package.
+	LedgerEntriesInverseTable = "ledger_entries"
+	// LedgerEntriesColumn is the table column denoting the ledger_entries relation/edge.
+	LedgerEntriesColumn = "property_ledger_entries"
 )
 
 // Columns holds all SQL columns for property fields.
@@ -129,7 +139,7 @@ var Columns = []string{
 	FieldStatus,
 	FieldYearBuilt,
 	FieldTotalSquareFootage,
-	FieldTotalUnits,
+	FieldTotalSpaces,
 	FieldLotSizeSqft,
 	FieldStories,
 	FieldParkingSpaces,
@@ -165,7 +175,13 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+// Note that the variables below are initialized by the runtime
+// package on the initialization of the application. Therefore,
+// it should be imported in the main as follows:
+//
+//	import _ "github.com/matthewbaird/ontology/ent/runtime"
 var (
+	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -224,6 +240,10 @@ const (
 	PropertyTypeSeniorLiving      PropertyType = "senior_living"
 	PropertyTypeVacationRental    PropertyType = "vacation_rental"
 	PropertyTypeMobileHomePark    PropertyType = "mobile_home_park"
+	PropertyTypeSelfStorage       PropertyType = "self_storage"
+	PropertyTypeCoworking         PropertyType = "coworking"
+	PropertyTypeDataCenter        PropertyType = "data_center"
+	PropertyTypeMedicalOffice     PropertyType = "medical_office"
 )
 
 func (pt PropertyType) String() string {
@@ -233,7 +253,7 @@ func (pt PropertyType) String() string {
 // PropertyTypeValidator is a validator for the "property_type" field enum values. It is called by the builders before save.
 func PropertyTypeValidator(pt PropertyType) error {
 	switch pt {
-	case PropertyTypeSingleFamily, PropertyTypeMultiFamily, PropertyTypeCommercialOffice, PropertyTypeCommercialRetail, PropertyTypeMixedUse, PropertyTypeIndustrial, PropertyTypeAffordableHousing, PropertyTypeStudentHousing, PropertyTypeSeniorLiving, PropertyTypeVacationRental, PropertyTypeMobileHomePark:
+	case PropertyTypeSingleFamily, PropertyTypeMultiFamily, PropertyTypeCommercialOffice, PropertyTypeCommercialRetail, PropertyTypeMixedUse, PropertyTypeIndustrial, PropertyTypeAffordableHousing, PropertyTypeStudentHousing, PropertyTypeSeniorLiving, PropertyTypeVacationRental, PropertyTypeMobileHomePark, PropertyTypeSelfStorage, PropertyTypeCoworking, PropertyTypeDataCenter, PropertyTypeMedicalOffice:
 		return nil
 	default:
 		return fmt.Errorf("property: invalid enum value for property_type field: %q", pt)
@@ -334,9 +354,9 @@ func ByTotalSquareFootage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTotalSquareFootage, opts...).ToFunc()
 }
 
-// ByTotalUnits orders the results by the total_units field.
-func ByTotalUnits(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTotalUnits, opts...).ToFunc()
+// ByTotalSpaces orders the results by the total_spaces field.
+func ByTotalSpaces(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTotalSpaces, opts...).ToFunc()
 }
 
 // ByLotSizeSqft orders the results by the lot_size_sqft field.
@@ -391,17 +411,31 @@ func ByPortfolioField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByUnitsCount orders the results by units count.
-func ByUnitsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByBuildingsCount orders the results by buildings count.
+func ByBuildingsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newUnitsStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newBuildingsStep(), opts...)
 	}
 }
 
-// ByUnits orders the results by units terms.
-func ByUnits(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByBuildings orders the results by buildings terms.
+func ByBuildings(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newUnitsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newBuildingsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// BySpacesCount orders the results by spaces count.
+func BySpacesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSpacesStep(), opts...)
+	}
+}
+
+// BySpaces orders the results by spaces terms.
+func BySpaces(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSpacesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -409,20 +443,6 @@ func ByUnits(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 func ByBankAccountField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newBankAccountStep(), sql.OrderByField(field, opts...))
-	}
-}
-
-// ByPropertyLedgerEntriesCount orders the results by property_ledger_entries count.
-func ByPropertyLedgerEntriesCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newPropertyLedgerEntriesStep(), opts...)
-	}
-}
-
-// ByPropertyLedgerEntries orders the results by property_ledger_entries terms.
-func ByPropertyLedgerEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newPropertyLedgerEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -439,6 +459,20 @@ func ByApplications(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newApplicationsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByLedgerEntriesCount orders the results by ledger_entries count.
+func ByLedgerEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newLedgerEntriesStep(), opts...)
+	}
+}
+
+// ByLedgerEntries orders the results by ledger_entries terms.
+func ByLedgerEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newLedgerEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPortfolioStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -446,11 +480,18 @@ func newPortfolioStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, PortfolioTable, PortfolioColumn),
 	)
 }
-func newUnitsStep() *sqlgraph.Step {
+func newBuildingsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(UnitsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, UnitsTable, UnitsColumn),
+		sqlgraph.To(BuildingsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BuildingsTable, BuildingsColumn),
+	)
+}
+func newSpacesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SpacesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SpacesTable, SpacesColumn),
 	)
 }
 func newBankAccountStep() *sqlgraph.Step {
@@ -460,17 +501,17 @@ func newBankAccountStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, false, BankAccountTable, BankAccountColumn),
 	)
 }
-func newPropertyLedgerEntriesStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(PropertyLedgerEntriesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, PropertyLedgerEntriesTable, PropertyLedgerEntriesColumn),
-	)
-}
 func newApplicationsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ApplicationsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ApplicationsTable, ApplicationsColumn),
+	)
+}
+func newLedgerEntriesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(LedgerEntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LedgerEntriesTable, LedgerEntriesColumn),
 	)
 }

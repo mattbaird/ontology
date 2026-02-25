@@ -197,13 +197,13 @@ func (_u *AccountUpdate) SetNillableAccountSubtype(v *account.AccountSubtype) *A
 }
 
 // SetParentAccountID sets the "parent_account_id" field.
-func (_u *AccountUpdate) SetParentAccountID(v string) *AccountUpdate {
+func (_u *AccountUpdate) SetParentAccountID(v uuid.UUID) *AccountUpdate {
 	_u.mutation.SetParentAccountID(v)
 	return _u
 }
 
 // SetNillableParentAccountID sets the "parent_account_id" field if the given value is not nil.
-func (_u *AccountUpdate) SetNillableParentAccountID(v *string) *AccountUpdate {
+func (_u *AccountUpdate) SetNillableParentAccountID(v *uuid.UUID) *AccountUpdate {
 	if v != nil {
 		_u.SetParentAccountID(*v)
 	}
@@ -250,13 +250,13 @@ func (_u *AccountUpdate) ClearDimensions() *AccountUpdate {
 }
 
 // SetNormalBalance sets the "normal_balance" field.
-func (_u *AccountUpdate) SetNormalBalance(v account.NormalBalance) *AccountUpdate {
+func (_u *AccountUpdate) SetNormalBalance(v string) *AccountUpdate {
 	_u.mutation.SetNormalBalance(v)
 	return _u
 }
 
 // SetNillableNormalBalance sets the "normal_balance" field if the given value is not nil.
-func (_u *AccountUpdate) SetNillableNormalBalance(v *account.NormalBalance) *AccountUpdate {
+func (_u *AccountUpdate) SetNillableNormalBalance(v *string) *AccountUpdate {
 	if v != nil {
 		_u.SetNormalBalance(*v)
 	}
@@ -334,13 +334,13 @@ func (_u *AccountUpdate) SetNillableIsTrustAccount(v *bool) *AccountUpdate {
 }
 
 // SetTrustType sets the "trust_type" field.
-func (_u *AccountUpdate) SetTrustType(v account.TrustType) *AccountUpdate {
+func (_u *AccountUpdate) SetTrustType(v string) *AccountUpdate {
 	_u.mutation.SetTrustType(v)
 	return _u
 }
 
 // SetNillableTrustType sets the "trust_type" field if the given value is not nil.
-func (_u *AccountUpdate) SetNillableTrustType(v *account.TrustType) *AccountUpdate {
+func (_u *AccountUpdate) SetNillableTrustType(v *string) *AccountUpdate {
 	if v != nil {
 		_u.SetTrustType(*v)
 	}
@@ -621,19 +621,9 @@ func (_u *AccountUpdate) check() error {
 			return &ValidationError{Name: "account_subtype", err: fmt.Errorf(`ent: validator failed for field "Account.account_subtype": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.NormalBalance(); ok {
-		if err := account.NormalBalanceValidator(v); err != nil {
-			return &ValidationError{Name: "normal_balance", err: fmt.Errorf(`ent: validator failed for field "Account.normal_balance": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := account.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Account.status": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.TrustType(); ok {
-		if err := account.TrustTypeValidator(v); err != nil {
-			return &ValidationError{Name: "trust_type", err: fmt.Errorf(`ent: validator failed for field "Account.trust_type": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.BudgetAmountCurrency(); ok {
@@ -699,10 +689,10 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.SetField(account.FieldAccountSubtype, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.ParentAccountID(); ok {
-		_spec.SetField(account.FieldParentAccountID, field.TypeString, value)
+		_spec.SetField(account.FieldParentAccountID, field.TypeUUID, value)
 	}
 	if _u.mutation.ParentAccountIDCleared() {
-		_spec.ClearField(account.FieldParentAccountID, field.TypeString)
+		_spec.ClearField(account.FieldParentAccountID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.Depth(); ok {
 		_spec.SetField(account.FieldDepth, field.TypeInt, value)
@@ -717,7 +707,7 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.ClearField(account.FieldDimensions, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.NormalBalance(); ok {
-		_spec.SetField(account.FieldNormalBalance, field.TypeEnum, value)
+		_spec.SetField(account.FieldNormalBalance, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.IsHeader(); ok {
 		_spec.SetField(account.FieldIsHeader, field.TypeBool, value)
@@ -735,10 +725,10 @@ func (_u *AccountUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		_spec.SetField(account.FieldIsTrustAccount, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.TrustType(); ok {
-		_spec.SetField(account.FieldTrustType, field.TypeEnum, value)
+		_spec.SetField(account.FieldTrustType, field.TypeString, value)
 	}
 	if _u.mutation.TrustTypeCleared() {
-		_spec.ClearField(account.FieldTrustType, field.TypeEnum)
+		_spec.ClearField(account.FieldTrustType, field.TypeString)
 	}
 	if value, ok := _u.mutation.BudgetAmountAmountCents(); ok {
 		_spec.SetField(account.FieldBudgetAmountAmountCents, field.TypeInt64, value)
@@ -1110,13 +1100,13 @@ func (_u *AccountUpdateOne) SetNillableAccountSubtype(v *account.AccountSubtype)
 }
 
 // SetParentAccountID sets the "parent_account_id" field.
-func (_u *AccountUpdateOne) SetParentAccountID(v string) *AccountUpdateOne {
+func (_u *AccountUpdateOne) SetParentAccountID(v uuid.UUID) *AccountUpdateOne {
 	_u.mutation.SetParentAccountID(v)
 	return _u
 }
 
 // SetNillableParentAccountID sets the "parent_account_id" field if the given value is not nil.
-func (_u *AccountUpdateOne) SetNillableParentAccountID(v *string) *AccountUpdateOne {
+func (_u *AccountUpdateOne) SetNillableParentAccountID(v *uuid.UUID) *AccountUpdateOne {
 	if v != nil {
 		_u.SetParentAccountID(*v)
 	}
@@ -1163,13 +1153,13 @@ func (_u *AccountUpdateOne) ClearDimensions() *AccountUpdateOne {
 }
 
 // SetNormalBalance sets the "normal_balance" field.
-func (_u *AccountUpdateOne) SetNormalBalance(v account.NormalBalance) *AccountUpdateOne {
+func (_u *AccountUpdateOne) SetNormalBalance(v string) *AccountUpdateOne {
 	_u.mutation.SetNormalBalance(v)
 	return _u
 }
 
 // SetNillableNormalBalance sets the "normal_balance" field if the given value is not nil.
-func (_u *AccountUpdateOne) SetNillableNormalBalance(v *account.NormalBalance) *AccountUpdateOne {
+func (_u *AccountUpdateOne) SetNillableNormalBalance(v *string) *AccountUpdateOne {
 	if v != nil {
 		_u.SetNormalBalance(*v)
 	}
@@ -1247,13 +1237,13 @@ func (_u *AccountUpdateOne) SetNillableIsTrustAccount(v *bool) *AccountUpdateOne
 }
 
 // SetTrustType sets the "trust_type" field.
-func (_u *AccountUpdateOne) SetTrustType(v account.TrustType) *AccountUpdateOne {
+func (_u *AccountUpdateOne) SetTrustType(v string) *AccountUpdateOne {
 	_u.mutation.SetTrustType(v)
 	return _u
 }
 
 // SetNillableTrustType sets the "trust_type" field if the given value is not nil.
-func (_u *AccountUpdateOne) SetNillableTrustType(v *account.TrustType) *AccountUpdateOne {
+func (_u *AccountUpdateOne) SetNillableTrustType(v *string) *AccountUpdateOne {
 	if v != nil {
 		_u.SetTrustType(*v)
 	}
@@ -1547,19 +1537,9 @@ func (_u *AccountUpdateOne) check() error {
 			return &ValidationError{Name: "account_subtype", err: fmt.Errorf(`ent: validator failed for field "Account.account_subtype": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.NormalBalance(); ok {
-		if err := account.NormalBalanceValidator(v); err != nil {
-			return &ValidationError{Name: "normal_balance", err: fmt.Errorf(`ent: validator failed for field "Account.normal_balance": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := account.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Account.status": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.TrustType(); ok {
-		if err := account.TrustTypeValidator(v); err != nil {
-			return &ValidationError{Name: "trust_type", err: fmt.Errorf(`ent: validator failed for field "Account.trust_type": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.BudgetAmountCurrency(); ok {
@@ -1642,10 +1622,10 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 		_spec.SetField(account.FieldAccountSubtype, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.ParentAccountID(); ok {
-		_spec.SetField(account.FieldParentAccountID, field.TypeString, value)
+		_spec.SetField(account.FieldParentAccountID, field.TypeUUID, value)
 	}
 	if _u.mutation.ParentAccountIDCleared() {
-		_spec.ClearField(account.FieldParentAccountID, field.TypeString)
+		_spec.ClearField(account.FieldParentAccountID, field.TypeUUID)
 	}
 	if value, ok := _u.mutation.Depth(); ok {
 		_spec.SetField(account.FieldDepth, field.TypeInt, value)
@@ -1660,7 +1640,7 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 		_spec.ClearField(account.FieldDimensions, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.NormalBalance(); ok {
-		_spec.SetField(account.FieldNormalBalance, field.TypeEnum, value)
+		_spec.SetField(account.FieldNormalBalance, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.IsHeader(); ok {
 		_spec.SetField(account.FieldIsHeader, field.TypeBool, value)
@@ -1678,10 +1658,10 @@ func (_u *AccountUpdateOne) sqlSave(ctx context.Context) (_node *Account, err er
 		_spec.SetField(account.FieldIsTrustAccount, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.TrustType(); ok {
-		_spec.SetField(account.FieldTrustType, field.TypeEnum, value)
+		_spec.SetField(account.FieldTrustType, field.TypeString, value)
 	}
 	if _u.mutation.TrustTypeCleared() {
-		_spec.ClearField(account.FieldTrustType, field.TypeEnum)
+		_spec.ClearField(account.FieldTrustType, field.TypeString)
 	}
 	if value, ok := _u.mutation.BudgetAmountAmountCents(); ok {
 		_spec.SetField(account.FieldBudgetAmountAmountCents, field.TypeInt64, value)

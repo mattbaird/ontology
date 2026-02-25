@@ -11,13 +11,13 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
-	"github.com/matthewbaird/ontology/ent/lease"
+	"github.com/matthewbaird/ontology/ent/building"
 	"github.com/matthewbaird/ontology/ent/property"
-	"github.com/matthewbaird/ontology/ent/unit"
+	"github.com/matthewbaird/ontology/ent/space"
 )
 
-// Unit is the model entity for the Unit schema.
-type Unit struct {
+// Space is the model entity for the Space schema.
+type Space struct {
 	config `json:"-"`
 	// ID of the ent.
 	// Primary key
@@ -31,17 +31,21 @@ type Unit struct {
 	// User ID, agent ID, or 'system' who last updated this entity
 	UpdatedBy string `json:"updated_by,omitempty"`
 	// Origin of the change
-	Source unit.Source `json:"source,omitempty"`
+	Source space.Source `json:"source,omitempty"`
 	// Links related changes across entities
 	CorrelationID *string `json:"correlation_id,omitempty"`
 	// If source == 'agent', which goal triggered this change
 	AgentGoalID *string `json:"agent_goal_id,omitempty"`
-	// UnitNumber holds the value of the "unit_number" field.
-	UnitNumber string `json:"unit_number,omitempty"`
-	// UnitType holds the value of the "unit_type" field.
-	UnitType unit.UnitType `json:"unit_type,omitempty"`
+	// SpaceNumber holds the value of the "space_number" field.
+	SpaceNumber string `json:"space_number,omitempty"`
+	// SpaceType holds the value of the "space_type" field.
+	SpaceType space.SpaceType `json:"space_type,omitempty"`
 	// Status holds the value of the "status" field.
-	Status unit.Status `json:"status,omitempty"`
+	Status space.Status `json:"status,omitempty"`
+	// Leasable holds the value of the "leasable" field.
+	Leasable bool `json:"leasable,omitempty"`
+	// SharedWithParent holds the value of the "shared_with_parent" field.
+	SharedWithParent bool `json:"shared_with_parent,omitempty"`
 	// SquareFootage holds the value of the "square_footage" field.
 	SquareFootage float64 `json:"square_footage,omitempty"`
 	// Bedrooms holds the value of the "bedrooms" field.
@@ -60,37 +64,49 @@ type Unit struct {
 	PetFriendly bool `json:"pet_friendly,omitempty"`
 	// Furnished holds the value of the "furnished" field.
 	Furnished bool `json:"furnished,omitempty"`
+	// SpecializedInfrastructure holds the value of the "specialized_infrastructure" field.
+	SpecializedInfrastructure []string `json:"specialized_infrastructure,omitempty"`
 	// market_rent — amount in cents
 	MarketRentAmountCents *int64 `json:"market_rent_amount_cents,omitempty"`
 	// market_rent — ISO 4217 currency code
 	MarketRentCurrency *string `json:"market_rent_currency,omitempty"`
 	// AmiRestriction holds the value of the "ami_restriction" field.
 	AmiRestriction *int `json:"ami_restriction,omitempty"`
+	// ActiveLeaseID holds the value of the "active_lease_id" field.
+	ActiveLeaseID *string `json:"active_lease_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the UnitQuery when eager-loading is set.
-	Edges          UnitEdges `json:"edges"`
-	property_units *uuid.UUID
-	selectValues   sql.SelectValues
+	// The values are being populated by the SpaceQuery when eager-loading is set.
+	Edges           SpaceEdges `json:"edges"`
+	building_spaces *uuid.UUID
+	property_spaces *uuid.UUID
+	space_children  *uuid.UUID
+	selectValues    sql.SelectValues
 }
 
-// UnitEdges holds the relations/edges for other nodes in the graph.
-type UnitEdges struct {
-	// Property contains Units (inverse)
+// SpaceEdges holds the relations/edges for other nodes in the graph.
+type SpaceEdges struct {
+	// Property contains Spaces (inverse)
 	Property *Property `json:"property,omitempty"`
-	// Unit has Leases over time
-	Leases []*Lease `json:"leases,omitempty"`
-	// Unit has at most one active Lease
-	ActiveLease *Lease `json:"active_lease,omitempty"`
-	// Application is for specific Unit (inverse)
+	// Building contains Spaces (inverse)
+	Building *Building `json:"building,omitempty"`
+	// Space has child Spaces
+	Children []*Space `json:"children,omitempty"`
+	// Space has child Spaces (inverse)
+	ParentSpace *Space `json:"parent_space,omitempty"`
+	// Space receives Applications
 	Applications []*Application `json:"applications,omitempty"`
+	// LeaseSpace references Space (inverse)
+	LeaseSpaces []*LeaseSpace `json:"lease_spaces,omitempty"`
+	// LedgerEntry relates to Space (inverse)
+	LedgerEntries []*LedgerEntry `json:"ledger_entries,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [7]bool
 }
 
 // PropertyOrErr returns the Property value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e UnitEdges) PropertyOrErr() (*Property, error) {
+func (e SpaceEdges) PropertyOrErr() (*Property, error) {
 	if e.Property != nil {
 		return e.Property, nil
 	} else if e.loadedTypes[0] {
@@ -99,55 +115,88 @@ func (e UnitEdges) PropertyOrErr() (*Property, error) {
 	return nil, &NotLoadedError{edge: "property"}
 }
 
-// LeasesOrErr returns the Leases value or an error if the edge
-// was not loaded in eager-loading.
-func (e UnitEdges) LeasesOrErr() ([]*Lease, error) {
-	if e.loadedTypes[1] {
-		return e.Leases, nil
+// BuildingOrErr returns the Building value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e SpaceEdges) BuildingOrErr() (*Building, error) {
+	if e.Building != nil {
+		return e.Building, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: building.Label}
 	}
-	return nil, &NotLoadedError{edge: "leases"}
+	return nil, &NotLoadedError{edge: "building"}
 }
 
-// ActiveLeaseOrErr returns the ActiveLease value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e UnitEdges) ActiveLeaseOrErr() (*Lease, error) {
-	if e.ActiveLease != nil {
-		return e.ActiveLease, nil
-	} else if e.loadedTypes[2] {
-		return nil, &NotFoundError{label: lease.Label}
+// ChildrenOrErr returns the Children value or an error if the edge
+// was not loaded in eager-loading.
+func (e SpaceEdges) ChildrenOrErr() ([]*Space, error) {
+	if e.loadedTypes[2] {
+		return e.Children, nil
 	}
-	return nil, &NotLoadedError{edge: "active_lease"}
+	return nil, &NotLoadedError{edge: "children"}
+}
+
+// ParentSpaceOrErr returns the ParentSpace value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e SpaceEdges) ParentSpaceOrErr() (*Space, error) {
+	if e.ParentSpace != nil {
+		return e.ParentSpace, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: space.Label}
+	}
+	return nil, &NotLoadedError{edge: "parent_space"}
 }
 
 // ApplicationsOrErr returns the Applications value or an error if the edge
 // was not loaded in eager-loading.
-func (e UnitEdges) ApplicationsOrErr() ([]*Application, error) {
-	if e.loadedTypes[3] {
+func (e SpaceEdges) ApplicationsOrErr() ([]*Application, error) {
+	if e.loadedTypes[4] {
 		return e.Applications, nil
 	}
 	return nil, &NotLoadedError{edge: "applications"}
 }
 
+// LeaseSpacesOrErr returns the LeaseSpaces value or an error if the edge
+// was not loaded in eager-loading.
+func (e SpaceEdges) LeaseSpacesOrErr() ([]*LeaseSpace, error) {
+	if e.loadedTypes[5] {
+		return e.LeaseSpaces, nil
+	}
+	return nil, &NotLoadedError{edge: "lease_spaces"}
+}
+
+// LedgerEntriesOrErr returns the LedgerEntries value or an error if the edge
+// was not loaded in eager-loading.
+func (e SpaceEdges) LedgerEntriesOrErr() ([]*LedgerEntry, error) {
+	if e.loadedTypes[6] {
+		return e.LedgerEntries, nil
+	}
+	return nil, &NotLoadedError{edge: "ledger_entries"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Unit) scanValues(columns []string) ([]any, error) {
+func (*Space) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case unit.FieldAmenities:
+		case space.FieldAmenities, space.FieldSpecializedInfrastructure:
 			values[i] = new([]byte)
-		case unit.FieldAdaAccessible, unit.FieldPetFriendly, unit.FieldFurnished:
+		case space.FieldLeasable, space.FieldSharedWithParent, space.FieldAdaAccessible, space.FieldPetFriendly, space.FieldFurnished:
 			values[i] = new(sql.NullBool)
-		case unit.FieldSquareFootage, unit.FieldBathrooms:
+		case space.FieldSquareFootage, space.FieldBathrooms:
 			values[i] = new(sql.NullFloat64)
-		case unit.FieldBedrooms, unit.FieldFloor, unit.FieldMarketRentAmountCents, unit.FieldAmiRestriction:
+		case space.FieldBedrooms, space.FieldFloor, space.FieldMarketRentAmountCents, space.FieldAmiRestriction:
 			values[i] = new(sql.NullInt64)
-		case unit.FieldCreatedBy, unit.FieldUpdatedBy, unit.FieldSource, unit.FieldCorrelationID, unit.FieldAgentGoalID, unit.FieldUnitNumber, unit.FieldUnitType, unit.FieldStatus, unit.FieldFloorPlan, unit.FieldMarketRentCurrency:
+		case space.FieldCreatedBy, space.FieldUpdatedBy, space.FieldSource, space.FieldCorrelationID, space.FieldAgentGoalID, space.FieldSpaceNumber, space.FieldSpaceType, space.FieldStatus, space.FieldFloorPlan, space.FieldMarketRentCurrency, space.FieldActiveLeaseID:
 			values[i] = new(sql.NullString)
-		case unit.FieldCreatedAt, unit.FieldUpdatedAt:
+		case space.FieldCreatedAt, space.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case unit.FieldID:
+		case space.FieldID:
 			values[i] = new(uuid.UUID)
-		case unit.ForeignKeys[0]: // property_units
+		case space.ForeignKeys[0]: // building_spaces
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case space.ForeignKeys[1]: // property_spaces
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case space.ForeignKeys[2]: // space_children
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -157,109 +206,121 @@ func (*Unit) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the Unit fields.
-func (_m *Unit) assignValues(columns []string, values []any) error {
+// to the Space fields.
+func (_m *Space) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case unit.FieldID:
+		case space.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
 			}
-		case unit.FieldCreatedAt:
+		case space.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case unit.FieldUpdatedAt:
+		case space.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case unit.FieldCreatedBy:
+		case space.FieldCreatedBy:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field created_by", values[i])
 			} else if value.Valid {
 				_m.CreatedBy = value.String
 			}
-		case unit.FieldUpdatedBy:
+		case space.FieldUpdatedBy:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_by", values[i])
 			} else if value.Valid {
 				_m.UpdatedBy = value.String
 			}
-		case unit.FieldSource:
+		case space.FieldSource:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field source", values[i])
 			} else if value.Valid {
-				_m.Source = unit.Source(value.String)
+				_m.Source = space.Source(value.String)
 			}
-		case unit.FieldCorrelationID:
+		case space.FieldCorrelationID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field correlation_id", values[i])
 			} else if value.Valid {
 				_m.CorrelationID = new(string)
 				*_m.CorrelationID = value.String
 			}
-		case unit.FieldAgentGoalID:
+		case space.FieldAgentGoalID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field agent_goal_id", values[i])
 			} else if value.Valid {
 				_m.AgentGoalID = new(string)
 				*_m.AgentGoalID = value.String
 			}
-		case unit.FieldUnitNumber:
+		case space.FieldSpaceNumber:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field unit_number", values[i])
+				return fmt.Errorf("unexpected type %T for field space_number", values[i])
 			} else if value.Valid {
-				_m.UnitNumber = value.String
+				_m.SpaceNumber = value.String
 			}
-		case unit.FieldUnitType:
+		case space.FieldSpaceType:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field unit_type", values[i])
+				return fmt.Errorf("unexpected type %T for field space_type", values[i])
 			} else if value.Valid {
-				_m.UnitType = unit.UnitType(value.String)
+				_m.SpaceType = space.SpaceType(value.String)
 			}
-		case unit.FieldStatus:
+		case space.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				_m.Status = unit.Status(value.String)
+				_m.Status = space.Status(value.String)
 			}
-		case unit.FieldSquareFootage:
+		case space.FieldLeasable:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field leasable", values[i])
+			} else if value.Valid {
+				_m.Leasable = value.Bool
+			}
+		case space.FieldSharedWithParent:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field shared_with_parent", values[i])
+			} else if value.Valid {
+				_m.SharedWithParent = value.Bool
+			}
+		case space.FieldSquareFootage:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field square_footage", values[i])
 			} else if value.Valid {
 				_m.SquareFootage = value.Float64
 			}
-		case unit.FieldBedrooms:
+		case space.FieldBedrooms:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field bedrooms", values[i])
 			} else if value.Valid {
 				_m.Bedrooms = new(int)
 				*_m.Bedrooms = int(value.Int64)
 			}
-		case unit.FieldBathrooms:
+		case space.FieldBathrooms:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field bathrooms", values[i])
 			} else if value.Valid {
 				_m.Bathrooms = new(float64)
 				*_m.Bathrooms = value.Float64
 			}
-		case unit.FieldFloor:
+		case space.FieldFloor:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field floor", values[i])
 			} else if value.Valid {
 				_m.Floor = new(int)
 				*_m.Floor = int(value.Int64)
 			}
-		case unit.FieldAmenities:
+		case space.FieldAmenities:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field amenities", values[i])
 			} else if value != nil && len(*value) > 0 {
@@ -267,58 +328,87 @@ func (_m *Unit) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field amenities: %w", err)
 				}
 			}
-		case unit.FieldFloorPlan:
+		case space.FieldFloorPlan:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field floor_plan", values[i])
 			} else if value.Valid {
 				_m.FloorPlan = new(string)
 				*_m.FloorPlan = value.String
 			}
-		case unit.FieldAdaAccessible:
+		case space.FieldAdaAccessible:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field ada_accessible", values[i])
 			} else if value.Valid {
 				_m.AdaAccessible = value.Bool
 			}
-		case unit.FieldPetFriendly:
+		case space.FieldPetFriendly:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field pet_friendly", values[i])
 			} else if value.Valid {
 				_m.PetFriendly = value.Bool
 			}
-		case unit.FieldFurnished:
+		case space.FieldFurnished:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field furnished", values[i])
 			} else if value.Valid {
 				_m.Furnished = value.Bool
 			}
-		case unit.FieldMarketRentAmountCents:
+		case space.FieldSpecializedInfrastructure:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field specialized_infrastructure", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.SpecializedInfrastructure); err != nil {
+					return fmt.Errorf("unmarshal field specialized_infrastructure: %w", err)
+				}
+			}
+		case space.FieldMarketRentAmountCents:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field market_rent_amount_cents", values[i])
 			} else if value.Valid {
 				_m.MarketRentAmountCents = new(int64)
 				*_m.MarketRentAmountCents = value.Int64
 			}
-		case unit.FieldMarketRentCurrency:
+		case space.FieldMarketRentCurrency:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field market_rent_currency", values[i])
 			} else if value.Valid {
 				_m.MarketRentCurrency = new(string)
 				*_m.MarketRentCurrency = value.String
 			}
-		case unit.FieldAmiRestriction:
+		case space.FieldAmiRestriction:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field ami_restriction", values[i])
 			} else if value.Valid {
 				_m.AmiRestriction = new(int)
 				*_m.AmiRestriction = int(value.Int64)
 			}
-		case unit.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field property_units", values[i])
+		case space.FieldActiveLeaseID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field active_lease_id", values[i])
 			} else if value.Valid {
-				_m.property_units = new(uuid.UUID)
-				*_m.property_units = *value.S.(*uuid.UUID)
+				_m.ActiveLeaseID = new(string)
+				*_m.ActiveLeaseID = value.String
+			}
+		case space.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field building_spaces", values[i])
+			} else if value.Valid {
+				_m.building_spaces = new(uuid.UUID)
+				*_m.building_spaces = *value.S.(*uuid.UUID)
+			}
+		case space.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field property_spaces", values[i])
+			} else if value.Valid {
+				_m.property_spaces = new(uuid.UUID)
+				*_m.property_spaces = *value.S.(*uuid.UUID)
+			}
+		case space.ForeignKeys[2]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field space_children", values[i])
+			} else if value.Valid {
+				_m.space_children = new(uuid.UUID)
+				*_m.space_children = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -327,54 +417,69 @@ func (_m *Unit) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the Unit.
+// Value returns the ent.Value that was dynamically selected and assigned to the Space.
 // This includes values selected through modifiers, order, etc.
-func (_m *Unit) Value(name string) (ent.Value, error) {
+func (_m *Space) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryProperty queries the "property" edge of the Unit entity.
-func (_m *Unit) QueryProperty() *PropertyQuery {
-	return NewUnitClient(_m.config).QueryProperty(_m)
+// QueryProperty queries the "property" edge of the Space entity.
+func (_m *Space) QueryProperty() *PropertyQuery {
+	return NewSpaceClient(_m.config).QueryProperty(_m)
 }
 
-// QueryLeases queries the "leases" edge of the Unit entity.
-func (_m *Unit) QueryLeases() *LeaseQuery {
-	return NewUnitClient(_m.config).QueryLeases(_m)
+// QueryBuilding queries the "building" edge of the Space entity.
+func (_m *Space) QueryBuilding() *BuildingQuery {
+	return NewSpaceClient(_m.config).QueryBuilding(_m)
 }
 
-// QueryActiveLease queries the "active_lease" edge of the Unit entity.
-func (_m *Unit) QueryActiveLease() *LeaseQuery {
-	return NewUnitClient(_m.config).QueryActiveLease(_m)
+// QueryChildren queries the "children" edge of the Space entity.
+func (_m *Space) QueryChildren() *SpaceQuery {
+	return NewSpaceClient(_m.config).QueryChildren(_m)
 }
 
-// QueryApplications queries the "applications" edge of the Unit entity.
-func (_m *Unit) QueryApplications() *ApplicationQuery {
-	return NewUnitClient(_m.config).QueryApplications(_m)
+// QueryParentSpace queries the "parent_space" edge of the Space entity.
+func (_m *Space) QueryParentSpace() *SpaceQuery {
+	return NewSpaceClient(_m.config).QueryParentSpace(_m)
 }
 
-// Update returns a builder for updating this Unit.
-// Note that you need to call Unit.Unwrap() before calling this method if this Unit
+// QueryApplications queries the "applications" edge of the Space entity.
+func (_m *Space) QueryApplications() *ApplicationQuery {
+	return NewSpaceClient(_m.config).QueryApplications(_m)
+}
+
+// QueryLeaseSpaces queries the "lease_spaces" edge of the Space entity.
+func (_m *Space) QueryLeaseSpaces() *LeaseSpaceQuery {
+	return NewSpaceClient(_m.config).QueryLeaseSpaces(_m)
+}
+
+// QueryLedgerEntries queries the "ledger_entries" edge of the Space entity.
+func (_m *Space) QueryLedgerEntries() *LedgerEntryQuery {
+	return NewSpaceClient(_m.config).QueryLedgerEntries(_m)
+}
+
+// Update returns a builder for updating this Space.
+// Note that you need to call Space.Unwrap() before calling this method if this Space
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *Unit) Update() *UnitUpdateOne {
-	return NewUnitClient(_m.config).UpdateOne(_m)
+func (_m *Space) Update() *SpaceUpdateOne {
+	return NewSpaceClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the Unit entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the Space entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *Unit) Unwrap() *Unit {
+func (_m *Space) Unwrap() *Space {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: Unit is not a transactional entity")
+		panic("ent: Space is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *Unit) String() string {
+func (_m *Space) String() string {
 	var builder strings.Builder
-	builder.WriteString("Unit(")
+	builder.WriteString("Space(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
@@ -401,14 +506,20 @@ func (_m *Unit) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	builder.WriteString("unit_number=")
-	builder.WriteString(_m.UnitNumber)
+	builder.WriteString("space_number=")
+	builder.WriteString(_m.SpaceNumber)
 	builder.WriteString(", ")
-	builder.WriteString("unit_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.UnitType))
+	builder.WriteString("space_type=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SpaceType))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString(", ")
+	builder.WriteString("leasable=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Leasable))
+	builder.WriteString(", ")
+	builder.WriteString("shared_with_parent=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SharedWithParent))
 	builder.WriteString(", ")
 	builder.WriteString("square_footage=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SquareFootage))
@@ -445,6 +556,9 @@ func (_m *Unit) String() string {
 	builder.WriteString("furnished=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Furnished))
 	builder.WriteString(", ")
+	builder.WriteString("specialized_infrastructure=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SpecializedInfrastructure))
+	builder.WriteString(", ")
 	if v := _m.MarketRentAmountCents; v != nil {
 		builder.WriteString("market_rent_amount_cents=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
@@ -459,9 +573,14 @@ func (_m *Unit) String() string {
 		builder.WriteString("ami_restriction=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	if v := _m.ActiveLeaseID; v != nil {
+		builder.WriteString("active_lease_id=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// Units is a parsable slice of Unit.
-type Units []*Unit
+// Spaces is a parsable slice of Space.
+type Spaces []*Space

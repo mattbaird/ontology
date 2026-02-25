@@ -49,8 +49,8 @@ type Property struct {
 	YearBuilt int `json:"year_built,omitempty"`
 	// TotalSquareFootage holds the value of the "total_square_footage" field.
 	TotalSquareFootage float64 `json:"total_square_footage,omitempty"`
-	// TotalUnits holds the value of the "total_units" field.
-	TotalUnits int `json:"total_units,omitempty"`
+	// TotalSpaces holds the value of the "total_spaces" field.
+	TotalSpaces int `json:"total_spaces,omitempty"`
 	// LotSizeSqft holds the value of the "lot_size_sqft" field.
 	LotSizeSqft *float64 `json:"lot_size_sqft,omitempty"`
 	// Stories holds the value of the "stories" field.
@@ -84,17 +84,19 @@ type Property struct {
 type PropertyEdges struct {
 	// Portfolio contains Properties (inverse)
 	Portfolio *Portfolio `json:"portfolio,omitempty"`
-	// Property contains Units
-	Units []*Unit `json:"units,omitempty"`
+	// Property contains Buildings
+	Buildings []*Building `json:"buildings,omitempty"`
+	// Property contains Spaces
+	Spaces []*Space `json:"spaces,omitempty"`
 	// Property uses BankAccount
 	BankAccount *BankAccount `json:"bank_account,omitempty"`
-	// LedgerEntry relates to Property (inverse)
-	PropertyLedgerEntries []*LedgerEntry `json:"property_ledger_entries,omitempty"`
-	// Application is for Property (inverse)
+	// Property receives Applications
 	Applications []*Application `json:"applications,omitempty"`
+	// LedgerEntry relates to Property (inverse)
+	LedgerEntries []*LedgerEntry `json:"ledger_entries,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // PortfolioOrErr returns the Portfolio value or an error if the edge
@@ -108,13 +110,22 @@ func (e PropertyEdges) PortfolioOrErr() (*Portfolio, error) {
 	return nil, &NotLoadedError{edge: "portfolio"}
 }
 
-// UnitsOrErr returns the Units value or an error if the edge
+// BuildingsOrErr returns the Buildings value or an error if the edge
 // was not loaded in eager-loading.
-func (e PropertyEdges) UnitsOrErr() ([]*Unit, error) {
+func (e PropertyEdges) BuildingsOrErr() ([]*Building, error) {
 	if e.loadedTypes[1] {
-		return e.Units, nil
+		return e.Buildings, nil
 	}
-	return nil, &NotLoadedError{edge: "units"}
+	return nil, &NotLoadedError{edge: "buildings"}
+}
+
+// SpacesOrErr returns the Spaces value or an error if the edge
+// was not loaded in eager-loading.
+func (e PropertyEdges) SpacesOrErr() ([]*Space, error) {
+	if e.loadedTypes[2] {
+		return e.Spaces, nil
+	}
+	return nil, &NotLoadedError{edge: "spaces"}
 }
 
 // BankAccountOrErr returns the BankAccount value or an error if the edge
@@ -122,19 +133,10 @@ func (e PropertyEdges) UnitsOrErr() ([]*Unit, error) {
 func (e PropertyEdges) BankAccountOrErr() (*BankAccount, error) {
 	if e.BankAccount != nil {
 		return e.BankAccount, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: bankaccount.Label}
 	}
 	return nil, &NotLoadedError{edge: "bank_account"}
-}
-
-// PropertyLedgerEntriesOrErr returns the PropertyLedgerEntries value or an error if the edge
-// was not loaded in eager-loading.
-func (e PropertyEdges) PropertyLedgerEntriesOrErr() ([]*LedgerEntry, error) {
-	if e.loadedTypes[3] {
-		return e.PropertyLedgerEntries, nil
-	}
-	return nil, &NotLoadedError{edge: "property_ledger_entries"}
 }
 
 // ApplicationsOrErr returns the Applications value or an error if the edge
@@ -144,6 +146,15 @@ func (e PropertyEdges) ApplicationsOrErr() ([]*Application, error) {
 		return e.Applications, nil
 	}
 	return nil, &NotLoadedError{edge: "applications"}
+}
+
+// LedgerEntriesOrErr returns the LedgerEntries value or an error if the edge
+// was not loaded in eager-loading.
+func (e PropertyEdges) LedgerEntriesOrErr() ([]*LedgerEntry, error) {
+	if e.loadedTypes[5] {
+		return e.LedgerEntries, nil
+	}
+	return nil, &NotLoadedError{edge: "ledger_entries"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -157,7 +168,7 @@ func (*Property) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case property.FieldTotalSquareFootage, property.FieldLotSizeSqft:
 			values[i] = new(sql.NullFloat64)
-		case property.FieldYearBuilt, property.FieldTotalUnits, property.FieldStories, property.FieldParkingSpaces:
+		case property.FieldYearBuilt, property.FieldTotalSpaces, property.FieldStories, property.FieldParkingSpaces:
 			values[i] = new(sql.NullInt64)
 		case property.FieldCreatedBy, property.FieldUpdatedBy, property.FieldSource, property.FieldCorrelationID, property.FieldAgentGoalID, property.FieldName, property.FieldPropertyType, property.FieldStatus, property.FieldJurisdictionID, property.FieldChartOfAccountsID, property.FieldInsurancePolicyNumber:
 			values[i] = new(sql.NullString)
@@ -274,11 +285,11 @@ func (_m *Property) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.TotalSquareFootage = value.Float64
 			}
-		case property.FieldTotalUnits:
+		case property.FieldTotalSpaces:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field total_units", values[i])
+				return fmt.Errorf("unexpected type %T for field total_spaces", values[i])
 			} else if value.Valid {
-				_m.TotalUnits = int(value.Int64)
+				_m.TotalSpaces = int(value.Int64)
 			}
 		case property.FieldLotSizeSqft:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -388,9 +399,14 @@ func (_m *Property) QueryPortfolio() *PortfolioQuery {
 	return NewPropertyClient(_m.config).QueryPortfolio(_m)
 }
 
-// QueryUnits queries the "units" edge of the Property entity.
-func (_m *Property) QueryUnits() *UnitQuery {
-	return NewPropertyClient(_m.config).QueryUnits(_m)
+// QueryBuildings queries the "buildings" edge of the Property entity.
+func (_m *Property) QueryBuildings() *BuildingQuery {
+	return NewPropertyClient(_m.config).QueryBuildings(_m)
+}
+
+// QuerySpaces queries the "spaces" edge of the Property entity.
+func (_m *Property) QuerySpaces() *SpaceQuery {
+	return NewPropertyClient(_m.config).QuerySpaces(_m)
 }
 
 // QueryBankAccount queries the "bank_account" edge of the Property entity.
@@ -398,14 +414,14 @@ func (_m *Property) QueryBankAccount() *BankAccountQuery {
 	return NewPropertyClient(_m.config).QueryBankAccount(_m)
 }
 
-// QueryPropertyLedgerEntries queries the "property_ledger_entries" edge of the Property entity.
-func (_m *Property) QueryPropertyLedgerEntries() *LedgerEntryQuery {
-	return NewPropertyClient(_m.config).QueryPropertyLedgerEntries(_m)
-}
-
 // QueryApplications queries the "applications" edge of the Property entity.
 func (_m *Property) QueryApplications() *ApplicationQuery {
 	return NewPropertyClient(_m.config).QueryApplications(_m)
+}
+
+// QueryLedgerEntries queries the "ledger_entries" edge of the Property entity.
+func (_m *Property) QueryLedgerEntries() *LedgerEntryQuery {
+	return NewPropertyClient(_m.config).QueryLedgerEntries(_m)
 }
 
 // Update returns a builder for updating this Property.
@@ -474,8 +490,8 @@ func (_m *Property) String() string {
 	builder.WriteString("total_square_footage=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TotalSquareFootage))
 	builder.WriteString(", ")
-	builder.WriteString("total_units=")
-	builder.WriteString(fmt.Sprintf("%v", _m.TotalUnits))
+	builder.WriteString("total_spaces=")
+	builder.WriteString(fmt.Sprintf("%v", _m.TotalSpaces))
 	builder.WriteString(", ")
 	if v := _m.LotSizeSqft; v != nil {
 		builder.WriteString("lot_size_sqft=")

@@ -35,7 +35,7 @@ func (Person) Fields() []ent.Field {
 		field.Time("date_of_birth").Optional().Nillable(),
 		field.String("ssn_last_four").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.JSON("contact_methods", []types.ContactMethod{}),
-		field.Enum("preferred_contact").Values("email", "sms", "phone", "mail", "portal"),
+		field.Enum("preferred_contact").Values("email", "sms", "phone", "mail", "portal").Default("email"),
 		field.String("language_preference").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("timezone").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Bool("do_not_contact").Default(false),
@@ -51,7 +51,7 @@ func (Person) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("roles", PersonRole.Type).Comment("Person has Roles in various contexts"),
 		edge.To("organizations", Organization.Type).Comment("Person is affiliated with Organizations"),
-		edge.To("person_ledger_entries", LedgerEntry.Type).Comment("LedgerEntry relates to Person (inverse)"),
+		edge.To("ledger_entries", LedgerEntry.Type).Comment("LedgerEntry relates to Person (inverse)"),
 		edge.To("applications", Application.Type).Comment("Application was submitted by Person (inverse)"),
 	}
 }

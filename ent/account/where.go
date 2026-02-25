@@ -102,13 +102,18 @@ func Description(v string) predicate.Account {
 }
 
 // ParentAccountID applies equality check predicate on the "parent_account_id" field. It's identical to ParentAccountIDEQ.
-func ParentAccountID(v string) predicate.Account {
+func ParentAccountID(v uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldParentAccountID, v))
 }
 
 // Depth applies equality check predicate on the "depth" field. It's identical to DepthEQ.
 func Depth(v int) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldDepth, v))
+}
+
+// NormalBalance applies equality check predicate on the "normal_balance" field. It's identical to NormalBalanceEQ.
+func NormalBalance(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldNormalBalance, v))
 }
 
 // IsHeader applies equality check predicate on the "is_header" field. It's identical to IsHeaderEQ.
@@ -129,6 +134,11 @@ func AllowsDirectPosting(v bool) predicate.Account {
 // IsTrustAccount applies equality check predicate on the "is_trust_account" field. It's identical to IsTrustAccountEQ.
 func IsTrustAccount(v bool) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldIsTrustAccount, v))
+}
+
+// TrustType applies equality check predicate on the "trust_type" field. It's identical to TrustTypeEQ.
+func TrustType(v string) predicate.Account {
+	return predicate.Account(sql.FieldEQ(FieldTrustType, v))
 }
 
 // BudgetAmountAmountCents applies equality check predicate on the "budget_amount_amount_cents" field. It's identical to BudgetAmountAmountCentsEQ.
@@ -772,58 +782,43 @@ func AccountSubtypeNotIn(vs ...AccountSubtype) predicate.Account {
 }
 
 // ParentAccountIDEQ applies the EQ predicate on the "parent_account_id" field.
-func ParentAccountIDEQ(v string) predicate.Account {
+func ParentAccountIDEQ(v uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldParentAccountID, v))
 }
 
 // ParentAccountIDNEQ applies the NEQ predicate on the "parent_account_id" field.
-func ParentAccountIDNEQ(v string) predicate.Account {
+func ParentAccountIDNEQ(v uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldNEQ(FieldParentAccountID, v))
 }
 
 // ParentAccountIDIn applies the In predicate on the "parent_account_id" field.
-func ParentAccountIDIn(vs ...string) predicate.Account {
+func ParentAccountIDIn(vs ...uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldIn(FieldParentAccountID, vs...))
 }
 
 // ParentAccountIDNotIn applies the NotIn predicate on the "parent_account_id" field.
-func ParentAccountIDNotIn(vs ...string) predicate.Account {
+func ParentAccountIDNotIn(vs ...uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldNotIn(FieldParentAccountID, vs...))
 }
 
 // ParentAccountIDGT applies the GT predicate on the "parent_account_id" field.
-func ParentAccountIDGT(v string) predicate.Account {
+func ParentAccountIDGT(v uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldGT(FieldParentAccountID, v))
 }
 
 // ParentAccountIDGTE applies the GTE predicate on the "parent_account_id" field.
-func ParentAccountIDGTE(v string) predicate.Account {
+func ParentAccountIDGTE(v uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldGTE(FieldParentAccountID, v))
 }
 
 // ParentAccountIDLT applies the LT predicate on the "parent_account_id" field.
-func ParentAccountIDLT(v string) predicate.Account {
+func ParentAccountIDLT(v uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldLT(FieldParentAccountID, v))
 }
 
 // ParentAccountIDLTE applies the LTE predicate on the "parent_account_id" field.
-func ParentAccountIDLTE(v string) predicate.Account {
+func ParentAccountIDLTE(v uuid.UUID) predicate.Account {
 	return predicate.Account(sql.FieldLTE(FieldParentAccountID, v))
-}
-
-// ParentAccountIDContains applies the Contains predicate on the "parent_account_id" field.
-func ParentAccountIDContains(v string) predicate.Account {
-	return predicate.Account(sql.FieldContains(FieldParentAccountID, v))
-}
-
-// ParentAccountIDHasPrefix applies the HasPrefix predicate on the "parent_account_id" field.
-func ParentAccountIDHasPrefix(v string) predicate.Account {
-	return predicate.Account(sql.FieldHasPrefix(FieldParentAccountID, v))
-}
-
-// ParentAccountIDHasSuffix applies the HasSuffix predicate on the "parent_account_id" field.
-func ParentAccountIDHasSuffix(v string) predicate.Account {
-	return predicate.Account(sql.FieldHasSuffix(FieldParentAccountID, v))
 }
 
 // ParentAccountIDIsNil applies the IsNil predicate on the "parent_account_id" field.
@@ -834,16 +829,6 @@ func ParentAccountIDIsNil() predicate.Account {
 // ParentAccountIDNotNil applies the NotNil predicate on the "parent_account_id" field.
 func ParentAccountIDNotNil() predicate.Account {
 	return predicate.Account(sql.FieldNotNull(FieldParentAccountID))
-}
-
-// ParentAccountIDEqualFold applies the EqualFold predicate on the "parent_account_id" field.
-func ParentAccountIDEqualFold(v string) predicate.Account {
-	return predicate.Account(sql.FieldEqualFold(FieldParentAccountID, v))
-}
-
-// ParentAccountIDContainsFold applies the ContainsFold predicate on the "parent_account_id" field.
-func ParentAccountIDContainsFold(v string) predicate.Account {
-	return predicate.Account(sql.FieldContainsFold(FieldParentAccountID, v))
 }
 
 // DepthEQ applies the EQ predicate on the "depth" field.
@@ -897,23 +882,68 @@ func DimensionsNotNil() predicate.Account {
 }
 
 // NormalBalanceEQ applies the EQ predicate on the "normal_balance" field.
-func NormalBalanceEQ(v NormalBalance) predicate.Account {
+func NormalBalanceEQ(v string) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldNormalBalance, v))
 }
 
 // NormalBalanceNEQ applies the NEQ predicate on the "normal_balance" field.
-func NormalBalanceNEQ(v NormalBalance) predicate.Account {
+func NormalBalanceNEQ(v string) predicate.Account {
 	return predicate.Account(sql.FieldNEQ(FieldNormalBalance, v))
 }
 
 // NormalBalanceIn applies the In predicate on the "normal_balance" field.
-func NormalBalanceIn(vs ...NormalBalance) predicate.Account {
+func NormalBalanceIn(vs ...string) predicate.Account {
 	return predicate.Account(sql.FieldIn(FieldNormalBalance, vs...))
 }
 
 // NormalBalanceNotIn applies the NotIn predicate on the "normal_balance" field.
-func NormalBalanceNotIn(vs ...NormalBalance) predicate.Account {
+func NormalBalanceNotIn(vs ...string) predicate.Account {
 	return predicate.Account(sql.FieldNotIn(FieldNormalBalance, vs...))
+}
+
+// NormalBalanceGT applies the GT predicate on the "normal_balance" field.
+func NormalBalanceGT(v string) predicate.Account {
+	return predicate.Account(sql.FieldGT(FieldNormalBalance, v))
+}
+
+// NormalBalanceGTE applies the GTE predicate on the "normal_balance" field.
+func NormalBalanceGTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldGTE(FieldNormalBalance, v))
+}
+
+// NormalBalanceLT applies the LT predicate on the "normal_balance" field.
+func NormalBalanceLT(v string) predicate.Account {
+	return predicate.Account(sql.FieldLT(FieldNormalBalance, v))
+}
+
+// NormalBalanceLTE applies the LTE predicate on the "normal_balance" field.
+func NormalBalanceLTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldLTE(FieldNormalBalance, v))
+}
+
+// NormalBalanceContains applies the Contains predicate on the "normal_balance" field.
+func NormalBalanceContains(v string) predicate.Account {
+	return predicate.Account(sql.FieldContains(FieldNormalBalance, v))
+}
+
+// NormalBalanceHasPrefix applies the HasPrefix predicate on the "normal_balance" field.
+func NormalBalanceHasPrefix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasPrefix(FieldNormalBalance, v))
+}
+
+// NormalBalanceHasSuffix applies the HasSuffix predicate on the "normal_balance" field.
+func NormalBalanceHasSuffix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasSuffix(FieldNormalBalance, v))
+}
+
+// NormalBalanceEqualFold applies the EqualFold predicate on the "normal_balance" field.
+func NormalBalanceEqualFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldEqualFold(FieldNormalBalance, v))
+}
+
+// NormalBalanceContainsFold applies the ContainsFold predicate on the "normal_balance" field.
+func NormalBalanceContainsFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldContainsFold(FieldNormalBalance, v))
 }
 
 // IsHeaderEQ applies the EQ predicate on the "is_header" field.
@@ -977,23 +1007,58 @@ func IsTrustAccountNEQ(v bool) predicate.Account {
 }
 
 // TrustTypeEQ applies the EQ predicate on the "trust_type" field.
-func TrustTypeEQ(v TrustType) predicate.Account {
+func TrustTypeEQ(v string) predicate.Account {
 	return predicate.Account(sql.FieldEQ(FieldTrustType, v))
 }
 
 // TrustTypeNEQ applies the NEQ predicate on the "trust_type" field.
-func TrustTypeNEQ(v TrustType) predicate.Account {
+func TrustTypeNEQ(v string) predicate.Account {
 	return predicate.Account(sql.FieldNEQ(FieldTrustType, v))
 }
 
 // TrustTypeIn applies the In predicate on the "trust_type" field.
-func TrustTypeIn(vs ...TrustType) predicate.Account {
+func TrustTypeIn(vs ...string) predicate.Account {
 	return predicate.Account(sql.FieldIn(FieldTrustType, vs...))
 }
 
 // TrustTypeNotIn applies the NotIn predicate on the "trust_type" field.
-func TrustTypeNotIn(vs ...TrustType) predicate.Account {
+func TrustTypeNotIn(vs ...string) predicate.Account {
 	return predicate.Account(sql.FieldNotIn(FieldTrustType, vs...))
+}
+
+// TrustTypeGT applies the GT predicate on the "trust_type" field.
+func TrustTypeGT(v string) predicate.Account {
+	return predicate.Account(sql.FieldGT(FieldTrustType, v))
+}
+
+// TrustTypeGTE applies the GTE predicate on the "trust_type" field.
+func TrustTypeGTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldGTE(FieldTrustType, v))
+}
+
+// TrustTypeLT applies the LT predicate on the "trust_type" field.
+func TrustTypeLT(v string) predicate.Account {
+	return predicate.Account(sql.FieldLT(FieldTrustType, v))
+}
+
+// TrustTypeLTE applies the LTE predicate on the "trust_type" field.
+func TrustTypeLTE(v string) predicate.Account {
+	return predicate.Account(sql.FieldLTE(FieldTrustType, v))
+}
+
+// TrustTypeContains applies the Contains predicate on the "trust_type" field.
+func TrustTypeContains(v string) predicate.Account {
+	return predicate.Account(sql.FieldContains(FieldTrustType, v))
+}
+
+// TrustTypeHasPrefix applies the HasPrefix predicate on the "trust_type" field.
+func TrustTypeHasPrefix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasPrefix(FieldTrustType, v))
+}
+
+// TrustTypeHasSuffix applies the HasSuffix predicate on the "trust_type" field.
+func TrustTypeHasSuffix(v string) predicate.Account {
+	return predicate.Account(sql.FieldHasSuffix(FieldTrustType, v))
 }
 
 // TrustTypeIsNil applies the IsNil predicate on the "trust_type" field.
@@ -1004,6 +1069,16 @@ func TrustTypeIsNil() predicate.Account {
 // TrustTypeNotNil applies the NotNil predicate on the "trust_type" field.
 func TrustTypeNotNil() predicate.Account {
 	return predicate.Account(sql.FieldNotNull(FieldTrustType))
+}
+
+// TrustTypeEqualFold applies the EqualFold predicate on the "trust_type" field.
+func TrustTypeEqualFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldEqualFold(FieldTrustType, v))
+}
+
+// TrustTypeContainsFold applies the ContainsFold predicate on the "trust_type" field.
+func TrustTypeContainsFold(v string) predicate.Account {
+	return predicate.Account(sql.FieldContainsFold(FieldTrustType, v))
 }
 
 // BudgetAmountAmountCentsEQ applies the EQ predicate on the "budget_amount_amount_cents" field.
