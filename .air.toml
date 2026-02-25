@@ -1,14 +1,14 @@
 # Air config for the signaldemo server (signal discovery demo).
-# Usage: air -c .air.signaldemo.toml
+# CUE changes trigger make generate automatically; Go-only changes just rebuild.
 
 root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = "go build -o ./tmp/signaldemo ./cmd/signaldemo"
+  cmd = "bash scripts/air-build.sh"
   bin = "tmp/signaldemo"
   include_ext = ["go", "cue"]
-  include_dir = ["cmd/signaldemo", "internal"]
+  include_dir = ["cmd/signaldemo", "internal", "ontology", "codegen"]
   exclude_dir = ["tmp", "ent", "gen", "node_modules", ".git"]
   exclude_regex = ["_test\\.go$"]
   delay = 1000
