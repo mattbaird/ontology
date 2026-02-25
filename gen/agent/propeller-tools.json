@@ -1,0 +1,1282 @@
+[
+  {
+    "name": "create_person",
+    "description": "Create a new person",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Person data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_person",
+    "description": "Get person by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Person to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_persons",
+    "description": "List persons with filtering",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_person",
+    "description": "Update person fields",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the Person to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_organization",
+    "description": "Create a new organization",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Organization data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_organization",
+    "description": "Get organization by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Organization to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_organizations",
+    "description": "List organizations",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_organization",
+    "description": "Update organization",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the Organization to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_person_role",
+    "description": "Assign a role to a person",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The PersonRole data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_person_role",
+    "description": "Get person role by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the PersonRole to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_person_roles",
+    "description": "List person roles",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "activate_role",
+    "description": "Activate a pending person role",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the PersonRole to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "deactivate_role",
+    "description": "Deactivate an active person role",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the PersonRole to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "terminate_role",
+    "description": "Terminate a person role",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the PersonRole to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_portfolio",
+    "description": "Create a new portfolio",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Portfolio data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_portfolio",
+    "description": "Get portfolio by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Portfolio to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_portfolios",
+    "description": "List portfolios",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_portfolio",
+    "description": "Update portfolio",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the Portfolio to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "activate_portfolio",
+    "description": "Activate a portfolio after onboarding",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Portfolio to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_property",
+    "description": "Create a new property",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Property data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_property",
+    "description": "Get property by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Property to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_properties",
+    "description": "List properties with filtering",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_property",
+    "description": "Update property fields",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the Property to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "activate_property",
+    "description": "Activate a property after onboarding",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Property to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_unit",
+    "description": "Create a new unit within a property",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Unit data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_unit",
+    "description": "Get unit by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Unit to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_units",
+    "description": "List units with filtering",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_unit",
+    "description": "Update unit fields",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the Unit to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_lease",
+    "description": "Create a new lease draft",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Lease data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_lease",
+    "description": "Get lease by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Lease to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_leases",
+    "description": "List leases with filtering",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_lease",
+    "description": "Update lease fields (draft only)",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the Lease to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "submit_for_approval",
+    "description": "Submit lease draft for approval",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Lease to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "approve_lease",
+    "description": "Approve lease for signing",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Lease to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "activate_lease",
+    "description": "Activate a signed lease. Side effects: Unit status -\u003e occupied, security deposit charge created",
+    "input_schema": {
+      "properties": {
+        "confirmed_rent": {
+          "description": "Additional field: confirmed_rent",
+          "type": "string"
+        },
+        "id": {
+          "description": "The UUID of the Lease to transition",
+          "type": "string"
+        },
+        "move_in_date": {
+          "description": "Additional field: move_in_date",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "terminate_lease",
+    "description": "Terminate a lease early. Requires reason for audit trail",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Lease to transition",
+          "type": "string"
+        },
+        "move_out_date": {
+          "description": "Additional field: move_out_date",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Additional field: reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "renew_lease",
+    "description": "Renew a lease. Creates a new lease entity for the renewal term",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Lease to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "start_eviction",
+    "description": "Begin eviction process",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Lease to transition",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Additional field: reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_application",
+    "description": "Submit a new lease application",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Application data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_application",
+    "description": "Get application by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Application to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_applications",
+    "description": "List applications",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "approve_application",
+    "description": "Approve a lease application",
+    "input_schema": {
+      "properties": {
+        "conditions": {
+          "description": "Additional field: conditions",
+          "type": "string"
+        },
+        "id": {
+          "description": "The UUID of the Application to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "deny_application",
+    "description": "Deny a lease application. Reason required for fair housing compliance",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Application to transition",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Additional field: reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_account",
+    "description": "Create a new GL account",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Account data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_account",
+    "description": "Get GL account by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Account to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_accounts",
+    "description": "List GL accounts",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_account",
+    "description": "Update GL account",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the Account to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_ledger_entry",
+    "description": "Get ledger entry by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the LedgerEntry to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_ledger_entries",
+    "description": "List ledger entries with filtering",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_journal_entry",
+    "description": "Create a new journal entry",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The JournalEntry data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_journal_entry",
+    "description": "Get journal entry by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the JournalEntry to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_journal_entries",
+    "description": "List journal entries",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "post_journal_entry",
+    "description": "Post a journal entry. Lines must balance (debits = credits)",
+    "input_schema": {
+      "properties": {
+        "approval_notes": {
+          "description": "Additional field: approval_notes",
+          "type": "string"
+        },
+        "id": {
+          "description": "The UUID of the JournalEntry to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "void_journal_entry",
+    "description": "Void a posted journal entry. Creates reversal entry",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the JournalEntry to transition",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Additional field: reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_bank_account",
+    "description": "Create a bank account",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The BankAccount data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_bank_account",
+    "description": "Get bank account by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the BankAccount to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_bank_accounts",
+    "description": "List bank accounts",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "update_bank_account",
+    "description": "Update bank account",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "Fields to update",
+          "type": "object"
+        },
+        "id": {
+          "description": "The UUID of the BankAccount to update",
+          "type": "string"
+        },
+        "update_mask": {
+          "description": "Fields to update (if empty, all provided fields are updated)",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "create_reconciliation",
+    "description": "Start a bank reconciliation",
+    "input_schema": {
+      "properties": {
+        "data": {
+          "description": "The Reconciliation data to create",
+          "type": "object"
+        }
+      },
+      "required": [
+        "data"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "get_reconciliation",
+    "description": "Get reconciliation by ID",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Reconciliation to retrieve",
+          "type": "string"
+        },
+        "include": {
+          "description": "Edge names to include in the response",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  },
+  {
+    "name": "list_reconciliations",
+    "description": "List reconciliations",
+    "input_schema": {
+      "properties": {
+        "filter": {
+          "description": "Filter expression",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "Number of results per page (max 100)",
+          "type": "integer"
+        },
+        "page_token": {
+          "description": "Cursor token for pagination",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  {
+    "name": "approve_reconciliation",
+    "description": "Approve a balanced reconciliation",
+    "input_schema": {
+      "properties": {
+        "id": {
+          "description": "The UUID of the Reconciliation to transition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "type": "object"
+    }
+  }
+]

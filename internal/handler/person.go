@@ -1,0 +1,504 @@
+package handler
+
+import (
+	"net/http"
+	"time"
+
+	"github.com/matthewbaird/ontology/ent"
+	"github.com/matthewbaird/ontology/ent/organization"
+	"github.com/matthewbaird/ontology/ent/person"
+	"github.com/matthewbaird/ontology/ent/personrole"
+	"github.com/matthewbaird/ontology/ent/schema"
+	"github.com/matthewbaird/ontology/internal/types"
+)
+
+// PersonHandler implements HTTP handlers for Person, Organization, and PersonRole.
+type PersonHandler struct {
+	client *ent.Client
+}
+
+// NewPersonHandler creates a new PersonHandler.
+func NewPersonHandler(client *ent.Client) *PersonHandler {
+	return &PersonHandler{client: client}
+}
+
+// ---------------------------------------------------------------------------
+// Person
+// ---------------------------------------------------------------------------
+
+type createPersonRequest struct {
+	FirstName          string                `json:"first_name"`
+	LastName           string                `json:"last_name"`
+	DisplayName        string                `json:"display_name"`
+	DateOfBirth        *time.Time            `json:"date_of_birth,omitempty"`
+	SSNLastFour        *string               `json:"ssn_last_four,omitempty"`
+	ContactMethods     []types.ContactMethod `json:"contact_methods"`
+	PreferredContact   string                `json:"preferred_contact"`
+	LanguagePreference string                `json:"language_preference"`
+	Timezone           *string               `json:"timezone,omitempty"`
+	DoNotContact       *bool                 `json:"do_not_contact,omitempty"`
+	Tags               []string              `json:"tags,omitempty"`
+}
+
+func (h *PersonHandler) CreatePerson(w http.ResponseWriter, r *http.Request) {
+	audit, ok := parseAuditContext(w, r)
+	if !ok {
+		return
+	}
+	var req createPersonRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_JSON", err.Error())
+		return
+	}
+
+	builder := h.client.Person.Create().
+		SetFirstName(req.FirstName).
+		SetLastName(req.LastName).
+		SetDisplayName(req.DisplayName).
+		SetContactMethods(req.ContactMethods).
+		SetPreferredContact(person.PreferredContact(req.PreferredContact)).
+		SetLanguagePreference(req.LanguagePreference).
+		SetCreatedBy(audit.Actor).
+		SetUpdatedBy(audit.Actor).
+		SetSource(person.Source(audit.Source))
+
+	if req.DateOfBirth != nil {
+		builder.SetNillableDateOfBirth(req.DateOfBirth)
+	}
+	if req.SSNLastFour != nil {
+		builder.SetNillableSsnLastFour(req.SSNLastFour)
+	}
+	if req.Timezone != nil {
+		builder.SetNillableTimezone(req.Timezone)
+	}
+	if req.DoNotContact != nil {
+		builder.SetDoNotContact(*req.DoNotContact)
+	}
+	if len(req.Tags) > 0 {
+		builder.SetTags(req.Tags)
+	}
+	if audit.CorrelationID != nil {
+		builder.SetCorrelationID(*audit.CorrelationID)
+	}
+
+	p, err := builder.Save(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, p)
+}
+
+func (h *PersonHandler) GetPerson(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	p, err := h.client.Person.Get(r.Context(), id)
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, p)
+}
+
+func (h *PersonHandler) ListPersons(w http.ResponseWriter, r *http.Request) {
+	pg := parsePagination(r)
+	items, err := h.client.Person.Query().
+		Limit(pg.Limit).Offset(pg.Offset).
+		Order(ent.Asc(person.FieldLastName)).
+		All(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+type updatePersonRequest struct {
+	FirstName          *string               `json:"first_name,omitempty"`
+	LastName           *string               `json:"last_name,omitempty"`
+	DisplayName        *string               `json:"display_name,omitempty"`
+	DateOfBirth        *time.Time            `json:"date_of_birth,omitempty"`
+	ContactMethods     []types.ContactMethod `json:"contact_methods,omitempty"`
+	PreferredContact   *string               `json:"preferred_contact,omitempty"`
+	LanguagePreference *string               `json:"language_preference,omitempty"`
+	Timezone           *string               `json:"timezone,omitempty"`
+	DoNotContact       *bool                 `json:"do_not_contact,omitempty"`
+	Tags               []string              `json:"tags,omitempty"`
+}
+
+func (h *PersonHandler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	audit, ok := parseAuditContext(w, r)
+	if !ok {
+		return
+	}
+	var req updatePersonRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_JSON", err.Error())
+		return
+	}
+
+	builder := h.client.Person.UpdateOneID(id).
+		SetUpdatedBy(audit.Actor).
+		SetSource(person.Source(audit.Source))
+	if audit.CorrelationID != nil {
+		builder.SetCorrelationID(*audit.CorrelationID)
+	}
+
+	if req.FirstName != nil {
+		builder.SetFirstName(*req.FirstName)
+	}
+	if req.LastName != nil {
+		builder.SetLastName(*req.LastName)
+	}
+	if req.DisplayName != nil {
+		builder.SetDisplayName(*req.DisplayName)
+	}
+	if req.DateOfBirth != nil {
+		builder.SetNillableDateOfBirth(req.DateOfBirth)
+	}
+	if req.ContactMethods != nil {
+		builder.SetContactMethods(req.ContactMethods)
+	}
+	if req.PreferredContact != nil {
+		builder.SetPreferredContact(person.PreferredContact(*req.PreferredContact))
+	}
+	if req.LanguagePreference != nil {
+		builder.SetLanguagePreference(*req.LanguagePreference)
+	}
+	if req.Timezone != nil {
+		builder.SetNillableTimezone(req.Timezone)
+	}
+	if req.DoNotContact != nil {
+		builder.SetDoNotContact(*req.DoNotContact)
+	}
+	if req.Tags != nil {
+		builder.SetTags(req.Tags)
+	}
+
+	p, err := builder.Save(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, p)
+}
+
+// ---------------------------------------------------------------------------
+// Organization
+// ---------------------------------------------------------------------------
+
+type createOrganizationRequest struct {
+	LegalName            string                `json:"legal_name"`
+	DBAName              *string               `json:"dba_name,omitempty"`
+	OrgType              string                `json:"org_type"`
+	TaxID                *string               `json:"tax_id,omitempty"`
+	TaxIDType            *string               `json:"tax_id_type,omitempty"`
+	Status               string                `json:"status"`
+	Address              *types.Address        `json:"address,omitempty"`
+	ContactMethods       []types.ContactMethod `json:"contact_methods,omitempty"`
+	StateOfIncorporation *string               `json:"state_of_incorporation,omitempty"`
+	FormationDate        *time.Time            `json:"formation_date,omitempty"`
+	ManagementLicense    *string               `json:"management_license,omitempty"`
+	LicenseState         *string               `json:"license_state,omitempty"`
+	LicenseExpiry        *time.Time            `json:"license_expiry,omitempty"`
+}
+
+func (h *PersonHandler) CreateOrganization(w http.ResponseWriter, r *http.Request) {
+	audit, ok := parseAuditContext(w, r)
+	if !ok {
+		return
+	}
+	var req createOrganizationRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_JSON", err.Error())
+		return
+	}
+
+	builder := h.client.Organization.Create().
+		SetLegalName(req.LegalName).
+		SetOrgType(organization.OrgType(req.OrgType)).
+		SetStatus(organization.Status(req.Status)).
+		SetCreatedBy(audit.Actor).
+		SetUpdatedBy(audit.Actor).
+		SetSource(organization.Source(audit.Source))
+
+	if req.DBAName != nil {
+		builder.SetNillableDbaName(req.DBAName)
+	}
+	if req.TaxID != nil {
+		builder.SetNillableTaxID(req.TaxID)
+	}
+	if req.TaxIDType != nil {
+		builder.SetTaxIDType(organization.TaxIDType(*req.TaxIDType))
+	}
+	if req.Address != nil {
+		builder.SetAddress(req.Address)
+	}
+	if req.ContactMethods != nil {
+		builder.SetContactMethods(req.ContactMethods)
+	}
+	if req.StateOfIncorporation != nil {
+		builder.SetNillableStateOfIncorporation(req.StateOfIncorporation)
+	}
+	if req.FormationDate != nil {
+		builder.SetNillableFormationDate(req.FormationDate)
+	}
+	if req.ManagementLicense != nil {
+		builder.SetNillableManagementLicense(req.ManagementLicense)
+	}
+	if req.LicenseState != nil {
+		builder.SetNillableLicenseState(req.LicenseState)
+	}
+	if req.LicenseExpiry != nil {
+		builder.SetNillableLicenseExpiry(req.LicenseExpiry)
+	}
+	if audit.CorrelationID != nil {
+		builder.SetCorrelationID(*audit.CorrelationID)
+	}
+
+	o, err := builder.Save(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, o)
+}
+
+func (h *PersonHandler) GetOrganization(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	o, err := h.client.Organization.Get(r.Context(), id)
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, o)
+}
+
+func (h *PersonHandler) ListOrganizations(w http.ResponseWriter, r *http.Request) {
+	pg := parsePagination(r)
+	items, err := h.client.Organization.Query().
+		Limit(pg.Limit).Offset(pg.Offset).
+		Order(ent.Asc(organization.FieldLegalName)).
+		All(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+type updateOrganizationRequest struct {
+	LegalName            *string               `json:"legal_name,omitempty"`
+	DBAName              *string               `json:"dba_name,omitempty"`
+	OrgType              *string               `json:"org_type,omitempty"`
+	TaxID                *string               `json:"tax_id,omitempty"`
+	TaxIDType            *string               `json:"tax_id_type,omitempty"`
+	Status               *string               `json:"status,omitempty"`
+	Address              *types.Address        `json:"address,omitempty"`
+	ContactMethods       []types.ContactMethod `json:"contact_methods,omitempty"`
+	StateOfIncorporation *string               `json:"state_of_incorporation,omitempty"`
+	FormationDate        *time.Time            `json:"formation_date,omitempty"`
+	ManagementLicense    *string               `json:"management_license,omitempty"`
+	LicenseState         *string               `json:"license_state,omitempty"`
+	LicenseExpiry        *time.Time            `json:"license_expiry,omitempty"`
+}
+
+func (h *PersonHandler) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	audit, ok := parseAuditContext(w, r)
+	if !ok {
+		return
+	}
+	var req updateOrganizationRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_JSON", err.Error())
+		return
+	}
+
+	builder := h.client.Organization.UpdateOneID(id).
+		SetUpdatedBy(audit.Actor).
+		SetSource(organization.Source(audit.Source))
+	if audit.CorrelationID != nil {
+		builder.SetCorrelationID(*audit.CorrelationID)
+	}
+
+	if req.LegalName != nil {
+		builder.SetLegalName(*req.LegalName)
+	}
+	if req.DBAName != nil {
+		builder.SetNillableDbaName(req.DBAName)
+	}
+	if req.OrgType != nil {
+		builder.SetOrgType(organization.OrgType(*req.OrgType))
+	}
+	if req.TaxID != nil {
+		builder.SetNillableTaxID(req.TaxID)
+	}
+	if req.TaxIDType != nil {
+		builder.SetTaxIDType(organization.TaxIDType(*req.TaxIDType))
+	}
+	if req.Status != nil {
+		builder.SetStatus(organization.Status(*req.Status))
+	}
+	if req.Address != nil {
+		builder.SetAddress(req.Address)
+	}
+	if req.ContactMethods != nil {
+		builder.SetContactMethods(req.ContactMethods)
+	}
+	if req.StateOfIncorporation != nil {
+		builder.SetNillableStateOfIncorporation(req.StateOfIncorporation)
+	}
+	if req.FormationDate != nil {
+		builder.SetNillableFormationDate(req.FormationDate)
+	}
+	if req.ManagementLicense != nil {
+		builder.SetNillableManagementLicense(req.ManagementLicense)
+	}
+	if req.LicenseState != nil {
+		builder.SetNillableLicenseState(req.LicenseState)
+	}
+	if req.LicenseExpiry != nil {
+		builder.SetNillableLicenseExpiry(req.LicenseExpiry)
+	}
+
+	o, err := builder.Save(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, o)
+}
+
+// ---------------------------------------------------------------------------
+// PersonRole
+// ---------------------------------------------------------------------------
+
+type createPersonRoleRequest struct {
+	RoleType   string           `json:"role_type"`
+	ScopeType  string           `json:"scope_type"`
+	ScopeID    string           `json:"scope_id"`
+	Status     string           `json:"status"`
+	Effective  types.DateRange  `json:"effective"`
+	Attributes *types.TenantAttributes `json:"attributes,omitempty"`
+	PersonID   *string          `json:"person_id,omitempty"`
+}
+
+func (h *PersonHandler) CreatePersonRole(w http.ResponseWriter, r *http.Request) {
+	audit, ok := parseAuditContext(w, r)
+	if !ok {
+		return
+	}
+	var req createPersonRoleRequest
+	if err := decodeJSON(r, &req); err != nil {
+		writeError(w, http.StatusBadRequest, "INVALID_JSON", err.Error())
+		return
+	}
+
+	builder := h.client.PersonRole.Create().
+		SetRoleType(personrole.RoleType(req.RoleType)).
+		SetScopeType(personrole.ScopeType(req.ScopeType)).
+		SetScopeID(req.ScopeID).
+		SetStatus(personrole.Status(req.Status)).
+		SetEffective(&req.Effective).
+		SetCreatedBy(audit.Actor).
+		SetUpdatedBy(audit.Actor).
+		SetSource(personrole.Source(audit.Source))
+
+	if req.Attributes != nil {
+		builder.SetAttributes(req.Attributes)
+	}
+	if audit.CorrelationID != nil {
+		builder.SetCorrelationID(*audit.CorrelationID)
+	}
+
+	pr, err := builder.Save(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, pr)
+}
+
+func (h *PersonHandler) GetPersonRole(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	pr, err := h.client.PersonRole.Get(r.Context(), id)
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, pr)
+}
+
+func (h *PersonHandler) ListPersonRoles(w http.ResponseWriter, r *http.Request) {
+	pg := parsePagination(r)
+	items, err := h.client.PersonRole.Query().
+		Limit(pg.Limit).Offset(pg.Offset).
+		Order(ent.Asc(personrole.FieldRoleType)).
+		All(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+func (h *PersonHandler) transitionRole(w http.ResponseWriter, r *http.Request, targetStatus string) {
+	id, ok := parseUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	audit, ok := parseAuditContext(w, r)
+	if !ok {
+		return
+	}
+	pr, err := h.client.PersonRole.Get(r.Context(), id)
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	if err := ValidateTransition(schema.ValidPersonRoleTransitions, string(pr.Status), targetStatus); err != nil {
+		writeError(w, http.StatusConflict, "INVALID_TRANSITION", err.Error())
+		return
+	}
+	builder := h.client.PersonRole.UpdateOneID(id).
+		SetStatus(personrole.Status(targetStatus)).
+		SetUpdatedBy(audit.Actor).
+		SetSource(personrole.Source(audit.Source))
+	if audit.CorrelationID != nil {
+		builder.SetCorrelationID(*audit.CorrelationID)
+	}
+	updated, err := builder.Save(r.Context())
+	if err != nil {
+		entErrorToHTTP(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, updated)
+}
+
+func (h *PersonHandler) ActivateRole(w http.ResponseWriter, r *http.Request) {
+	h.transitionRole(w, r, "active")
+}
+
+func (h *PersonHandler) DeactivateRole(w http.ResponseWriter, r *http.Request) {
+	h.transitionRole(w, r, "inactive")
+}
+
+func (h *PersonHandler) TerminateRole(w http.ResponseWriter, r *http.Request) {
+	h.transitionRole(w, r, "terminated")
+}

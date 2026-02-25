@@ -1,0 +1,539 @@
+[
+  {
+    "event_type": "application.approved",
+    "entity_type": "Application",
+    "from_states": [
+      "under_review",
+      "conditionally_approved"
+    ],
+    "to_state": "approved",
+    "description": "Application transitioned to approved",
+    "nats_subject": "propeller.events.application.approved"
+  },
+  {
+    "event_type": "application.conditionally_approved",
+    "entity_type": "Application",
+    "from_states": [
+      "under_review"
+    ],
+    "to_state": "conditionally_approved",
+    "description": "Application transitioned to conditionally_approved",
+    "nats_subject": "propeller.events.application.conditionally_approved"
+  },
+  {
+    "event_type": "application.denied",
+    "entity_type": "Application",
+    "from_states": [
+      "under_review",
+      "conditionally_approved"
+    ],
+    "to_state": "denied",
+    "description": "Application transitioned to denied",
+    "nats_subject": "propeller.events.application.denied"
+  },
+  {
+    "event_type": "application.expired",
+    "entity_type": "Application",
+    "from_states": [
+      "approved",
+      "conditionally_approved"
+    ],
+    "to_state": "expired",
+    "description": "Application transitioned to expired",
+    "nats_subject": "propeller.events.application.expired"
+  },
+  {
+    "event_type": "application.screening",
+    "entity_type": "Application",
+    "from_states": [
+      "submitted"
+    ],
+    "to_state": "screening",
+    "description": "Application transitioned to screening",
+    "nats_subject": "propeller.events.application.screening"
+  },
+  {
+    "event_type": "application.under_review",
+    "entity_type": "Application",
+    "from_states": [
+      "screening"
+    ],
+    "to_state": "under_review",
+    "description": "Application transitioned to under_review",
+    "nats_subject": "propeller.events.application.under_review"
+  },
+  {
+    "event_type": "application.withdrawn",
+    "entity_type": "Application",
+    "from_states": [
+      "submitted",
+      "screening",
+      "under_review",
+      "conditionally_approved"
+    ],
+    "to_state": "withdrawn",
+    "description": "Application transitioned to withdrawn",
+    "nats_subject": "propeller.events.application.withdrawn"
+  },
+  {
+    "event_type": "bank_account.active",
+    "entity_type": "BankAccount",
+    "from_states": [
+      "inactive",
+      "frozen"
+    ],
+    "to_state": "active",
+    "description": "BankAccount transitioned to active",
+    "nats_subject": "propeller.events.bank_account.active"
+  },
+  {
+    "event_type": "bank_account.closed",
+    "entity_type": "BankAccount",
+    "from_states": [
+      "active",
+      "inactive",
+      "frozen"
+    ],
+    "to_state": "closed",
+    "description": "BankAccount transitioned to closed",
+    "nats_subject": "propeller.events.bank_account.closed"
+  },
+  {
+    "event_type": "bank_account.frozen",
+    "entity_type": "BankAccount",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "frozen",
+    "description": "BankAccount transitioned to frozen",
+    "nats_subject": "propeller.events.bank_account.frozen"
+  },
+  {
+    "event_type": "bank_account.inactive",
+    "entity_type": "BankAccount",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "inactive",
+    "description": "BankAccount transitioned to inactive",
+    "nats_subject": "propeller.events.bank_account.inactive"
+  },
+  {
+    "event_type": "journal_entry.draft",
+    "entity_type": "JournalEntry",
+    "from_states": [
+      "pending_approval"
+    ],
+    "to_state": "draft",
+    "description": "JournalEntry transitioned to draft",
+    "nats_subject": "propeller.events.journal_entry.draft"
+  },
+  {
+    "event_type": "journal_entry.pending_approval",
+    "entity_type": "JournalEntry",
+    "from_states": [
+      "draft"
+    ],
+    "to_state": "pending_approval",
+    "description": "JournalEntry transitioned to pending_approval",
+    "nats_subject": "propeller.events.journal_entry.pending_approval"
+  },
+  {
+    "event_type": "journal_entry.posted",
+    "entity_type": "JournalEntry",
+    "from_states": [
+      "draft",
+      "pending_approval"
+    ],
+    "to_state": "posted",
+    "description": "JournalEntry transitioned to posted",
+    "nats_subject": "propeller.events.journal_entry.posted"
+  },
+  {
+    "event_type": "journal_entry.voided",
+    "entity_type": "JournalEntry",
+    "from_states": [
+      "posted"
+    ],
+    "to_state": "voided",
+    "description": "JournalEntry transitioned to voided",
+    "nats_subject": "propeller.events.journal_entry.voided"
+  },
+  {
+    "event_type": "lease.active",
+    "entity_type": "Lease",
+    "from_states": [
+      "pending_signature",
+      "expired",
+      "month_to_month_holdover"
+    ],
+    "to_state": "active",
+    "description": "Lease transitioned to active",
+    "nats_subject": "propeller.events.lease.active"
+  },
+  {
+    "event_type": "lease.draft",
+    "entity_type": "Lease",
+    "from_states": [
+      "pending_approval",
+      "pending_signature"
+    ],
+    "to_state": "draft",
+    "description": "Lease transitioned to draft",
+    "nats_subject": "propeller.events.lease.draft"
+  },
+  {
+    "event_type": "lease.eviction",
+    "entity_type": "Lease",
+    "from_states": [
+      "active",
+      "month_to_month_holdover"
+    ],
+    "to_state": "eviction",
+    "description": "Lease transitioned to eviction",
+    "nats_subject": "propeller.events.lease.eviction"
+  },
+  {
+    "event_type": "lease.expired",
+    "entity_type": "Lease",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "expired",
+    "description": "Lease transitioned to expired",
+    "nats_subject": "propeller.events.lease.expired"
+  },
+  {
+    "event_type": "lease.month_to_month_holdover",
+    "entity_type": "Lease",
+    "from_states": [
+      "active",
+      "expired"
+    ],
+    "to_state": "month_to_month_holdover",
+    "description": "Lease transitioned to month_to_month_holdover",
+    "nats_subject": "propeller.events.lease.month_to_month_holdover"
+  },
+  {
+    "event_type": "lease.pending_approval",
+    "entity_type": "Lease",
+    "from_states": [
+      "draft"
+    ],
+    "to_state": "pending_approval",
+    "description": "Lease transitioned to pending_approval",
+    "nats_subject": "propeller.events.lease.pending_approval"
+  },
+  {
+    "event_type": "lease.pending_signature",
+    "entity_type": "Lease",
+    "from_states": [
+      "draft",
+      "pending_approval"
+    ],
+    "to_state": "pending_signature",
+    "description": "Lease transitioned to pending_signature",
+    "nats_subject": "propeller.events.lease.pending_signature"
+  },
+  {
+    "event_type": "lease.renewed",
+    "entity_type": "Lease",
+    "from_states": [
+      "expired",
+      "month_to_month_holdover"
+    ],
+    "to_state": "renewed",
+    "description": "Lease transitioned to renewed",
+    "nats_subject": "propeller.events.lease.renewed"
+  },
+  {
+    "event_type": "lease.terminated",
+    "entity_type": "Lease",
+    "from_states": [
+      "draft",
+      "pending_approval",
+      "pending_signature",
+      "active",
+      "expired",
+      "month_to_month_holdover",
+      "eviction"
+    ],
+    "to_state": "terminated",
+    "description": "Lease transitioned to terminated",
+    "nats_subject": "propeller.events.lease.terminated"
+  },
+  {
+    "event_type": "organization.active",
+    "entity_type": "Organization",
+    "from_states": [
+      "inactive",
+      "suspended"
+    ],
+    "to_state": "active",
+    "description": "Organization transitioned to active",
+    "nats_subject": "propeller.events.organization.active"
+  },
+  {
+    "event_type": "organization.dissolved",
+    "entity_type": "Organization",
+    "from_states": [
+      "active",
+      "inactive",
+      "suspended"
+    ],
+    "to_state": "dissolved",
+    "description": "Organization transitioned to dissolved",
+    "nats_subject": "propeller.events.organization.dissolved"
+  },
+  {
+    "event_type": "organization.inactive",
+    "entity_type": "Organization",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "inactive",
+    "description": "Organization transitioned to inactive",
+    "nats_subject": "propeller.events.organization.inactive"
+  },
+  {
+    "event_type": "organization.suspended",
+    "entity_type": "Organization",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "suspended",
+    "description": "Organization transitioned to suspended",
+    "nats_subject": "propeller.events.organization.suspended"
+  },
+  {
+    "event_type": "person_role.active",
+    "entity_type": "PersonRole",
+    "from_states": [
+      "pending",
+      "inactive"
+    ],
+    "to_state": "active",
+    "description": "PersonRole transitioned to active",
+    "nats_subject": "propeller.events.person_role.active"
+  },
+  {
+    "event_type": "person_role.inactive",
+    "entity_type": "PersonRole",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "inactive",
+    "description": "PersonRole transitioned to inactive",
+    "nats_subject": "propeller.events.person_role.inactive"
+  },
+  {
+    "event_type": "person_role.terminated",
+    "entity_type": "PersonRole",
+    "from_states": [
+      "pending",
+      "active",
+      "inactive"
+    ],
+    "to_state": "terminated",
+    "description": "PersonRole transitioned to terminated",
+    "nats_subject": "propeller.events.person_role.terminated"
+  },
+  {
+    "event_type": "portfolio.active",
+    "entity_type": "Portfolio",
+    "from_states": [
+      "onboarding",
+      "inactive"
+    ],
+    "to_state": "active",
+    "description": "Portfolio transitioned to active",
+    "nats_subject": "propeller.events.portfolio.active"
+  },
+  {
+    "event_type": "portfolio.inactive",
+    "entity_type": "Portfolio",
+    "from_states": [
+      "active",
+      "offboarding"
+    ],
+    "to_state": "inactive",
+    "description": "Portfolio transitioned to inactive",
+    "nats_subject": "propeller.events.portfolio.inactive"
+  },
+  {
+    "event_type": "portfolio.offboarding",
+    "entity_type": "Portfolio",
+    "from_states": [
+      "active",
+      "inactive"
+    ],
+    "to_state": "offboarding",
+    "description": "Portfolio transitioned to offboarding",
+    "nats_subject": "propeller.events.portfolio.offboarding"
+  },
+  {
+    "event_type": "property.active",
+    "entity_type": "Property",
+    "from_states": [
+      "onboarding",
+      "inactive",
+      "under_renovation",
+      "for_sale"
+    ],
+    "to_state": "active",
+    "description": "Property transitioned to active",
+    "nats_subject": "propeller.events.property.active"
+  },
+  {
+    "event_type": "property.for_sale",
+    "entity_type": "Property",
+    "from_states": [
+      "active",
+      "under_renovation"
+    ],
+    "to_state": "for_sale",
+    "description": "Property transitioned to for_sale",
+    "nats_subject": "propeller.events.property.for_sale"
+  },
+  {
+    "event_type": "property.inactive",
+    "entity_type": "Property",
+    "from_states": [
+      "active",
+      "for_sale"
+    ],
+    "to_state": "inactive",
+    "description": "Property transitioned to inactive",
+    "nats_subject": "propeller.events.property.inactive"
+  },
+  {
+    "event_type": "property.under_renovation",
+    "entity_type": "Property",
+    "from_states": [
+      "active"
+    ],
+    "to_state": "under_renovation",
+    "description": "Property transitioned to under_renovation",
+    "nats_subject": "propeller.events.property.under_renovation"
+  },
+  {
+    "event_type": "reconciliation.approved",
+    "entity_type": "Reconciliation",
+    "from_states": [
+      "balanced"
+    ],
+    "to_state": "approved",
+    "description": "Reconciliation transitioned to approved",
+    "nats_subject": "propeller.events.reconciliation.approved"
+  },
+  {
+    "event_type": "reconciliation.balanced",
+    "entity_type": "Reconciliation",
+    "from_states": [
+      "in_progress"
+    ],
+    "to_state": "balanced",
+    "description": "Reconciliation transitioned to balanced",
+    "nats_subject": "propeller.events.reconciliation.balanced"
+  },
+  {
+    "event_type": "reconciliation.in_progress",
+    "entity_type": "Reconciliation",
+    "from_states": [
+      "balanced",
+      "unbalanced"
+    ],
+    "to_state": "in_progress",
+    "description": "Reconciliation transitioned to in_progress",
+    "nats_subject": "propeller.events.reconciliation.in_progress"
+  },
+  {
+    "event_type": "reconciliation.unbalanced",
+    "entity_type": "Reconciliation",
+    "from_states": [
+      "in_progress"
+    ],
+    "to_state": "unbalanced",
+    "description": "Reconciliation transitioned to unbalanced",
+    "nats_subject": "propeller.events.reconciliation.unbalanced"
+  },
+  {
+    "event_type": "unit.down",
+    "entity_type": "Unit",
+    "from_states": [
+      "vacant",
+      "make_ready"
+    ],
+    "to_state": "down",
+    "description": "Unit transitioned to down",
+    "nats_subject": "propeller.events.unit.down"
+  },
+  {
+    "event_type": "unit.make_ready",
+    "entity_type": "Unit",
+    "from_states": [
+      "vacant",
+      "notice_given",
+      "down"
+    ],
+    "to_state": "make_ready",
+    "description": "Unit transitioned to make_ready",
+    "nats_subject": "propeller.events.unit.make_ready"
+  },
+  {
+    "event_type": "unit.model",
+    "entity_type": "Unit",
+    "from_states": [
+      "vacant"
+    ],
+    "to_state": "model",
+    "description": "Unit transitioned to model",
+    "nats_subject": "propeller.events.unit.model"
+  },
+  {
+    "event_type": "unit.notice_given",
+    "entity_type": "Unit",
+    "from_states": [
+      "occupied"
+    ],
+    "to_state": "notice_given",
+    "description": "Unit transitioned to notice_given",
+    "nats_subject": "propeller.events.unit.notice_given"
+  },
+  {
+    "event_type": "unit.occupied",
+    "entity_type": "Unit",
+    "from_states": [
+      "vacant",
+      "notice_given",
+      "model",
+      "reserved"
+    ],
+    "to_state": "occupied",
+    "description": "Unit transitioned to occupied",
+    "nats_subject": "propeller.events.unit.occupied"
+  },
+  {
+    "event_type": "unit.reserved",
+    "entity_type": "Unit",
+    "from_states": [
+      "vacant"
+    ],
+    "to_state": "reserved",
+    "description": "Unit transitioned to reserved",
+    "nats_subject": "propeller.events.unit.reserved"
+  },
+  {
+    "event_type": "unit.vacant",
+    "entity_type": "Unit",
+    "from_states": [
+      "make_ready",
+      "down",
+      "model",
+      "reserved"
+    ],
+    "to_state": "vacant",
+    "description": "Unit transitioned to vacant",
+    "nats_subject": "propeller.events.unit.vacant"
+  }
+]
