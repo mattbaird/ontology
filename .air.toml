@@ -10,7 +10,7 @@ tmp_dir = "tmp"
 
 [build]
   cmd = "bash scripts/air-build.sh"
-  bin = "tmp/app"
+  entrypoint = ["./tmp/app"]
   include_ext = ["go", "cue"]
   include_dir = ["cmd", "internal", "ontology", "codegen"]
   exclude_dir = ["tmp", "ent", "gen", "node_modules", ".git"]

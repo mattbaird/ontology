@@ -29,7 +29,6 @@ Thumbs.db
 # Build
 /bin/
 /dist/
-/server
 tmp/
 .cue_stamp
 
