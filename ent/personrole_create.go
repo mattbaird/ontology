@@ -184,14 +184,6 @@ func (_c *PersonRoleCreate) SetPersonID(id uuid.UUID) *PersonRoleCreate {
 	return _c
 }
 
-// SetNillablePersonID sets the "person" edge to the Person entity by ID if the given value is not nil.
-func (_c *PersonRoleCreate) SetNillablePersonID(id *uuid.UUID) *PersonRoleCreate {
-	if id != nil {
-		_c = _c.SetPersonID(*id)
-	}
-	return _c
-}
-
 // SetPerson sets the "person" edge to the Person entity.
 func (_c *PersonRoleCreate) SetPerson(v *Person) *PersonRoleCreate {
 	return _c.SetPersonID(v.ID)
@@ -307,6 +299,9 @@ func (_c *PersonRoleCreate) check() error {
 	}
 	if _, ok := _c.mutation.Effective(); !ok {
 		return &ValidationError{Name: "effective", err: errors.New(`ent: missing required field "PersonRole.effective"`)}
+	}
+	if len(_c.mutation.PersonIDs()) == 0 {
+		return &ValidationError{Name: "person", err: errors.New(`ent: missing required edge "PersonRole.person"`)}
 	}
 	return nil
 }

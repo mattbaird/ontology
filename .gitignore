@@ -26,6 +26,9 @@ Thumbs.db
 .env
 .env.local
 
+# Generated output (regenerated from CUE ontology)
+gen/
+
 # Build
 /bin/
 /dist/

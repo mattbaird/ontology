@@ -2,6 +2,8 @@
 package schema
 
 import (
+	"context"
+	"fmt"
 	"regexp"
 
 	"entgo.io/ent"
@@ -64,4 +66,55 @@ var ValidBankAccountTransitions = map[string][]string{
 	"closed":   {},
 	"frozen":   {"active", "closed"},
 	"inactive": {"active", "closed"},
+}
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (BankAccount) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateBankAccountConstraints(),
+	}
+}
+
+func validateBankAccountConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}
+			toString := func(v interface{}) string {
+				if v == nil {
+					return ""
+				}
+				switch s := v.(type) {
+				case string:
+					return s
+				case *string:
+					if s != nil {
+						return *s
+					}
+					return ""
+				}
+				return fmt.Sprint(v)
+			}
+
+			// Trust accounts must specify state and prohibit commingling
+			if v, ok := getField("is_trust"); ok && fmt.Sprint(v) == "true" {
+				ts, tsOk := getField("trust_state")
+				if !tsOk || toString(ts) == "" {
+					return nil, fmt.Errorf("trust bank account must have trust_state set")
+				}
+				if ca, ok := getField("commingling_allowed"); ok && fmt.Sprint(ca) == "true" {
+					return nil, fmt.Errorf("trust bank account must have commingling_allowed=false")
+				}
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
 }

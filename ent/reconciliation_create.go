@@ -274,7 +274,9 @@ func (_c *ReconciliationCreate) Mutation() *ReconciliationMutation {
 
 // Save creates the Reconciliation in the database.
 func (_c *ReconciliationCreate) Save(ctx context.Context) (*Reconciliation, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -301,12 +303,18 @@ func (_c *ReconciliationCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ReconciliationCreate) defaults() {
+func (_c *ReconciliationCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if reconciliation.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized reconciliation.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := reconciliation.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if reconciliation.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized reconciliation.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := reconciliation.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
@@ -323,9 +331,13 @@ func (_c *ReconciliationCreate) defaults() {
 		_c.mutation.SetDifferenceCurrency(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if reconciliation.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized reconciliation.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := reconciliation.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

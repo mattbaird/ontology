@@ -230,14 +230,6 @@ func (_u *PersonRoleUpdate) SetPersonID(id uuid.UUID) *PersonRoleUpdate {
 	return _u
 }
 
-// SetNillablePersonID sets the "person" edge to the Person entity by ID if the given value is not nil.
-func (_u *PersonRoleUpdate) SetNillablePersonID(id *uuid.UUID) *PersonRoleUpdate {
-	if id != nil {
-		_u = _u.SetPersonID(*id)
-	}
-	return _u
-}
-
 // SetPerson sets the "person" edge to the Person entity.
 func (_u *PersonRoleUpdate) SetPerson(v *Person) *PersonRoleUpdate {
 	return _u.SetPersonID(v.ID)
@@ -363,6 +355,9 @@ func (_u *PersonRoleUpdate) check() error {
 		if err := personrole.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "PersonRole.status": %w`, err)}
 		}
+	}
+	if _u.mutation.PersonCleared() && len(_u.mutation.PersonIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "PersonRole.person"`)
 	}
 	return nil
 }
@@ -761,14 +756,6 @@ func (_u *PersonRoleUpdateOne) SetPersonID(id uuid.UUID) *PersonRoleUpdateOne {
 	return _u
 }
 
-// SetNillablePersonID sets the "person" edge to the Person entity by ID if the given value is not nil.
-func (_u *PersonRoleUpdateOne) SetNillablePersonID(id *uuid.UUID) *PersonRoleUpdateOne {
-	if id != nil {
-		_u = _u.SetPersonID(*id)
-	}
-	return _u
-}
-
 // SetPerson sets the "person" edge to the Person entity.
 func (_u *PersonRoleUpdateOne) SetPerson(v *Person) *PersonRoleUpdateOne {
 	return _u.SetPersonID(v.ID)
@@ -907,6 +894,9 @@ func (_u *PersonRoleUpdateOne) check() error {
 		if err := personrole.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "PersonRole.status": %w`, err)}
 		}
+	}
+	if _u.mutation.PersonCleared() && len(_u.mutation.PersonIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "PersonRole.person"`)
 	}
 	return nil
 }

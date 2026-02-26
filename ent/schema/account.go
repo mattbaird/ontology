@@ -2,6 +2,8 @@
 package schema
 
 import (
+	"context"
+	"fmt"
 	"regexp"
 
 	"entgo.io/ent"
@@ -59,5 +61,76 @@ func (Account) Edges() []ent.Edge {
 		edge.From("parent", Account.Type).Ref("children").Unique().Comment("Account has sub-Accounts (inverse)"),
 		edge.To("entries", LedgerEntry.Type).Comment("LedgerEntry posts to Account (inverse)"),
 		edge.To("bank_accounts", BankAccount.Type).Comment("BankAccount is tracked via GL Account (inverse)"),
+	}
+}
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (Account) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateAccountConstraints(),
+	}
+}
+
+func validateAccountConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}
+			toString := func(v interface{}) string {
+				if v == nil {
+					return ""
+				}
+				switch s := v.(type) {
+				case string:
+					return s
+				case *string:
+					if s != nil {
+						return *s
+					}
+					return ""
+				}
+				return fmt.Sprint(v)
+			}
+
+			// Asset and expense accounts must have debit normal balance
+			if v, ok := getField("account_type"); ok {
+				at := fmt.Sprint(v)
+				if at == "asset" || at == "expense" {
+					if nb, ok := getField("normal_balance"); ok && toString(nb) != "debit" {
+						return nil, fmt.Errorf("%s account must have normal_balance=debit", at)
+					}
+				}
+				// Liability, equity, and revenue accounts must have credit normal balance
+				if at == "liability" || at == "equity" || at == "revenue" {
+					if nb, ok := getField("normal_balance"); ok && toString(nb) != "credit" {
+						return nil, fmt.Errorf("%s account must have normal_balance=credit", at)
+					}
+				}
+			}
+
+			// Header accounts cannot accept direct postings
+			if v, ok := getField("is_header"); ok && fmt.Sprint(v) == "true" {
+				if adp, ok := getField("allows_direct_posting"); ok && fmt.Sprint(adp) == "true" {
+					return nil, fmt.Errorf("header account must have allows_direct_posting=false")
+				}
+			}
+
+			// Trust accounts must specify trust type
+			if v, ok := getField("is_trust_account"); ok && fmt.Sprint(v) == "true" {
+				tt, ttOk := getField("trust_type")
+				if !ttOk || toString(tt) == "" {
+					return nil, fmt.Errorf("trust account must have trust_type set")
+				}
+			}
+			return next.Mutate(ctx, m)
+		})
 	}
 }

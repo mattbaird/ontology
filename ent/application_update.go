@@ -440,14 +440,6 @@ func (_u *ApplicationUpdate) SetPropertyID(id uuid.UUID) *ApplicationUpdate {
 	return _u
 }
 
-// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
-func (_u *ApplicationUpdate) SetNillablePropertyID(id *uuid.UUID) *ApplicationUpdate {
-	if id != nil {
-		_u = _u.SetPropertyID(*id)
-	}
-	return _u
-}
-
 // SetProperty sets the "property" edge to the Property entity.
 func (_u *ApplicationUpdate) SetProperty(v *Property) *ApplicationUpdate {
 	return _u.SetPropertyID(v.ID)
@@ -533,7 +525,9 @@ func (_u *ApplicationUpdate) ClearApplicant() *ApplicationUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *ApplicationUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -560,11 +554,15 @@ func (_u *ApplicationUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ApplicationUpdate) defaults() {
+func (_u *ApplicationUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if application.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized application.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := application.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -593,6 +591,9 @@ func (_u *ApplicationUpdate) check() error {
 		if err := application.ApplicationFeeCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "application_fee_currency", err: fmt.Errorf(`ent: validator failed for field "Application.application_fee_currency": %w`, err)}
 		}
+	}
+	if _u.mutation.PropertyCleared() && len(_u.mutation.PropertyIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Application.property"`)
 	}
 	if _u.mutation.ApplicantCleared() && len(_u.mutation.ApplicantIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Application.applicant"`)
@@ -1267,14 +1268,6 @@ func (_u *ApplicationUpdateOne) SetPropertyID(id uuid.UUID) *ApplicationUpdateOn
 	return _u
 }
 
-// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
-func (_u *ApplicationUpdateOne) SetNillablePropertyID(id *uuid.UUID) *ApplicationUpdateOne {
-	if id != nil {
-		_u = _u.SetPropertyID(*id)
-	}
-	return _u
-}
-
 // SetProperty sets the "property" edge to the Property entity.
 func (_u *ApplicationUpdateOne) SetProperty(v *Property) *ApplicationUpdateOne {
 	return _u.SetPropertyID(v.ID)
@@ -1373,7 +1366,9 @@ func (_u *ApplicationUpdateOne) Select(field string, fields ...string) *Applicat
 
 // Save executes the query and returns the updated Application entity.
 func (_u *ApplicationUpdateOne) Save(ctx context.Context) (*Application, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -1400,11 +1395,15 @@ func (_u *ApplicationUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ApplicationUpdateOne) defaults() {
+func (_u *ApplicationUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if application.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized application.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := application.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1433,6 +1432,9 @@ func (_u *ApplicationUpdateOne) check() error {
 		if err := application.ApplicationFeeCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "application_fee_currency", err: fmt.Errorf(`ent: validator failed for field "Application.application_fee_currency": %w`, err)}
 		}
+	}
+	if _u.mutation.PropertyCleared() && len(_u.mutation.PropertyIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Application.property"`)
 	}
 	if _u.mutation.ApplicantCleared() && len(_u.mutation.ApplicantIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Application.applicant"`)

@@ -288,14 +288,6 @@ func (_c *PropertyCreate) SetPortfolioID(id uuid.UUID) *PropertyCreate {
 	return _c
 }
 
-// SetNillablePortfolioID sets the "portfolio" edge to the Portfolio entity by ID if the given value is not nil.
-func (_c *PropertyCreate) SetNillablePortfolioID(id *uuid.UUID) *PropertyCreate {
-	if id != nil {
-		_c = _c.SetPortfolioID(*id)
-	}
-	return _c
-}
-
 // SetPortfolio sets the "portfolio" edge to the Portfolio entity.
 func (_c *PropertyCreate) SetPortfolio(v *Portfolio) *PropertyCreate {
 	return _c.SetPortfolioID(v.ID)
@@ -513,6 +505,9 @@ func (_c *PropertyCreate) check() error {
 	}
 	if _, ok := _c.mutation.RequiresLeadDisclosure(); !ok {
 		return &ValidationError{Name: "requires_lead_disclosure", err: errors.New(`ent: missing required field "Property.requires_lead_disclosure"`)}
+	}
+	if len(_c.mutation.PortfolioIDs()) == 0 {
+		return &ValidationError{Name: "portfolio", err: errors.New(`ent: missing required edge "Property.portfolio"`)}
 	}
 	return nil
 }

@@ -405,7 +405,9 @@ func (_u *JournalEntryUpdate) RemoveLedgerEntries(v ...*LedgerEntry) *JournalEnt
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *JournalEntryUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -432,11 +434,15 @@ func (_u *JournalEntryUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *JournalEntryUpdate) defaults() {
+func (_u *JournalEntryUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if journalentry.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized journalentry.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := journalentry.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1027,7 +1033,9 @@ func (_u *JournalEntryUpdateOne) Select(field string, fields ...string) *Journal
 
 // Save executes the query and returns the updated JournalEntry entity.
 func (_u *JournalEntryUpdateOne) Save(ctx context.Context) (*JournalEntry, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -1054,11 +1062,15 @@ func (_u *JournalEntryUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *JournalEntryUpdateOne) defaults() {
+func (_u *JournalEntryUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if journalentry.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized journalentry.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := journalentry.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

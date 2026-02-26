@@ -81,7 +81,7 @@ var (
 		{Name: "applicant_person_id", Type: field.TypeUUID},
 		{Name: "lease_application", Type: field.TypeUUID, Unique: true, Nullable: true},
 		{Name: "person_applications", Type: field.TypeUUID, Nullable: true},
-		{Name: "property_applications", Type: field.TypeUUID, Nullable: true},
+		{Name: "property_applications", Type: field.TypeUUID},
 		{Name: "space_applications", Type: field.TypeUUID, Nullable: true},
 	}
 	// ApplicationsTable holds the schema information for the "applications" table.
@@ -112,7 +112,7 @@ var (
 				Symbol:     "applications_properties_applications",
 				Columns:    []*schema.Column{ApplicationsColumns[27]},
 				RefColumns: []*schema.Column{PropertiesColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "applications_spaces_applications",
@@ -195,7 +195,7 @@ var (
 		{Name: "year_built", Type: field.TypeInt, Nullable: true},
 		{Name: "total_square_footage", Type: field.TypeFloat64, Nullable: true},
 		{Name: "total_rentable_square_footage", Type: field.TypeFloat64, Nullable: true},
-		{Name: "property_buildings", Type: field.TypeUUID, Nullable: true},
+		{Name: "property_buildings", Type: field.TypeUUID},
 	}
 	// BuildingsTable holds the schema information for the "buildings" table.
 	BuildingsTable = &schema.Table{
@@ -207,7 +207,7 @@ var (
 				Symbol:     "buildings_properties_buildings",
 				Columns:    []*schema.Column{BuildingsColumns[17]},
 				RefColumns: []*schema.Column{PropertiesColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -555,7 +555,7 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "pending", "terminated"}},
 		{Name: "effective", Type: field.TypeJSON},
 		{Name: "attributes", Type: field.TypeJSON, Nullable: true},
-		{Name: "person_roles", Type: field.TypeUUID, Nullable: true},
+		{Name: "person_roles", Type: field.TypeUUID},
 	}
 	// PersonRolesTable holds the schema information for the "person_roles" table.
 	PersonRolesTable = &schema.Table{
@@ -567,7 +567,7 @@ var (
 				Symbol:     "person_roles_persons_roles",
 				Columns:    []*schema.Column{PersonRolesColumns[14]},
 				RefColumns: []*schema.Column{PersonsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -639,7 +639,7 @@ var (
 		{Name: "insurance_policy_number", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "insurance_expiry", Type: field.TypeTime, Nullable: true},
 		{Name: "bank_account_properties", Type: field.TypeUUID, Nullable: true},
-		{Name: "portfolio_properties", Type: field.TypeUUID, Nullable: true},
+		{Name: "portfolio_properties", Type: field.TypeUUID},
 		{Name: "property_bank_account", Type: field.TypeUUID, Nullable: true},
 	}
 	// PropertiesTable holds the schema information for the "properties" table.
@@ -658,7 +658,7 @@ var (
 				Symbol:     "properties_portfolios_properties",
 				Columns:    []*schema.Column{PropertiesColumns[26]},
 				RefColumns: []*schema.Column{PortfoliosColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "properties_bank_accounts_bank_account",
@@ -746,7 +746,7 @@ var (
 		{Name: "ami_restriction", Type: field.TypeInt, Nullable: true},
 		{Name: "active_lease_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "building_spaces", Type: field.TypeUUID, Nullable: true},
-		{Name: "property_spaces", Type: field.TypeUUID, Nullable: true},
+		{Name: "property_spaces", Type: field.TypeUUID},
 		{Name: "space_children", Type: field.TypeUUID, Nullable: true},
 	}
 	// SpacesTable holds the schema information for the "spaces" table.
@@ -765,7 +765,7 @@ var (
 				Symbol:     "spaces_properties_spaces",
 				Columns:    []*schema.Column{SpacesColumns[28]},
 				RefColumns: []*schema.Column{PropertiesColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "spaces_spaces_children",

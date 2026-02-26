@@ -496,7 +496,8 @@ func (c *AccountClient) QueryBankAccounts(_m *Account) *BankAccountQuery {
 
 // Hooks returns the client hooks.
 func (c *AccountClient) Hooks() []Hook {
-	return c.hooks.Account
+	hooks := c.hooks.Account
+	return append(hooks[:len(hooks):len(hooks)], account.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -693,7 +694,8 @@ func (c *ApplicationClient) QueryApplicant(_m *Application) *PersonQuery {
 
 // Hooks returns the client hooks.
 func (c *ApplicationClient) Hooks() []Hook {
-	return c.hooks.Application
+	hooks := c.hooks.Application
+	return append(hooks[:len(hooks):len(hooks)], application.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -890,7 +892,8 @@ func (c *BankAccountClient) QueryReconciliations(_m *BankAccount) *Reconciliatio
 
 // Hooks returns the client hooks.
 func (c *BankAccountClient) Hooks() []Hook {
-	return c.hooks.BankAccount
+	hooks := c.hooks.BankAccount
+	return append(hooks[:len(hooks):len(hooks)], bankaccount.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -1204,7 +1207,8 @@ func (c *JournalEntryClient) QueryLedgerEntries(_m *JournalEntry) *LedgerEntryQu
 
 // Hooks returns the client hooks.
 func (c *JournalEntryClient) Hooks() []Hook {
-	return c.hooks.JournalEntry
+	hooks := c.hooks.JournalEntry
+	return append(hooks[:len(hooks):len(hooks)], journalentry.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -1449,7 +1453,8 @@ func (c *LeaseClient) QueryParentLease(_m *Lease) *LeaseQuery {
 
 // Hooks returns the client hooks.
 func (c *LeaseClient) Hooks() []Hook {
-	return c.hooks.Lease
+	hooks := c.hooks.Lease
+	return append(hooks[:len(hooks):len(hooks)], lease.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -1843,7 +1848,8 @@ func (c *LedgerEntryClient) QueryPerson(_m *LedgerEntry) *PersonQuery {
 
 // Hooks returns the client hooks.
 func (c *LedgerEntryClient) Hooks() []Hook {
-	return c.hooks.LedgerEntry
+	hooks := c.hooks.LedgerEntry
+	return append(hooks[:len(hooks):len(hooks)], ledgerentry.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.
@@ -2979,7 +2985,8 @@ func (c *ReconciliationClient) QueryBankAccount(_m *Reconciliation) *BankAccount
 
 // Hooks returns the client hooks.
 func (c *ReconciliationClient) Hooks() []Hook {
-	return c.hooks.Reconciliation
+	hooks := c.hooks.Reconciliation
+	return append(hooks[:len(hooks):len(hooks)], reconciliation.Hooks[:]...)
 }
 
 // Interceptors returns the client interceptors.

@@ -43,7 +43,7 @@ func (PersonRole) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("leases", Lease.Type).Ref("tenant_roles").Comment("Lease is held by tenant PersonRoles (inverse)"),
 		edge.From("guaranteed_leases", Lease.Type).Ref("guarantor_roles").Comment("Lease is guaranteed by guarantor PersonRoles (inverse)"),
-		edge.From("person", Person.Type).Ref("roles").Unique().Comment("Person has Roles in various contexts (inverse)"),
+		edge.From("person", Person.Type).Ref("roles").Unique().Required().Comment("Person has Roles in various contexts (inverse)"),
 	}
 }
 

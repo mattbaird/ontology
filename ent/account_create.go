@@ -371,7 +371,9 @@ func (_c *AccountCreate) Mutation() *AccountMutation {
 
 // Save creates the Account in the database.
 func (_c *AccountCreate) Save(ctx context.Context) (*Account, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -398,12 +400,18 @@ func (_c *AccountCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *AccountCreate) defaults() {
+func (_c *AccountCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if account.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized account.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := account.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if account.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized account.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := account.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
@@ -428,9 +436,13 @@ func (_c *AccountCreate) defaults() {
 		_c.mutation.SetBudgetAmountCurrency(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if account.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized account.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := account.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

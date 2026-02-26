@@ -330,14 +330,6 @@ func (_c *SpaceCreate) SetPropertyID(id uuid.UUID) *SpaceCreate {
 	return _c
 }
 
-// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
-func (_c *SpaceCreate) SetNillablePropertyID(id *uuid.UUID) *SpaceCreate {
-	if id != nil {
-		_c = _c.SetPropertyID(*id)
-	}
-	return _c
-}
-
 // SetProperty sets the "property" edge to the Property entity.
 func (_c *SpaceCreate) SetProperty(v *Property) *SpaceCreate {
 	return _c.SetPropertyID(v.ID)
@@ -595,6 +587,9 @@ func (_c *SpaceCreate) check() error {
 		if err := space.MarketRentCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "market_rent_currency", err: fmt.Errorf(`ent: validator failed for field "Space.market_rent_currency": %w`, err)}
 		}
+	}
+	if len(_c.mutation.PropertyIDs()) == 0 {
+		return &ValidationError{Name: "property", err: errors.New(`ent: missing required edge "Space.property"`)}
 	}
 	return nil
 }

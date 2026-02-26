@@ -281,7 +281,9 @@ func (_c *JournalEntryCreate) Mutation() *JournalEntryMutation {
 
 // Save creates the JournalEntry in the database.
 func (_c *JournalEntryCreate) Save(ctx context.Context) (*JournalEntry, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -308,19 +310,29 @@ func (_c *JournalEntryCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *JournalEntryCreate) defaults() {
+func (_c *JournalEntryCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if journalentry.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized journalentry.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := journalentry.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if journalentry.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized journalentry.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := journalentry.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if journalentry.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized journalentry.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := journalentry.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

@@ -55,7 +55,7 @@ func (Property) Fields() []ent.Field {
 // Edges of the Property.
 func (Property) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("portfolio", Portfolio.Type).Ref("properties").Unique().Comment("Portfolio contains Properties (inverse)"),
+		edge.From("portfolio", Portfolio.Type).Ref("properties").Unique().Required().Comment("Portfolio contains Properties (inverse)"),
 		edge.To("buildings", Building.Type).Comment("Property contains Buildings"),
 		edge.To("spaces", Space.Type).Comment("Property contains Spaces"),
 		edge.To("bank_account", BankAccount.Type).Unique().Comment("Property uses BankAccount"),

@@ -449,14 +449,6 @@ func (_u *PropertyUpdate) SetPortfolioID(id uuid.UUID) *PropertyUpdate {
 	return _u
 }
 
-// SetNillablePortfolioID sets the "portfolio" edge to the Portfolio entity by ID if the given value is not nil.
-func (_u *PropertyUpdate) SetNillablePortfolioID(id *uuid.UUID) *PropertyUpdate {
-	if id != nil {
-		_u = _u.SetPortfolioID(*id)
-	}
-	return _u
-}
-
 // SetPortfolio sets the "portfolio" edge to the Portfolio entity.
 func (_u *PropertyUpdate) SetPortfolio(v *Portfolio) *PropertyUpdate {
 	return _u.SetPortfolioID(v.ID)
@@ -710,6 +702,9 @@ func (_u *PropertyUpdate) check() error {
 		if err := property.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Property.status": %w`, err)}
 		}
+	}
+	if _u.mutation.PortfolioCleared() && len(_u.mutation.PortfolioIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Property.portfolio"`)
 	}
 	return nil
 }
@@ -1518,14 +1513,6 @@ func (_u *PropertyUpdateOne) SetPortfolioID(id uuid.UUID) *PropertyUpdateOne {
 	return _u
 }
 
-// SetNillablePortfolioID sets the "portfolio" edge to the Portfolio entity by ID if the given value is not nil.
-func (_u *PropertyUpdateOne) SetNillablePortfolioID(id *uuid.UUID) *PropertyUpdateOne {
-	if id != nil {
-		_u = _u.SetPortfolioID(*id)
-	}
-	return _u
-}
-
 // SetPortfolio sets the "portfolio" edge to the Portfolio entity.
 func (_u *PropertyUpdateOne) SetPortfolio(v *Portfolio) *PropertyUpdateOne {
 	return _u.SetPortfolioID(v.ID)
@@ -1792,6 +1779,9 @@ func (_u *PropertyUpdateOne) check() error {
 		if err := property.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Property.status": %w`, err)}
 		}
+	}
+	if _u.mutation.PortfolioCleared() && len(_u.mutation.PortfolioIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Property.portfolio"`)
 	}
 	return nil
 }

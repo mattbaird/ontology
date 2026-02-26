@@ -493,14 +493,6 @@ func (_u *SpaceUpdate) SetPropertyID(id uuid.UUID) *SpaceUpdate {
 	return _u
 }
 
-// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
-func (_u *SpaceUpdate) SetNillablePropertyID(id *uuid.UUID) *SpaceUpdate {
-	if id != nil {
-		_u = _u.SetPropertyID(*id)
-	}
-	return _u
-}
-
 // SetProperty sets the "property" edge to the Property entity.
 func (_u *SpaceUpdate) SetProperty(v *Property) *SpaceUpdate {
 	return _u.SetPropertyID(v.ID)
@@ -784,6 +776,9 @@ func (_u *SpaceUpdate) check() error {
 		if err := space.MarketRentCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "market_rent_currency", err: fmt.Errorf(`ent: validator failed for field "Space.market_rent_currency": %w`, err)}
 		}
+	}
+	if _u.mutation.PropertyCleared() && len(_u.mutation.PropertyIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Space.property"`)
 	}
 	return nil
 }
@@ -1684,14 +1679,6 @@ func (_u *SpaceUpdateOne) SetPropertyID(id uuid.UUID) *SpaceUpdateOne {
 	return _u
 }
 
-// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
-func (_u *SpaceUpdateOne) SetNillablePropertyID(id *uuid.UUID) *SpaceUpdateOne {
-	if id != nil {
-		_u = _u.SetPropertyID(*id)
-	}
-	return _u
-}
-
 // SetProperty sets the "property" edge to the Property entity.
 func (_u *SpaceUpdateOne) SetProperty(v *Property) *SpaceUpdateOne {
 	return _u.SetPropertyID(v.ID)
@@ -1988,6 +1975,9 @@ func (_u *SpaceUpdateOne) check() error {
 		if err := space.MarketRentCurrencyValidator(v); err != nil {
 			return &ValidationError{Name: "market_rent_currency", err: fmt.Errorf(`ent: validator failed for field "Space.market_rent_currency": %w`, err)}
 		}
+	}
+	if _u.mutation.PropertyCleared() && len(_u.mutation.PropertyIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Space.property"`)
 	}
 	return nil
 }

@@ -2,6 +2,8 @@
 package schema
 
 import (
+	"context"
+	"fmt"
 	"regexp"
 
 	"entgo.io/ent"
@@ -99,4 +101,135 @@ var ValidLeaseTransitions = map[string][]string{
 	"pending_signature":       {"active", "draft", "terminated"},
 	"renewed":                 {},
 	"terminated":              {},
+}
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (Lease) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateLeaseConstraints(),
+	}
+}
+
+func validateLeaseConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}
+			toBool := func(v interface{}) (bool, bool) {
+				switch b := v.(type) {
+				case bool:
+					return b, true
+				case *bool:
+					if b != nil {
+						return *b, true
+					}
+				}
+				return false, false
+			}
+
+			leaseType := ""
+			if v, ok := getField("lease_type"); ok {
+				leaseType = fmt.Sprint(v)
+			}
+			status := ""
+			if v, ok := getField("status"); ok {
+				status = fmt.Sprint(v)
+			}
+
+			// Active leases must have a move-in date
+			if status == "active" {
+				if _, ok := getField("move_in_date"); !ok && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("active lease must have move_in_date set")
+				}
+			}
+
+			// Active/expired/renewed leases must be signed
+			if status == "active" || status == "expired" || status == "renewed" {
+				if _, ok := getField("signed_at"); !ok && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("%s lease must have signed_at set", status)
+				}
+			}
+
+			// Sublease must reference parent lease
+			if v, ok := getField("is_sublease"); ok {
+				if b, isBool := toBool(v); isBool && b {
+					// parent_lease_id is managed via the parent_lease edge
+					if len(m.AddedIDs("parent_lease")) == 0 && m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("sublease must have parent_lease set")
+					}
+				}
+			}
+
+			// Commercial lease types require CAM terms
+			commercialTypes := map[string]bool{
+				"commercial_nnn": true, "commercial_nn": true, "commercial_n": true,
+				"commercial_gross": true, "commercial_modified_gross": true,
+			}
+			if commercialTypes[leaseType] && m.Op().Is(ent.OpCreate) {
+				if v, ok := getField("cam_terms"); !ok || v == nil {
+					return nil, fmt.Errorf("commercial lease type %s requires cam_terms", leaseType)
+				}
+			}
+
+			// NNN leases: cam_terms must include property_tax, insurance, and utilities
+			if leaseType == "commercial_nnn" {
+				if v, ok := getField("cam_terms"); ok && v != nil {
+					if ct, isCAM := v.(*types.CAMTerms); isCAM && ct != nil {
+						if !ct.IncludesPropertyTax || !ct.IncludesInsurance || !ct.IncludesUtilities {
+							return nil, fmt.Errorf("NNN lease cam_terms must include property_tax, insurance, and utilities")
+						}
+					}
+				}
+			}
+
+			// NN leases: cam_terms must include property_tax and insurance
+			if leaseType == "commercial_nn" {
+				if v, ok := getField("cam_terms"); ok && v != nil {
+					if ct, isCAM := v.(*types.CAMTerms); isCAM && ct != nil {
+						if !ct.IncludesPropertyTax || !ct.IncludesInsurance {
+							return nil, fmt.Errorf("NN lease cam_terms must include property_tax and insurance")
+						}
+					}
+				}
+			}
+
+			// N leases: cam_terms must include property_tax
+			if leaseType == "commercial_n" {
+				if v, ok := getField("cam_terms"); ok && v != nil {
+					if ct, isCAM := v.(*types.CAMTerms); isCAM && ct != nil {
+						if !ct.IncludesPropertyTax {
+							return nil, fmt.Errorf("N lease cam_terms must include property_tax")
+						}
+					}
+				}
+			}
+
+			// Section 8 leases require subsidy terms
+			if leaseType == "section_8" && m.Op().Is(ent.OpCreate) {
+				if v, ok := getField("subsidy"); !ok || v == nil {
+					return nil, fmt.Errorf("section_8 lease requires subsidy terms")
+				}
+			}
+
+			// Fixed-term/student leases must have term with end date
+			if (leaseType == "fixed_term" || leaseType == "student") && m.Op().Is(ent.OpCreate) {
+				if v, ok := getField("term"); ok && v != nil {
+					if dr, isDR := v.(*types.DateRange); isDR && dr != nil {
+						if dr.End == nil {
+							return nil, fmt.Errorf("%s lease must have term.end set", leaseType)
+						}
+					}
+				}
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
 }

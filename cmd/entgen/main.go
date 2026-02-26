@@ -868,6 +868,14 @@ func removeFKFields(ent *entityDef) {
 		} else {
 			// Remove the field, Ent creates the FK column from the edge
 			removeFields[m.fieldName] = true
+			// Propagate required-ness: if the CUE field was NOT optional,
+			// mark the edge as Required so the FK column is NOT NULL.
+			for _, f := range ent.Fields {
+				if f.Name == m.fieldName && !f.Optional {
+					ent.Edges[m.edgeIdx].Required = true
+					break
+				}
+			}
 		}
 	}
 
@@ -959,6 +967,32 @@ func buildConstraintCode(entityName string) string {
 				return 0, false
 			}`
 
+	const helperToBool = `
+			toBool := func(v interface{}) (bool, bool) {
+				switch b := v.(type) {
+				case bool:
+					return b, true
+				case *bool:
+					if b != nil {
+						return *b, true
+					}
+				}
+				return false, false
+			}`
+
+	const helperToInt64 = `
+			toInt64 := func(v interface{}) (int64, bool) {
+				switch i := v.(type) {
+				case int64:
+					return i, true
+				case *int64:
+					if i != nil {
+						return *i, true
+					}
+				}
+				return 0, false
+			}`
+
 	wrap := func(name, helpers, checks string) string {
 		return fmt.Sprintf(`
 
@@ -1037,7 +1071,7 @@ func validate%sConstraints() ent.Hook {
 
 	case "Space":
 		return wrap("Space",
-			helperGetField+helperToInt+helperToFloat,
+			helperGetField+helperToString+helperToInt+helperToFloat,
 			`
 			// residential_unit → bedrooms and bathrooms must be set
 			if v, ok := getField("space_type"); ok && fmt.Sprint(v) == "residential_unit" {
@@ -1060,6 +1094,300 @@ func validate%sConstraints() ent.Hook {
 					if bt, ok := getField("bathrooms"); ok {
 						if btFloat, ok := toFloat(bt); ok && btFloat != 0 {
 							return nil, fmt.Errorf("%s space must have bathrooms=0, got %v", st, btFloat)
+						}
+					}
+				}
+			}
+			// common_area → leasable must be false
+			if v, ok := getField("space_type"); ok && fmt.Sprint(v) == "common_area" {
+				if lv, ok := getField("leasable"); ok && fmt.Sprint(lv) == "true" {
+					return nil, fmt.Errorf("common_area space must have leasable=false")
+				}
+			}
+			// occupied → active_lease_id must be set
+			if v, ok := getField("status"); ok && fmt.Sprint(v) == "occupied" {
+				alid, alidOk := getField("active_lease_id")
+				if !alidOk || toString(alid) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("occupied space must have active_lease_id set")
+					}
+				}
+			}`)
+
+	case "Lease":
+		return wrap("Lease",
+			helperGetField+helperToBool,
+			`
+			leaseType := ""
+			if v, ok := getField("lease_type"); ok {
+				leaseType = fmt.Sprint(v)
+			}
+			status := ""
+			if v, ok := getField("status"); ok {
+				status = fmt.Sprint(v)
+			}
+
+			// Active leases must have a move-in date
+			if status == "active" {
+				if _, ok := getField("move_in_date"); !ok && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("active lease must have move_in_date set")
+				}
+			}
+
+			// Active/expired/renewed leases must be signed
+			if status == "active" || status == "expired" || status == "renewed" {
+				if _, ok := getField("signed_at"); !ok && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("%s lease must have signed_at set", status)
+				}
+			}
+
+			// Sublease must reference parent lease
+			if v, ok := getField("is_sublease"); ok {
+				if b, isBool := toBool(v); isBool && b {
+					// parent_lease_id is managed via the parent_lease edge
+					if len(m.AddedIDs("parent_lease")) == 0 && m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("sublease must have parent_lease set")
+					}
+				}
+			}
+
+			// Commercial lease types require CAM terms
+			commercialTypes := map[string]bool{
+				"commercial_nnn": true, "commercial_nn": true, "commercial_n": true,
+				"commercial_gross": true, "commercial_modified_gross": true,
+			}
+			if commercialTypes[leaseType] && m.Op().Is(ent.OpCreate) {
+				if v, ok := getField("cam_terms"); !ok || v == nil {
+					return nil, fmt.Errorf("commercial lease type %s requires cam_terms", leaseType)
+				}
+			}
+
+			// NNN leases: cam_terms must include property_tax, insurance, and utilities
+			if leaseType == "commercial_nnn" {
+				if v, ok := getField("cam_terms"); ok && v != nil {
+					if ct, isCAM := v.(*types.CAMTerms); isCAM && ct != nil {
+						if !ct.IncludesPropertyTax || !ct.IncludesInsurance || !ct.IncludesUtilities {
+							return nil, fmt.Errorf("NNN lease cam_terms must include property_tax, insurance, and utilities")
+						}
+					}
+				}
+			}
+
+			// NN leases: cam_terms must include property_tax and insurance
+			if leaseType == "commercial_nn" {
+				if v, ok := getField("cam_terms"); ok && v != nil {
+					if ct, isCAM := v.(*types.CAMTerms); isCAM && ct != nil {
+						if !ct.IncludesPropertyTax || !ct.IncludesInsurance {
+							return nil, fmt.Errorf("NN lease cam_terms must include property_tax and insurance")
+						}
+					}
+				}
+			}
+
+			// N leases: cam_terms must include property_tax
+			if leaseType == "commercial_n" {
+				if v, ok := getField("cam_terms"); ok && v != nil {
+					if ct, isCAM := v.(*types.CAMTerms); isCAM && ct != nil {
+						if !ct.IncludesPropertyTax {
+							return nil, fmt.Errorf("N lease cam_terms must include property_tax")
+						}
+					}
+				}
+			}
+
+			// Section 8 leases require subsidy terms
+			if leaseType == "section_8" && m.Op().Is(ent.OpCreate) {
+				if v, ok := getField("subsidy"); !ok || v == nil {
+					return nil, fmt.Errorf("section_8 lease requires subsidy terms")
+				}
+			}
+
+			// Fixed-term/student leases must have term with end date
+			if (leaseType == "fixed_term" || leaseType == "student") && m.Op().Is(ent.OpCreate) {
+				if v, ok := getField("term"); ok && v != nil {
+					if dr, isDR := v.(*types.DateRange); isDR && dr != nil {
+						if dr.End == nil {
+							return nil, fmt.Errorf("%s lease must have term.end set", leaseType)
+						}
+					}
+				}
+			}`)
+
+	case "Application":
+		return wrap("Application",
+			helperGetField+helperToString,
+			`
+			status := ""
+			if v, ok := getField("status"); ok {
+				status = fmt.Sprint(v)
+			}
+
+			// Decisions require decision_by and decision_at
+			if status == "approved" || status == "conditionally_approved" || status == "denied" {
+				if m.Op().Is(ent.OpCreate) {
+					db, dbOk := getField("decision_by")
+					if !dbOk || toString(db) == "" {
+						return nil, fmt.Errorf("%s application must have decision_by set", status)
+					}
+					if _, ok := getField("decision_at"); !ok {
+						return nil, fmt.Errorf("%s application must have decision_at set", status)
+					}
+				}
+			}
+
+			// Denials require a reason (fair housing compliance)
+			if status == "denied" {
+				dr, drOk := getField("decision_reason")
+				if !drOk || toString(dr) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("denied application must have decision_reason set (fair housing compliance)")
+					}
+				}
+			}`)
+
+	case "Account":
+		return wrap("Account",
+			helperGetField+helperToString,
+			`
+			// Asset and expense accounts must have debit normal balance
+			if v, ok := getField("account_type"); ok {
+				at := fmt.Sprint(v)
+				if at == "asset" || at == "expense" {
+					if nb, ok := getField("normal_balance"); ok && toString(nb) != "debit" {
+						return nil, fmt.Errorf("%s account must have normal_balance=debit", at)
+					}
+				}
+				// Liability, equity, and revenue accounts must have credit normal balance
+				if at == "liability" || at == "equity" || at == "revenue" {
+					if nb, ok := getField("normal_balance"); ok && toString(nb) != "credit" {
+						return nil, fmt.Errorf("%s account must have normal_balance=credit", at)
+					}
+				}
+			}
+
+			// Header accounts cannot accept direct postings
+			if v, ok := getField("is_header"); ok && fmt.Sprint(v) == "true" {
+				if adp, ok := getField("allows_direct_posting"); ok && fmt.Sprint(adp) == "true" {
+					return nil, fmt.Errorf("header account must have allows_direct_posting=false")
+				}
+			}
+
+			// Trust accounts must specify trust type
+			if v, ok := getField("is_trust_account"); ok && fmt.Sprint(v) == "true" {
+				tt, ttOk := getField("trust_type")
+				if !ttOk || toString(tt) == "" {
+					return nil, fmt.Errorf("trust account must have trust_type set")
+				}
+			}`)
+
+	case "LedgerEntry":
+		return wrap("LedgerEntry",
+			helperGetField+helperToString+helperToBool,
+			`
+			entryType := ""
+			if v, ok := getField("entry_type"); ok {
+				entryType = fmt.Sprint(v)
+			}
+
+			// Payment/refund/nsf entries require a person (person edge)
+			if entryType == "payment" || entryType == "refund" || entryType == "nsf" {
+				if len(m.AddedIDs("person")) == 0 && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("%s ledger entry must have person set", entryType)
+				}
+			}
+
+			// Charge/late_fee entries require a lease (lease edge)
+			if entryType == "charge" || entryType == "late_fee" {
+				if len(m.AddedIDs("lease")) == 0 && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("%s ledger entry must have lease set", entryType)
+				}
+			}
+
+			// Adjustment entries must reference the entry they adjust
+			if entryType == "adjustment" {
+				aeid, aeidOk := getField("adjusts_entry_id")
+				if !aeidOk || toString(aeid) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("adjustment ledger entry must have adjusts_entry_id set")
+					}
+				}
+			}
+
+			// Reconciled entries must have reconciliation details
+			if v, ok := getField("reconciled"); ok {
+				if b, isBool := toBool(v); isBool && b {
+					rid, ridOk := getField("reconciliation_id")
+					if !ridOk || toString(rid) == "" {
+						return nil, fmt.Errorf("reconciled ledger entry must have reconciliation_id set")
+					}
+					if _, ok := getField("reconciled_at"); !ok && m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("reconciled ledger entry must have reconciled_at set")
+					}
+				}
+			}`)
+
+	case "JournalEntry":
+		return wrap("JournalEntry",
+			helperGetField+helperToString,
+			`
+			status := ""
+			if v, ok := getField("status"); ok {
+				status = fmt.Sprint(v)
+			}
+			sourceType := ""
+			if v, ok := getField("source_type"); ok {
+				sourceType = fmt.Sprint(v)
+			}
+
+			// Posted manual entries require approval
+			if status == "posted" && sourceType == "manual" {
+				ab, abOk := getField("approved_by")
+				if !abOk || toString(ab) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("posted manual journal entry must have approved_by set")
+					}
+				}
+				if _, ok := getField("approved_at"); !ok && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("posted manual journal entry must have approved_at set")
+				}
+			}
+
+			// Voided entries must reference the reversing journal
+			if status == "voided" {
+				rbj, rbjOk := getField("reversed_by_journal_id")
+				if !rbjOk || toString(rbj) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("voided journal entry must have reversed_by_journal_id set")
+					}
+				}
+			}`)
+
+	case "BankAccount":
+		return wrap("BankAccount",
+			helperGetField+helperToString,
+			`
+			// Trust accounts must specify state and prohibit commingling
+			if v, ok := getField("is_trust"); ok && fmt.Sprint(v) == "true" {
+				ts, tsOk := getField("trust_state")
+				if !tsOk || toString(ts) == "" {
+					return nil, fmt.Errorf("trust bank account must have trust_state set")
+				}
+				if ca, ok := getField("commingling_allowed"); ok && fmt.Sprint(ca) == "true" {
+					return nil, fmt.Errorf("trust bank account must have commingling_allowed=false")
+				}
+			}`)
+
+	case "Reconciliation":
+		return wrap("Reconciliation",
+			helperGetField+helperToInt64,
+			`
+			// Balanced/approved reconciliations must have zero difference
+			if v, ok := getField("status"); ok {
+				st := fmt.Sprint(v)
+				if st == "balanced" || st == "approved" {
+					if diff, ok := getField("difference_amount_cents"); ok {
+						if d, isI64 := toInt64(diff); isI64 && d != 0 {
+							return nil, fmt.Errorf("%s reconciliation must have difference_amount_cents=0, got %d", st, d)
 						}
 					}
 				}
@@ -1271,7 +1599,7 @@ func ({{.Name}}) Edges() []ent.Edge {
 {{- if eq .Type "To"}}
 		edge.To("{{.Name}}", {{.Target}}.Type){{if .Unique}}.Unique(){{end}}{{if .Required}}.Required(){{end}}{{if .FieldBinding}}.Field("{{.FieldBinding}}"){{end}}.Comment("{{.Comment}}"),
 {{- else}}
-		edge.From("{{.Name}}", {{.Target}}.Type).Ref("{{.RefName}}"){{if .Unique}}.Unique(){{end}}.Comment("{{.Comment}}"),
+		edge.From("{{.Name}}", {{.Target}}.Type).Ref("{{.RefName}}"){{if .Unique}}.Unique(){{end}}{{if .Required}}.Required(){{end}}.Comment("{{.Comment}}"),
 {{- end}}
 {{- end}}
 	}

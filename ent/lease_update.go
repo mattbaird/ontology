@@ -1046,7 +1046,9 @@ func (_u *LeaseUpdate) ClearParentLease() *LeaseUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *LeaseUpdate) Save(ctx context.Context) (int, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return 0, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -1073,11 +1075,15 @@ func (_u *LeaseUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *LeaseUpdate) defaults() {
+func (_u *LeaseUpdate) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if lease.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized lease.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := lease.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -2761,7 +2767,9 @@ func (_u *LeaseUpdateOne) Select(field string, fields ...string) *LeaseUpdateOne
 
 // Save executes the query and returns the updated Lease entity.
 func (_u *LeaseUpdateOne) Save(ctx context.Context) (*Lease, error) {
-	_u.defaults()
+	if err := _u.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -2788,11 +2796,15 @@ func (_u *LeaseUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *LeaseUpdateOne) defaults() {
+func (_u *LeaseUpdateOne) defaults() error {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
+		if lease.UpdateDefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized lease.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := lease.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

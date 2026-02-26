@@ -2,6 +2,8 @@
 package schema
 
 import (
+	"context"
+	"fmt"
 	"regexp"
 
 	"entgo.io/ent"
@@ -62,4 +64,52 @@ var ValidReconciliationTransitions = map[string][]string{
 	"balanced":    {"approved", "in_progress"},
 	"in_progress": {"balanced", "unbalanced"},
 	"unbalanced":  {"in_progress"},
+}
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (Reconciliation) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateReconciliationConstraints(),
+	}
+}
+
+func validateReconciliationConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}
+			toInt64 := func(v interface{}) (int64, bool) {
+				switch i := v.(type) {
+				case int64:
+					return i, true
+				case *int64:
+					if i != nil {
+						return *i, true
+					}
+				}
+				return 0, false
+			}
+
+			// Balanced/approved reconciliations must have zero difference
+			if v, ok := getField("status"); ok {
+				st := fmt.Sprint(v)
+				if st == "balanced" || st == "approved" {
+					if diff, ok := getField("difference_amount_cents"); ok {
+						if d, isI64 := toInt64(diff); isI64 && d != 0 {
+							return nil, fmt.Errorf("%s reconciliation must have difference_amount_cents=0, got %d", st, d)
+						}
+					}
+				}
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
 }

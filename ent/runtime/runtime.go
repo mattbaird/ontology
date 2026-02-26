@@ -29,6 +29,8 @@ import (
 // to their package variables.
 func init() {
 	accountMixin := schema.Account{}.Mixin()
+	accountHooks := schema.Account{}.Hooks()
+	account.Hooks[0] = accountHooks[0]
 	accountMixinFields0 := accountMixin[0].Fields()
 	_ = accountMixinFields0
 	accountFields := schema.Account{}.Fields()
@@ -78,6 +80,8 @@ func init() {
 	// account.DefaultID holds the default value on creation for the id field.
 	account.DefaultID = accountDescID.Default.(func() uuid.UUID)
 	applicationMixin := schema.Application{}.Mixin()
+	applicationHooks := schema.Application{}.Hooks()
+	application.Hooks[0] = applicationHooks[0]
 	applicationMixinFields0 := applicationMixin[0].Fields()
 	_ = applicationMixinFields0
 	applicationFields := schema.Application{}.Fields()
@@ -123,6 +127,8 @@ func init() {
 	// application.DefaultID holds the default value on creation for the id field.
 	application.DefaultID = applicationDescID.Default.(func() uuid.UUID)
 	bankaccountMixin := schema.BankAccount{}.Mixin()
+	bankaccountHooks := schema.BankAccount{}.Hooks()
+	bankaccount.Hooks[0] = bankaccountHooks[0]
 	bankaccountMixinFields0 := bankaccountMixin[0].Fields()
 	_ = bankaccountMixinFields0
 	bankaccountFields := schema.BankAccount{}.Fields()
@@ -191,6 +197,8 @@ func init() {
 	// building.DefaultID holds the default value on creation for the id field.
 	building.DefaultID = buildingDescID.Default.(func() uuid.UUID)
 	journalentryMixin := schema.JournalEntry{}.Mixin()
+	journalentryHooks := schema.JournalEntry{}.Hooks()
+	journalentry.Hooks[0] = journalentryHooks[0]
 	journalentryMixinFields0 := journalentryMixin[0].Fields()
 	_ = journalentryMixinFields0
 	journalentryFields := schema.JournalEntry{}.Fields()
@@ -218,6 +226,8 @@ func init() {
 	// journalentry.DefaultID holds the default value on creation for the id field.
 	journalentry.DefaultID = journalentryDescID.Default.(func() uuid.UUID)
 	leaseMixin := schema.Lease{}.Mixin()
+	leaseHooks := schema.Lease{}.Hooks()
+	lease.Hooks[0] = leaseHooks[0]
 	leaseMixinFields0 := leaseMixin[0].Fields()
 	_ = leaseMixinFields0
 	leaseFields := schema.Lease{}.Fields()
@@ -298,6 +308,8 @@ func init() {
 	// leasespace.DefaultID holds the default value on creation for the id field.
 	leasespace.DefaultID = leasespaceDescID.Default.(func() uuid.UUID)
 	ledgerentryMixin := schema.LedgerEntry{}.Mixin()
+	ledgerentryHooks := schema.LedgerEntry{}.Hooks()
+	ledgerentry.Hooks[0] = ledgerentryHooks[0]
 	ledgerentryMixinFields0 := ledgerentryMixin[0].Fields()
 	_ = ledgerentryMixinFields0
 	ledgerentryFields := schema.LedgerEntry{}.Fields()
@@ -486,6 +498,8 @@ func init() {
 	// property.DefaultID holds the default value on creation for the id field.
 	property.DefaultID = propertyDescID.Default.(func() uuid.UUID)
 	reconciliationMixin := schema.Reconciliation{}.Mixin()
+	reconciliationHooks := schema.Reconciliation{}.Hooks()
+	reconciliation.Hooks[0] = reconciliationHooks[0]
 	reconciliationMixinFields0 := reconciliationMixin[0].Fields()
 	_ = reconciliationMixinFields0
 	reconciliationFields := schema.Reconciliation{}.Fields()

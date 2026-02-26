@@ -2,6 +2,8 @@
 package schema
 
 import (
+	"context"
+	"fmt"
 	"regexp"
 
 	"entgo.io/ent"
@@ -56,6 +58,99 @@ func (LedgerEntry) Edges() []ent.Edge {
 		edge.To("property", Property.Type).Unique().Required().Comment("LedgerEntry relates to Property"),
 		edge.To("space", Space.Type).Unique().Comment("LedgerEntry relates to Space"),
 		edge.To("person", Person.Type).Unique().Comment("LedgerEntry relates to Person"),
+	}
+}
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (LedgerEntry) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateLedgerEntryConstraints(),
+	}
+}
+
+func validateLedgerEntryConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}
+			toString := func(v interface{}) string {
+				if v == nil {
+					return ""
+				}
+				switch s := v.(type) {
+				case string:
+					return s
+				case *string:
+					if s != nil {
+						return *s
+					}
+					return ""
+				}
+				return fmt.Sprint(v)
+			}
+			toBool := func(v interface{}) (bool, bool) {
+				switch b := v.(type) {
+				case bool:
+					return b, true
+				case *bool:
+					if b != nil {
+						return *b, true
+					}
+				}
+				return false, false
+			}
+
+			entryType := ""
+			if v, ok := getField("entry_type"); ok {
+				entryType = fmt.Sprint(v)
+			}
+
+			// Payment/refund/nsf entries require a person (person edge)
+			if entryType == "payment" || entryType == "refund" || entryType == "nsf" {
+				if len(m.AddedIDs("person")) == 0 && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("%s ledger entry must have person set", entryType)
+				}
+			}
+
+			// Charge/late_fee entries require a lease (lease edge)
+			if entryType == "charge" || entryType == "late_fee" {
+				if len(m.AddedIDs("lease")) == 0 && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("%s ledger entry must have lease set", entryType)
+				}
+			}
+
+			// Adjustment entries must reference the entry they adjust
+			if entryType == "adjustment" {
+				aeid, aeidOk := getField("adjusts_entry_id")
+				if !aeidOk || toString(aeid) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("adjustment ledger entry must have adjusts_entry_id set")
+					}
+				}
+			}
+
+			// Reconciled entries must have reconciliation details
+			if v, ok := getField("reconciled"); ok {
+				if b, isBool := toBool(v); isBool && b {
+					rid, ridOk := getField("reconciliation_id")
+					if !ridOk || toString(rid) == "" {
+						return nil, fmt.Errorf("reconciled ledger entry must have reconciliation_id set")
+					}
+					if _, ok := getField("reconciled_at"); !ok && m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("reconciled ledger entry must have reconciled_at set")
+					}
+				}
+			}
+			return next.Mutate(ctx, m)
+		})
 	}
 }
 

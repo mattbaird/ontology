@@ -336,7 +336,9 @@ func (_c *BankAccountCreate) Mutation() *BankAccountMutation {
 
 // Save creates the BankAccount in the database.
 func (_c *BankAccountCreate) Save(ctx context.Context) (*BankAccount, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -363,12 +365,18 @@ func (_c *BankAccountCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *BankAccountCreate) defaults() {
+func (_c *BankAccountCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if bankaccount.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized bankaccount.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := bankaccount.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if bankaccount.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized bankaccount.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := bankaccount.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
@@ -385,9 +393,13 @@ func (_c *BankAccountCreate) defaults() {
 		_c.mutation.SetComminglingAllowed(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if bankaccount.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized bankaccount.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := bankaccount.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

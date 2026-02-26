@@ -309,14 +309,6 @@ func (_c *ApplicationCreate) SetPropertyID(id uuid.UUID) *ApplicationCreate {
 	return _c
 }
 
-// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
-func (_c *ApplicationCreate) SetNillablePropertyID(id *uuid.UUID) *ApplicationCreate {
-	if id != nil {
-		_c = _c.SetPropertyID(*id)
-	}
-	return _c
-}
-
 // SetProperty sets the "property" edge to the Property entity.
 func (_c *ApplicationCreate) SetProperty(v *Property) *ApplicationCreate {
 	return _c.SetPropertyID(v.ID)
@@ -378,7 +370,9 @@ func (_c *ApplicationCreate) Mutation() *ApplicationMutation {
 
 // Save creates the Application in the database.
 func (_c *ApplicationCreate) Save(ctx context.Context) (*Application, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -405,12 +399,18 @@ func (_c *ApplicationCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ApplicationCreate) defaults() {
+func (_c *ApplicationCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if application.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized application.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := application.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if application.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized application.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := application.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
@@ -431,9 +431,13 @@ func (_c *ApplicationCreate) defaults() {
 		_c.mutation.SetFeePaid(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if application.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized application.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := application.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -504,6 +508,9 @@ func (_c *ApplicationCreate) check() error {
 	}
 	if _, ok := _c.mutation.FeePaid(); !ok {
 		return &ValidationError{Name: "fee_paid", err: errors.New(`ent: missing required field "Application.fee_paid"`)}
+	}
+	if len(_c.mutation.PropertyIDs()) == 0 {
+		return &ValidationError{Name: "property", err: errors.New(`ent: missing required edge "Application.property"`)}
 	}
 	if len(_c.mutation.ApplicantIDs()) == 0 {
 		return &ValidationError{Name: "applicant", err: errors.New(`ent: missing required edge "Application.applicant"`)}

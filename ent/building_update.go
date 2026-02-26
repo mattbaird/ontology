@@ -308,14 +308,6 @@ func (_u *BuildingUpdate) SetPropertyID(id uuid.UUID) *BuildingUpdate {
 	return _u
 }
 
-// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
-func (_u *BuildingUpdate) SetNillablePropertyID(id *uuid.UUID) *BuildingUpdate {
-	if id != nil {
-		_u = _u.SetPropertyID(*id)
-	}
-	return _u
-}
-
 // SetProperty sets the "property" edge to the Property entity.
 func (_u *BuildingUpdate) SetProperty(v *Property) *BuildingUpdate {
 	return _u.SetPropertyID(v.ID)
@@ -430,6 +422,9 @@ func (_u *BuildingUpdate) check() error {
 		if err := building.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Building.status": %w`, err)}
 		}
+	}
+	if _u.mutation.PropertyCleared() && len(_u.mutation.PropertyIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Building.property"`)
 	}
 	return nil
 }
@@ -897,14 +892,6 @@ func (_u *BuildingUpdateOne) SetPropertyID(id uuid.UUID) *BuildingUpdateOne {
 	return _u
 }
 
-// SetNillablePropertyID sets the "property" edge to the Property entity by ID if the given value is not nil.
-func (_u *BuildingUpdateOne) SetNillablePropertyID(id *uuid.UUID) *BuildingUpdateOne {
-	if id != nil {
-		_u = _u.SetPropertyID(*id)
-	}
-	return _u
-}
-
 // SetProperty sets the "property" edge to the Property entity.
 func (_u *BuildingUpdateOne) SetProperty(v *Property) *BuildingUpdateOne {
 	return _u.SetPropertyID(v.ID)
@@ -1032,6 +1019,9 @@ func (_u *BuildingUpdateOne) check() error {
 		if err := building.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Building.status": %w`, err)}
 		}
+	}
+	if _u.mutation.PropertyCleared() && len(_u.mutation.PropertyIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Building.property"`)
 	}
 	return nil
 }

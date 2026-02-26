@@ -360,7 +360,9 @@ func (_c *LedgerEntryCreate) Mutation() *LedgerEntryMutation {
 
 // Save creates the LedgerEntry in the database.
 func (_c *LedgerEntryCreate) Save(ctx context.Context) (*LedgerEntry, error) {
-	_c.defaults()
+	if err := _c.defaults(); err != nil {
+		return nil, err
+	}
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -387,12 +389,18 @@ func (_c *LedgerEntryCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *LedgerEntryCreate) defaults() {
+func (_c *LedgerEntryCreate) defaults() error {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
+		if ledgerentry.DefaultCreatedAt == nil {
+			return fmt.Errorf("ent: uninitialized ledgerentry.DefaultCreatedAt (forgotten import ent/runtime?)")
+		}
 		v := ledgerentry.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
+		if ledgerentry.DefaultUpdatedAt == nil {
+			return fmt.Errorf("ent: uninitialized ledgerentry.DefaultUpdatedAt (forgotten import ent/runtime?)")
+		}
 		v := ledgerentry.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
@@ -405,9 +413,13 @@ func (_c *LedgerEntryCreate) defaults() {
 		_c.mutation.SetReconciled(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
+		if ledgerentry.DefaultID == nil {
+			return fmt.Errorf("ent: uninitialized ledgerentry.DefaultID (forgotten import ent/runtime?)")
+		}
 		v := ledgerentry.DefaultID()
 		_c.mutation.SetID(v)
 	}
+	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.

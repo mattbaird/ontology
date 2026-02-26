@@ -2,6 +2,8 @@
 package schema
 
 import (
+	"context"
+	"fmt"
 	"regexp"
 
 	"entgo.io/ent"
@@ -53,7 +55,7 @@ func (Application) Fields() []ent.Field {
 // Edges of the Application.
 func (Application) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("property", Property.Type).Ref("applications").Unique().Comment("Property receives Applications (inverse)"),
+		edge.From("property", Property.Type).Ref("applications").Unique().Required().Comment("Property receives Applications (inverse)"),
 		edge.From("space", Space.Type).Ref("applications").Unique().Comment("Space receives Applications (inverse)"),
 		edge.From("resulting_lease", Lease.Type).Ref("application").Unique().Comment("Lease originated from Application (inverse)"),
 		edge.To("applicant", Person.Type).Unique().Required().Field("applicant_person_id").Comment("Application was submitted by Person"),
@@ -71,4 +73,72 @@ var ValidApplicationTransitions = map[string][]string{
 	"submitted":              {"screening", "withdrawn"},
 	"under_review":           {"approved", "conditionally_approved", "denied", "withdrawn"},
 	"withdrawn":              {},
+}
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (Application) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateApplicationConstraints(),
+	}
+}
+
+func validateApplicationConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}
+			toString := func(v interface{}) string {
+				if v == nil {
+					return ""
+				}
+				switch s := v.(type) {
+				case string:
+					return s
+				case *string:
+					if s != nil {
+						return *s
+					}
+					return ""
+				}
+				return fmt.Sprint(v)
+			}
+
+			status := ""
+			if v, ok := getField("status"); ok {
+				status = fmt.Sprint(v)
+			}
+
+			// Decisions require decision_by and decision_at
+			if status == "approved" || status == "conditionally_approved" || status == "denied" {
+				if m.Op().Is(ent.OpCreate) {
+					db, dbOk := getField("decision_by")
+					if !dbOk || toString(db) == "" {
+						return nil, fmt.Errorf("%s application must have decision_by set", status)
+					}
+					if _, ok := getField("decision_at"); !ok {
+						return nil, fmt.Errorf("%s application must have decision_at set", status)
+					}
+				}
+			}
+
+			// Denials require a reason (fair housing compliance)
+			if status == "denied" {
+				dr, drOk := getField("decision_reason")
+				if !drOk || toString(dr) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("denied application must have decision_reason set (fair housing compliance)")
+					}
+				}
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
 }

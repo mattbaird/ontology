@@ -44,7 +44,7 @@ func (Building) Fields() []ent.Field {
 // Edges of the Building.
 func (Building) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("property", Property.Type).Ref("buildings").Unique().Comment("Property contains Buildings (inverse)"),
+		edge.From("property", Property.Type).Ref("buildings").Unique().Required().Comment("Property contains Buildings (inverse)"),
 		edge.To("spaces", Space.Type).Comment("Building contains Spaces"),
 	}
 }

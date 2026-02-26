@@ -57,7 +57,7 @@ func (Space) Fields() []ent.Field {
 // Edges of the Space.
 func (Space) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("property", Property.Type).Ref("spaces").Unique().Comment("Property contains Spaces (inverse)"),
+		edge.From("property", Property.Type).Ref("spaces").Unique().Required().Comment("Property contains Spaces (inverse)"),
 		edge.From("building", Building.Type).Ref("spaces").Unique().Comment("Building contains Spaces (inverse)"),
 		edge.To("children", Space.Type).Comment("Space has child Spaces"),
 		edge.From("parent_space", Space.Type).Ref("children").Unique().Comment("Space has child Spaces (inverse)"),
@@ -99,6 +99,21 @@ func validateSpaceConstraints() ent.Hook {
 					return v, true
 				}
 				return nil, false
+			}
+			toString := func(v interface{}) string {
+				if v == nil {
+					return ""
+				}
+				switch s := v.(type) {
+				case string:
+					return s
+				case *string:
+					if s != nil {
+						return *s
+					}
+					return ""
+				}
+				return fmt.Sprint(v)
 			}
 			toInt := func(v interface{}) (int, bool) {
 				switch i := v.(type) {
@@ -145,6 +160,21 @@ func validateSpaceConstraints() ent.Hook {
 						if btFloat, ok := toFloat(bt); ok && btFloat != 0 {
 							return nil, fmt.Errorf("%s space must have bathrooms=0, got %v", st, btFloat)
 						}
+					}
+				}
+			}
+			// common_area → leasable must be false
+			if v, ok := getField("space_type"); ok && fmt.Sprint(v) == "common_area" {
+				if lv, ok := getField("leasable"); ok && fmt.Sprint(lv) == "true" {
+					return nil, fmt.Errorf("common_area space must have leasable=false")
+				}
+			}
+			// occupied → active_lease_id must be set
+			if v, ok := getField("status"); ok && fmt.Sprint(v) == "occupied" {
+				alid, alidOk := getField("active_lease_id")
+				if !alidOk || toString(alid) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("occupied space must have active_lease_id set")
 					}
 				}
 			}

@@ -2,6 +2,9 @@
 package schema
 
 import (
+	"context"
+	"fmt"
+
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -60,6 +63,78 @@ var ValidJournalEntryTransitions = map[string][]string{
 	"pending_approval": {"posted", "draft"},
 	"posted":           {"voided"},
 	"voided":           {},
+}
+
+// Hooks returns cross-field constraint validation hooks.
+// Generated from CUE ontology conditional blocks.
+func (JournalEntry) Hooks() []ent.Hook {
+	return []ent.Hook{
+		validateJournalEntryConstraints(),
+	}
+}
+
+func validateJournalEntryConstraints() ent.Hook {
+	return func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			getField := func(name string) (interface{}, bool) {
+				if v, ok := m.Field(name); ok {
+					return v, true
+				}
+				if v, err := m.OldField(ctx, name); err == nil {
+					return v, true
+				}
+				return nil, false
+			}
+			toString := func(v interface{}) string {
+				if v == nil {
+					return ""
+				}
+				switch s := v.(type) {
+				case string:
+					return s
+				case *string:
+					if s != nil {
+						return *s
+					}
+					return ""
+				}
+				return fmt.Sprint(v)
+			}
+
+			status := ""
+			if v, ok := getField("status"); ok {
+				status = fmt.Sprint(v)
+			}
+			sourceType := ""
+			if v, ok := getField("source_type"); ok {
+				sourceType = fmt.Sprint(v)
+			}
+
+			// Posted manual entries require approval
+			if status == "posted" && sourceType == "manual" {
+				ab, abOk := getField("approved_by")
+				if !abOk || toString(ab) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("posted manual journal entry must have approved_by set")
+					}
+				}
+				if _, ok := getField("approved_at"); !ok && m.Op().Is(ent.OpCreate) {
+					return nil, fmt.Errorf("posted manual journal entry must have approved_at set")
+				}
+			}
+
+			// Voided entries must reference the reversing journal
+			if status == "voided" {
+				rbj, rbjOk := getField("reversed_by_journal_id")
+				if !rbjOk || toString(rbj) == "" {
+					if m.Op().Is(ent.OpCreate) {
+						return nil, fmt.Errorf("voided journal entry must have reversed_by_journal_id set")
+					}
+				}
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
 }
 
 // Policy of the JournalEntry.
