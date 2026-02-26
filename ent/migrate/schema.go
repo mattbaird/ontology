@@ -257,6 +257,7 @@ var (
 		{Name: "guarantor_role_ids", Type: field.TypeJSON, Nullable: true},
 		{Name: "lease_type", Type: field.TypeEnum, Enums: []string{"fixed_term", "month_to_month", "commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross", "affordable", "section_8", "student", "ground_lease", "short_term", "membership"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "pending_approval", "pending_signature", "active", "expired", "month_to_month_holdover", "renewed", "terminated", "eviction"}},
+		{Name: "description", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "liability_type", Type: field.TypeEnum, Enums: []string{"joint_and_several", "individual", "by_the_bed", "proportional"}, Default: "joint_and_several"},
 		{Name: "term", Type: field.TypeJSON},
 		{Name: "lease_commencement_date", Type: field.TypeTime, Nullable: true},
@@ -301,7 +302,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "leases_leases_subleases",
-				Columns:    []*schema.Column{LeasesColumns[47]},
+				Columns:    []*schema.Column{LeasesColumns[48]},
 				RefColumns: []*schema.Column{LeasesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

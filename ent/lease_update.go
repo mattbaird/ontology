@@ -195,6 +195,26 @@ func (_u *LeaseUpdate) SetNillableStatus(v *lease.Status) *LeaseUpdate {
 	return _u
 }
 
+// SetDescription sets the "description" field.
+func (_u *LeaseUpdate) SetDescription(v string) *LeaseUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_u *LeaseUpdate) SetNillableDescription(v *string) *LeaseUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
+	}
+	return _u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (_u *LeaseUpdate) ClearDescription() *LeaseUpdate {
+	_u.mutation.ClearDescription()
+	return _u
+}
+
 // SetLiabilityType sets the "liability_type" field.
 func (_u *LeaseUpdate) SetLiabilityType(v lease.LiabilityType) *LeaseUpdate {
 	_u.mutation.SetLiabilityType(v)
@@ -1189,6 +1209,12 @@ func (_u *LeaseUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(lease.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.Description(); ok {
+		_spec.SetField(lease.FieldDescription, field.TypeString, value)
+	}
+	if _u.mutation.DescriptionCleared() {
+		_spec.ClearField(lease.FieldDescription, field.TypeString)
+	}
 	if value, ok := _u.mutation.LiabilityType(); ok {
 		_spec.SetField(lease.FieldLiabilityType, field.TypeEnum, value)
 	}
@@ -1868,6 +1894,26 @@ func (_u *LeaseUpdateOne) SetNillableStatus(v *lease.Status) *LeaseUpdateOne {
 	if v != nil {
 		_u.SetStatus(*v)
 	}
+	return _u
+}
+
+// SetDescription sets the "description" field.
+func (_u *LeaseUpdateOne) SetDescription(v string) *LeaseUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_u *LeaseUpdateOne) SetNillableDescription(v *string) *LeaseUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
+	}
+	return _u
+}
+
+// ClearDescription clears the value of the "description" field.
+func (_u *LeaseUpdateOne) ClearDescription() *LeaseUpdateOne {
+	_u.mutation.ClearDescription()
 	return _u
 }
 
@@ -2894,6 +2940,12 @@ func (_u *LeaseUpdateOne) sqlSave(ctx context.Context) (_node *Lease, err error)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(lease.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Description(); ok {
+		_spec.SetField(lease.FieldDescription, field.TypeString, value)
+	}
+	if _u.mutation.DescriptionCleared() {
+		_spec.ClearField(lease.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.LiabilityType(); ok {
 		_spec.SetField(lease.FieldLiabilityType, field.TypeEnum, value)

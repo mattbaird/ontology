@@ -9651,6 +9651,7 @@ type LeaseMutation struct {
 	appendguarantor_role_ids         []string
 	lease_type                       *lease.LeaseType
 	status                           *lease.Status
+	description                      *string
 	liability_type                   *lease.LiabilityType
 	term                             **types.DateRange
 	lease_commencement_date          *time.Time
@@ -10324,6 +10325,55 @@ func (m *LeaseMutation) OldStatus(ctx context.Context) (v lease.Status, err erro
 // ResetStatus resets all changes to the "status" field.
 func (m *LeaseMutation) ResetStatus() {
 	m.status = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *LeaseMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *LeaseMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Lease entity.
+// If the Lease object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeaseMutation) OldDescription(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *LeaseMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[lease.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *LeaseMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[lease.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *LeaseMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, lease.FieldDescription)
 }
 
 // SetLiabilityType sets the "liability_type" field.
@@ -12434,7 +12484,7 @@ func (m *LeaseMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LeaseMutation) Fields() []string {
-	fields := make([]string, 0, 46)
+	fields := make([]string, 0, 47)
 	if m.created_at != nil {
 		fields = append(fields, lease.FieldCreatedAt)
 	}
@@ -12470,6 +12520,9 @@ func (m *LeaseMutation) Fields() []string {
 	}
 	if m.status != nil {
 		fields = append(fields, lease.FieldStatus)
+	}
+	if m.description != nil {
+		fields = append(fields, lease.FieldDescription)
 	}
 	if m.liability_type != nil {
 		fields = append(fields, lease.FieldLiabilityType)
@@ -12605,6 +12658,8 @@ func (m *LeaseMutation) Field(name string) (ent.Value, bool) {
 		return m.LeaseType()
 	case lease.FieldStatus:
 		return m.Status()
+	case lease.FieldDescription:
+		return m.Description()
 	case lease.FieldLiabilityType:
 		return m.LiabilityType()
 	case lease.FieldTerm:
@@ -12706,6 +12761,8 @@ func (m *LeaseMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLeaseType(ctx)
 	case lease.FieldStatus:
 		return m.OldStatus(ctx)
+	case lease.FieldDescription:
+		return m.OldDescription(ctx)
 	case lease.FieldLiabilityType:
 		return m.OldLiabilityType(ctx)
 	case lease.FieldTerm:
@@ -12866,6 +12923,13 @@ func (m *LeaseMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatus(v)
+		return nil
+	case lease.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
 		return nil
 	case lease.FieldLiabilityType:
 		v, ok := value.(lease.LiabilityType)
@@ -13195,6 +13259,9 @@ func (m *LeaseMutation) ClearedFields() []string {
 	if m.FieldCleared(lease.FieldGuarantorRoleIds) {
 		fields = append(fields, lease.FieldGuarantorRoleIds)
 	}
+	if m.FieldCleared(lease.FieldDescription) {
+		fields = append(fields, lease.FieldDescription)
+	}
 	if m.FieldCleared(lease.FieldLeaseCommencementDate) {
 		fields = append(fields, lease.FieldLeaseCommencementDate)
 	}
@@ -13292,6 +13359,9 @@ func (m *LeaseMutation) ClearField(name string) error {
 		return nil
 	case lease.FieldGuarantorRoleIds:
 		m.ClearGuarantorRoleIds()
+		return nil
+	case lease.FieldDescription:
+		m.ClearDescription()
 		return nil
 	case lease.FieldLeaseCommencementDate:
 		m.ClearLeaseCommencementDate()
@@ -13411,6 +13481,9 @@ func (m *LeaseMutation) ResetField(name string) error {
 		return nil
 	case lease.FieldStatus:
 		m.ResetStatus()
+		return nil
+	case lease.FieldDescription:
+		m.ResetDescription()
 		return nil
 	case lease.FieldLiabilityType:
 		m.ResetLiabilityType()

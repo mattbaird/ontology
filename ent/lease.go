@@ -46,6 +46,8 @@ type Lease struct {
 	LeaseType lease.LeaseType `json:"lease_type,omitempty"`
 	// Status holds the value of the "status" field.
 	Status lease.Status `json:"status,omitempty"`
+	// Description holds the value of the "description" field.
+	Description *string `json:"description,omitempty"`
 	// LiabilityType holds the value of the "liability_type" field.
 	LiabilityType lease.LiabilityType `json:"liability_type,omitempty"`
 	// Term holds the value of the "term" field.
@@ -220,7 +222,7 @@ func (*Lease) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case lease.FieldBaseRentAmountCents, lease.FieldSecurityDepositAmountCents, lease.FieldNoticeRequiredDays, lease.FieldCleaningFeeAmountCents:
 			values[i] = new(sql.NullInt64)
-		case lease.FieldCreatedBy, lease.FieldUpdatedBy, lease.FieldSource, lease.FieldCorrelationID, lease.FieldAgentGoalID, lease.FieldPropertyID, lease.FieldLeaseType, lease.FieldStatus, lease.FieldLiabilityType, lease.FieldBaseRentCurrency, lease.FieldSecurityDepositCurrency, lease.FieldCheckInTime, lease.FieldCheckOutTime, lease.FieldCleaningFeeCurrency, lease.FieldPlatformBookingID, lease.FieldMembershipTier, lease.FieldSubleaseBilling, lease.FieldSigningMethod, lease.FieldDocumentID:
+		case lease.FieldCreatedBy, lease.FieldUpdatedBy, lease.FieldSource, lease.FieldCorrelationID, lease.FieldAgentGoalID, lease.FieldPropertyID, lease.FieldLeaseType, lease.FieldStatus, lease.FieldDescription, lease.FieldLiabilityType, lease.FieldBaseRentCurrency, lease.FieldSecurityDepositCurrency, lease.FieldCheckInTime, lease.FieldCheckOutTime, lease.FieldCleaningFeeCurrency, lease.FieldPlatformBookingID, lease.FieldMembershipTier, lease.FieldSubleaseBilling, lease.FieldSigningMethod, lease.FieldDocumentID:
 			values[i] = new(sql.NullString)
 		case lease.FieldCreatedAt, lease.FieldUpdatedAt, lease.FieldLeaseCommencementDate, lease.FieldRentCommencementDate, lease.FieldMoveInDate, lease.FieldMoveOutDate, lease.FieldNoticeDate, lease.FieldSignedAt:
 			values[i] = new(sql.NullTime)
@@ -326,6 +328,13 @@ func (_m *Lease) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
 				_m.Status = lease.Status(value.String)
+			}
+		case lease.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				_m.Description = new(string)
+				*_m.Description = value.String
 			}
 		case lease.FieldLiabilityType:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -686,6 +695,11 @@ func (_m *Lease) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString(", ")
+	if v := _m.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("liability_type=")
 	builder.WriteString(fmt.Sprintf("%v", _m.LiabilityType))

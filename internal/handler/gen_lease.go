@@ -42,6 +42,7 @@ type createLeaseRequest struct {
 	GuarantorRoleIds           []string                  `json:"guarantor_role_ids,omitempty"`
 	LeaseType                  string                    `json:"lease_type"`
 	Status                     string                    `json:"status"`
+	Description                *string                   `json:"description,omitempty"`
 	LiabilityType              string                    `json:"liability_type"`
 	Term                       types.DateRange           `json:"term"`
 	LeaseCommencementDate      *time.Time                `json:"lease_commencement_date,omitempty"`
@@ -97,6 +98,9 @@ func (h *LeaseHandler) CreateLease(w http.ResponseWriter, r *http.Request) {
 	}
 	builder.SetLeaseType(lease.LeaseType(req.LeaseType))
 	builder.SetStatus(lease.Status(req.Status))
+	if req.Description != nil {
+		builder.SetNillableDescription(req.Description)
+	}
 	if req.LiabilityType != "" {
 		builder.SetLiabilityType(lease.LiabilityType(req.LiabilityType))
 	}
@@ -241,6 +245,7 @@ type updateLeaseRequest struct {
 	GuarantorRoleIds           []string                  `json:"guarantor_role_ids,omitempty"`
 	LeaseType                  *string                   `json:"lease_type,omitempty"`
 	Status                     *string                   `json:"status,omitempty"`
+	Description                *string                   `json:"description,omitempty"`
 	LiabilityType              *string                   `json:"liability_type,omitempty"`
 	Term                       *types.DateRange          `json:"term,omitempty"`
 	LeaseCommencementDate      *time.Time                `json:"lease_commencement_date,omitempty"`
@@ -307,6 +312,9 @@ func (h *LeaseHandler) UpdateLease(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Status != nil {
 		builder.SetStatus(lease.Status(*req.Status))
+	}
+	if req.Description != nil {
+		builder.SetNillableDescription(req.Description)
 	}
 	if req.LiabilityType != nil {
 		builder.SetLiabilityType(lease.LiabilityType(*req.LiabilityType))

@@ -36,6 +36,7 @@ func (Lease) Fields() []ent.Field {
 		field.JSON("guarantor_role_ids", []string{}).Optional(),
 		field.Enum("lease_type").Values("fixed_term", "month_to_month", "commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross", "affordable", "section_8", "student", "ground_lease", "short_term", "membership"),
 		field.Enum("status").Values("draft", "pending_approval", "pending_signature", "active", "expired", "month_to_month_holdover", "renewed", "terminated", "eviction"),
+		field.String("description").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("liability_type").Values("joint_and_several", "individual", "by_the_bed", "proportional").Default("joint_and_several"),
 		field.JSON("term", &types.DateRange{}),
 		field.Time("lease_commencement_date").Optional().Nillable(),

@@ -22,6 +22,7 @@ import "time"
 		"expired" | "month_to_month_holdover" | "renewed" |
 		"terminated" | "eviction"
 
+	description?:       string
 	// Liability
 	liability_type: *"joint_and_several" | "joint_and_several" | "individual" | "by_the_bed" | "proportional"
 

@@ -4459,6 +4459,9 @@
                         ],
                         "type": "string"
                     },
+                    "description": {
+                        "type": "string"
+                    },
                     "liability_type": {
                         "enum": [
                             "joint_and_several",
@@ -4691,6 +4694,9 @@
                         ],
                         "type": "string"
                     },
+                    "description": {
+                        "type": "string"
+                    },
                     "liability_type": {
                         "enum": [
                             "joint_and_several",
@@ -4901,6 +4907,9 @@
                             "terminated",
                             "eviction"
                         ],
+                        "type": "string"
+                    },
+                    "description": {
                         "type": "string"
                     },
                     "liability_type": {

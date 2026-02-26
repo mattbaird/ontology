@@ -241,25 +241,25 @@ func init() {
 	// lease.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	lease.UpdatedByValidator = leaseDescUpdatedBy.Validators[0].(func(string) error)
 	// leaseDescBaseRentCurrency is the schema descriptor for base_rent_currency field.
-	leaseDescBaseRentCurrency := leaseFields[11].Descriptor()
+	leaseDescBaseRentCurrency := leaseFields[12].Descriptor()
 	// lease.DefaultBaseRentCurrency holds the default value on creation for the base_rent_currency field.
 	lease.DefaultBaseRentCurrency = leaseDescBaseRentCurrency.Default.(string)
 	// lease.BaseRentCurrencyValidator is a validator for the "base_rent_currency" field. It is called by the builders before save.
 	lease.BaseRentCurrencyValidator = leaseDescBaseRentCurrency.Validators[0].(func(string) error)
 	// leaseDescSecurityDepositCurrency is the schema descriptor for security_deposit_currency field.
-	leaseDescSecurityDepositCurrency := leaseFields[13].Descriptor()
+	leaseDescSecurityDepositCurrency := leaseFields[14].Descriptor()
 	// lease.DefaultSecurityDepositCurrency holds the default value on creation for the security_deposit_currency field.
 	lease.DefaultSecurityDepositCurrency = leaseDescSecurityDepositCurrency.Default.(string)
 	// lease.SecurityDepositCurrencyValidator is a validator for the "security_deposit_currency" field. It is called by the builders before save.
 	lease.SecurityDepositCurrencyValidator = leaseDescSecurityDepositCurrency.Validators[0].(func(string) error)
 	// leaseDescCleaningFeeCurrency is the schema descriptor for cleaning_fee_currency field.
-	leaseDescCleaningFeeCurrency := leaseFields[32].Descriptor()
+	leaseDescCleaningFeeCurrency := leaseFields[33].Descriptor()
 	// lease.DefaultCleaningFeeCurrency holds the default value on creation for the cleaning_fee_currency field.
 	lease.DefaultCleaningFeeCurrency = leaseDescCleaningFeeCurrency.Default.(string)
 	// lease.CleaningFeeCurrencyValidator is a validator for the "cleaning_fee_currency" field. It is called by the builders before save.
 	lease.CleaningFeeCurrencyValidator = leaseDescCleaningFeeCurrency.Validators[0].(func(string) error)
 	// leaseDescIsSublease is the schema descriptor for is_sublease field.
-	leaseDescIsSublease := leaseFields[35].Descriptor()
+	leaseDescIsSublease := leaseFields[36].Descriptor()
 	// lease.DefaultIsSublease holds the default value on creation for the is_sublease field.
 	lease.DefaultIsSublease = leaseDescIsSublease.Default.(bool)
 	// leaseDescID is the schema descriptor for id field.

@@ -130,6 +130,20 @@ func (_c *LeaseCreate) SetStatus(v lease.Status) *LeaseCreate {
 	return _c
 }
 
+// SetDescription sets the "description" field.
+func (_c *LeaseCreate) SetDescription(v string) *LeaseCreate {
+	_c.mutation.SetDescription(v)
+	return _c
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_c *LeaseCreate) SetNillableDescription(v *string) *LeaseCreate {
+	if v != nil {
+		_c.SetDescription(*v)
+	}
+	return _c
+}
+
 // SetLiabilityType sets the "liability_type" field.
 func (_c *LeaseCreate) SetLiabilityType(v lease.LiabilityType) *LeaseCreate {
 	_c.mutation.SetLiabilityType(v)
@@ -884,6 +898,10 @@ func (_c *LeaseCreate) createSpec() (*Lease, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(lease.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
+	}
+	if value, ok := _c.mutation.Description(); ok {
+		_spec.SetField(lease.FieldDescription, field.TypeString, value)
+		_node.Description = &value
 	}
 	if value, ok := _c.mutation.LiabilityType(); ok {
 		_spec.SetField(lease.FieldLiabilityType, field.TypeEnum, value)

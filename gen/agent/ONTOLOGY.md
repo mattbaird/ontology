@@ -113,6 +113,7 @@ Fields:
 - `guarantor_role_ids (optional)`
 - `lease_type`
 - `status`
+- `description (optional)`
 - `liability_type`
 - `term`
 - `lease_commencement_date (optional)`

@@ -40,6 +40,8 @@ const (
 	FieldLeaseType = "lease_type"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
 	// FieldLiabilityType holds the string denoting the liability_type field in the database.
 	FieldLiabilityType = "liability_type"
 	// FieldTerm holds the string denoting the term field in the database.
@@ -180,6 +182,7 @@ var Columns = []string{
 	FieldGuarantorRoleIds,
 	FieldLeaseType,
 	FieldStatus,
+	FieldDescription,
 	FieldLiabilityType,
 	FieldTerm,
 	FieldLeaseCommencementDate,
@@ -525,6 +528,11 @@ func ByLeaseType(opts ...sql.OrderTermOption) OrderOption {
 // ByStatus orders the results by the status field.
 func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByDescription orders the results by the description field.
+func ByDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
 // ByLiabilityType orders the results by the liability_type field.
