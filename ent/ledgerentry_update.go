@@ -123,171 +123,6 @@ func (_u *LedgerEntryUpdate) ClearAgentGoalID() *LedgerEntryUpdate {
 	return _u
 }
 
-// SetEntryType sets the "entry_type" field.
-func (_u *LedgerEntryUpdate) SetEntryType(v ledgerentry.EntryType) *LedgerEntryUpdate {
-	_u.mutation.SetEntryType(v)
-	return _u
-}
-
-// SetNillableEntryType sets the "entry_type" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableEntryType(v *ledgerentry.EntryType) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetEntryType(*v)
-	}
-	return _u
-}
-
-// SetAmountAmountCents sets the "amount_amount_cents" field.
-func (_u *LedgerEntryUpdate) SetAmountAmountCents(v int64) *LedgerEntryUpdate {
-	_u.mutation.ResetAmountAmountCents()
-	_u.mutation.SetAmountAmountCents(v)
-	return _u
-}
-
-// SetNillableAmountAmountCents sets the "amount_amount_cents" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableAmountAmountCents(v *int64) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetAmountAmountCents(*v)
-	}
-	return _u
-}
-
-// AddAmountAmountCents adds value to the "amount_amount_cents" field.
-func (_u *LedgerEntryUpdate) AddAmountAmountCents(v int64) *LedgerEntryUpdate {
-	_u.mutation.AddAmountAmountCents(v)
-	return _u
-}
-
-// SetAmountCurrency sets the "amount_currency" field.
-func (_u *LedgerEntryUpdate) SetAmountCurrency(v string) *LedgerEntryUpdate {
-	_u.mutation.SetAmountCurrency(v)
-	return _u
-}
-
-// SetNillableAmountCurrency sets the "amount_currency" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableAmountCurrency(v *string) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetAmountCurrency(*v)
-	}
-	return _u
-}
-
-// SetEffectiveDate sets the "effective_date" field.
-func (_u *LedgerEntryUpdate) SetEffectiveDate(v time.Time) *LedgerEntryUpdate {
-	_u.mutation.SetEffectiveDate(v)
-	return _u
-}
-
-// SetNillableEffectiveDate sets the "effective_date" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableEffectiveDate(v *time.Time) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetEffectiveDate(*v)
-	}
-	return _u
-}
-
-// SetPostedDate sets the "posted_date" field.
-func (_u *LedgerEntryUpdate) SetPostedDate(v time.Time) *LedgerEntryUpdate {
-	_u.mutation.SetPostedDate(v)
-	return _u
-}
-
-// SetNillablePostedDate sets the "posted_date" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillablePostedDate(v *time.Time) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetPostedDate(*v)
-	}
-	return _u
-}
-
-// SetDescription sets the "description" field.
-func (_u *LedgerEntryUpdate) SetDescription(v string) *LedgerEntryUpdate {
-	_u.mutation.SetDescription(v)
-	return _u
-}
-
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableDescription(v *string) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetDescription(*v)
-	}
-	return _u
-}
-
-// SetChargeCode sets the "charge_code" field.
-func (_u *LedgerEntryUpdate) SetChargeCode(v string) *LedgerEntryUpdate {
-	_u.mutation.SetChargeCode(v)
-	return _u
-}
-
-// SetNillableChargeCode sets the "charge_code" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableChargeCode(v *string) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetChargeCode(*v)
-	}
-	return _u
-}
-
-// SetMemo sets the "memo" field.
-func (_u *LedgerEntryUpdate) SetMemo(v string) *LedgerEntryUpdate {
-	_u.mutation.SetMemo(v)
-	return _u
-}
-
-// SetNillableMemo sets the "memo" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableMemo(v *string) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetMemo(*v)
-	}
-	return _u
-}
-
-// ClearMemo clears the value of the "memo" field.
-func (_u *LedgerEntryUpdate) ClearMemo() *LedgerEntryUpdate {
-	_u.mutation.ClearMemo()
-	return _u
-}
-
-// SetBankAccountID sets the "bank_account_id" field.
-func (_u *LedgerEntryUpdate) SetBankAccountID(v string) *LedgerEntryUpdate {
-	_u.mutation.SetBankAccountID(v)
-	return _u
-}
-
-// SetNillableBankAccountID sets the "bank_account_id" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableBankAccountID(v *string) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetBankAccountID(*v)
-	}
-	return _u
-}
-
-// ClearBankAccountID clears the value of the "bank_account_id" field.
-func (_u *LedgerEntryUpdate) ClearBankAccountID() *LedgerEntryUpdate {
-	_u.mutation.ClearBankAccountID()
-	return _u
-}
-
-// SetBankTransactionID sets the "bank_transaction_id" field.
-func (_u *LedgerEntryUpdate) SetBankTransactionID(v string) *LedgerEntryUpdate {
-	_u.mutation.SetBankTransactionID(v)
-	return _u
-}
-
-// SetNillableBankTransactionID sets the "bank_transaction_id" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableBankTransactionID(v *string) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetBankTransactionID(*v)
-	}
-	return _u
-}
-
-// ClearBankTransactionID clears the value of the "bank_transaction_id" field.
-func (_u *LedgerEntryUpdate) ClearBankTransactionID() *LedgerEntryUpdate {
-	_u.mutation.ClearBankTransactionID()
-	return _u
-}
-
 // SetReconciled sets the "reconciled" field.
 func (_u *LedgerEntryUpdate) SetReconciled(v bool) *LedgerEntryUpdate {
 	_u.mutation.SetReconciled(v)
@@ -339,26 +174,6 @@ func (_u *LedgerEntryUpdate) SetNillableReconciledAt(v *time.Time) *LedgerEntryU
 // ClearReconciledAt clears the value of the "reconciled_at" field.
 func (_u *LedgerEntryUpdate) ClearReconciledAt() *LedgerEntryUpdate {
 	_u.mutation.ClearReconciledAt()
-	return _u
-}
-
-// SetAdjustsEntryID sets the "adjusts_entry_id" field.
-func (_u *LedgerEntryUpdate) SetAdjustsEntryID(v string) *LedgerEntryUpdate {
-	_u.mutation.SetAdjustsEntryID(v)
-	return _u
-}
-
-// SetNillableAdjustsEntryID sets the "adjusts_entry_id" field if the given value is not nil.
-func (_u *LedgerEntryUpdate) SetNillableAdjustsEntryID(v *string) *LedgerEntryUpdate {
-	if v != nil {
-		_u.SetAdjustsEntryID(*v)
-	}
-	return _u
-}
-
-// ClearAdjustsEntryID clears the value of the "adjusts_entry_id" field.
-func (_u *LedgerEntryUpdate) ClearAdjustsEntryID() *LedgerEntryUpdate {
-	_u.mutation.ClearAdjustsEntryID()
 	return _u
 }
 
@@ -552,16 +367,6 @@ func (_u *LedgerEntryUpdate) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.source": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.EntryType(); ok {
-		if err := ledgerentry.EntryTypeValidator(v); err != nil {
-			return &ValidationError{Name: "entry_type", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.entry_type": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.AmountCurrency(); ok {
-		if err := ledgerentry.AmountCurrencyValidator(v); err != nil {
-			return &ValidationError{Name: "amount_currency", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.amount_currency": %w`, err)}
-		}
-	}
 	if _u.mutation.JournalEntryCleared() && len(_u.mutation.JournalEntryIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "LedgerEntry.journal_entry"`)
 	}
@@ -610,44 +415,11 @@ func (_u *LedgerEntryUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if _u.mutation.AgentGoalIDCleared() {
 		_spec.ClearField(ledgerentry.FieldAgentGoalID, field.TypeString)
 	}
-	if value, ok := _u.mutation.EntryType(); ok {
-		_spec.SetField(ledgerentry.FieldEntryType, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.AmountAmountCents(); ok {
-		_spec.SetField(ledgerentry.FieldAmountAmountCents, field.TypeInt64, value)
-	}
-	if value, ok := _u.mutation.AddedAmountAmountCents(); ok {
-		_spec.AddField(ledgerentry.FieldAmountAmountCents, field.TypeInt64, value)
-	}
-	if value, ok := _u.mutation.AmountCurrency(); ok {
-		_spec.SetField(ledgerentry.FieldAmountCurrency, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.EffectiveDate(); ok {
-		_spec.SetField(ledgerentry.FieldEffectiveDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.PostedDate(); ok {
-		_spec.SetField(ledgerentry.FieldPostedDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Description(); ok {
-		_spec.SetField(ledgerentry.FieldDescription, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.ChargeCode(); ok {
-		_spec.SetField(ledgerentry.FieldChargeCode, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Memo(); ok {
-		_spec.SetField(ledgerentry.FieldMemo, field.TypeString, value)
-	}
 	if _u.mutation.MemoCleared() {
 		_spec.ClearField(ledgerentry.FieldMemo, field.TypeString)
 	}
-	if value, ok := _u.mutation.BankAccountID(); ok {
-		_spec.SetField(ledgerentry.FieldBankAccountID, field.TypeString, value)
-	}
 	if _u.mutation.BankAccountIDCleared() {
 		_spec.ClearField(ledgerentry.FieldBankAccountID, field.TypeString)
-	}
-	if value, ok := _u.mutation.BankTransactionID(); ok {
-		_spec.SetField(ledgerentry.FieldBankTransactionID, field.TypeString, value)
 	}
 	if _u.mutation.BankTransactionIDCleared() {
 		_spec.ClearField(ledgerentry.FieldBankTransactionID, field.TypeString)
@@ -666,9 +438,6 @@ func (_u *LedgerEntryUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	}
 	if _u.mutation.ReconciledAtCleared() {
 		_spec.ClearField(ledgerentry.FieldReconciledAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.AdjustsEntryID(); ok {
-		_spec.SetField(ledgerentry.FieldAdjustsEntryID, field.TypeString, value)
 	}
 	if _u.mutation.AdjustsEntryIDCleared() {
 		_spec.ClearField(ledgerentry.FieldAdjustsEntryID, field.TypeString)
@@ -955,171 +724,6 @@ func (_u *LedgerEntryUpdateOne) ClearAgentGoalID() *LedgerEntryUpdateOne {
 	return _u
 }
 
-// SetEntryType sets the "entry_type" field.
-func (_u *LedgerEntryUpdateOne) SetEntryType(v ledgerentry.EntryType) *LedgerEntryUpdateOne {
-	_u.mutation.SetEntryType(v)
-	return _u
-}
-
-// SetNillableEntryType sets the "entry_type" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableEntryType(v *ledgerentry.EntryType) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetEntryType(*v)
-	}
-	return _u
-}
-
-// SetAmountAmountCents sets the "amount_amount_cents" field.
-func (_u *LedgerEntryUpdateOne) SetAmountAmountCents(v int64) *LedgerEntryUpdateOne {
-	_u.mutation.ResetAmountAmountCents()
-	_u.mutation.SetAmountAmountCents(v)
-	return _u
-}
-
-// SetNillableAmountAmountCents sets the "amount_amount_cents" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableAmountAmountCents(v *int64) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetAmountAmountCents(*v)
-	}
-	return _u
-}
-
-// AddAmountAmountCents adds value to the "amount_amount_cents" field.
-func (_u *LedgerEntryUpdateOne) AddAmountAmountCents(v int64) *LedgerEntryUpdateOne {
-	_u.mutation.AddAmountAmountCents(v)
-	return _u
-}
-
-// SetAmountCurrency sets the "amount_currency" field.
-func (_u *LedgerEntryUpdateOne) SetAmountCurrency(v string) *LedgerEntryUpdateOne {
-	_u.mutation.SetAmountCurrency(v)
-	return _u
-}
-
-// SetNillableAmountCurrency sets the "amount_currency" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableAmountCurrency(v *string) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetAmountCurrency(*v)
-	}
-	return _u
-}
-
-// SetEffectiveDate sets the "effective_date" field.
-func (_u *LedgerEntryUpdateOne) SetEffectiveDate(v time.Time) *LedgerEntryUpdateOne {
-	_u.mutation.SetEffectiveDate(v)
-	return _u
-}
-
-// SetNillableEffectiveDate sets the "effective_date" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableEffectiveDate(v *time.Time) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetEffectiveDate(*v)
-	}
-	return _u
-}
-
-// SetPostedDate sets the "posted_date" field.
-func (_u *LedgerEntryUpdateOne) SetPostedDate(v time.Time) *LedgerEntryUpdateOne {
-	_u.mutation.SetPostedDate(v)
-	return _u
-}
-
-// SetNillablePostedDate sets the "posted_date" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillablePostedDate(v *time.Time) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetPostedDate(*v)
-	}
-	return _u
-}
-
-// SetDescription sets the "description" field.
-func (_u *LedgerEntryUpdateOne) SetDescription(v string) *LedgerEntryUpdateOne {
-	_u.mutation.SetDescription(v)
-	return _u
-}
-
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableDescription(v *string) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetDescription(*v)
-	}
-	return _u
-}
-
-// SetChargeCode sets the "charge_code" field.
-func (_u *LedgerEntryUpdateOne) SetChargeCode(v string) *LedgerEntryUpdateOne {
-	_u.mutation.SetChargeCode(v)
-	return _u
-}
-
-// SetNillableChargeCode sets the "charge_code" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableChargeCode(v *string) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetChargeCode(*v)
-	}
-	return _u
-}
-
-// SetMemo sets the "memo" field.
-func (_u *LedgerEntryUpdateOne) SetMemo(v string) *LedgerEntryUpdateOne {
-	_u.mutation.SetMemo(v)
-	return _u
-}
-
-// SetNillableMemo sets the "memo" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableMemo(v *string) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetMemo(*v)
-	}
-	return _u
-}
-
-// ClearMemo clears the value of the "memo" field.
-func (_u *LedgerEntryUpdateOne) ClearMemo() *LedgerEntryUpdateOne {
-	_u.mutation.ClearMemo()
-	return _u
-}
-
-// SetBankAccountID sets the "bank_account_id" field.
-func (_u *LedgerEntryUpdateOne) SetBankAccountID(v string) *LedgerEntryUpdateOne {
-	_u.mutation.SetBankAccountID(v)
-	return _u
-}
-
-// SetNillableBankAccountID sets the "bank_account_id" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableBankAccountID(v *string) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetBankAccountID(*v)
-	}
-	return _u
-}
-
-// ClearBankAccountID clears the value of the "bank_account_id" field.
-func (_u *LedgerEntryUpdateOne) ClearBankAccountID() *LedgerEntryUpdateOne {
-	_u.mutation.ClearBankAccountID()
-	return _u
-}
-
-// SetBankTransactionID sets the "bank_transaction_id" field.
-func (_u *LedgerEntryUpdateOne) SetBankTransactionID(v string) *LedgerEntryUpdateOne {
-	_u.mutation.SetBankTransactionID(v)
-	return _u
-}
-
-// SetNillableBankTransactionID sets the "bank_transaction_id" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableBankTransactionID(v *string) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetBankTransactionID(*v)
-	}
-	return _u
-}
-
-// ClearBankTransactionID clears the value of the "bank_transaction_id" field.
-func (_u *LedgerEntryUpdateOne) ClearBankTransactionID() *LedgerEntryUpdateOne {
-	_u.mutation.ClearBankTransactionID()
-	return _u
-}
-
 // SetReconciled sets the "reconciled" field.
 func (_u *LedgerEntryUpdateOne) SetReconciled(v bool) *LedgerEntryUpdateOne {
 	_u.mutation.SetReconciled(v)
@@ -1171,26 +775,6 @@ func (_u *LedgerEntryUpdateOne) SetNillableReconciledAt(v *time.Time) *LedgerEnt
 // ClearReconciledAt clears the value of the "reconciled_at" field.
 func (_u *LedgerEntryUpdateOne) ClearReconciledAt() *LedgerEntryUpdateOne {
 	_u.mutation.ClearReconciledAt()
-	return _u
-}
-
-// SetAdjustsEntryID sets the "adjusts_entry_id" field.
-func (_u *LedgerEntryUpdateOne) SetAdjustsEntryID(v string) *LedgerEntryUpdateOne {
-	_u.mutation.SetAdjustsEntryID(v)
-	return _u
-}
-
-// SetNillableAdjustsEntryID sets the "adjusts_entry_id" field if the given value is not nil.
-func (_u *LedgerEntryUpdateOne) SetNillableAdjustsEntryID(v *string) *LedgerEntryUpdateOne {
-	if v != nil {
-		_u.SetAdjustsEntryID(*v)
-	}
-	return _u
-}
-
-// ClearAdjustsEntryID clears the value of the "adjusts_entry_id" field.
-func (_u *LedgerEntryUpdateOne) ClearAdjustsEntryID() *LedgerEntryUpdateOne {
-	_u.mutation.ClearAdjustsEntryID()
 	return _u
 }
 
@@ -1397,16 +981,6 @@ func (_u *LedgerEntryUpdateOne) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.source": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.EntryType(); ok {
-		if err := ledgerentry.EntryTypeValidator(v); err != nil {
-			return &ValidationError{Name: "entry_type", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.entry_type": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.AmountCurrency(); ok {
-		if err := ledgerentry.AmountCurrencyValidator(v); err != nil {
-			return &ValidationError{Name: "amount_currency", err: fmt.Errorf(`ent: validator failed for field "LedgerEntry.amount_currency": %w`, err)}
-		}
-	}
 	if _u.mutation.JournalEntryCleared() && len(_u.mutation.JournalEntryIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "LedgerEntry.journal_entry"`)
 	}
@@ -1472,44 +1046,11 @@ func (_u *LedgerEntryUpdateOne) sqlSave(ctx context.Context) (_node *LedgerEntry
 	if _u.mutation.AgentGoalIDCleared() {
 		_spec.ClearField(ledgerentry.FieldAgentGoalID, field.TypeString)
 	}
-	if value, ok := _u.mutation.EntryType(); ok {
-		_spec.SetField(ledgerentry.FieldEntryType, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.AmountAmountCents(); ok {
-		_spec.SetField(ledgerentry.FieldAmountAmountCents, field.TypeInt64, value)
-	}
-	if value, ok := _u.mutation.AddedAmountAmountCents(); ok {
-		_spec.AddField(ledgerentry.FieldAmountAmountCents, field.TypeInt64, value)
-	}
-	if value, ok := _u.mutation.AmountCurrency(); ok {
-		_spec.SetField(ledgerentry.FieldAmountCurrency, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.EffectiveDate(); ok {
-		_spec.SetField(ledgerentry.FieldEffectiveDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.PostedDate(); ok {
-		_spec.SetField(ledgerentry.FieldPostedDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Description(); ok {
-		_spec.SetField(ledgerentry.FieldDescription, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.ChargeCode(); ok {
-		_spec.SetField(ledgerentry.FieldChargeCode, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.Memo(); ok {
-		_spec.SetField(ledgerentry.FieldMemo, field.TypeString, value)
-	}
 	if _u.mutation.MemoCleared() {
 		_spec.ClearField(ledgerentry.FieldMemo, field.TypeString)
 	}
-	if value, ok := _u.mutation.BankAccountID(); ok {
-		_spec.SetField(ledgerentry.FieldBankAccountID, field.TypeString, value)
-	}
 	if _u.mutation.BankAccountIDCleared() {
 		_spec.ClearField(ledgerentry.FieldBankAccountID, field.TypeString)
-	}
-	if value, ok := _u.mutation.BankTransactionID(); ok {
-		_spec.SetField(ledgerentry.FieldBankTransactionID, field.TypeString, value)
 	}
 	if _u.mutation.BankTransactionIDCleared() {
 		_spec.ClearField(ledgerentry.FieldBankTransactionID, field.TypeString)
@@ -1528,9 +1069,6 @@ func (_u *LedgerEntryUpdateOne) sqlSave(ctx context.Context) (_node *LedgerEntry
 	}
 	if _u.mutation.ReconciledAtCleared() {
 		_spec.ClearField(ledgerentry.FieldReconciledAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.AdjustsEntryID(); ok {
-		_spec.SetField(ledgerentry.FieldAdjustsEntryID, field.TypeString, value)
 	}
 	if _u.mutation.AdjustsEntryIDCleared() {
 		_spec.ClearField(ledgerentry.FieldAdjustsEntryID, field.TypeString)

@@ -1,0 +1,45 @@
+// GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT.
+// Source: gen/ui/schema/{{.Entity}}.schema.json
+
+import type { {{.PascalName}}CreateInput } from '../types/{{.Entity}}.types';
+
+export type ValidationErrors = Record<string, string>;
+
+export function validate{{.PascalName}}(input: Partial<{{.PascalName}}CreateInput>): ValidationErrors {
+  const errors: ValidationErrors = {};
+
+{{- range .Validation.FieldRules}}
+{{- if eq .Rule "required"}}
+  if (input.{{.Field | dotToOptional}} == null || input.{{.Field | dotToOptional}} === '') {
+    errors['{{.Field}}'] = '{{.Field | fieldLabel}} is required';
+  }
+{{- end}}
+{{- if eq .Rule "min"}}
+  if (input.{{.Field | dotToOptional}} != null && input.{{.Field | dotToOptional}} < {{.Value}}) {
+    errors['{{.Field}}'] = '{{.Field | fieldLabel}} must be at least {{.Value}}';
+  }
+{{- end}}
+{{- if eq .Rule "max"}}
+  if (input.{{.Field | dotToOptional}} != null && input.{{.Field | dotToOptional}} > {{.Value}}) {
+    errors['{{.Field}}'] = '{{.Field | fieldLabel}} must be at most {{.Value}}';
+  }
+{{- end}}
+{{- if eq .Rule "min_length"}}
+  if (input.{{.Field | dotToOptional}} != null && input.{{.Field | dotToOptional}}.length < {{.Value}}) {
+    errors['{{.Field}}'] = '{{.Field | fieldLabel}} must have at least {{.Value}} item(s)';
+  }
+{{- end}}
+{{- if eq .Rule "pattern"}}
+  if (input.{{.Field | dotToOptional}} != null && !new RegExp('{{.Value}}').test(input.{{.Field | dotToOptional}})) {
+    errors['{{.Field}}'] = '{{.Field | fieldLabel}} format is invalid';
+  }
+{{- end}}
+{{- end}}
+
+  // Cross-field validation
+{{- range .Validation.CrossFieldRules}}
+  {{crossFieldCheck .}}
+{{- end}}
+
+  return errors;
+}

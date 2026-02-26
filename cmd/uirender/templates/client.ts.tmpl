@@ -1,0 +1,51 @@
+// GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT.
+// Base API client for Propeller UI
+
+export interface ApiClientConfig {
+  baseUrl: string;
+  getAuthHeaders?: () => Record<string, string>;
+}
+
+let config: ApiClientConfig = {
+  baseUrl: '',
+};
+
+export function configureApiClient(c: ApiClientConfig) {
+  config = c;
+}
+
+async function request<T>(method: string, path: string, body?: any, params?: Record<string, any>): Promise<T> {
+  const base = config.baseUrl || window.location.origin;
+  const url = new URL(path, base);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      if (value != null) url.searchParams.set(key, String(value));
+    });
+  }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(config.getAuthHeaders?.() ?? {}),
+  };
+
+  const res = await fetch(url.toString(), {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (!res.ok) {
+    const errorBody = await res.text();
+    throw new Error(`API ${method} ${path} failed (${res.status}): ${errorBody}`);
+  }
+
+  if (res.status === 204) return undefined as T;
+  return res.json();
+}
+
+export const apiClient = {
+  get: <T>(path: string, params?: Record<string, any>) => request<T>('GET', path, undefined, params),
+  post: <T>(path: string, body?: any) => request<T>('POST', path, body),
+  patch: <T>(path: string, body?: any) => request<T>('PATCH', path, body),
+  delete: (path: string) => request<void>('DELETE', path),
+};

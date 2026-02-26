@@ -26,6 +26,8 @@ type fieldDef struct {
 	Optional   bool
 	JSONType   string // Go type for JSON fields
 	Default    string
+	Computed   bool   // @computed() — exclude from create and update
+	Immutable  bool   // @immutable() — exclude from update
 }
 
 type edgeDef struct {
@@ -107,6 +109,26 @@ var goInitialisms = map[string]bool{
 	"ttl": true, "udp": true, "ui": true, "uid": true, "uuid": true,
 	"uri": true, "url": true, "utf8": true, "vm": true, "xml": true,
 	"xmpp": true, "xsrf": true, "xss": true,
+}
+
+// ── CUE attribute extraction ─────────────────────────────────────────────────
+
+// fieldAttrs holds cross-cutting metadata read from CUE @attr() annotations.
+type fieldAttrs struct {
+	computed  bool
+	immutable bool
+}
+
+// extractAttributes reads CUE field-level attributes from a value.
+func extractAttributes(v cue.Value) fieldAttrs {
+	var fa fieldAttrs
+	if a := v.Attribute("computed"); a.Err() == nil {
+		fa.computed = true
+	}
+	if a := v.Attribute("immutable"); a.Err() == nil {
+		fa.immutable = true
+	}
+	return fa
 }
 
 // ─── CUE Parsing ────────────────────────────────────────────────────────────
@@ -323,6 +345,9 @@ func parseEntities(val cue.Value) map[string]*entityInfo {
 			}
 			fd := classifyField(fLabel, fIter.Value(), fIter.IsOptional())
 			if fd != nil {
+				attrs := extractAttributes(fIter.Value())
+				fd.Computed = attrs.computed
+				fd.Immutable = attrs.immutable
 				ent.Fields = append(ent.Fields, *fd)
 			}
 		}
@@ -746,6 +771,9 @@ func writeEntitySection(buf *cw, handlerType string, ent *entityInfo, pkg string
 func writeCreateStruct(buf *cw, ent *entityInfo, pkg string) {
 	buf.line("type create%sRequest struct {", ent.Name)
 	for _, f := range ent.Fields {
+		if f.Computed {
+			continue // @computed() fields are server-managed
+		}
 		writeStructField(buf, f, false)
 	}
 	for _, efk := range ent.EdgeFKs {
@@ -772,6 +800,9 @@ func writeCreateHandler(buf *cw, handlerType string, ent *entityInfo, pkg, opNam
 
 	// Set fields
 	for _, f := range ent.Fields {
+		if f.Computed {
+			continue // @computed() fields are server-managed
+		}
 		writeCreateSetter(buf, f, pkg)
 	}
 	// Set edge FK fields
@@ -833,6 +864,9 @@ func writeListHandler(buf *cw, handlerType string, ent *entityInfo, pkg, opName 
 func writeUpdateStruct(buf *cw, ent *entityInfo, pkg string) {
 	buf.line("type update%sRequest struct {", ent.Name)
 	for _, f := range ent.Fields {
+		if f.Computed || f.Immutable {
+			continue // @computed() and @immutable() fields cannot be updated
+		}
 		writeStructField(buf, f, true)
 	}
 	for _, efk := range ent.EdgeFKs {
@@ -857,6 +891,9 @@ func writeUpdateHandler(buf *cw, handlerType string, ent *entityInfo, pkg, opNam
 
 	// Set fields
 	for _, f := range ent.Fields {
+		if f.Computed || f.Immutable {
+			continue // @computed() and @immutable() fields cannot be updated
+		}
 		writeUpdateSetter(buf, f, pkg)
 	}
 	// Set edge FK fields

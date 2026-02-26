@@ -32,20 +32,20 @@ func (JournalEntry) Mixin() []ent.Mixin {
 func (JournalEntry) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.Time("entry_date"),
+		field.Time("entry_date").Immutable(),
 		field.Time("posted_date"),
-		field.String("description").SchemaType(map[string]string{"postgres": "varchar"}),
-		field.Enum("source_type").Values("manual", "auto_charge", "payment", "bank_import", "cam_reconciliation", "depreciation", "accrual", "intercompany", "management_fee", "system"),
-		field.String("source_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("description").Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.Enum("source_type").Values("manual", "auto_charge", "payment", "bank_import", "cam_reconciliation", "depreciation", "accrual", "intercompany", "management_fee", "system").Immutable(),
+		field.String("source_id").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("status").Values("draft", "pending_approval", "posted", "voided"),
 		field.String("approved_by").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Time("approved_at").Optional().Nillable(),
-		field.String("batch_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("entity_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("property_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("reverses_journal_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("batch_id").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("entity_id").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("property_id").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("reverses_journal_id").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("reversed_by_journal_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.JSON("lines", []types.JournalLine{}),
+		field.JSON("lines", []types.JournalLine{}).Immutable(),
 	}
 }
 
@@ -135,10 +135,4 @@ func validateJournalEntryConstraints() ent.Hook {
 			return next.Mutate(ctx, m)
 		})
 	}
-}
-
-// Policy of the JournalEntry.
-// Immutable entity: updates and deletes are denied.
-func (JournalEntry) Policy() ent.Policy {
-	return nil // Immutability enforced via hooks at handler level
 }

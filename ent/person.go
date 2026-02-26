@@ -44,7 +44,7 @@ type Person struct {
 	// DateOfBirth holds the value of the "date_of_birth" field.
 	DateOfBirth *time.Time `json:"date_of_birth,omitempty"`
 	// SsnLastFour holds the value of the "ssn_last_four" field.
-	SsnLastFour *string `json:"ssn_last_four,omitempty"`
+	SsnLastFour *string `json:"-"`
 	// ContactMethods holds the value of the "contact_methods" field.
 	ContactMethods []types.ContactMethod `json:"contact_methods,omitempty"`
 	// PreferredContact holds the value of the "preferred_contact" field.
@@ -388,10 +388,7 @@ func (_m *Person) String() string {
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	if v := _m.SsnLastFour; v != nil {
-		builder.WriteString("ssn_last_four=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("ssn_last_four=<sensitive>")
 	builder.WriteString(", ")
 	builder.WriteString("contact_methods=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ContactMethods))

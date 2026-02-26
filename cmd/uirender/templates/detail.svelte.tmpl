@@ -1,0 +1,77 @@
+<!-- GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT. -->
+<!-- Source: gen/ui/schema/{{.Entity}}.schema.json -->
+
+<script lang="ts">
+{{- if .HasStatus}}
+  import {{.PascalName}}StatusBadge from './{{.PascalName}}StatusBadge.svelte';
+{{- end}}
+{{- if .HasStateMachine}}
+  import {{.PascalName}}Actions from './{{.PascalName}}Actions.svelte';
+{{- end}}
+  import MoneyDisplay from '../../shared/MoneyDisplay.svelte';
+  import DateRangeDisplay from '../../shared/DateRangeDisplay.svelte';
+  import AddressDisplay from '../../shared/AddressDisplay.svelte';
+  import EnumBadge from '../../shared/EnumBadge.svelte';
+  import FormSection from '../../shared/FormSection.svelte';
+  import { entityStore } from '../../../stores/entity';
+  import type { {{.PascalName}} } from '../../../types/{{.Entity}}.types';
+
+  export let id: string;
+
+  const store = entityStore<{{.PascalName}}>('{{.API.BasePath}}', id);
+</script>
+
+{#if $store.data}
+  {@const entity = $store.data}
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <h1 class="h2">{{.DisplayName}}</h1>
+{{- if .HasStatus}}
+      <{{.PascalName}}StatusBadge status={entity.status} />
+{{- end}}
+    </div>
+{{- if .HasStateMachine}}
+    <{{.PascalName}}Actions
+      entityId={entity.id}
+      currentStatus={entity.status}
+      on:transition={() => store.refetch()}
+    />
+{{- end}}
+  </div>
+
+{{- range .Detail.Sections}}
+
+  {{- if .VisibleWhen}}
+  {#if entity.{{.VisibleWhen.Field}}}
+  {{- end}}
+  <FormSection title="{{.Title}}"{{if .EmbeddedObject}} collapsible{{end}}>
+    <div class="grid grid-cols-2 gap-4">
+    {{- range .Fields}}
+      <div>
+        <dt class="text-sm text-surface-500">{{. | fieldLabel}}</dt>
+        <dd>{entity.{{.}}}</dd>
+      </div>
+    {{- end}}
+    {{- if .EmbeddedObject}}
+      <!-- Embedded object: {{.EmbeddedObject}} -->
+    {{- end}}
+    </div>
+  </FormSection>
+  {{- if .VisibleWhen}}
+  {/if}
+  {{- end}}
+{{- end}}
+
+{{- range .Detail.RelatedSections}}
+  <FormSection title="{{.Title}}" collapsible>
+    <!-- Related: {{.Relationship}} ({{.Entity}}) -->
+    <p class="text-surface-400">Related {{.Entity}} data</p>
+  </FormSection>
+{{- end}}
+{:else if $store.loading}
+  <p>Loading...</p>
+{:else if $store.error}
+  <p class="text-error-500">Error: {$store.error.message}</p>
+{/if}

@@ -10,13 +10,11 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent/journalentry"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/predicate"
-	"github.com/matthewbaird/ontology/internal/types"
 )
 
 // JournalEntryUpdate is the builder for updating JournalEntry entities.
@@ -120,20 +118,6 @@ func (_u *JournalEntryUpdate) ClearAgentGoalID() *JournalEntryUpdate {
 	return _u
 }
 
-// SetEntryDate sets the "entry_date" field.
-func (_u *JournalEntryUpdate) SetEntryDate(v time.Time) *JournalEntryUpdate {
-	_u.mutation.SetEntryDate(v)
-	return _u
-}
-
-// SetNillableEntryDate sets the "entry_date" field if the given value is not nil.
-func (_u *JournalEntryUpdate) SetNillableEntryDate(v *time.Time) *JournalEntryUpdate {
-	if v != nil {
-		_u.SetEntryDate(*v)
-	}
-	return _u
-}
-
 // SetPostedDate sets the "posted_date" field.
 func (_u *JournalEntryUpdate) SetPostedDate(v time.Time) *JournalEntryUpdate {
 	_u.mutation.SetPostedDate(v)
@@ -145,54 +129,6 @@ func (_u *JournalEntryUpdate) SetNillablePostedDate(v *time.Time) *JournalEntryU
 	if v != nil {
 		_u.SetPostedDate(*v)
 	}
-	return _u
-}
-
-// SetDescription sets the "description" field.
-func (_u *JournalEntryUpdate) SetDescription(v string) *JournalEntryUpdate {
-	_u.mutation.SetDescription(v)
-	return _u
-}
-
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (_u *JournalEntryUpdate) SetNillableDescription(v *string) *JournalEntryUpdate {
-	if v != nil {
-		_u.SetDescription(*v)
-	}
-	return _u
-}
-
-// SetSourceType sets the "source_type" field.
-func (_u *JournalEntryUpdate) SetSourceType(v journalentry.SourceType) *JournalEntryUpdate {
-	_u.mutation.SetSourceType(v)
-	return _u
-}
-
-// SetNillableSourceType sets the "source_type" field if the given value is not nil.
-func (_u *JournalEntryUpdate) SetNillableSourceType(v *journalentry.SourceType) *JournalEntryUpdate {
-	if v != nil {
-		_u.SetSourceType(*v)
-	}
-	return _u
-}
-
-// SetSourceID sets the "source_id" field.
-func (_u *JournalEntryUpdate) SetSourceID(v string) *JournalEntryUpdate {
-	_u.mutation.SetSourceID(v)
-	return _u
-}
-
-// SetNillableSourceID sets the "source_id" field if the given value is not nil.
-func (_u *JournalEntryUpdate) SetNillableSourceID(v *string) *JournalEntryUpdate {
-	if v != nil {
-		_u.SetSourceID(*v)
-	}
-	return _u
-}
-
-// ClearSourceID clears the value of the "source_id" field.
-func (_u *JournalEntryUpdate) ClearSourceID() *JournalEntryUpdate {
-	_u.mutation.ClearSourceID()
 	return _u
 }
 
@@ -250,86 +186,6 @@ func (_u *JournalEntryUpdate) ClearApprovedAt() *JournalEntryUpdate {
 	return _u
 }
 
-// SetBatchID sets the "batch_id" field.
-func (_u *JournalEntryUpdate) SetBatchID(v string) *JournalEntryUpdate {
-	_u.mutation.SetBatchID(v)
-	return _u
-}
-
-// SetNillableBatchID sets the "batch_id" field if the given value is not nil.
-func (_u *JournalEntryUpdate) SetNillableBatchID(v *string) *JournalEntryUpdate {
-	if v != nil {
-		_u.SetBatchID(*v)
-	}
-	return _u
-}
-
-// ClearBatchID clears the value of the "batch_id" field.
-func (_u *JournalEntryUpdate) ClearBatchID() *JournalEntryUpdate {
-	_u.mutation.ClearBatchID()
-	return _u
-}
-
-// SetEntityID sets the "entity_id" field.
-func (_u *JournalEntryUpdate) SetEntityID(v string) *JournalEntryUpdate {
-	_u.mutation.SetEntityID(v)
-	return _u
-}
-
-// SetNillableEntityID sets the "entity_id" field if the given value is not nil.
-func (_u *JournalEntryUpdate) SetNillableEntityID(v *string) *JournalEntryUpdate {
-	if v != nil {
-		_u.SetEntityID(*v)
-	}
-	return _u
-}
-
-// ClearEntityID clears the value of the "entity_id" field.
-func (_u *JournalEntryUpdate) ClearEntityID() *JournalEntryUpdate {
-	_u.mutation.ClearEntityID()
-	return _u
-}
-
-// SetPropertyID sets the "property_id" field.
-func (_u *JournalEntryUpdate) SetPropertyID(v string) *JournalEntryUpdate {
-	_u.mutation.SetPropertyID(v)
-	return _u
-}
-
-// SetNillablePropertyID sets the "property_id" field if the given value is not nil.
-func (_u *JournalEntryUpdate) SetNillablePropertyID(v *string) *JournalEntryUpdate {
-	if v != nil {
-		_u.SetPropertyID(*v)
-	}
-	return _u
-}
-
-// ClearPropertyID clears the value of the "property_id" field.
-func (_u *JournalEntryUpdate) ClearPropertyID() *JournalEntryUpdate {
-	_u.mutation.ClearPropertyID()
-	return _u
-}
-
-// SetReversesJournalID sets the "reverses_journal_id" field.
-func (_u *JournalEntryUpdate) SetReversesJournalID(v string) *JournalEntryUpdate {
-	_u.mutation.SetReversesJournalID(v)
-	return _u
-}
-
-// SetNillableReversesJournalID sets the "reverses_journal_id" field if the given value is not nil.
-func (_u *JournalEntryUpdate) SetNillableReversesJournalID(v *string) *JournalEntryUpdate {
-	if v != nil {
-		_u.SetReversesJournalID(*v)
-	}
-	return _u
-}
-
-// ClearReversesJournalID clears the value of the "reverses_journal_id" field.
-func (_u *JournalEntryUpdate) ClearReversesJournalID() *JournalEntryUpdate {
-	_u.mutation.ClearReversesJournalID()
-	return _u
-}
-
 // SetReversedByJournalID sets the "reversed_by_journal_id" field.
 func (_u *JournalEntryUpdate) SetReversedByJournalID(v string) *JournalEntryUpdate {
 	_u.mutation.SetReversedByJournalID(v)
@@ -347,18 +203,6 @@ func (_u *JournalEntryUpdate) SetNillableReversedByJournalID(v *string) *Journal
 // ClearReversedByJournalID clears the value of the "reversed_by_journal_id" field.
 func (_u *JournalEntryUpdate) ClearReversedByJournalID() *JournalEntryUpdate {
 	_u.mutation.ClearReversedByJournalID()
-	return _u
-}
-
-// SetLines sets the "lines" field.
-func (_u *JournalEntryUpdate) SetLines(v []types.JournalLine) *JournalEntryUpdate {
-	_u.mutation.SetLines(v)
-	return _u
-}
-
-// AppendLines appends value to the "lines" field.
-func (_u *JournalEntryUpdate) AppendLines(v []types.JournalLine) *JournalEntryUpdate {
-	_u.mutation.AppendLines(v)
 	return _u
 }
 
@@ -462,11 +306,6 @@ func (_u *JournalEntryUpdate) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "JournalEntry.source": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.SourceType(); ok {
-		if err := journalentry.SourceTypeValidator(v); err != nil {
-			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "JournalEntry.source_type": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := journalentry.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "JournalEntry.status": %w`, err)}
@@ -511,20 +350,8 @@ func (_u *JournalEntryUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if _u.mutation.AgentGoalIDCleared() {
 		_spec.ClearField(journalentry.FieldAgentGoalID, field.TypeString)
 	}
-	if value, ok := _u.mutation.EntryDate(); ok {
-		_spec.SetField(journalentry.FieldEntryDate, field.TypeTime, value)
-	}
 	if value, ok := _u.mutation.PostedDate(); ok {
 		_spec.SetField(journalentry.FieldPostedDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Description(); ok {
-		_spec.SetField(journalentry.FieldDescription, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.SourceType(); ok {
-		_spec.SetField(journalentry.FieldSourceType, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.SourceID(); ok {
-		_spec.SetField(journalentry.FieldSourceID, field.TypeString, value)
 	}
 	if _u.mutation.SourceIDCleared() {
 		_spec.ClearField(journalentry.FieldSourceID, field.TypeString)
@@ -544,26 +371,14 @@ func (_u *JournalEntryUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if _u.mutation.ApprovedAtCleared() {
 		_spec.ClearField(journalentry.FieldApprovedAt, field.TypeTime)
 	}
-	if value, ok := _u.mutation.BatchID(); ok {
-		_spec.SetField(journalentry.FieldBatchID, field.TypeString, value)
-	}
 	if _u.mutation.BatchIDCleared() {
 		_spec.ClearField(journalentry.FieldBatchID, field.TypeString)
-	}
-	if value, ok := _u.mutation.EntityID(); ok {
-		_spec.SetField(journalentry.FieldEntityID, field.TypeString, value)
 	}
 	if _u.mutation.EntityIDCleared() {
 		_spec.ClearField(journalentry.FieldEntityID, field.TypeString)
 	}
-	if value, ok := _u.mutation.PropertyID(); ok {
-		_spec.SetField(journalentry.FieldPropertyID, field.TypeString, value)
-	}
 	if _u.mutation.PropertyIDCleared() {
 		_spec.ClearField(journalentry.FieldPropertyID, field.TypeString)
-	}
-	if value, ok := _u.mutation.ReversesJournalID(); ok {
-		_spec.SetField(journalentry.FieldReversesJournalID, field.TypeString, value)
 	}
 	if _u.mutation.ReversesJournalIDCleared() {
 		_spec.ClearField(journalentry.FieldReversesJournalID, field.TypeString)
@@ -573,14 +388,6 @@ func (_u *JournalEntryUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if _u.mutation.ReversedByJournalIDCleared() {
 		_spec.ClearField(journalentry.FieldReversedByJournalID, field.TypeString)
-	}
-	if value, ok := _u.mutation.Lines(); ok {
-		_spec.SetField(journalentry.FieldLines, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedLines(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, journalentry.FieldLines, value)
-		})
 	}
 	if _u.mutation.LedgerEntriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -735,20 +542,6 @@ func (_u *JournalEntryUpdateOne) ClearAgentGoalID() *JournalEntryUpdateOne {
 	return _u
 }
 
-// SetEntryDate sets the "entry_date" field.
-func (_u *JournalEntryUpdateOne) SetEntryDate(v time.Time) *JournalEntryUpdateOne {
-	_u.mutation.SetEntryDate(v)
-	return _u
-}
-
-// SetNillableEntryDate sets the "entry_date" field if the given value is not nil.
-func (_u *JournalEntryUpdateOne) SetNillableEntryDate(v *time.Time) *JournalEntryUpdateOne {
-	if v != nil {
-		_u.SetEntryDate(*v)
-	}
-	return _u
-}
-
 // SetPostedDate sets the "posted_date" field.
 func (_u *JournalEntryUpdateOne) SetPostedDate(v time.Time) *JournalEntryUpdateOne {
 	_u.mutation.SetPostedDate(v)
@@ -760,54 +553,6 @@ func (_u *JournalEntryUpdateOne) SetNillablePostedDate(v *time.Time) *JournalEnt
 	if v != nil {
 		_u.SetPostedDate(*v)
 	}
-	return _u
-}
-
-// SetDescription sets the "description" field.
-func (_u *JournalEntryUpdateOne) SetDescription(v string) *JournalEntryUpdateOne {
-	_u.mutation.SetDescription(v)
-	return _u
-}
-
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (_u *JournalEntryUpdateOne) SetNillableDescription(v *string) *JournalEntryUpdateOne {
-	if v != nil {
-		_u.SetDescription(*v)
-	}
-	return _u
-}
-
-// SetSourceType sets the "source_type" field.
-func (_u *JournalEntryUpdateOne) SetSourceType(v journalentry.SourceType) *JournalEntryUpdateOne {
-	_u.mutation.SetSourceType(v)
-	return _u
-}
-
-// SetNillableSourceType sets the "source_type" field if the given value is not nil.
-func (_u *JournalEntryUpdateOne) SetNillableSourceType(v *journalentry.SourceType) *JournalEntryUpdateOne {
-	if v != nil {
-		_u.SetSourceType(*v)
-	}
-	return _u
-}
-
-// SetSourceID sets the "source_id" field.
-func (_u *JournalEntryUpdateOne) SetSourceID(v string) *JournalEntryUpdateOne {
-	_u.mutation.SetSourceID(v)
-	return _u
-}
-
-// SetNillableSourceID sets the "source_id" field if the given value is not nil.
-func (_u *JournalEntryUpdateOne) SetNillableSourceID(v *string) *JournalEntryUpdateOne {
-	if v != nil {
-		_u.SetSourceID(*v)
-	}
-	return _u
-}
-
-// ClearSourceID clears the value of the "source_id" field.
-func (_u *JournalEntryUpdateOne) ClearSourceID() *JournalEntryUpdateOne {
-	_u.mutation.ClearSourceID()
 	return _u
 }
 
@@ -865,86 +610,6 @@ func (_u *JournalEntryUpdateOne) ClearApprovedAt() *JournalEntryUpdateOne {
 	return _u
 }
 
-// SetBatchID sets the "batch_id" field.
-func (_u *JournalEntryUpdateOne) SetBatchID(v string) *JournalEntryUpdateOne {
-	_u.mutation.SetBatchID(v)
-	return _u
-}
-
-// SetNillableBatchID sets the "batch_id" field if the given value is not nil.
-func (_u *JournalEntryUpdateOne) SetNillableBatchID(v *string) *JournalEntryUpdateOne {
-	if v != nil {
-		_u.SetBatchID(*v)
-	}
-	return _u
-}
-
-// ClearBatchID clears the value of the "batch_id" field.
-func (_u *JournalEntryUpdateOne) ClearBatchID() *JournalEntryUpdateOne {
-	_u.mutation.ClearBatchID()
-	return _u
-}
-
-// SetEntityID sets the "entity_id" field.
-func (_u *JournalEntryUpdateOne) SetEntityID(v string) *JournalEntryUpdateOne {
-	_u.mutation.SetEntityID(v)
-	return _u
-}
-
-// SetNillableEntityID sets the "entity_id" field if the given value is not nil.
-func (_u *JournalEntryUpdateOne) SetNillableEntityID(v *string) *JournalEntryUpdateOne {
-	if v != nil {
-		_u.SetEntityID(*v)
-	}
-	return _u
-}
-
-// ClearEntityID clears the value of the "entity_id" field.
-func (_u *JournalEntryUpdateOne) ClearEntityID() *JournalEntryUpdateOne {
-	_u.mutation.ClearEntityID()
-	return _u
-}
-
-// SetPropertyID sets the "property_id" field.
-func (_u *JournalEntryUpdateOne) SetPropertyID(v string) *JournalEntryUpdateOne {
-	_u.mutation.SetPropertyID(v)
-	return _u
-}
-
-// SetNillablePropertyID sets the "property_id" field if the given value is not nil.
-func (_u *JournalEntryUpdateOne) SetNillablePropertyID(v *string) *JournalEntryUpdateOne {
-	if v != nil {
-		_u.SetPropertyID(*v)
-	}
-	return _u
-}
-
-// ClearPropertyID clears the value of the "property_id" field.
-func (_u *JournalEntryUpdateOne) ClearPropertyID() *JournalEntryUpdateOne {
-	_u.mutation.ClearPropertyID()
-	return _u
-}
-
-// SetReversesJournalID sets the "reverses_journal_id" field.
-func (_u *JournalEntryUpdateOne) SetReversesJournalID(v string) *JournalEntryUpdateOne {
-	_u.mutation.SetReversesJournalID(v)
-	return _u
-}
-
-// SetNillableReversesJournalID sets the "reverses_journal_id" field if the given value is not nil.
-func (_u *JournalEntryUpdateOne) SetNillableReversesJournalID(v *string) *JournalEntryUpdateOne {
-	if v != nil {
-		_u.SetReversesJournalID(*v)
-	}
-	return _u
-}
-
-// ClearReversesJournalID clears the value of the "reverses_journal_id" field.
-func (_u *JournalEntryUpdateOne) ClearReversesJournalID() *JournalEntryUpdateOne {
-	_u.mutation.ClearReversesJournalID()
-	return _u
-}
-
 // SetReversedByJournalID sets the "reversed_by_journal_id" field.
 func (_u *JournalEntryUpdateOne) SetReversedByJournalID(v string) *JournalEntryUpdateOne {
 	_u.mutation.SetReversedByJournalID(v)
@@ -962,18 +627,6 @@ func (_u *JournalEntryUpdateOne) SetNillableReversedByJournalID(v *string) *Jour
 // ClearReversedByJournalID clears the value of the "reversed_by_journal_id" field.
 func (_u *JournalEntryUpdateOne) ClearReversedByJournalID() *JournalEntryUpdateOne {
 	_u.mutation.ClearReversedByJournalID()
-	return _u
-}
-
-// SetLines sets the "lines" field.
-func (_u *JournalEntryUpdateOne) SetLines(v []types.JournalLine) *JournalEntryUpdateOne {
-	_u.mutation.SetLines(v)
-	return _u
-}
-
-// AppendLines appends value to the "lines" field.
-func (_u *JournalEntryUpdateOne) AppendLines(v []types.JournalLine) *JournalEntryUpdateOne {
-	_u.mutation.AppendLines(v)
 	return _u
 }
 
@@ -1090,11 +743,6 @@ func (_u *JournalEntryUpdateOne) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "JournalEntry.source": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.SourceType(); ok {
-		if err := journalentry.SourceTypeValidator(v); err != nil {
-			return &ValidationError{Name: "source_type", err: fmt.Errorf(`ent: validator failed for field "JournalEntry.source_type": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Status(); ok {
 		if err := journalentry.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "JournalEntry.status": %w`, err)}
@@ -1156,20 +804,8 @@ func (_u *JournalEntryUpdateOne) sqlSave(ctx context.Context) (_node *JournalEnt
 	if _u.mutation.AgentGoalIDCleared() {
 		_spec.ClearField(journalentry.FieldAgentGoalID, field.TypeString)
 	}
-	if value, ok := _u.mutation.EntryDate(); ok {
-		_spec.SetField(journalentry.FieldEntryDate, field.TypeTime, value)
-	}
 	if value, ok := _u.mutation.PostedDate(); ok {
 		_spec.SetField(journalentry.FieldPostedDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Description(); ok {
-		_spec.SetField(journalentry.FieldDescription, field.TypeString, value)
-	}
-	if value, ok := _u.mutation.SourceType(); ok {
-		_spec.SetField(journalentry.FieldSourceType, field.TypeEnum, value)
-	}
-	if value, ok := _u.mutation.SourceID(); ok {
-		_spec.SetField(journalentry.FieldSourceID, field.TypeString, value)
 	}
 	if _u.mutation.SourceIDCleared() {
 		_spec.ClearField(journalentry.FieldSourceID, field.TypeString)
@@ -1189,26 +825,14 @@ func (_u *JournalEntryUpdateOne) sqlSave(ctx context.Context) (_node *JournalEnt
 	if _u.mutation.ApprovedAtCleared() {
 		_spec.ClearField(journalentry.FieldApprovedAt, field.TypeTime)
 	}
-	if value, ok := _u.mutation.BatchID(); ok {
-		_spec.SetField(journalentry.FieldBatchID, field.TypeString, value)
-	}
 	if _u.mutation.BatchIDCleared() {
 		_spec.ClearField(journalentry.FieldBatchID, field.TypeString)
-	}
-	if value, ok := _u.mutation.EntityID(); ok {
-		_spec.SetField(journalentry.FieldEntityID, field.TypeString, value)
 	}
 	if _u.mutation.EntityIDCleared() {
 		_spec.ClearField(journalentry.FieldEntityID, field.TypeString)
 	}
-	if value, ok := _u.mutation.PropertyID(); ok {
-		_spec.SetField(journalentry.FieldPropertyID, field.TypeString, value)
-	}
 	if _u.mutation.PropertyIDCleared() {
 		_spec.ClearField(journalentry.FieldPropertyID, field.TypeString)
-	}
-	if value, ok := _u.mutation.ReversesJournalID(); ok {
-		_spec.SetField(journalentry.FieldReversesJournalID, field.TypeString, value)
 	}
 	if _u.mutation.ReversesJournalIDCleared() {
 		_spec.ClearField(journalentry.FieldReversesJournalID, field.TypeString)
@@ -1218,14 +842,6 @@ func (_u *JournalEntryUpdateOne) sqlSave(ctx context.Context) (_node *JournalEnt
 	}
 	if _u.mutation.ReversedByJournalIDCleared() {
 		_spec.ClearField(journalentry.FieldReversedByJournalID, field.TypeString)
-	}
-	if value, ok := _u.mutation.Lines(); ok {
-		_spec.SetField(journalentry.FieldLines, field.TypeJSON, value)
-	}
-	if value, ok := _u.mutation.AppendedLines(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, journalentry.FieldLines, value)
-		})
 	}
 	if _u.mutation.LedgerEntriesCleared() {
 		edge := &sqlgraph.EdgeSpec{

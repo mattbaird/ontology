@@ -1,4 +1,4 @@
-.PHONY: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen generate ci-check clean serve migrate-diff migrate-apply migrate-status
+.PHONY: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen uigen uirender generate-ui generate ci-check clean serve migrate-diff migrate-apply migrate-status
 
 # Validate CUE ontology
 validate:
@@ -36,8 +36,19 @@ agentgen:
 openapigen:
 	go run ./cmd/openapigen
 
+# Generate UI schemas from CUE ontology (Layer 1)
+uigen:
+	go run ./cmd/uigen
+
+# Generate Svelte components from UI schemas (Layer 2)
+uirender:
+	go run ./cmd/uirender
+
+# Generate all UI artifacts (schemas + components)
+generate-ui: uigen uirender
+
 # Full generation pipeline
-generate: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen
+generate: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen generate-ui
 
 # CI check: verify generated code matches ontology (no drift)
 ci-check: generate
@@ -78,3 +89,4 @@ clean:
 	rm -rf ent/generated
 	rm -rf gen/proto/*.go
 	rm -rf gen/connect/*.go
+	rm -rf gen/ui/

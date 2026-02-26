@@ -1,0 +1,93 @@
+<!-- GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT. -->
+<!-- Source: gen/ui/schema/{{.Entity}}.schema.json -->
+
+<script lang="ts">
+  import { Paginator } from '@skeletonlabs/skeleton';
+{{- if .HasStatus}}
+  import {{.PascalName}}StatusBadge from './{{.PascalName}}StatusBadge.svelte';
+{{- end}}
+  import MoneyDisplay from '../../shared/MoneyDisplay.svelte';
+  import EnumBadge from '../../shared/EnumBadge.svelte';
+  import { entityListStore } from '../../../stores/entityList';
+  import type { {{.PascalName}} } from '../../../types/{{.Entity}}.types';
+
+  const store = entityListStore<{{.PascalName}}>({
+    basePath: '{{.API.BasePath}}',
+    defaultSort: { field: '{{.List.DefaultSort.Field}}', direction: '{{.List.DefaultSort.Direction}}' },
+  });
+
+  const columns = [
+{{- range .List.DefaultColumns}}
+    { field: '{{.Field}}', label: '{{if .Label}}{{.Label}}{{else}}{{.Field | fieldLabel}}{{end}}', width: '{{.Width}}'{{if .Align}}, align: '{{.Align}}'{{end}}{{if .Component}}, component: '{{.Component}}'{{end}}{{if .DisplayAs}}, displayAs: '{{.DisplayAs}}'{{end}} },
+{{- end}}
+  ];
+
+  $: paginationSettings = $store.pagination;
+
+  function handleRowClick(item: {{.PascalName}}) {
+    // Navigate to detail view
+    window.location.hash = `{{.RoutePath}}/${item.id}`;
+  }
+
+  function handlePage(e: CustomEvent<number>) {
+    store.setPage(e.detail);
+  }
+</script>
+
+<!-- Filter bar -->
+<div class="flex gap-2 mb-4 flex-wrap">
+{{- range .List.Filters}}
+  <!-- Filter: {{.Field}} ({{.Type}}) -->
+  <div class="flex items-center gap-1">
+    <label class="text-sm text-surface-500">{{if .Label}}{{.Label}}{{else}}{{.Field | fieldLabel}}{{end}}</label>
+  </div>
+{{- end}}
+</div>
+
+<!-- Table -->
+<div class="table-container">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+      {{- range .List.DefaultColumns}}
+        <th style="width: {{.Width}}"{{if .Align}} class="text-{{.Align}}"{{end}}>
+          <button class="btn btn-sm variant-soft" on:click={() => store.toggleSort('{{.Field}}')}>
+            {{if .Label}}{{.Label}}{{else}}{{.Field | fieldLabel}}{{end}}
+          </button>
+        </th>
+      {{- end}}
+      </tr>
+    </thead>
+    <tbody>
+      {#each $store.data as item}
+        <tr class="cursor-pointer" on:click={() => handleRowClick(item)}>
+        {{- range .List.DefaultColumns}}
+          <td{{if .Align}} class="text-{{.Align}}"{{end}}>
+          {{- if eq .Component "status_badge"}}
+            <{{$.PascalName}}StatusBadge status={item.{{.Field}}} />
+          {{- else if eq .Component "money"}}
+            <MoneyDisplay value={item.{{.Field}}} />
+          {{- else if eq .Component "enum_badge"}}
+            <EnumBadge value={item.{{.Field}}} />
+          {{- else if eq .Component "date"}}
+            {item.{{.Field}} ? new Date(item.{{.Field}}).toLocaleDateString() : '—'}
+          {{- else if eq .Component "datetime"}}
+            {item.{{.Field}} ? new Date(item.{{.Field}}).toLocaleString() : '—'}
+          {{- else}}
+            {item.{{.Field}} ?? '—'}
+          {{- end}}
+          </td>
+        {{- end}}
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{#if paginationSettings}
+  <Paginator
+    settings={paginationSettings}
+    on:page={handlePage}
+  />
+{/if}

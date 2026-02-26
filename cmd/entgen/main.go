@@ -116,10 +116,42 @@ var moneyFieldNames = map[string]bool{
 	"#Money": true, "#NonNegativeMoney": true, "#PositiveMoney": true,
 }
 
-// entities that are immutable (no updates or deletes allowed).
-var immutableEntities = map[string]bool{
-	"LedgerEntry":  true,
-	"JournalEntry": true,
+// ── CUE attribute extraction ─────────────────────────────────────────────────
+
+// fieldAttrs holds cross-cutting metadata read from CUE @attr() annotations.
+type fieldAttrs struct {
+	display   bool
+	text      bool
+	immutable bool
+	computed  bool
+	sensitive bool
+	pii       bool
+}
+
+// extractAttributes reads CUE field-level attributes from a value.
+func extractAttributes(v cue.Value) fieldAttrs {
+	var fa fieldAttrs
+	for _, name := range []string{"display", "text", "immutable", "computed", "sensitive", "pii"} {
+		a := v.Attribute(name)
+		if a.Err() != nil {
+			continue
+		}
+		switch name {
+		case "display":
+			fa.display = true
+		case "text":
+			fa.text = true
+		case "immutable":
+			fa.immutable = true
+		case "computed":
+			fa.computed = true
+		case "sensitive":
+			fa.sensitive = true
+		case "pii":
+			fa.pii = true
+		}
+	}
+	return fa
 }
 
 // entityTransitionMap maps entity names to their CUE state machine definition names.
@@ -230,12 +262,26 @@ func parseEntities(val cue.Value) map[string]*entityDef {
 
 		name := strings.TrimPrefix(label, "#")
 		ent := &entityDef{
-			Name:      name,
-			Immutable: immutableEntities[name],
+			Name: name,
 		}
 
 		// Parse fields
 		ent.Fields = parseFields(name, defVal)
+
+		// Derive entity-level immutability: if all non-status fields have @immutable()
+		if len(ent.Fields) > 0 {
+			allImmutable := true
+			for _, fd := range ent.Fields {
+				if fd.Name == "status" {
+					continue // status is controlled by state machine, not @immutable
+				}
+				if !fd.Immutable {
+					allImmutable = false
+					break
+				}
+			}
+			ent.Immutable = allImmutable
+		}
 
 		entities[name] = ent
 	}
@@ -268,6 +314,14 @@ func parseFields(entityName string, structVal cue.Value) []fieldDef {
 		// Detect the CUE type reference
 		fd := classifyField(label, fieldVal, iter.IsOptional())
 		if fd != nil {
+			// Apply CUE attribute metadata
+			attrs := extractAttributes(fieldVal)
+			if attrs.immutable {
+				fd.Immutable = true
+			}
+			if attrs.sensitive || attrs.pii {
+				fd.Sensitive = true
+			}
 			fields = append(fields, *fd)
 		}
 	}
@@ -1566,26 +1620,26 @@ func ({{.Name}}) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
 {{- range .Fields}}
 {{- if eq .EntType "Money"}}
-		field.Int64("{{.Name}}_amount_cents"){{if .Optional}}.Optional().Nillable(){{end}}.Comment("{{.Name}} — amount in cents"),
-		field.String("{{.Name}}_currency"){{if .Optional}}.Optional().Nillable(){{end}}.Default("USD").Match(regexp.MustCompile(` + "`" + `^[A-Z]{3}$` + "`" + `)).Comment("{{.Name}} — ISO 4217 currency code"),
+		field.Int64("{{.Name}}_amount_cents"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}}.Comment("{{.Name}} — amount in cents"),
+		field.String("{{.Name}}_currency"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}}.Default("USD").Match(regexp.MustCompile(` + "`" + `^[A-Z]{3}$` + "`" + `)).Comment("{{.Name}} — ISO 4217 currency code"),
 {{- else if eq .EntType "String"}}
-		field.String("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .NotEmpty}}.NotEmpty(){{end}}{{if .Sensitive}}.Sensitive(){{end}}{{if .MatchPattern}}.Match(regexp.MustCompile(` + "`" + `{{.MatchPattern}}` + "`" + `)){{end}}.SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .NotEmpty}}.NotEmpty(){{end}}{{if .Sensitive}}.Sensitive(){{end}}{{if .Immutable}}.Immutable(){{end}}{{if .MatchPattern}}.Match(regexp.MustCompile(` + "`" + `{{.MatchPattern}}` + "`" + `)){{end}}.SchemaType(map[string]string{"postgres": "varchar"}),
 {{- else if eq .EntType "Int"}}
-		field.Int("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .NonNegative}}.NonNegative(){{end}}{{if .Min}}.Min({{.Min}}){{end}}{{if .Max}}.Max({{.Max}}){{end}},
+		field.Int("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}}{{if .NonNegative}}.NonNegative(){{end}}{{if .Min}}.Min({{.Min}}){{end}}{{if .Max}}.Max({{.Max}}){{end}},
 {{- else if eq .EntType "Int64"}}
-		field.Int64("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}},
+		field.Int64("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}},
 {{- else if eq .EntType "Float64"}}
-		field.Float("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}},
+		field.Float("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}},
 {{- else if eq .EntType "Bool"}}
-		field.Bool("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Default}}.Default({{.Default}}){{end}},
+		field.Bool("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}}{{if .Default}}.Default({{.Default}}){{end}},
 {{- else if eq .EntType "Time"}}
 		field.Time("{{.Name}}"){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}},
 {{- else if eq .EntType "Enum"}}
-		field.Enum("{{.Name}}").Values({{range $i, $v := .EnumValues}}{{if $i}}, {{end}}"{{$v}}"{{end}}){{if .Optional}}.Optional().Nillable(){{end}}{{if .Default}}.Default("{{.Default}}"){{end}},
+		field.Enum("{{.Name}}").Values({{range $i, $v := .EnumValues}}{{if $i}}, {{end}}"{{$v}}"{{end}}){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}}{{if .Default}}.Default("{{.Default}}"){{end}},
 {{- else if eq .EntType "JSON"}}
-		field.JSON("{{.Name}}", {{.JSONType}}){{if .Optional}}.Optional(){{end}},
+		field.JSON("{{.Name}}", {{.JSONType}}){{if .Optional}}.Optional(){{end}}{{if .Immutable}}.Immutable(){{end}},
 {{- else if eq .EntType "UUID"}}
-		field.UUID("{{.Name}}", uuid.UUID{}){{if .Optional}}.Optional().Nillable(){{end}},
+		field.UUID("{{.Name}}", uuid.UUID{}){{if .Optional}}.Optional().Nillable(){{end}}{{if .Immutable}}.Immutable(){{end}},
 {{- end}}
 {{- end}}
 	}

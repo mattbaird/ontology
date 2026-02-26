@@ -1,0 +1,115 @@
+<!-- GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT. -->
+<!-- Source: gen/ui/schema/{{.Entity}}.schema.json -->
+
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import FormField from '../../shared/FormField.svelte';
+  import FormSection from '../../shared/FormSection.svelte';
+{{- range .Imports}}
+  import {{.Name}} from '{{.Path}}';
+{{- end}}
+  import { validate{{.PascalName}} } from '../../../validation/{{.Entity}}.validation';
+  import type { {{.PascalName}}CreateInput, {{.PascalName}}UpdateInput } from '../../../types/{{.Entity}}.types';
+
+  export let initialValues: Partial<{{.PascalName}}CreateInput> = {};
+  export let mode: 'create' | 'edit' = 'create';
+
+  const dispatch = createEventDispatcher();
+
+  let values: Partial<{{.PascalName}}CreateInput> = {
+{{- if .InitialStatus}}
+    ...(mode === 'create' ? { status: '{{.InitialStatus}}' } : {}),
+{{- end}}
+{{- range .Fields}}
+{{- if eq .Type "bool"}}
+    {{.Name}}: false,
+{{- end}}
+{{- end}}
+    ...initialValues,
+  };
+  let errors: Record<string, string> = {};
+
+  function handleChange(field: string, value: any) {
+    values = { ...values, [field]: value };
+    if (errors[field]) {
+      const { [field]: _, ...rest } = errors;
+      errors = rest;
+    }
+  }
+
+  function isVisible(sectionId: string): boolean {
+    {{- range .Form.Sections}}
+    {{- if .VisibleWhen}}
+    if (sectionId === '{{.ID}}') {
+      {{visibilityCheck .VisibleWhen "values"}}
+    }
+    {{- end}}
+    {{- end}}
+    return true;
+  }
+
+  function cleanValues(obj: Record<string, any>): Record<string, any> {
+    const cleaned: Record<string, any> = {};
+    for (const [key, val] of Object.entries(obj)) {
+      if (val === '' || val == null) continue;
+      // Normalize HTML date/datetime strings to RFC3339 for Go
+      if (typeof val === 'string') {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          cleaned[key] = val + 'T00:00:00Z';
+          continue;
+        }
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(val)) {
+          cleaned[key] = val + ':00Z';
+          continue;
+        }
+      }
+      cleaned[key] = val;
+    }
+    return cleaned;
+  }
+
+  async function handleSubmit() {
+    const validationErrors = validate{{.PascalName}}(values as {{.PascalName}}CreateInput);
+    if (Object.keys(validationErrors).length > 0) {
+      errors = validationErrors;
+      return;
+    }
+    dispatch('submit', { values: cleanValues(values), mode });
+  }
+</script>
+
+<form on:submit|preventDefault={handleSubmit} class="space-y-6">
+{{- range .Form.Sections}}
+
+  {{- if .VisibleWhen}}
+  {#if isVisible('{{.ID}}')}
+  {{- end}}
+  <FormSection title="{{.Title}}"{{if .Collapsible}} collapsible{{end}}{{if and .InitiallyCollapsed (derefBool .InitiallyCollapsed)}} initiallyCollapsed{{end}}>
+    {{- if .Fields}}
+    {{- range .Fields}}
+    {{formFieldRender $ .}}
+    {{- end}}
+    {{- end}}
+    {{- if .EmbeddedObject}}
+    <!-- Embedded: {{.EmbeddedObject}} -->
+    <slot name="{{.ID}}" />
+    {{- end}}
+    {{- if .EmbeddedArray}}
+    <!-- Array: {{.EmbeddedArray}} -->
+    <slot name="{{.ID}}" />
+    {{- end}}
+  </FormSection>
+  {{- if .VisibleWhen}}
+  {/if}
+  {{- end}}
+{{- end}}
+
+  <div class="flex justify-end gap-2 pt-4">
+    <button type="button" class="btn variant-soft" on:click={() => dispatch('cancel')}>
+      Cancel
+    </button>
+    <button type="submit" class="btn variant-filled-primary">
+      {mode === 'create' ? 'Create {{.DisplayName}}' : 'Save Changes'}
+    </button>
+  </div>
+</form>

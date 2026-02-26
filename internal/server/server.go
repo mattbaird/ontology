@@ -23,7 +23,7 @@ type Config struct {
 // Run starts the HTTP server with all routes registered.
 func Run(ctx context.Context, cfg Config) error {
 	r := chi.NewRouter()
-	r.Use(handler.Logging, handler.Recovery)
+	r.Use(handler.CORS, handler.Logging, handler.Recovery)
 
 	// Generated routes for standard CRUD and transitions.
 	RegisterRoutes(r, cfg.DBClient)

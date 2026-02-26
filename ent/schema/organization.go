@@ -32,7 +32,7 @@ func (Organization) Fields() []ent.Field {
 		field.String("legal_name").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("dba_name").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("org_type").Values("management_company", "ownership_entity", "vendor", "corporate_tenant", "government_agency", "hoa", "investment_fund", "other"),
-		field.String("tax_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("tax_id").Optional().Nillable().Sensitive().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("tax_id_type").Values("ein", "ssn", "itin", "foreign").Optional().Nillable(),
 		field.Enum("status").Values("active", "inactive", "suspended", "dissolved"),
 		field.JSON("address", &types.Address{}).Optional(),

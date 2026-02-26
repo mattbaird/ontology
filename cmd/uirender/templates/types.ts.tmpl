@@ -1,0 +1,33 @@
+// GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT.
+// Source: gen/ui/schema/{{.Entity}}.schema.json
+
+{{- range $enumName, $enum := .Enums}}
+export type {{$enumName}} = {{range $i, $v := $enum.Values}}{{if $i}} | {{end}}'{{$v.Value}}'{{end}};
+{{end}}
+
+export interface {{.PascalName}} {
+  id: string;
+{{- range .Fields}}
+  {{.Name}}{{if not .Required}}?{{end}}: {{tsType .}};
+{{- end}}
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  updated_by: string;
+}
+
+export interface {{.PascalName}}CreateInput {
+{{- range .Fields}}
+{{- if .ShowInCreate}}
+  {{.Name}}{{if not .Required}}?{{end}}: {{tsType .}};
+{{- end}}
+{{- end}}
+}
+
+export interface {{.PascalName}}UpdateInput {
+{{- range .Fields}}
+{{- if .ShowInUpdate}}
+  {{.Name}}?: {{tsType .}};
+{{- end}}
+{{- end}}
+}

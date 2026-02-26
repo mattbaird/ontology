@@ -41,17 +41,34 @@ func main() {
 		log.Fatalf("building CUE: %v", val.Err())
 	}
 
-	// Parse entities
+	// Parse entities and track sensitive/PII fields
 	var entities []string
+	entitySensitiveFields := make(map[string][]string)
+	entityPIIFields := make(map[string][]string)
 	iter, _ := val.Fields(cue.Definitions(true))
 	for iter.Next() {
 		label := iter.Selector().String()
 		defVal := iter.Value()
 		if defVal.LookupPath(cue.ParsePath("id")).Err() == nil &&
 			defVal.LookupPath(cue.ParsePath("audit")).Err() == nil {
-			entities = append(entities, strings.TrimPrefix(label, "#"))
+			name := strings.TrimPrefix(label, "#")
+			entities = append(entities, name)
+
+			// Collect sensitive/PII fields for policy annotations
+			fIter, _ := defVal.Fields(cue.Optional(true))
+			for fIter.Next() {
+				fname := strings.TrimSuffix(fIter.Selector().String(), "?")
+				if a := fIter.Value().Attribute("sensitive"); a.Err() == nil {
+					entitySensitiveFields[name] = append(entitySensitiveFields[name], fname)
+				}
+				if a := fIter.Value().Attribute("pii"); a.Err() == nil {
+					entityPIIFields[name] = append(entityPIIFields[name], fname)
+				}
+			}
 		}
 	}
+	_ = entitySensitiveFields // Available for future field-level policy generation
+	_ = entityPIIFields       // Available for future field-level policy generation
 
 	// Parse role types from PersonRole
 	roleTypes := []string{

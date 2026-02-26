@@ -28,6 +28,7 @@ type fieldDef struct {
 	Optional   bool
 	EnumValues []string
 	JSONType   string // Go type for JSON fields (e.g. "[]string", "types.Money")
+	Deprecated bool   // @deprecated() — mark in OpenAPI output
 }
 
 type entityInfo struct {
@@ -284,6 +285,9 @@ func parseEntities(val cue.Value) map[string]*entityInfo {
 			}
 			fd := classifyField(fLabel, fIter.Value(), fIter.IsOptional())
 			if fd != nil {
+				if a := fIter.Value().Attribute("deprecated"); a.Err() == nil {
+					fd.Deprecated = true
+				}
 				ent.Fields = append(ent.Fields, *fd)
 			}
 		}
@@ -431,6 +435,9 @@ func buildEntitySchema(ent *entityInfo) *orderedMap {
 
 		s := fieldToSchema(f)
 		if s != nil {
+			if f.Deprecated {
+				s["deprecated"] = true
+			}
 			props.Set(f.Name, s)
 			if !f.Optional {
 				required = append(required, f.Name)

@@ -11,10 +11,10 @@ import "time"
 	id:           string & !=""
 	first_name:   string & !=""
 	last_name:    string & !=""
-	display_name: string
+	display_name: string & !="" @display()
 
-	date_of_birth?: time.Time
-	ssn_last_four?: =~"^[0-9]{4}$"
+	date_of_birth?: time.Time @pii()
+	ssn_last_four?: =~"^[0-9]{4}$" @pii()
 
 	contact_methods: [#ContactMethod, ...#ContactMethod] // At least one required
 	preferred_contact: *"email" | "email" | "sms" | "phone" | "mail" | "portal"
@@ -39,14 +39,14 @@ import "time"
 
 #Organization: {
 	id:         string & !=""
-	legal_name: string & !=""
-	dba_name?:  string
+	legal_name: string & !="" @display()
+	dba_name?:  string @display()
 
 	org_type: "management_company" | "ownership_entity" | "vendor" |
 		"corporate_tenant" | "government_agency" | "hoa" |
 		"investment_fund" | "other"
 
-	tax_id?:      string
+	tax_id?:      string @pii()
 	tax_id_type?: "ein" | "ssn" | "itin" | "foreign"
 
 	status: "active" | "inactive" | "suspended" | "dissolved"
@@ -55,12 +55,12 @@ import "time"
 	contact_methods?: [...#ContactMethod]
 
 	// Regulatory
-	state_of_incorporation?: =~"^[A-Z]{2}$"
+	state_of_incorporation?: #USState
 	formation_date?:         time.Time
 
 	// For management companies
 	management_license?: string
-	license_state?:      =~"^[A-Z]{2}$"
+	license_state?:      #USState
 	license_expiry?:     time.Time
 
 	audit: #AuditMetadata

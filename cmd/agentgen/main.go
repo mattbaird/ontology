@@ -44,6 +44,19 @@ var entityTransitionMap = map[string]string{
 	"Reconciliation": "#ReconciliationTransitions",
 }
 
+// ── CUE attribute extraction ─────────────────────────────────────────────────
+
+// extractAttributes reads CUE field-level attributes for agent context.
+func extractAttributes(v cue.Value) (sensitive, pii bool) {
+	if a := v.Attribute("sensitive"); a.Err() == nil {
+		sensitive = true
+	}
+	if a := v.Attribute("pii"); a.Err() == nil {
+		pii = true
+	}
+	return
+}
+
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix("agentgen: ")
@@ -119,11 +132,18 @@ func generateOntologyDoc(val cue.Value, outDir string) {
 			if fname == "audit" || strings.HasPrefix(fname, "_") {
 				continue
 			}
-			optional := ""
-			if fIter.IsOptional() {
-				optional = " (optional)"
+			sensitive, pii := extractAttributes(fIter.Value())
+			if pii {
+				continue // @pii() fields are never exposed in agent context
 			}
-			fields = append(fields, fname+optional)
+			annotation := ""
+			if fIter.IsOptional() {
+				annotation = " (optional)"
+			}
+			if sensitive {
+				annotation += " ⚠️ sensitive"
+			}
+			fields = append(fields, fname+annotation)
 		}
 		entityFields[name] = fields
 	}

@@ -143,6 +143,13 @@ propeller/
   "compliance"       — Lease violations, policy infractions, regulatory
                        notices, inspection failures, permit issues.
 
+  "regulatory"       — Jurisdiction rule changes, new ordinances, law
+                       effective dates approaching, rule expirations,
+                       rent control program changes, disclosure requirement
+                       updates. Signals that the legal environment around
+                       a property has changed and existing leases or
+                       practices may need review.
+
   "behavioral"       — Occupancy pattern changes, amenity usage changes,
                        parking behavior, portal login frequency,
                        maintenance request pattern changes. Proxy
@@ -395,6 +402,71 @@ Claude Code reads `ontology/person.cue`, understands the domain meaning of each 
     }
 ```
 
+**Example: Claude Code annotating JurisdictionRule fields**
+
+Claude Code reads `ontology/jurisdiction.cue` and generates annotations for jurisdiction rule changes that affect properties:
+
+```
+#JurisdictionRule:
+  rule_type:
+    _signal: {
+      category: "regulatory"
+      weight: "strong"
+      polarity: "contextual"
+      on_value: {
+        "rent_increase_cap":           { weight: "critical", polarity: "negative" }
+        "security_deposit_limit":      { weight: "strong",   polarity: "negative" }
+        "just_cause_eviction":         { weight: "critical", polarity: "negative" }
+        "required_disclosure":         { weight: "moderate", polarity: "neutral" }
+        "short_term_rental_restriction": { weight: "strong", polarity: "negative" }
+      }
+      interpretation: "New or changed jurisdiction rules directly constrain
+        operational flexibility. Rent caps and eviction restrictions have the
+        highest operational impact. Disclosures require process changes but
+        don't restrict pricing or decisions."
+    }
+
+  status:
+    _signal: {
+      category: "regulatory"
+      weight: "strong"
+      polarity: "neutral"
+      on_value: {
+        "active":     { weight: "strong",   polarity: "negative", 
+                        interpretation: "New rule is now enforceable. Review all
+                          affected properties and leases for compliance." }
+        "superseded": { weight: "moderate", polarity: "positive",
+                        interpretation: "Rule replaced — check whether
+                          replacement is more or less restrictive." }
+        "repealed":   { weight: "strong",   polarity: "positive",
+                        interpretation: "Restriction removed. Pricing and
+                          operational flexibility may increase." }
+      }
+    }
+
+  effective_date:
+    _signal: {
+      category: "regulatory"
+      weight: "moderate"
+      polarity: "neutral"
+      approaching_threshold_days: 90
+      interpretation: "Rules approaching their effective date need compliance
+        review. Leases signed before the effective date may be grandfathered;
+        leases signed after must comply."
+    }
+
+  expiration_date:
+    _signal: {
+      category: "regulatory"
+      weight: "moderate"
+      polarity: "neutral"
+      approaching_threshold_days: 60
+      interpretation: "Expiring rules (sunset clauses) may restore operational
+        flexibility. But watch for renewal — legislatures often extend. Don't
+        assume expiration until it actually happens."
+    }
+```
+
 ### 6.3 Escalation Rules (Claude Code Generated)
 
 Claude Code generates escalation rules based on property management domain knowledge — industry thresholds, legal requirements, and behavioral research.
@@ -639,6 +711,43 @@ Claude Code generates escalation rules based on property management domain knowl
     escalated_weight: "moderate"
     escalated_description: "Payment timing trending later over 6 months."
     recommended_action: "Early intervention before pattern becomes critical. Friendly check-in."
+  },
+
+  // === Regulatory Escalations ===
+
+  {
+    id: "reg_rule_approaching_effective"
+    description: "Jurisdiction rule approaching effective date"
+    trigger_type: "trend"
+    trend_direction: "decreasing"
+    trend_metric: "days_until_rule_effective"
+    trend_window_days: 90
+    escalated_weight: "strong"
+    escalated_description: "New jurisdiction rule takes effect within 90 days. Review all affected leases."
+    recommended_action: "Audit existing leases for compliance with incoming rule. Update templates. Notify affected tenants if required."
+  },
+  {
+    id: "reg_multiple_rule_changes"
+    description: "Multiple jurisdiction rule changes in short window"
+    trigger_type: "count"
+    signal_category: "regulatory"
+    signal_polarity: "negative"
+    count: 3, within_days: 180
+    escalated_weight: "critical"
+    escalated_description: "3+ regulatory changes in 6 months across property jurisdictions. Compliance risk elevated."
+    recommended_action: "Comprehensive compliance audit. Consider legal review of all active leases."
+  },
+  {
+    id: "reg_financial_plus_regulatory"
+    description: "Rent cap change coinciding with renewal window"
+    trigger_type: "cross_category"
+    required_categories: [
+      { category: "regulatory", polarity: "negative", min_count: 1 },
+      { category: "lifecycle", polarity: "neutral", min_count: 1 }
+    ]
+    escalated_weight: "strong"
+    escalated_description: "Lease renewal approaching during period of regulatory change. Renewal terms must comply with new rules."
+    recommended_action: "Model renewal offer under new constraints before sending. Verify deposit, rent increase, and notice period comply."
   }
 ]
 ```

@@ -8,8 +8,8 @@ import "time"
 #Account: {
 	id:             string & !=""
 	account_number: string & !=""
-	name:           string & !=""
-	description?:   string
+	name:           string & !="" @display()
+	description?:   string @text()
 
 	account_type: "asset" | "liability" | "equity" | "revenue" | "expense"
 
@@ -85,43 +85,43 @@ import "time"
 // ─── Ledger Entry ────────────────────────────────────────────────────────────
 
 #LedgerEntry: {
-	id:         string & !=""
-	account_id: string & !=""
+	id:         string & !="" @immutable()
+	account_id: string & !="" @immutable()
 
-	entry_type: "charge" | "payment" | "credit" | "adjustment" |
+	entry_type: ("charge" | "payment" | "credit" | "adjustment" |
 		"refund" | "deposit" | "nsf" | "write_off" |
-		"late_fee" | "management_fee" | "owner_draw"
+		"late_fee" | "management_fee" | "owner_draw") @immutable()
 
-	amount: #Money
+	amount: #Money @immutable()
 
 	// Double-entry
-	journal_entry_id: string & !=""
+	journal_entry_id: string & !="" @immutable()
 
 	// Temporal
-	effective_date: time.Time
-	posted_date:    time.Time
+	effective_date: time.Time @immutable()
+	posted_date:    time.Time @immutable()
 
-	description: string & !=""
-	charge_code: string & !=""
-	memo?:       string
+	description: string & !="" @immutable() @text()
+	charge_code: string & !="" @immutable()
+	memo?:       string @immutable() @text()
 
 	// Dimensional references
-	property_id: string & !=""
-	space_id?:   string
-	lease_id?:   string
-	person_id?:  string
+	property_id: string & !="" @immutable()
+	space_id?:   string @immutable()
+	lease_id?:   string @immutable()
+	person_id?:  string @immutable()
 
 	// Bank / trust accounting
-	bank_account_id?:     string
-	bank_transaction_id?: string
+	bank_account_id?:     string @immutable()
+	bank_transaction_id?: string @immutable()
 
-	// Reconciliation
+	// Reconciliation — set during reconciliation process, not immutable
 	reconciled:         bool | *false
 	reconciliation_id?: string
 	reconciled_at?:     time.Time
 
 	// For adjustments
-	adjusts_entry_id?: string
+	adjusts_entry_id?: string @immutable()
 
 	// CONSTRAINTS:
 
@@ -154,36 +154,36 @@ import "time"
 // ─── Journal Entry ───────────────────────────────────────────────────────────
 
 #JournalEntry: {
-	id: string & !=""
+	id: string & !="" @immutable()
 
-	entry_date:  time.Time
+	entry_date:  time.Time @immutable()
 	posted_date: time.Time
 
-	description: string & !=""
+	description: string & !="" @immutable() @text()
 
-	source_type: "manual" | "auto_charge" | "payment" | "bank_import" |
+	source_type: ("manual" | "auto_charge" | "payment" | "bank_import" |
 		"cam_reconciliation" | "depreciation" | "accrual" |
-		"intercompany" | "management_fee" | "system"
-	source_id?: string
+		"intercompany" | "management_fee" | "system") @immutable()
+	source_id?: string @immutable()
 
-	// Approval
+	// Approval — set during state transitions, not immutable
 	status:      "draft" | "pending_approval" | "posted" | "voided"
 	approved_by?: string
 	approved_at?: time.Time
 
 	// Batch
-	batch_id?: string
+	batch_id?: string @immutable()
 
 	// Entity / property scope
-	entity_id?:   string
-	property_id?: string
+	entity_id?:   string @immutable()
+	property_id?: string @immutable()
 
 	// Reversal tracking
-	reverses_journal_id?:    string
+	reverses_journal_id?:    string @immutable()
 	reversed_by_journal_id?: string
 
 	// Line items — minimum 2 lines for double-entry
-	lines: [#JournalLine, #JournalLine, ...#JournalLine]
+	lines: [#JournalLine, #JournalLine, ...#JournalLine] @immutable()
 
 	// CONSTRAINTS:
 
@@ -209,7 +209,7 @@ import "time"
 	account_id:  string & !=""
 	debit?:      #NonNegativeMoney
 	credit?:     #NonNegativeMoney
-	description?: string
+	description?: string @text()
 	dimensions?: #AccountDimensions
 	// CONSTRAINT: Must have exactly one of debit or credit (not both, not neither)
 	// (enforced at runtime via Ent hooks)
@@ -219,7 +219,7 @@ import "time"
 
 #BankAccount: {
 	id:   string & !=""
-	name: string & !=""
+	name: string & !="" @display()
 
 	account_type: "operating" | "trust" | "security_deposit" | "escrow" | "reserve"
 

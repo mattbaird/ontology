@@ -1,0 +1,82 @@
+<!-- GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT. -->
+<!-- Section component for embedded type: {{.TypeName}} -->
+
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import FormField from '../shared/FormField.svelte';
+  import MoneyInput from '../shared/MoneyInput.svelte';
+  import EnumSelect from '../shared/EnumSelect.svelte';
+
+  export let value: Record<string, any> = {};
+  export let errors: Record<string, string> = {};
+  export let readonly = false;
+
+  const dispatch = createEventDispatcher();
+
+  function handleChange(field: string, val: any) {
+    value = { ...value, [field]: val };
+    dispatch('change', value);
+  }
+</script>
+
+<div class="space-y-4">
+{{- range .Fields}}
+  <FormField label="{{.Label}}"{{if .Required}} required{{end}} error={errors['{{$.FieldPrefix}}.{{.Name}}']}>
+  {{- if eq .Type "money"}}
+    <MoneyInput
+      value={value.{{.Name}}}
+      {readonly}
+      on:change={(e) => handleChange('{{.Name}}', e.detail)}
+    />
+  {{- else if eq .Type "enum"}}
+    <EnumSelect
+      value={value.{{.Name}}}
+      disabled={readonly}
+      on:change={(e) => handleChange('{{.Name}}', e.detail)}
+    />
+  {{- else if eq .Type "bool"}}
+    <input
+      type="checkbox"
+      checked={value.{{.Name}} ?? false}
+      disabled={readonly}
+      on:change={(e) => handleChange('{{.Name}}', e.target.checked)}
+      class="checkbox"
+    />
+  {{- else if eq .Type "int"}}
+    <input
+      type="number"
+      step="1"
+      value={value.{{.Name}} ?? ''}
+      disabled={readonly}
+      on:input={(e) => handleChange('{{.Name}}', parseInt(e.target.value))}
+      class="input"
+    />
+  {{- else if eq .Type "float"}}
+    <input
+      type="number"
+      step="any"
+      value={value.{{.Name}} ?? ''}
+      disabled={readonly}
+      on:input={(e) => handleChange('{{.Name}}', parseFloat(e.target.value))}
+      class="input"
+    />
+  {{- else if eq .Type "date"}}
+    <input
+      type="date"
+      value={value.{{.Name}} ?? ''}
+      disabled={readonly}
+      on:change={(e) => handleChange('{{.Name}}', e.target.value)}
+      class="input"
+    />
+  {{- else}}
+    <input
+      type="text"
+      value={value.{{.Name}} ?? ''}
+      disabled={readonly}
+      on:input={(e) => handleChange('{{.Name}}', e.target.value)}
+      class="input"
+    />
+  {{- end}}
+  </FormField>
+{{- end}}
+</div>

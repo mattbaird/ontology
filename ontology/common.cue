@@ -33,11 +33,19 @@ import "time"
 
 // ─── Geographic ──────────────────────────────────────────────────────────────
 
+#USState:
+	"AL" | "AK" | "AZ" | "AR" | "CA" | "CO" | "CT" | "DE" | "FL" | "GA" |
+	"HI" | "ID" | "IL" | "IN" | "IA" | "KS" | "KY" | "LA" | "ME" | "MD" |
+	"MA" | "MI" | "MN" | "MS" | "MO" | "MT" | "NE" | "NV" | "NH" | "NJ" |
+	"NM" | "NY" | "NC" | "ND" | "OH" | "OK" | "OR" | "PA" | "RI" | "SC" |
+	"SD" | "TN" | "TX" | "UT" | "VT" | "VA" | "WA" | "WV" | "WI" | "WY" |
+	"DC" | "PR" | "VI" | "GU" | "AS" | "MP"
+
 #Address: {
 	line1:       string & !=""
 	line2?:      string
 	city:        string & !=""
-	state:       =~"^[A-Z]{2}$"
+	state:       #USState
 	postal_code: =~"^[0-9]{5}(-[0-9]{4})?$"
 	country:     *"US" | =~"^[A-Z]{2}$"
 	latitude?:   float & >=-90 & <=90
@@ -76,13 +84,13 @@ import "time"
 // - Agent accountability (which agent made this change, under what authority)
 // - Debugging (correlation IDs trace chains of related changes)
 #AuditMetadata: {
-	created_by:      string & !="" // User ID, agent ID, or "system"
-	updated_by:      string & !=""
-	created_at:      time.Time
-	updated_at:      time.Time
-	source:          "user" | "agent" | "import" | "system" | "migration"
-	correlation_id?: string // Links related changes across entities
-	agent_goal_id?:  string // If source == "agent", which goal triggered this
+	created_by:      string & !="" @computed() // User ID, agent ID, or "system"
+	updated_by:      string & !="" @computed()
+	created_at:      time.Time @computed()
+	updated_at:      time.Time @computed()
+	source:          ("user" | "agent" | "import" | "system" | "migration") @computed()
+	correlation_id?: string @computed() // Links related changes across entities
+	agent_goal_id?:  string @computed() // If source == "agent", which goal triggered this
 }
 
 // ─── Contact ─────────────────────────────────────────────────────────────────

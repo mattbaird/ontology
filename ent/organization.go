@@ -42,7 +42,7 @@ type Organization struct {
 	// OrgType holds the value of the "org_type" field.
 	OrgType organization.OrgType `json:"org_type,omitempty"`
 	// TaxID holds the value of the "tax_id" field.
-	TaxID *string `json:"tax_id,omitempty"`
+	TaxID *string `json:"-"`
 	// TaxIDType holds the value of the "tax_id_type" field.
 	TaxIDType *organization.TaxIDType `json:"tax_id_type,omitempty"`
 	// Status holds the value of the "status" field.
@@ -390,10 +390,7 @@ func (_m *Organization) String() string {
 	builder.WriteString("org_type=")
 	builder.WriteString(fmt.Sprintf("%v", _m.OrgType))
 	builder.WriteString(", ")
-	if v := _m.TaxID; v != nil {
-		builder.WriteString("tax_id=")
-		builder.WriteString(*v)
-	}
+	builder.WriteString("tax_id=<sensitive>")
 	builder.WriteString(", ")
 	if v := _m.TaxIDType; v != nil {
 		builder.WriteString("tax_id_type=")

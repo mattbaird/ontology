@@ -35,6 +35,17 @@ gen/
 tmp/
 .cue_stamp
 
+# Generator binaries (compiled from cmd/)
+/entgen
+/agentgen
+/handlergen
+/uigen
+/uirender
+
+# Frontend
+node_modules/
+frontend/dist/
+
 # Database
 *.db
 *.db-journal

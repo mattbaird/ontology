@@ -84,6 +84,10 @@ For every domain event:
   4. Summary materialization  — Increment per-entity signal counters, update sentiment
   5. State machine enforcement — Reject invalid transitions (already in Ent hooks)
   6. Derived field updates    — Recompute Space.status from lease state, balance from ledger
+  7. Jurisdiction constraint enforcement — On lease mutations, resolve property's jurisdiction
+                                  stack and validate against applicable rules (deposit limits,
+                                  notice periods, rent caps, required disclosures). Hard
+                                  violations rejected; soft violations flagged for review.
 ```
 
 ### 3.2 Escalation Rule Evaluation

@@ -22,7 +22,7 @@ import "time"
 		"expired" | "month_to_month_holdover" | "renewed" |
 		"terminated" | "eviction"
 
-	description?:       string
+	description?:       string @text()
 	// Liability
 	liability_type: *"joint_and_several" | "joint_and_several" | "individual" | "by_the_bed" | "proportional"
 
@@ -33,7 +33,7 @@ import "time"
 
 	// Financial — base rent
 	base_rent:        #NonNegativeMoney
-	security_deposit: #NonNegativeMoney
+	security_deposit: #NonNegativeMoney @sensitive()
 
 	// Rent schedule
 	rent_schedule?: [...#RentScheduleEntry]
@@ -335,7 +335,7 @@ import "time"
 	// Decision
 	decision_by?:     string
 	decision_at?:     time.Time
-	decision_reason?: string
+	decision_reason?: string @text()
 	conditions?:      [...string]
 
 	// Financial

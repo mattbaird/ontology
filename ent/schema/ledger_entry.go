@@ -32,20 +32,20 @@ func (LedgerEntry) Mixin() []ent.Mixin {
 func (LedgerEntry) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.Enum("entry_type").Values("charge", "payment", "credit", "adjustment", "refund", "deposit", "nsf", "write_off", "late_fee", "management_fee", "owner_draw"),
-		field.Int64("amount_amount_cents").Comment("amount — amount in cents"),
-		field.String("amount_currency").Default("USD").Match(regexp.MustCompile(`^[A-Z]{3}$`)).Comment("amount — ISO 4217 currency code"),
-		field.Time("effective_date"),
-		field.Time("posted_date"),
-		field.String("description").SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("charge_code").SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("memo").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("bank_account_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("bank_transaction_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.Enum("entry_type").Values("charge", "payment", "credit", "adjustment", "refund", "deposit", "nsf", "write_off", "late_fee", "management_fee", "owner_draw").Immutable(),
+		field.Int64("amount_amount_cents").Immutable().Comment("amount — amount in cents"),
+		field.String("amount_currency").Immutable().Default("USD").Match(regexp.MustCompile(`^[A-Z]{3}$`)).Comment("amount — ISO 4217 currency code"),
+		field.Time("effective_date").Immutable(),
+		field.Time("posted_date").Immutable(),
+		field.String("description").Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("charge_code").Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("memo").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("bank_account_id").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("bank_transaction_id").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Bool("reconciled").Default(false),
 		field.String("reconciliation_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Time("reconciled_at").Optional().Nillable(),
-		field.String("adjusts_entry_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("adjusts_entry_id").Optional().Nillable().Immutable().SchemaType(map[string]string{"postgres": "varchar"}),
 	}
 }
 
@@ -152,10 +152,4 @@ func validateLedgerEntryConstraints() ent.Hook {
 			return next.Mutate(ctx, m)
 		})
 	}
-}
-
-// Policy of the LedgerEntry.
-// Immutable entity: updates and deletes are denied.
-func (LedgerEntry) Policy() ent.Policy {
-	return nil // Immutability enforced via hooks at handler level
 }

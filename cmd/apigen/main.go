@@ -38,12 +38,13 @@ type operationDef struct {
 }
 
 type entityField struct {
-	Name     string
-	ProtoType string
-	Number   int
-	Optional bool
-	Repeated bool
-	Comment  string
+	Name       string
+	ProtoType  string
+	Number     int
+	Optional   bool
+	Repeated   bool
+	Comment    string
+	Deprecated bool // @deprecated() — add proto comment
 }
 
 func main() {
@@ -183,6 +184,13 @@ func parseEntityMessages(val cue.Value) map[string][]entityField {
 				Optional: fIter.IsOptional(),
 			}
 			ef.ProtoType = cueToProtoType(fIter.Value())
+			if a := fIter.Value().Attribute("deprecated"); a.Err() == nil {
+				ef.Deprecated = true
+				reason, _, _ := a.Lookup(0, "reason")
+				if reason != "" {
+					ef.Comment = "Deprecated: " + reason
+				}
+			}
 			fields = append(fields, ef)
 			fieldNum++
 		}

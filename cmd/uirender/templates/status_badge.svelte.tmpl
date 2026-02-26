@@ -1,0 +1,18 @@
+<!-- GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT. -->
+<!-- Source: gen/ui/schema/{{.Entity}}.schema.json -->
+
+<script lang="ts">
+  import type { {{.StatusType}} } from '../../../types/{{.Entity}}.types';
+
+  export let status: {{.StatusType}};
+
+  const colorMap: Record<{{.StatusType}}, string> = {
+{{- range $state, $color := .Status.ColorMapping}}
+    '{{$state}}': '{{$color | skeletonVariant}}',
+{{- end}}
+  };
+</script>
+
+<span class="badge {colorMap[status] ?? 'variant-soft'}">
+  {status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+</span>

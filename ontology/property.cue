@@ -9,10 +9,12 @@ import "time"
 
 #Portfolio: {
 	id:       string & !=""
-	name:     string & !=""
+	name:     string & !="" @display()
 	owner_id: string & !="" // Organization ID of the ownership entity
 
 	management_type: "self_managed" | "third_party" | "hybrid"
+
+//	description: string & !="" @text()
 
 	// Trust accounting — drives major architectural decisions downstream
 	requires_trust_accounting: bool
@@ -37,7 +39,7 @@ import "time"
 #Property: {
 	id:           string & !=""
 	portfolio_id: string & !=""
-	name:         string & !=""
+	name:         string & !="" @display()
 	address:      #Address
 
 	property_type: "single_family" | "multi_family" | "commercial_office" |
@@ -103,13 +105,13 @@ import "time"
 #Building: {
 	id:          string & !=""
 	property_id: string & !=""
-	name:        string & !=""
+	name:        string & !="" @display()
 
 	building_type: "residential" | "commercial" | "mixed_use" | "parking_structure" |
 		"industrial" | "storage" | "auxiliary"
 
 	address?: #Address
-	description?: string
+	description?: string @text()
 
 	status: "active" | "inactive" | "under_renovation"
 
@@ -128,7 +130,7 @@ import "time"
 #Space: {
 	id:          string & !=""
 	property_id: string & !=""
-	space_number: string & !="" // "101", "A", "Suite 200", etc.
+	space_number: string & !="" @display() // "101", "A", "Suite 200", etc.
 
 	space_type: "residential_unit" | "commercial_office" | "commercial_retail" |
 		"storage" | "parking" | "common_area" |

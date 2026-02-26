@@ -1,0 +1,97 @@
+<!-- GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT. -->
+<!-- Source: gen/ui/schema/{{.Entity}}.schema.json -->
+
+<script lang="ts">
+  import { createEventDispatcher } from 'svelte';
+  import TransitionButton from '../../shared/TransitionButton.svelte';
+  import ConfirmDialog from '../../shared/ConfirmDialog.svelte';
+  import type { {{.StatusType}} } from '../../../types/{{.Entity}}.types';
+
+  export let entityId: string;
+  export let currentStatus: {{.StatusType}};
+
+  const dispatch = createEventDispatcher();
+
+  let confirmOpen = false;
+  let pendingTransition: any = null;
+
+  const transitions: Record<{{.StatusType}}, Array<{
+    target: {{.StatusType}};
+    label: string;
+    variant: 'primary' | 'secondary' | 'danger';
+    confirm: boolean;
+    confirmMessage?: string;
+    endpoint: string;
+    requiresFields?: string[];
+  }>> = {
+{{- range $state, $trans := .StateMachine.Transitions}}
+    '{{$state}}': [
+{{- range $trans}}
+      {
+        target: '{{.Target}}',
+        label: '{{.Label}}',
+        variant: '{{.Variant}}',
+        confirm: {{.Confirm}},
+{{- if .ConfirmMessage}}
+        confirmMessage: '{{.ConfirmMessage | escapeJS}}',
+{{- end}}
+        endpoint: `{{.APIEndpoint | replaceIDTemplate}}`,
+{{- if .RequiresFields}}
+        requiresFields: [{{range $i, $f := .RequiresFields}}{{if $i}}, {{end}}'{{$f}}'{{end}}],
+{{- end}}
+      },
+{{- end}}
+    ],
+{{- end}}
+  };
+
+  $: availableTransitions = transitions[currentStatus] ?? [];
+
+  function handleTransition(transition: any) {
+    if (transition.confirm) {
+      pendingTransition = transition;
+      confirmOpen = true;
+    } else {
+      executeTransition(transition);
+    }
+  }
+
+  async function executeTransition(transition: any) {
+    const url = transition.endpoint.replace('{id}', entityId);
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      if (res.ok) {
+        dispatch('transition', { target: transition.target });
+      }
+    } catch (e) {
+      console.error('Transition failed:', e);
+    }
+  }
+
+  function handleConfirm() {
+    if (pendingTransition) {
+      executeTransition(pendingTransition);
+      pendingTransition = null;
+    }
+    confirmOpen = false;
+  }
+</script>
+
+{#if availableTransitions.length > 0}
+  <div class="flex gap-2">
+    {#each availableTransitions as transition}
+      <TransitionButton
+        label={transition.label}
+        variant={transition.variant}
+        on:click={() => handleTransition(transition)}
+      />
+    {/each}
+  </div>
+{/if}
+
+<ConfirmDialog
+  bind:open={confirmOpen}
+  message={pendingTransition?.confirmMessage ?? 'Are you sure?'}
+  on:confirm={handleConfirm}
+  on:cancel={() => { confirmOpen = false; pendingTransition = null; }}
+/>

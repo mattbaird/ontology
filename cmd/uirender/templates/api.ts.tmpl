@@ -1,0 +1,44 @@
+// GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT.
+// Source: gen/ui/schema/{{.Entity}}.schema.json
+
+import { apiClient } from './client';
+import type { {{.PascalName}}, {{.PascalName}}CreateInput, {{.PascalName}}UpdateInput } from '../types/{{.Entity}}.types';
+
+export const {{.CamelName}}Api = {
+{{- if .API.Operations.create}}
+  async create(input: {{.PascalName}}CreateInput): Promise<{{.PascalName}}> {
+    return apiClient.post<{{.PascalName}}>('{{.API.Operations.create.Path}}', input);
+  },
+{{- end}}
+
+{{- if .API.Operations.get}}
+  async get(id: string, include?: string[]): Promise<{{.PascalName}}> {
+    const params = include ? { include: include.join(',') } : {};
+    return apiClient.get<{{.PascalName}}>(`{{.API.Operations.get.Path | replaceID}}`.replace('{id}', id), params);
+  },
+{{- end}}
+
+{{- if .API.Operations.list}}
+  async list(params?: Record<string, any>): Promise<{ data: {{.PascalName}}[]; total: number }> {
+    return apiClient.get<{ data: {{.PascalName}}[]; total: number }>('{{.API.Operations.list.Path}}', params);
+  },
+{{- end}}
+
+{{- if .API.Operations.update}}
+  async update(id: string, input: {{.PascalName}}UpdateInput): Promise<{{.PascalName}}> {
+    return apiClient.patch<{{.PascalName}}>(`{{.API.Operations.update.Path | replaceID}}`.replace('{id}', id), input);
+  },
+{{- end}}
+
+{{- if .API.Operations.delete}}
+  async delete(id: string): Promise<void> {
+    return apiClient.delete(`{{.API.Operations.delete.Path | replaceID}}`.replace('{id}', id));
+  },
+{{- end}}
+
+{{- range $action, $ep := .API.Transitions}}
+  async {{$action}}(id: string, body?: Record<string, any>): Promise<{{$.PascalName}}> {
+    return apiClient.post<{{$.PascalName}}>(`{{$ep.Path | replaceID}}`.replace('{id}', id), body);
+  },
+{{- end}}
+};

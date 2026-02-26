@@ -33,7 +33,7 @@ func (Person) Fields() []ent.Field {
 		field.String("last_name").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("display_name").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Time("date_of_birth").Optional().Nillable(),
-		field.String("ssn_last_four").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("ssn_last_four").Optional().Nillable().Sensitive().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.JSON("contact_methods", []types.ContactMethod{}),
 		field.Enum("preferred_contact").Values("email", "sms", "phone", "mail", "portal").Default("email"),
 		field.String("language_preference").SchemaType(map[string]string{"postgres": "varchar"}),
