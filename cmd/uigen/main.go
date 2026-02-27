@@ -365,19 +365,7 @@ var moneyTypes = map[string]string{
 	"#PositiveMoney":    "positive",
 }
 
-var entityTransitionMap = map[string]string{
-	"Lease":          "#LeaseTransitions",
-	"Space":          "#SpaceTransitions",
-	"Building":       "#BuildingTransitions",
-	"Application":    "#ApplicationTransitions",
-	"JournalEntry":   "#JournalEntryTransitions",
-	"Portfolio":      "#PortfolioTransitions",
-	"Property":       "#PropertyTransitions",
-	"PersonRole":     "#PersonRoleTransitions",
-	"Organization":   "#OrganizationTransitions",
-	"BankAccount":    "#BankAccountTransitions",
-	"Reconciliation": "#ReconciliationTransitions",
-}
+// State machines are read from the unified #StateMachines map in CUE.
 
 // knownEntityNames is populated in main() before field classification runs.
 // Used to validate that _id/_ids suffixed fields actually reference entities.
@@ -640,13 +628,8 @@ func isTimeField(val cue.Value) bool {
 }
 
 func isEnum(val cue.Value) bool {
-	op, args := val.Expr()
-	// Resolve definition references (e.g., #USState)
-	if op != cue.OrOp {
-		deref := cue.Dereference(val)
-		op, args = deref.Expr()
-	}
-	if op != cue.OrOp {
+	op, args := findEnumDisjunction(val)
+	if op != cue.OrOp || len(args) < 2 {
 		return false
 	}
 	for _, arg := range args {
@@ -669,16 +652,39 @@ func isEnum(val cue.Value) bool {
 			}
 		}
 	}
-	return len(args) >= 2
+	return true
+}
+
+// findEnumDisjunction extracts the OrOp disjunction from a value that may be
+// wrapped in an AndOp (e.g., when a field from an embedded base type is
+// unified with enum values in the entity).
+func findEnumDisjunction(val cue.Value) (cue.Op, []cue.Value) {
+	op, args := val.Expr()
+	if op == cue.OrOp {
+		return op, args
+	}
+	// Resolve definition references (e.g., #USState)
+	if op != cue.OrOp {
+		deref := cue.Dereference(val)
+		dOp, dArgs := deref.Expr()
+		if dOp == cue.OrOp {
+			return dOp, dArgs
+		}
+	}
+	// When embedding introduces `string & ("a" | "b" | "c")`, look through AndOp
+	if op == cue.AndOp {
+		for _, arg := range args {
+			argOp, argArgs := arg.Expr()
+			if argOp == cue.OrOp {
+				return argOp, argArgs
+			}
+		}
+	}
+	return op, args
 }
 
 func extractEnumValues(val cue.Value) []string {
-	op, args := val.Expr()
-	// If the expression is a definition reference (SelectorOp), resolve it first
-	if op != cue.OrOp {
-		deref := cue.Dereference(val)
-		op, args = deref.Expr()
-	}
+	op, args := findEnumDisjunction(val)
 	if op != cue.OrOp {
 		return nil
 	}
@@ -810,6 +816,12 @@ func hasNonEmpty(val cue.Value) bool {
 			return true
 		}
 	}
+	// Detect strings.MinRunes(1) CallOp pattern
+	if op == cue.CallOp && len(args) >= 2 {
+		if n, err := args[1].Int64(); err == nil && n >= 1 {
+			return true
+		}
+	}
 	if op == cue.AndOp {
 		for _, arg := range args {
 			if hasNonEmpty(arg) {
@@ -837,6 +849,10 @@ func parseEntities(val cue.Value) map[string]*entityInfo {
 		}
 
 		name := strings.TrimPrefix(label, "#")
+		// Skip base entity types — not domain entities
+		if name == "BaseEntity" || name == "StatefulEntity" || name == "ImmutableEntity" {
+			continue
+		}
 		ent := &entityInfo{
 			name: name,
 		}
@@ -1058,6 +1074,14 @@ func classifyUIField(name string, val cue.Value, optional bool) *fieldInfo {
 		fi.uiType = "embedded_object"
 		fi.objectRef = "Unknown"
 		return fi
+
+	default:
+		// Top type (_) or mixed kind → embedded_object (JSON)
+		if kind != 0 && kind != cue.BottomKind {
+			fi.uiType = "embedded_object"
+			fi.objectRef = "JSON"
+			return fi
+		}
 	}
 
 	return nil
@@ -1111,13 +1135,8 @@ func parseRelationships(val cue.Value) []relationshipInfo {
 // ── State machine parsing ────────────────────────────────────────────────────
 
 func parseStateMachines(val cue.Value, entities map[string]*entityInfo) {
-	for entityName, defName := range entityTransitionMap {
-		ent, ok := entities[entityName]
-		if !ok {
-			continue
-		}
-
-		transVal := val.LookupPath(cue.ParsePath(defName))
+	for entityName, ent := range entities {
+		transVal := val.LookupPath(cue.ParsePath("#StateMachines." + toSnake(entityName)))
 		if transVal.Err() != nil {
 			continue
 		}
@@ -1629,9 +1648,7 @@ func getEntityConstraints(entityName string) []constraintDef {
 			{field: "rent_controlled", operator: "eq", value: true, requires: []string{"jurisdiction_id"}},
 		}
 	case "Portfolio":
-		return []constraintDef{
-			{field: "requires_trust_accounting", operator: "eq", value: true, requires: []string{"trust_bank_account_id"}},
-		}
+		return nil // Trust fields removed in v3
 	case "Account":
 		return []constraintDef{
 			{field: "account_type", operator: "in", values: []string{"asset", "expense"}, requires: []string{"normal_balance"}},
@@ -1657,12 +1674,10 @@ func getEntityConstraints(entityName string) []constraintDef {
 			{field: "status", operator: "eq", value: "denied", requires: []string{"decision_reason"}},
 		}
 	case "BankAccount":
-		return []constraintDef{
-			{field: "is_trust", operator: "eq", value: true, requires: []string{"trust_state"}},
-		}
+		return nil // Trust fields removed in v3
 	case "Reconciliation":
 		return []constraintDef{
-			{field: "status", operator: "in", values: []string{"balanced", "approved"}, requires: []string{"completed_by", "completed_at"}},
+			{field: "status", operator: "in", values: []string{"balanced", "approved"}, requires: []string{"reconciled_by", "reconciled_at"}},
 		}
 	}
 	return nil
@@ -1837,11 +1852,9 @@ func buildPropertyFormSections(fields []UIFieldDef, constraints []constraintDef)
 
 func buildPortfolioFormSections(fields []UIFieldDef, constraints []constraintDef) []UIFormSection {
 	return []UIFormSection{
-		{ID: "identity", Title: "Portfolio Details", Fields: []string{"name", "owner_id", "management_type"}},
-		{ID: "trust", Title: "Trust Accounting", Collapsible: true,
-			Fields: []string{"requires_trust_accounting", "trust_bank_account_id"}},
-		{ID: "settings", Title: "Settings", Collapsible: true,
-			Fields: []string{"default_payment_methods", "fiscal_year_start_month"}},
+		{ID: "identity", Title: "Portfolio Details", Fields: []string{"name", "owner_id", "management_type", "description"}},
+		{ID: "financial", Title: "Financial Defaults", Collapsible: true,
+			Fields: []string{"default_chart_of_accounts_id", "default_bank_account_id"}},
 	}
 }
 
@@ -1873,11 +1886,12 @@ func buildApplicationFormSections(fields []UIFieldDef, constraints []constraintD
 func buildBankAccountFormSections(fields []UIFieldDef, constraints []constraintDef) []UIFormSection {
 	return []UIFormSection{
 		{ID: "identity", Title: "Bank Account Details", Fields: []string{"name", "account_type", "gl_account_id"}},
-		{ID: "bank", Title: "Bank Information", Fields: []string{"bank_name", "routing_number", "account_number_last_four"}},
+		{ID: "bank", Title: "Bank Information", Fields: []string{"institution_name", "routing_number", "account_mask", "account_number_encrypted"}},
 		{ID: "scope", Title: "Scope", Collapsible: true, Fields: []string{"portfolio_id", "property_id", "entity_id"}},
-		{ID: "trust", Title: "Trust", Collapsible: true,
-			VisibleWhen: &VisibilityRule{Field: "is_trust", Operator: "eq", Value: true},
-			Fields: []string{"is_trust", "trust_state", "commingling_allowed"}},
+		{ID: "capabilities", Title: "Capabilities", Collapsible: true,
+			Fields: []string{"is_default", "accepts_deposits", "accepts_payments"}},
+		{ID: "integration", Title: "Integration", Collapsible: true, InitiallyCollapsed: boolPtr(true),
+			Fields: []string{"plaid_account_id", "plaid_access_token"}},
 	}
 }
 

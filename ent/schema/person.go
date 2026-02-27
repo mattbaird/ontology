@@ -29,9 +29,11 @@ func (Person) Mixin() []ent.Mixin {
 func (Person) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.String("first_name").SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("last_name").SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("display_name").SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("first_name").NotEmpty().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("middle_name").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("last_name").NotEmpty().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("display_name").NotEmpty().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.Enum("record_source").Values("user", "applicant", "import", "system").Default("user"),
 		field.Time("date_of_birth").Optional().Nillable(),
 		field.String("ssn_last_four").Optional().Nillable().Sensitive().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.JSON("contact_methods", []types.ContactMethod{}),

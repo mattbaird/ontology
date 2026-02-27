@@ -39,30 +39,36 @@ type BankAccount struct {
 	Name string `json:"name,omitempty"`
 	// AccountType holds the value of the "account_type" field.
 	AccountType bankaccount.AccountType `json:"account_type,omitempty"`
-	// BankName holds the value of the "bank_name" field.
-	BankName string `json:"bank_name,omitempty"`
+	// InstitutionName holds the value of the "institution_name" field.
+	InstitutionName string `json:"institution_name,omitempty"`
 	// RoutingNumber holds the value of the "routing_number" field.
-	RoutingNumber *string `json:"routing_number,omitempty"`
-	// AccountNumberLastFour holds the value of the "account_number_last_four" field.
-	AccountNumberLastFour string `json:"account_number_last_four,omitempty"`
+	RoutingNumber string `json:"-"`
+	// AccountMask holds the value of the "account_mask" field.
+	AccountMask string `json:"-"`
+	// AccountNumberEncrypted holds the value of the "account_number_encrypted" field.
+	AccountNumberEncrypted *string `json:"-"`
+	// PlaidAccountID holds the value of the "plaid_account_id" field.
+	PlaidAccountID *string `json:"plaid_account_id,omitempty"`
+	// PlaidAccessToken holds the value of the "plaid_access_token" field.
+	PlaidAccessToken *string `json:"-"`
 	// PropertyID holds the value of the "property_id" field.
 	PropertyID *string `json:"property_id,omitempty"`
 	// EntityID holds the value of the "entity_id" field.
 	EntityID *string `json:"entity_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status bankaccount.Status `json:"status,omitempty"`
+	// IsDefault holds the value of the "is_default" field.
+	IsDefault bool `json:"is_default,omitempty"`
+	// AcceptsDeposits holds the value of the "accepts_deposits" field.
+	AcceptsDeposits bool `json:"accepts_deposits,omitempty"`
+	// AcceptsPayments holds the value of the "accepts_payments" field.
+	AcceptsPayments bool `json:"accepts_payments,omitempty"`
 	// current_balance — amount in cents
 	CurrentBalanceAmountCents *int64 `json:"current_balance_amount_cents,omitempty"`
 	// current_balance — ISO 4217 currency code
 	CurrentBalanceCurrency *string `json:"current_balance_currency,omitempty"`
-	// LastReconciledAt holds the value of the "last_reconciled_at" field.
-	LastReconciledAt *time.Time `json:"last_reconciled_at,omitempty"`
-	// IsTrust holds the value of the "is_trust" field.
-	IsTrust bool `json:"is_trust,omitempty"`
-	// TrustState holds the value of the "trust_state" field.
-	TrustState *string `json:"trust_state,omitempty"`
-	// ComminglingAllowed holds the value of the "commingling_allowed" field.
-	ComminglingAllowed bool `json:"commingling_allowed,omitempty"`
+	// LastStatementDate holds the value of the "last_statement_date" field.
+	LastStatementDate *time.Time `json:"last_statement_date,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the BankAccountQuery when eager-loading is set.
 	Edges                   BankAccountEdges `json:"edges"`
@@ -132,13 +138,13 @@ func (*BankAccount) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case bankaccount.FieldIsTrust, bankaccount.FieldComminglingAllowed:
+		case bankaccount.FieldIsDefault, bankaccount.FieldAcceptsDeposits, bankaccount.FieldAcceptsPayments:
 			values[i] = new(sql.NullBool)
 		case bankaccount.FieldCurrentBalanceAmountCents:
 			values[i] = new(sql.NullInt64)
-		case bankaccount.FieldCreatedBy, bankaccount.FieldUpdatedBy, bankaccount.FieldSource, bankaccount.FieldCorrelationID, bankaccount.FieldAgentGoalID, bankaccount.FieldName, bankaccount.FieldAccountType, bankaccount.FieldBankName, bankaccount.FieldRoutingNumber, bankaccount.FieldAccountNumberLastFour, bankaccount.FieldPropertyID, bankaccount.FieldEntityID, bankaccount.FieldStatus, bankaccount.FieldCurrentBalanceCurrency, bankaccount.FieldTrustState:
+		case bankaccount.FieldCreatedBy, bankaccount.FieldUpdatedBy, bankaccount.FieldSource, bankaccount.FieldCorrelationID, bankaccount.FieldAgentGoalID, bankaccount.FieldName, bankaccount.FieldAccountType, bankaccount.FieldInstitutionName, bankaccount.FieldRoutingNumber, bankaccount.FieldAccountMask, bankaccount.FieldAccountNumberEncrypted, bankaccount.FieldPlaidAccountID, bankaccount.FieldPlaidAccessToken, bankaccount.FieldPropertyID, bankaccount.FieldEntityID, bankaccount.FieldStatus, bankaccount.FieldCurrentBalanceCurrency:
 			values[i] = new(sql.NullString)
-		case bankaccount.FieldCreatedAt, bankaccount.FieldUpdatedAt, bankaccount.FieldLastReconciledAt:
+		case bankaccount.FieldCreatedAt, bankaccount.FieldUpdatedAt, bankaccount.FieldLastStatementDate:
 			values[i] = new(sql.NullTime)
 		case bankaccount.FieldID:
 			values[i] = new(uuid.UUID)
@@ -225,24 +231,44 @@ func (_m *BankAccount) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.AccountType = bankaccount.AccountType(value.String)
 			}
-		case bankaccount.FieldBankName:
+		case bankaccount.FieldInstitutionName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field bank_name", values[i])
+				return fmt.Errorf("unexpected type %T for field institution_name", values[i])
 			} else if value.Valid {
-				_m.BankName = value.String
+				_m.InstitutionName = value.String
 			}
 		case bankaccount.FieldRoutingNumber:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field routing_number", values[i])
 			} else if value.Valid {
-				_m.RoutingNumber = new(string)
-				*_m.RoutingNumber = value.String
+				_m.RoutingNumber = value.String
 			}
-		case bankaccount.FieldAccountNumberLastFour:
+		case bankaccount.FieldAccountMask:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field account_number_last_four", values[i])
+				return fmt.Errorf("unexpected type %T for field account_mask", values[i])
 			} else if value.Valid {
-				_m.AccountNumberLastFour = value.String
+				_m.AccountMask = value.String
+			}
+		case bankaccount.FieldAccountNumberEncrypted:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field account_number_encrypted", values[i])
+			} else if value.Valid {
+				_m.AccountNumberEncrypted = new(string)
+				*_m.AccountNumberEncrypted = value.String
+			}
+		case bankaccount.FieldPlaidAccountID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field plaid_account_id", values[i])
+			} else if value.Valid {
+				_m.PlaidAccountID = new(string)
+				*_m.PlaidAccountID = value.String
+			}
+		case bankaccount.FieldPlaidAccessToken:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field plaid_access_token", values[i])
+			} else if value.Valid {
+				_m.PlaidAccessToken = new(string)
+				*_m.PlaidAccessToken = value.String
 			}
 		case bankaccount.FieldPropertyID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -264,6 +290,24 @@ func (_m *BankAccount) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Status = bankaccount.Status(value.String)
 			}
+		case bankaccount.FieldIsDefault:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_default", values[i])
+			} else if value.Valid {
+				_m.IsDefault = value.Bool
+			}
+		case bankaccount.FieldAcceptsDeposits:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field accepts_deposits", values[i])
+			} else if value.Valid {
+				_m.AcceptsDeposits = value.Bool
+			}
+		case bankaccount.FieldAcceptsPayments:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field accepts_payments", values[i])
+			} else if value.Valid {
+				_m.AcceptsPayments = value.Bool
+			}
 		case bankaccount.FieldCurrentBalanceAmountCents:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field current_balance_amount_cents", values[i])
@@ -278,31 +322,12 @@ func (_m *BankAccount) assignValues(columns []string, values []any) error {
 				_m.CurrentBalanceCurrency = new(string)
 				*_m.CurrentBalanceCurrency = value.String
 			}
-		case bankaccount.FieldLastReconciledAt:
+		case bankaccount.FieldLastStatementDate:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field last_reconciled_at", values[i])
+				return fmt.Errorf("unexpected type %T for field last_statement_date", values[i])
 			} else if value.Valid {
-				_m.LastReconciledAt = new(time.Time)
-				*_m.LastReconciledAt = value.Time
-			}
-		case bankaccount.FieldIsTrust:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field is_trust", values[i])
-			} else if value.Valid {
-				_m.IsTrust = value.Bool
-			}
-		case bankaccount.FieldTrustState:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field trust_state", values[i])
-			} else if value.Valid {
-				_m.TrustState = new(string)
-				*_m.TrustState = value.String
-			}
-		case bankaccount.FieldComminglingAllowed:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field commingling_allowed", values[i])
-			} else if value.Valid {
-				_m.ComminglingAllowed = value.Bool
+				_m.LastStatementDate = new(time.Time)
+				*_m.LastStatementDate = value.Time
 			}
 		case bankaccount.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -412,16 +437,21 @@ func (_m *BankAccount) String() string {
 	builder.WriteString("account_type=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AccountType))
 	builder.WriteString(", ")
-	builder.WriteString("bank_name=")
-	builder.WriteString(_m.BankName)
+	builder.WriteString("institution_name=")
+	builder.WriteString(_m.InstitutionName)
 	builder.WriteString(", ")
-	if v := _m.RoutingNumber; v != nil {
-		builder.WriteString("routing_number=")
+	builder.WriteString("routing_number=<sensitive>")
+	builder.WriteString(", ")
+	builder.WriteString("account_mask=<sensitive>")
+	builder.WriteString(", ")
+	builder.WriteString("account_number_encrypted=<sensitive>")
+	builder.WriteString(", ")
+	if v := _m.PlaidAccountID; v != nil {
+		builder.WriteString("plaid_account_id=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	builder.WriteString("account_number_last_four=")
-	builder.WriteString(_m.AccountNumberLastFour)
+	builder.WriteString("plaid_access_token=<sensitive>")
 	builder.WriteString(", ")
 	if v := _m.PropertyID; v != nil {
 		builder.WriteString("property_id=")
@@ -436,6 +466,15 @@ func (_m *BankAccount) String() string {
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
+	builder.WriteString("is_default=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsDefault))
+	builder.WriteString(", ")
+	builder.WriteString("accepts_deposits=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AcceptsDeposits))
+	builder.WriteString(", ")
+	builder.WriteString("accepts_payments=")
+	builder.WriteString(fmt.Sprintf("%v", _m.AcceptsPayments))
+	builder.WriteString(", ")
 	if v := _m.CurrentBalanceAmountCents; v != nil {
 		builder.WriteString("current_balance_amount_cents=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
@@ -446,21 +485,10 @@ func (_m *BankAccount) String() string {
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := _m.LastReconciledAt; v != nil {
-		builder.WriteString("last_reconciled_at=")
+	if v := _m.LastStatementDate; v != nil {
+		builder.WriteString("last_statement_date=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
-	builder.WriteString(", ")
-	builder.WriteString("is_trust=")
-	builder.WriteString(fmt.Sprintf("%v", _m.IsTrust))
-	builder.WriteString(", ")
-	if v := _m.TrustState; v != nil {
-		builder.WriteString("trust_state=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	builder.WriteString("commingling_allowed=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ComminglingAllowed))
 	builder.WriteByte(')')
 	return builder.String()
 }

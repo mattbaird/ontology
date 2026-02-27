@@ -159,6 +159,10 @@ func parseEntityMessages(val cue.Value) map[string][]entityField {
 		}
 
 		name := strings.TrimPrefix(label, "#")
+		// Skip base entity types — not domain entities
+		if name == "BaseEntity" || name == "StatefulEntity" || name == "ImmutableEntity" {
+			continue
+		}
 		var fields []entityField
 		fieldNum := 1
 

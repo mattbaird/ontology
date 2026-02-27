@@ -29,19 +29,12 @@ type ToolDef struct {
 	InputSchema json.RawMessage `json:"input_schema"`
 }
 
-// entityTransitionMap maps entity names to CUE state machine definition names.
-var entityTransitionMap = map[string]string{
-	"Lease":          "#LeaseTransitions",
-	"Space":          "#SpaceTransitions",
-	"Building":       "#BuildingTransitions",
-	"Application":    "#ApplicationTransitions",
-	"JournalEntry":   "#JournalEntryTransitions",
-	"Portfolio":      "#PortfolioTransitions",
-	"Property":       "#PropertyTransitions",
-	"PersonRole":     "#PersonRoleTransitions",
-	"Organization":   "#OrganizationTransitions",
-	"BankAccount":    "#BankAccountTransitions",
-	"Reconciliation": "#ReconciliationTransitions",
+// State machines are read from the unified #StateMachines map in CUE.
+// statefulEntities lists all entities that have state machines, for deterministic ordering.
+var statefulEntities = []string{
+	"Application", "BankAccount", "Building", "Jurisdiction", "JurisdictionRule",
+	"JournalEntry", "Lease", "Organization", "PersonRole", "Portfolio",
+	"Property", "Reconciliation", "Space",
 }
 
 // ── CUE attribute extraction ─────────────────────────────────────────────────
@@ -123,6 +116,10 @@ func generateOntologyDoc(val cue.Value, outDir string) {
 		}
 
 		name := strings.TrimPrefix(label, "#")
+		// Skip base entity types — not domain entities
+		if name == "BaseEntity" || name == "StatefulEntity" || name == "ImmutableEntity" {
+			continue
+		}
 		entities = append(entities, name)
 
 		var fields []string
@@ -186,16 +183,8 @@ func generateStateMachinesDoc(val cue.Value, outDir string) {
 	buf.WriteString("Every entity with a `status` field has an explicit state machine.\n")
 	buf.WriteString("Invalid transitions are rejected at the persistence layer.\n\n")
 
-	// Sort entity names for deterministic output
-	var entNames []string
-	for k := range entityTransitionMap {
-		entNames = append(entNames, k)
-	}
-	sort.Strings(entNames)
-
-	for _, entName := range entNames {
-		cueName := entityTransitionMap[entName]
-		smVal := val.LookupPath(cue.ParsePath(cueName))
+	for _, entName := range statefulEntities {
+		smVal := val.LookupPath(cue.ParsePath("#StateMachines." + toSnake(entName)))
 		if smVal.Err() != nil {
 			continue
 		}

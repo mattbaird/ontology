@@ -544,6 +544,11 @@ func (_u *OrganizationUpdate) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Organization.source": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LegalName(); ok {
+		if err := organization.LegalNameValidator(v); err != nil {
+			return &ValidationError{Name: "legal_name", err: fmt.Errorf(`ent: validator failed for field "Organization.legal_name": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.OrgType(); ok {
 		if err := organization.OrgTypeValidator(v); err != nil {
 			return &ValidationError{Name: "org_type", err: fmt.Errorf(`ent: validator failed for field "Organization.org_type": %w`, err)}
@@ -1378,6 +1383,11 @@ func (_u *OrganizationUpdateOne) check() error {
 	if v, ok := _u.mutation.Source(); ok {
 		if err := organization.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Organization.source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LegalName(); ok {
+		if err := organization.LegalNameValidator(v); err != nil {
+			return &ValidationError{Name: "legal_name", err: fmt.Errorf(`ent: validator failed for field "Organization.legal_name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.OrgType(); ok {

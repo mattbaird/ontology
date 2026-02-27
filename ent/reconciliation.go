@@ -38,28 +38,28 @@ type Reconciliation struct {
 	PeriodStart time.Time `json:"period_start,omitempty"`
 	// PeriodEnd holds the value of the "period_end" field.
 	PeriodEnd time.Time `json:"period_end,omitempty"`
+	// StatementDate holds the value of the "statement_date" field.
+	StatementDate time.Time `json:"statement_date,omitempty"`
 	// statement_balance — amount in cents
 	StatementBalanceAmountCents int64 `json:"statement_balance_amount_cents,omitempty"`
 	// statement_balance — ISO 4217 currency code
 	StatementBalanceCurrency string `json:"statement_balance_currency,omitempty"`
-	// system_balance — amount in cents
-	SystemBalanceAmountCents int64 `json:"system_balance_amount_cents,omitempty"`
-	// system_balance — ISO 4217 currency code
-	SystemBalanceCurrency string `json:"system_balance_currency,omitempty"`
+	// gl_balance — amount in cents
+	GlBalanceAmountCents int64 `json:"gl_balance_amount_cents,omitempty"`
+	// gl_balance — ISO 4217 currency code
+	GlBalanceCurrency string `json:"gl_balance_currency,omitempty"`
 	// difference — amount in cents
-	DifferenceAmountCents int64 `json:"difference_amount_cents,omitempty"`
+	DifferenceAmountCents *int64 `json:"difference_amount_cents,omitempty"`
 	// difference — ISO 4217 currency code
-	DifferenceCurrency string `json:"difference_currency,omitempty"`
+	DifferenceCurrency *string `json:"difference_currency,omitempty"`
 	// Status holds the value of the "status" field.
 	Status reconciliation.Status `json:"status,omitempty"`
-	// MatchedTransactionCount holds the value of the "matched_transaction_count" field.
-	MatchedTransactionCount int `json:"matched_transaction_count,omitempty"`
-	// UnmatchedTransactionCount holds the value of the "unmatched_transaction_count" field.
-	UnmatchedTransactionCount int `json:"unmatched_transaction_count,omitempty"`
-	// CompletedBy holds the value of the "completed_by" field.
-	CompletedBy *string `json:"completed_by,omitempty"`
-	// CompletedAt holds the value of the "completed_at" field.
-	CompletedAt *time.Time `json:"completed_at,omitempty"`
+	// UnreconciledItems holds the value of the "unreconciled_items" field.
+	UnreconciledItems *int `json:"unreconciled_items,omitempty"`
+	// ReconciledBy holds the value of the "reconciled_by" field.
+	ReconciledBy *string `json:"reconciled_by,omitempty"`
+	// ReconciledAt holds the value of the "reconciled_at" field.
+	ReconciledAt *time.Time `json:"reconciled_at,omitempty"`
 	// ApprovedBy holds the value of the "approved_by" field.
 	ApprovedBy *string `json:"approved_by,omitempty"`
 	// ApprovedAt holds the value of the "approved_at" field.
@@ -97,11 +97,11 @@ func (*Reconciliation) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case reconciliation.FieldStatementBalanceAmountCents, reconciliation.FieldSystemBalanceAmountCents, reconciliation.FieldDifferenceAmountCents, reconciliation.FieldMatchedTransactionCount, reconciliation.FieldUnmatchedTransactionCount:
+		case reconciliation.FieldStatementBalanceAmountCents, reconciliation.FieldGlBalanceAmountCents, reconciliation.FieldDifferenceAmountCents, reconciliation.FieldUnreconciledItems:
 			values[i] = new(sql.NullInt64)
-		case reconciliation.FieldCreatedBy, reconciliation.FieldUpdatedBy, reconciliation.FieldSource, reconciliation.FieldCorrelationID, reconciliation.FieldAgentGoalID, reconciliation.FieldStatementBalanceCurrency, reconciliation.FieldSystemBalanceCurrency, reconciliation.FieldDifferenceCurrency, reconciliation.FieldStatus, reconciliation.FieldCompletedBy, reconciliation.FieldApprovedBy:
+		case reconciliation.FieldCreatedBy, reconciliation.FieldUpdatedBy, reconciliation.FieldSource, reconciliation.FieldCorrelationID, reconciliation.FieldAgentGoalID, reconciliation.FieldStatementBalanceCurrency, reconciliation.FieldGlBalanceCurrency, reconciliation.FieldDifferenceCurrency, reconciliation.FieldStatus, reconciliation.FieldReconciledBy, reconciliation.FieldApprovedBy:
 			values[i] = new(sql.NullString)
-		case reconciliation.FieldCreatedAt, reconciliation.FieldUpdatedAt, reconciliation.FieldPeriodStart, reconciliation.FieldPeriodEnd, reconciliation.FieldCompletedAt, reconciliation.FieldApprovedAt:
+		case reconciliation.FieldCreatedAt, reconciliation.FieldUpdatedAt, reconciliation.FieldPeriodStart, reconciliation.FieldPeriodEnd, reconciliation.FieldStatementDate, reconciliation.FieldReconciledAt, reconciliation.FieldApprovedAt:
 			values[i] = new(sql.NullTime)
 		case reconciliation.FieldID:
 			values[i] = new(uuid.UUID)
@@ -186,6 +186,12 @@ func (_m *Reconciliation) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.PeriodEnd = value.Time
 			}
+		case reconciliation.FieldStatementDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field statement_date", values[i])
+			} else if value.Valid {
+				_m.StatementDate = value.Time
+			}
 		case reconciliation.FieldStatementBalanceAmountCents:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field statement_balance_amount_cents", values[i])
@@ -198,29 +204,31 @@ func (_m *Reconciliation) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.StatementBalanceCurrency = value.String
 			}
-		case reconciliation.FieldSystemBalanceAmountCents:
+		case reconciliation.FieldGlBalanceAmountCents:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field system_balance_amount_cents", values[i])
+				return fmt.Errorf("unexpected type %T for field gl_balance_amount_cents", values[i])
 			} else if value.Valid {
-				_m.SystemBalanceAmountCents = value.Int64
+				_m.GlBalanceAmountCents = value.Int64
 			}
-		case reconciliation.FieldSystemBalanceCurrency:
+		case reconciliation.FieldGlBalanceCurrency:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field system_balance_currency", values[i])
+				return fmt.Errorf("unexpected type %T for field gl_balance_currency", values[i])
 			} else if value.Valid {
-				_m.SystemBalanceCurrency = value.String
+				_m.GlBalanceCurrency = value.String
 			}
 		case reconciliation.FieldDifferenceAmountCents:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field difference_amount_cents", values[i])
 			} else if value.Valid {
-				_m.DifferenceAmountCents = value.Int64
+				_m.DifferenceAmountCents = new(int64)
+				*_m.DifferenceAmountCents = value.Int64
 			}
 		case reconciliation.FieldDifferenceCurrency:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field difference_currency", values[i])
 			} else if value.Valid {
-				_m.DifferenceCurrency = value.String
+				_m.DifferenceCurrency = new(string)
+				*_m.DifferenceCurrency = value.String
 			}
 		case reconciliation.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -228,31 +236,26 @@ func (_m *Reconciliation) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Status = reconciliation.Status(value.String)
 			}
-		case reconciliation.FieldMatchedTransactionCount:
+		case reconciliation.FieldUnreconciledItems:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field matched_transaction_count", values[i])
+				return fmt.Errorf("unexpected type %T for field unreconciled_items", values[i])
 			} else if value.Valid {
-				_m.MatchedTransactionCount = int(value.Int64)
+				_m.UnreconciledItems = new(int)
+				*_m.UnreconciledItems = int(value.Int64)
 			}
-		case reconciliation.FieldUnmatchedTransactionCount:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field unmatched_transaction_count", values[i])
-			} else if value.Valid {
-				_m.UnmatchedTransactionCount = int(value.Int64)
-			}
-		case reconciliation.FieldCompletedBy:
+		case reconciliation.FieldReconciledBy:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field completed_by", values[i])
+				return fmt.Errorf("unexpected type %T for field reconciled_by", values[i])
 			} else if value.Valid {
-				_m.CompletedBy = new(string)
-				*_m.CompletedBy = value.String
+				_m.ReconciledBy = new(string)
+				*_m.ReconciledBy = value.String
 			}
-		case reconciliation.FieldCompletedAt:
+		case reconciliation.FieldReconciledAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field completed_at", values[i])
+				return fmt.Errorf("unexpected type %T for field reconciled_at", values[i])
 			} else if value.Valid {
-				_m.CompletedAt = new(time.Time)
-				*_m.CompletedAt = value.Time
+				_m.ReconciledAt = new(time.Time)
+				*_m.ReconciledAt = value.Time
 			}
 		case reconciliation.FieldApprovedBy:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -354,40 +357,46 @@ func (_m *Reconciliation) String() string {
 	builder.WriteString("period_end=")
 	builder.WriteString(_m.PeriodEnd.Format(time.ANSIC))
 	builder.WriteString(", ")
+	builder.WriteString("statement_date=")
+	builder.WriteString(_m.StatementDate.Format(time.ANSIC))
+	builder.WriteString(", ")
 	builder.WriteString("statement_balance_amount_cents=")
 	builder.WriteString(fmt.Sprintf("%v", _m.StatementBalanceAmountCents))
 	builder.WriteString(", ")
 	builder.WriteString("statement_balance_currency=")
 	builder.WriteString(_m.StatementBalanceCurrency)
 	builder.WriteString(", ")
-	builder.WriteString("system_balance_amount_cents=")
-	builder.WriteString(fmt.Sprintf("%v", _m.SystemBalanceAmountCents))
+	builder.WriteString("gl_balance_amount_cents=")
+	builder.WriteString(fmt.Sprintf("%v", _m.GlBalanceAmountCents))
 	builder.WriteString(", ")
-	builder.WriteString("system_balance_currency=")
-	builder.WriteString(_m.SystemBalanceCurrency)
+	builder.WriteString("gl_balance_currency=")
+	builder.WriteString(_m.GlBalanceCurrency)
 	builder.WriteString(", ")
-	builder.WriteString("difference_amount_cents=")
-	builder.WriteString(fmt.Sprintf("%v", _m.DifferenceAmountCents))
+	if v := _m.DifferenceAmountCents; v != nil {
+		builder.WriteString("difference_amount_cents=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("difference_currency=")
-	builder.WriteString(_m.DifferenceCurrency)
+	if v := _m.DifferenceCurrency; v != nil {
+		builder.WriteString("difference_currency=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
-	builder.WriteString("matched_transaction_count=")
-	builder.WriteString(fmt.Sprintf("%v", _m.MatchedTransactionCount))
+	if v := _m.UnreconciledItems; v != nil {
+		builder.WriteString("unreconciled_items=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
-	builder.WriteString("unmatched_transaction_count=")
-	builder.WriteString(fmt.Sprintf("%v", _m.UnmatchedTransactionCount))
-	builder.WriteString(", ")
-	if v := _m.CompletedBy; v != nil {
-		builder.WriteString("completed_by=")
+	if v := _m.ReconciledBy; v != nil {
+		builder.WriteString("reconciled_by=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := _m.CompletedAt; v != nil {
-		builder.WriteString("completed_at=")
+	if v := _m.ReconciledAt; v != nil {
+		builder.WriteString("reconciled_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")

@@ -146,6 +146,20 @@ func (_u *ReconciliationUpdate) SetNillablePeriodEnd(v *time.Time) *Reconciliati
 	return _u
 }
 
+// SetStatementDate sets the "statement_date" field.
+func (_u *ReconciliationUpdate) SetStatementDate(v time.Time) *ReconciliationUpdate {
+	_u.mutation.SetStatementDate(v)
+	return _u
+}
+
+// SetNillableStatementDate sets the "statement_date" field if the given value is not nil.
+func (_u *ReconciliationUpdate) SetNillableStatementDate(v *time.Time) *ReconciliationUpdate {
+	if v != nil {
+		_u.SetStatementDate(*v)
+	}
+	return _u
+}
+
 // SetStatementBalanceAmountCents sets the "statement_balance_amount_cents" field.
 func (_u *ReconciliationUpdate) SetStatementBalanceAmountCents(v int64) *ReconciliationUpdate {
 	_u.mutation.ResetStatementBalanceAmountCents()
@@ -181,37 +195,37 @@ func (_u *ReconciliationUpdate) SetNillableStatementBalanceCurrency(v *string) *
 	return _u
 }
 
-// SetSystemBalanceAmountCents sets the "system_balance_amount_cents" field.
-func (_u *ReconciliationUpdate) SetSystemBalanceAmountCents(v int64) *ReconciliationUpdate {
-	_u.mutation.ResetSystemBalanceAmountCents()
-	_u.mutation.SetSystemBalanceAmountCents(v)
+// SetGlBalanceAmountCents sets the "gl_balance_amount_cents" field.
+func (_u *ReconciliationUpdate) SetGlBalanceAmountCents(v int64) *ReconciliationUpdate {
+	_u.mutation.ResetGlBalanceAmountCents()
+	_u.mutation.SetGlBalanceAmountCents(v)
 	return _u
 }
 
-// SetNillableSystemBalanceAmountCents sets the "system_balance_amount_cents" field if the given value is not nil.
-func (_u *ReconciliationUpdate) SetNillableSystemBalanceAmountCents(v *int64) *ReconciliationUpdate {
+// SetNillableGlBalanceAmountCents sets the "gl_balance_amount_cents" field if the given value is not nil.
+func (_u *ReconciliationUpdate) SetNillableGlBalanceAmountCents(v *int64) *ReconciliationUpdate {
 	if v != nil {
-		_u.SetSystemBalanceAmountCents(*v)
+		_u.SetGlBalanceAmountCents(*v)
 	}
 	return _u
 }
 
-// AddSystemBalanceAmountCents adds value to the "system_balance_amount_cents" field.
-func (_u *ReconciliationUpdate) AddSystemBalanceAmountCents(v int64) *ReconciliationUpdate {
-	_u.mutation.AddSystemBalanceAmountCents(v)
+// AddGlBalanceAmountCents adds value to the "gl_balance_amount_cents" field.
+func (_u *ReconciliationUpdate) AddGlBalanceAmountCents(v int64) *ReconciliationUpdate {
+	_u.mutation.AddGlBalanceAmountCents(v)
 	return _u
 }
 
-// SetSystemBalanceCurrency sets the "system_balance_currency" field.
-func (_u *ReconciliationUpdate) SetSystemBalanceCurrency(v string) *ReconciliationUpdate {
-	_u.mutation.SetSystemBalanceCurrency(v)
+// SetGlBalanceCurrency sets the "gl_balance_currency" field.
+func (_u *ReconciliationUpdate) SetGlBalanceCurrency(v string) *ReconciliationUpdate {
+	_u.mutation.SetGlBalanceCurrency(v)
 	return _u
 }
 
-// SetNillableSystemBalanceCurrency sets the "system_balance_currency" field if the given value is not nil.
-func (_u *ReconciliationUpdate) SetNillableSystemBalanceCurrency(v *string) *ReconciliationUpdate {
+// SetNillableGlBalanceCurrency sets the "gl_balance_currency" field if the given value is not nil.
+func (_u *ReconciliationUpdate) SetNillableGlBalanceCurrency(v *string) *ReconciliationUpdate {
 	if v != nil {
-		_u.SetSystemBalanceCurrency(*v)
+		_u.SetGlBalanceCurrency(*v)
 	}
 	return _u
 }
@@ -237,6 +251,12 @@ func (_u *ReconciliationUpdate) AddDifferenceAmountCents(v int64) *Reconciliatio
 	return _u
 }
 
+// ClearDifferenceAmountCents clears the value of the "difference_amount_cents" field.
+func (_u *ReconciliationUpdate) ClearDifferenceAmountCents() *ReconciliationUpdate {
+	_u.mutation.ClearDifferenceAmountCents()
+	return _u
+}
+
 // SetDifferenceCurrency sets the "difference_currency" field.
 func (_u *ReconciliationUpdate) SetDifferenceCurrency(v string) *ReconciliationUpdate {
 	_u.mutation.SetDifferenceCurrency(v)
@@ -248,6 +268,12 @@ func (_u *ReconciliationUpdate) SetNillableDifferenceCurrency(v *string) *Reconc
 	if v != nil {
 		_u.SetDifferenceCurrency(*v)
 	}
+	return _u
+}
+
+// ClearDifferenceCurrency clears the value of the "difference_currency" field.
+func (_u *ReconciliationUpdate) ClearDifferenceCurrency() *ReconciliationUpdate {
+	_u.mutation.ClearDifferenceCurrency()
 	return _u
 }
 
@@ -265,85 +291,70 @@ func (_u *ReconciliationUpdate) SetNillableStatus(v *reconciliation.Status) *Rec
 	return _u
 }
 
-// SetMatchedTransactionCount sets the "matched_transaction_count" field.
-func (_u *ReconciliationUpdate) SetMatchedTransactionCount(v int) *ReconciliationUpdate {
-	_u.mutation.ResetMatchedTransactionCount()
-	_u.mutation.SetMatchedTransactionCount(v)
+// SetUnreconciledItems sets the "unreconciled_items" field.
+func (_u *ReconciliationUpdate) SetUnreconciledItems(v int) *ReconciliationUpdate {
+	_u.mutation.ResetUnreconciledItems()
+	_u.mutation.SetUnreconciledItems(v)
 	return _u
 }
 
-// SetNillableMatchedTransactionCount sets the "matched_transaction_count" field if the given value is not nil.
-func (_u *ReconciliationUpdate) SetNillableMatchedTransactionCount(v *int) *ReconciliationUpdate {
+// SetNillableUnreconciledItems sets the "unreconciled_items" field if the given value is not nil.
+func (_u *ReconciliationUpdate) SetNillableUnreconciledItems(v *int) *ReconciliationUpdate {
 	if v != nil {
-		_u.SetMatchedTransactionCount(*v)
+		_u.SetUnreconciledItems(*v)
 	}
 	return _u
 }
 
-// AddMatchedTransactionCount adds value to the "matched_transaction_count" field.
-func (_u *ReconciliationUpdate) AddMatchedTransactionCount(v int) *ReconciliationUpdate {
-	_u.mutation.AddMatchedTransactionCount(v)
+// AddUnreconciledItems adds value to the "unreconciled_items" field.
+func (_u *ReconciliationUpdate) AddUnreconciledItems(v int) *ReconciliationUpdate {
+	_u.mutation.AddUnreconciledItems(v)
 	return _u
 }
 
-// SetUnmatchedTransactionCount sets the "unmatched_transaction_count" field.
-func (_u *ReconciliationUpdate) SetUnmatchedTransactionCount(v int) *ReconciliationUpdate {
-	_u.mutation.ResetUnmatchedTransactionCount()
-	_u.mutation.SetUnmatchedTransactionCount(v)
+// ClearUnreconciledItems clears the value of the "unreconciled_items" field.
+func (_u *ReconciliationUpdate) ClearUnreconciledItems() *ReconciliationUpdate {
+	_u.mutation.ClearUnreconciledItems()
 	return _u
 }
 
-// SetNillableUnmatchedTransactionCount sets the "unmatched_transaction_count" field if the given value is not nil.
-func (_u *ReconciliationUpdate) SetNillableUnmatchedTransactionCount(v *int) *ReconciliationUpdate {
+// SetReconciledBy sets the "reconciled_by" field.
+func (_u *ReconciliationUpdate) SetReconciledBy(v string) *ReconciliationUpdate {
+	_u.mutation.SetReconciledBy(v)
+	return _u
+}
+
+// SetNillableReconciledBy sets the "reconciled_by" field if the given value is not nil.
+func (_u *ReconciliationUpdate) SetNillableReconciledBy(v *string) *ReconciliationUpdate {
 	if v != nil {
-		_u.SetUnmatchedTransactionCount(*v)
+		_u.SetReconciledBy(*v)
 	}
 	return _u
 }
 
-// AddUnmatchedTransactionCount adds value to the "unmatched_transaction_count" field.
-func (_u *ReconciliationUpdate) AddUnmatchedTransactionCount(v int) *ReconciliationUpdate {
-	_u.mutation.AddUnmatchedTransactionCount(v)
+// ClearReconciledBy clears the value of the "reconciled_by" field.
+func (_u *ReconciliationUpdate) ClearReconciledBy() *ReconciliationUpdate {
+	_u.mutation.ClearReconciledBy()
 	return _u
 }
 
-// SetCompletedBy sets the "completed_by" field.
-func (_u *ReconciliationUpdate) SetCompletedBy(v string) *ReconciliationUpdate {
-	_u.mutation.SetCompletedBy(v)
+// SetReconciledAt sets the "reconciled_at" field.
+func (_u *ReconciliationUpdate) SetReconciledAt(v time.Time) *ReconciliationUpdate {
+	_u.mutation.SetReconciledAt(v)
 	return _u
 }
 
-// SetNillableCompletedBy sets the "completed_by" field if the given value is not nil.
-func (_u *ReconciliationUpdate) SetNillableCompletedBy(v *string) *ReconciliationUpdate {
+// SetNillableReconciledAt sets the "reconciled_at" field if the given value is not nil.
+func (_u *ReconciliationUpdate) SetNillableReconciledAt(v *time.Time) *ReconciliationUpdate {
 	if v != nil {
-		_u.SetCompletedBy(*v)
+		_u.SetReconciledAt(*v)
 	}
 	return _u
 }
 
-// ClearCompletedBy clears the value of the "completed_by" field.
-func (_u *ReconciliationUpdate) ClearCompletedBy() *ReconciliationUpdate {
-	_u.mutation.ClearCompletedBy()
-	return _u
-}
-
-// SetCompletedAt sets the "completed_at" field.
-func (_u *ReconciliationUpdate) SetCompletedAt(v time.Time) *ReconciliationUpdate {
-	_u.mutation.SetCompletedAt(v)
-	return _u
-}
-
-// SetNillableCompletedAt sets the "completed_at" field if the given value is not nil.
-func (_u *ReconciliationUpdate) SetNillableCompletedAt(v *time.Time) *ReconciliationUpdate {
-	if v != nil {
-		_u.SetCompletedAt(*v)
-	}
-	return _u
-}
-
-// ClearCompletedAt clears the value of the "completed_at" field.
-func (_u *ReconciliationUpdate) ClearCompletedAt() *ReconciliationUpdate {
-	_u.mutation.ClearCompletedAt()
+// ClearReconciledAt clears the value of the "reconciled_at" field.
+func (_u *ReconciliationUpdate) ClearReconciledAt() *ReconciliationUpdate {
+	_u.mutation.ClearReconciledAt()
 	return _u
 }
 
@@ -411,9 +422,7 @@ func (_u *ReconciliationUpdate) ClearBankAccount() *ReconciliationUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *ReconciliationUpdate) Save(ctx context.Context) (int, error) {
-	if err := _u.defaults(); err != nil {
-		return 0, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -440,15 +449,11 @@ func (_u *ReconciliationUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ReconciliationUpdate) defaults() error {
+func (_u *ReconciliationUpdate) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if reconciliation.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized reconciliation.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := reconciliation.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -473,9 +478,9 @@ func (_u *ReconciliationUpdate) check() error {
 			return &ValidationError{Name: "statement_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.statement_balance_currency": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.SystemBalanceCurrency(); ok {
-		if err := reconciliation.SystemBalanceCurrencyValidator(v); err != nil {
-			return &ValidationError{Name: "system_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.system_balance_currency": %w`, err)}
+	if v, ok := _u.mutation.GlBalanceCurrency(); ok {
+		if err := reconciliation.GlBalanceCurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "gl_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.gl_balance_currency": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.DifferenceCurrency(); ok {
@@ -536,6 +541,9 @@ func (_u *ReconciliationUpdate) sqlSave(ctx context.Context) (_node int, err err
 	if value, ok := _u.mutation.PeriodEnd(); ok {
 		_spec.SetField(reconciliation.FieldPeriodEnd, field.TypeTime, value)
 	}
+	if value, ok := _u.mutation.StatementDate(); ok {
+		_spec.SetField(reconciliation.FieldStatementDate, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.StatementBalanceAmountCents(); ok {
 		_spec.SetField(reconciliation.FieldStatementBalanceAmountCents, field.TypeInt64, value)
 	}
@@ -545,14 +553,14 @@ func (_u *ReconciliationUpdate) sqlSave(ctx context.Context) (_node int, err err
 	if value, ok := _u.mutation.StatementBalanceCurrency(); ok {
 		_spec.SetField(reconciliation.FieldStatementBalanceCurrency, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.SystemBalanceAmountCents(); ok {
-		_spec.SetField(reconciliation.FieldSystemBalanceAmountCents, field.TypeInt64, value)
+	if value, ok := _u.mutation.GlBalanceAmountCents(); ok {
+		_spec.SetField(reconciliation.FieldGlBalanceAmountCents, field.TypeInt64, value)
 	}
-	if value, ok := _u.mutation.AddedSystemBalanceAmountCents(); ok {
-		_spec.AddField(reconciliation.FieldSystemBalanceAmountCents, field.TypeInt64, value)
+	if value, ok := _u.mutation.AddedGlBalanceAmountCents(); ok {
+		_spec.AddField(reconciliation.FieldGlBalanceAmountCents, field.TypeInt64, value)
 	}
-	if value, ok := _u.mutation.SystemBalanceCurrency(); ok {
-		_spec.SetField(reconciliation.FieldSystemBalanceCurrency, field.TypeString, value)
+	if value, ok := _u.mutation.GlBalanceCurrency(); ok {
+		_spec.SetField(reconciliation.FieldGlBalanceCurrency, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.DifferenceAmountCents(); ok {
 		_spec.SetField(reconciliation.FieldDifferenceAmountCents, field.TypeInt64, value)
@@ -560,35 +568,38 @@ func (_u *ReconciliationUpdate) sqlSave(ctx context.Context) (_node int, err err
 	if value, ok := _u.mutation.AddedDifferenceAmountCents(); ok {
 		_spec.AddField(reconciliation.FieldDifferenceAmountCents, field.TypeInt64, value)
 	}
+	if _u.mutation.DifferenceAmountCentsCleared() {
+		_spec.ClearField(reconciliation.FieldDifferenceAmountCents, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.DifferenceCurrency(); ok {
 		_spec.SetField(reconciliation.FieldDifferenceCurrency, field.TypeString, value)
+	}
+	if _u.mutation.DifferenceCurrencyCleared() {
+		_spec.ClearField(reconciliation.FieldDifferenceCurrency, field.TypeString)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(reconciliation.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.MatchedTransactionCount(); ok {
-		_spec.SetField(reconciliation.FieldMatchedTransactionCount, field.TypeInt, value)
+	if value, ok := _u.mutation.UnreconciledItems(); ok {
+		_spec.SetField(reconciliation.FieldUnreconciledItems, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.AddedMatchedTransactionCount(); ok {
-		_spec.AddField(reconciliation.FieldMatchedTransactionCount, field.TypeInt, value)
+	if value, ok := _u.mutation.AddedUnreconciledItems(); ok {
+		_spec.AddField(reconciliation.FieldUnreconciledItems, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.UnmatchedTransactionCount(); ok {
-		_spec.SetField(reconciliation.FieldUnmatchedTransactionCount, field.TypeInt, value)
+	if _u.mutation.UnreconciledItemsCleared() {
+		_spec.ClearField(reconciliation.FieldUnreconciledItems, field.TypeInt)
 	}
-	if value, ok := _u.mutation.AddedUnmatchedTransactionCount(); ok {
-		_spec.AddField(reconciliation.FieldUnmatchedTransactionCount, field.TypeInt, value)
+	if value, ok := _u.mutation.ReconciledBy(); ok {
+		_spec.SetField(reconciliation.FieldReconciledBy, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.CompletedBy(); ok {
-		_spec.SetField(reconciliation.FieldCompletedBy, field.TypeString, value)
+	if _u.mutation.ReconciledByCleared() {
+		_spec.ClearField(reconciliation.FieldReconciledBy, field.TypeString)
 	}
-	if _u.mutation.CompletedByCleared() {
-		_spec.ClearField(reconciliation.FieldCompletedBy, field.TypeString)
+	if value, ok := _u.mutation.ReconciledAt(); ok {
+		_spec.SetField(reconciliation.FieldReconciledAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.CompletedAt(); ok {
-		_spec.SetField(reconciliation.FieldCompletedAt, field.TypeTime, value)
-	}
-	if _u.mutation.CompletedAtCleared() {
-		_spec.ClearField(reconciliation.FieldCompletedAt, field.TypeTime)
+	if _u.mutation.ReconciledAtCleared() {
+		_spec.ClearField(reconciliation.FieldReconciledAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.ApprovedBy(); ok {
 		_spec.SetField(reconciliation.FieldApprovedBy, field.TypeString, value)
@@ -767,6 +778,20 @@ func (_u *ReconciliationUpdateOne) SetNillablePeriodEnd(v *time.Time) *Reconcili
 	return _u
 }
 
+// SetStatementDate sets the "statement_date" field.
+func (_u *ReconciliationUpdateOne) SetStatementDate(v time.Time) *ReconciliationUpdateOne {
+	_u.mutation.SetStatementDate(v)
+	return _u
+}
+
+// SetNillableStatementDate sets the "statement_date" field if the given value is not nil.
+func (_u *ReconciliationUpdateOne) SetNillableStatementDate(v *time.Time) *ReconciliationUpdateOne {
+	if v != nil {
+		_u.SetStatementDate(*v)
+	}
+	return _u
+}
+
 // SetStatementBalanceAmountCents sets the "statement_balance_amount_cents" field.
 func (_u *ReconciliationUpdateOne) SetStatementBalanceAmountCents(v int64) *ReconciliationUpdateOne {
 	_u.mutation.ResetStatementBalanceAmountCents()
@@ -802,37 +827,37 @@ func (_u *ReconciliationUpdateOne) SetNillableStatementBalanceCurrency(v *string
 	return _u
 }
 
-// SetSystemBalanceAmountCents sets the "system_balance_amount_cents" field.
-func (_u *ReconciliationUpdateOne) SetSystemBalanceAmountCents(v int64) *ReconciliationUpdateOne {
-	_u.mutation.ResetSystemBalanceAmountCents()
-	_u.mutation.SetSystemBalanceAmountCents(v)
+// SetGlBalanceAmountCents sets the "gl_balance_amount_cents" field.
+func (_u *ReconciliationUpdateOne) SetGlBalanceAmountCents(v int64) *ReconciliationUpdateOne {
+	_u.mutation.ResetGlBalanceAmountCents()
+	_u.mutation.SetGlBalanceAmountCents(v)
 	return _u
 }
 
-// SetNillableSystemBalanceAmountCents sets the "system_balance_amount_cents" field if the given value is not nil.
-func (_u *ReconciliationUpdateOne) SetNillableSystemBalanceAmountCents(v *int64) *ReconciliationUpdateOne {
+// SetNillableGlBalanceAmountCents sets the "gl_balance_amount_cents" field if the given value is not nil.
+func (_u *ReconciliationUpdateOne) SetNillableGlBalanceAmountCents(v *int64) *ReconciliationUpdateOne {
 	if v != nil {
-		_u.SetSystemBalanceAmountCents(*v)
+		_u.SetGlBalanceAmountCents(*v)
 	}
 	return _u
 }
 
-// AddSystemBalanceAmountCents adds value to the "system_balance_amount_cents" field.
-func (_u *ReconciliationUpdateOne) AddSystemBalanceAmountCents(v int64) *ReconciliationUpdateOne {
-	_u.mutation.AddSystemBalanceAmountCents(v)
+// AddGlBalanceAmountCents adds value to the "gl_balance_amount_cents" field.
+func (_u *ReconciliationUpdateOne) AddGlBalanceAmountCents(v int64) *ReconciliationUpdateOne {
+	_u.mutation.AddGlBalanceAmountCents(v)
 	return _u
 }
 
-// SetSystemBalanceCurrency sets the "system_balance_currency" field.
-func (_u *ReconciliationUpdateOne) SetSystemBalanceCurrency(v string) *ReconciliationUpdateOne {
-	_u.mutation.SetSystemBalanceCurrency(v)
+// SetGlBalanceCurrency sets the "gl_balance_currency" field.
+func (_u *ReconciliationUpdateOne) SetGlBalanceCurrency(v string) *ReconciliationUpdateOne {
+	_u.mutation.SetGlBalanceCurrency(v)
 	return _u
 }
 
-// SetNillableSystemBalanceCurrency sets the "system_balance_currency" field if the given value is not nil.
-func (_u *ReconciliationUpdateOne) SetNillableSystemBalanceCurrency(v *string) *ReconciliationUpdateOne {
+// SetNillableGlBalanceCurrency sets the "gl_balance_currency" field if the given value is not nil.
+func (_u *ReconciliationUpdateOne) SetNillableGlBalanceCurrency(v *string) *ReconciliationUpdateOne {
 	if v != nil {
-		_u.SetSystemBalanceCurrency(*v)
+		_u.SetGlBalanceCurrency(*v)
 	}
 	return _u
 }
@@ -858,6 +883,12 @@ func (_u *ReconciliationUpdateOne) AddDifferenceAmountCents(v int64) *Reconcilia
 	return _u
 }
 
+// ClearDifferenceAmountCents clears the value of the "difference_amount_cents" field.
+func (_u *ReconciliationUpdateOne) ClearDifferenceAmountCents() *ReconciliationUpdateOne {
+	_u.mutation.ClearDifferenceAmountCents()
+	return _u
+}
+
 // SetDifferenceCurrency sets the "difference_currency" field.
 func (_u *ReconciliationUpdateOne) SetDifferenceCurrency(v string) *ReconciliationUpdateOne {
 	_u.mutation.SetDifferenceCurrency(v)
@@ -869,6 +900,12 @@ func (_u *ReconciliationUpdateOne) SetNillableDifferenceCurrency(v *string) *Rec
 	if v != nil {
 		_u.SetDifferenceCurrency(*v)
 	}
+	return _u
+}
+
+// ClearDifferenceCurrency clears the value of the "difference_currency" field.
+func (_u *ReconciliationUpdateOne) ClearDifferenceCurrency() *ReconciliationUpdateOne {
+	_u.mutation.ClearDifferenceCurrency()
 	return _u
 }
 
@@ -886,85 +923,70 @@ func (_u *ReconciliationUpdateOne) SetNillableStatus(v *reconciliation.Status) *
 	return _u
 }
 
-// SetMatchedTransactionCount sets the "matched_transaction_count" field.
-func (_u *ReconciliationUpdateOne) SetMatchedTransactionCount(v int) *ReconciliationUpdateOne {
-	_u.mutation.ResetMatchedTransactionCount()
-	_u.mutation.SetMatchedTransactionCount(v)
+// SetUnreconciledItems sets the "unreconciled_items" field.
+func (_u *ReconciliationUpdateOne) SetUnreconciledItems(v int) *ReconciliationUpdateOne {
+	_u.mutation.ResetUnreconciledItems()
+	_u.mutation.SetUnreconciledItems(v)
 	return _u
 }
 
-// SetNillableMatchedTransactionCount sets the "matched_transaction_count" field if the given value is not nil.
-func (_u *ReconciliationUpdateOne) SetNillableMatchedTransactionCount(v *int) *ReconciliationUpdateOne {
+// SetNillableUnreconciledItems sets the "unreconciled_items" field if the given value is not nil.
+func (_u *ReconciliationUpdateOne) SetNillableUnreconciledItems(v *int) *ReconciliationUpdateOne {
 	if v != nil {
-		_u.SetMatchedTransactionCount(*v)
+		_u.SetUnreconciledItems(*v)
 	}
 	return _u
 }
 
-// AddMatchedTransactionCount adds value to the "matched_transaction_count" field.
-func (_u *ReconciliationUpdateOne) AddMatchedTransactionCount(v int) *ReconciliationUpdateOne {
-	_u.mutation.AddMatchedTransactionCount(v)
+// AddUnreconciledItems adds value to the "unreconciled_items" field.
+func (_u *ReconciliationUpdateOne) AddUnreconciledItems(v int) *ReconciliationUpdateOne {
+	_u.mutation.AddUnreconciledItems(v)
 	return _u
 }
 
-// SetUnmatchedTransactionCount sets the "unmatched_transaction_count" field.
-func (_u *ReconciliationUpdateOne) SetUnmatchedTransactionCount(v int) *ReconciliationUpdateOne {
-	_u.mutation.ResetUnmatchedTransactionCount()
-	_u.mutation.SetUnmatchedTransactionCount(v)
+// ClearUnreconciledItems clears the value of the "unreconciled_items" field.
+func (_u *ReconciliationUpdateOne) ClearUnreconciledItems() *ReconciliationUpdateOne {
+	_u.mutation.ClearUnreconciledItems()
 	return _u
 }
 
-// SetNillableUnmatchedTransactionCount sets the "unmatched_transaction_count" field if the given value is not nil.
-func (_u *ReconciliationUpdateOne) SetNillableUnmatchedTransactionCount(v *int) *ReconciliationUpdateOne {
+// SetReconciledBy sets the "reconciled_by" field.
+func (_u *ReconciliationUpdateOne) SetReconciledBy(v string) *ReconciliationUpdateOne {
+	_u.mutation.SetReconciledBy(v)
+	return _u
+}
+
+// SetNillableReconciledBy sets the "reconciled_by" field if the given value is not nil.
+func (_u *ReconciliationUpdateOne) SetNillableReconciledBy(v *string) *ReconciliationUpdateOne {
 	if v != nil {
-		_u.SetUnmatchedTransactionCount(*v)
+		_u.SetReconciledBy(*v)
 	}
 	return _u
 }
 
-// AddUnmatchedTransactionCount adds value to the "unmatched_transaction_count" field.
-func (_u *ReconciliationUpdateOne) AddUnmatchedTransactionCount(v int) *ReconciliationUpdateOne {
-	_u.mutation.AddUnmatchedTransactionCount(v)
+// ClearReconciledBy clears the value of the "reconciled_by" field.
+func (_u *ReconciliationUpdateOne) ClearReconciledBy() *ReconciliationUpdateOne {
+	_u.mutation.ClearReconciledBy()
 	return _u
 }
 
-// SetCompletedBy sets the "completed_by" field.
-func (_u *ReconciliationUpdateOne) SetCompletedBy(v string) *ReconciliationUpdateOne {
-	_u.mutation.SetCompletedBy(v)
+// SetReconciledAt sets the "reconciled_at" field.
+func (_u *ReconciliationUpdateOne) SetReconciledAt(v time.Time) *ReconciliationUpdateOne {
+	_u.mutation.SetReconciledAt(v)
 	return _u
 }
 
-// SetNillableCompletedBy sets the "completed_by" field if the given value is not nil.
-func (_u *ReconciliationUpdateOne) SetNillableCompletedBy(v *string) *ReconciliationUpdateOne {
+// SetNillableReconciledAt sets the "reconciled_at" field if the given value is not nil.
+func (_u *ReconciliationUpdateOne) SetNillableReconciledAt(v *time.Time) *ReconciliationUpdateOne {
 	if v != nil {
-		_u.SetCompletedBy(*v)
+		_u.SetReconciledAt(*v)
 	}
 	return _u
 }
 
-// ClearCompletedBy clears the value of the "completed_by" field.
-func (_u *ReconciliationUpdateOne) ClearCompletedBy() *ReconciliationUpdateOne {
-	_u.mutation.ClearCompletedBy()
-	return _u
-}
-
-// SetCompletedAt sets the "completed_at" field.
-func (_u *ReconciliationUpdateOne) SetCompletedAt(v time.Time) *ReconciliationUpdateOne {
-	_u.mutation.SetCompletedAt(v)
-	return _u
-}
-
-// SetNillableCompletedAt sets the "completed_at" field if the given value is not nil.
-func (_u *ReconciliationUpdateOne) SetNillableCompletedAt(v *time.Time) *ReconciliationUpdateOne {
-	if v != nil {
-		_u.SetCompletedAt(*v)
-	}
-	return _u
-}
-
-// ClearCompletedAt clears the value of the "completed_at" field.
-func (_u *ReconciliationUpdateOne) ClearCompletedAt() *ReconciliationUpdateOne {
-	_u.mutation.ClearCompletedAt()
+// ClearReconciledAt clears the value of the "reconciled_at" field.
+func (_u *ReconciliationUpdateOne) ClearReconciledAt() *ReconciliationUpdateOne {
+	_u.mutation.ClearReconciledAt()
 	return _u
 }
 
@@ -1045,9 +1067,7 @@ func (_u *ReconciliationUpdateOne) Select(field string, fields ...string) *Recon
 
 // Save executes the query and returns the updated Reconciliation entity.
 func (_u *ReconciliationUpdateOne) Save(ctx context.Context) (*Reconciliation, error) {
-	if err := _u.defaults(); err != nil {
-		return nil, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -1074,15 +1094,11 @@ func (_u *ReconciliationUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *ReconciliationUpdateOne) defaults() error {
+func (_u *ReconciliationUpdateOne) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if reconciliation.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized reconciliation.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := reconciliation.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1107,9 +1123,9 @@ func (_u *ReconciliationUpdateOne) check() error {
 			return &ValidationError{Name: "statement_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.statement_balance_currency": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.SystemBalanceCurrency(); ok {
-		if err := reconciliation.SystemBalanceCurrencyValidator(v); err != nil {
-			return &ValidationError{Name: "system_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.system_balance_currency": %w`, err)}
+	if v, ok := _u.mutation.GlBalanceCurrency(); ok {
+		if err := reconciliation.GlBalanceCurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "gl_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.gl_balance_currency": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.DifferenceCurrency(); ok {
@@ -1187,6 +1203,9 @@ func (_u *ReconciliationUpdateOne) sqlSave(ctx context.Context) (_node *Reconcil
 	if value, ok := _u.mutation.PeriodEnd(); ok {
 		_spec.SetField(reconciliation.FieldPeriodEnd, field.TypeTime, value)
 	}
+	if value, ok := _u.mutation.StatementDate(); ok {
+		_spec.SetField(reconciliation.FieldStatementDate, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.StatementBalanceAmountCents(); ok {
 		_spec.SetField(reconciliation.FieldStatementBalanceAmountCents, field.TypeInt64, value)
 	}
@@ -1196,14 +1215,14 @@ func (_u *ReconciliationUpdateOne) sqlSave(ctx context.Context) (_node *Reconcil
 	if value, ok := _u.mutation.StatementBalanceCurrency(); ok {
 		_spec.SetField(reconciliation.FieldStatementBalanceCurrency, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.SystemBalanceAmountCents(); ok {
-		_spec.SetField(reconciliation.FieldSystemBalanceAmountCents, field.TypeInt64, value)
+	if value, ok := _u.mutation.GlBalanceAmountCents(); ok {
+		_spec.SetField(reconciliation.FieldGlBalanceAmountCents, field.TypeInt64, value)
 	}
-	if value, ok := _u.mutation.AddedSystemBalanceAmountCents(); ok {
-		_spec.AddField(reconciliation.FieldSystemBalanceAmountCents, field.TypeInt64, value)
+	if value, ok := _u.mutation.AddedGlBalanceAmountCents(); ok {
+		_spec.AddField(reconciliation.FieldGlBalanceAmountCents, field.TypeInt64, value)
 	}
-	if value, ok := _u.mutation.SystemBalanceCurrency(); ok {
-		_spec.SetField(reconciliation.FieldSystemBalanceCurrency, field.TypeString, value)
+	if value, ok := _u.mutation.GlBalanceCurrency(); ok {
+		_spec.SetField(reconciliation.FieldGlBalanceCurrency, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.DifferenceAmountCents(); ok {
 		_spec.SetField(reconciliation.FieldDifferenceAmountCents, field.TypeInt64, value)
@@ -1211,35 +1230,38 @@ func (_u *ReconciliationUpdateOne) sqlSave(ctx context.Context) (_node *Reconcil
 	if value, ok := _u.mutation.AddedDifferenceAmountCents(); ok {
 		_spec.AddField(reconciliation.FieldDifferenceAmountCents, field.TypeInt64, value)
 	}
+	if _u.mutation.DifferenceAmountCentsCleared() {
+		_spec.ClearField(reconciliation.FieldDifferenceAmountCents, field.TypeInt64)
+	}
 	if value, ok := _u.mutation.DifferenceCurrency(); ok {
 		_spec.SetField(reconciliation.FieldDifferenceCurrency, field.TypeString, value)
+	}
+	if _u.mutation.DifferenceCurrencyCleared() {
+		_spec.ClearField(reconciliation.FieldDifferenceCurrency, field.TypeString)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(reconciliation.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.MatchedTransactionCount(); ok {
-		_spec.SetField(reconciliation.FieldMatchedTransactionCount, field.TypeInt, value)
+	if value, ok := _u.mutation.UnreconciledItems(); ok {
+		_spec.SetField(reconciliation.FieldUnreconciledItems, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.AddedMatchedTransactionCount(); ok {
-		_spec.AddField(reconciliation.FieldMatchedTransactionCount, field.TypeInt, value)
+	if value, ok := _u.mutation.AddedUnreconciledItems(); ok {
+		_spec.AddField(reconciliation.FieldUnreconciledItems, field.TypeInt, value)
 	}
-	if value, ok := _u.mutation.UnmatchedTransactionCount(); ok {
-		_spec.SetField(reconciliation.FieldUnmatchedTransactionCount, field.TypeInt, value)
+	if _u.mutation.UnreconciledItemsCleared() {
+		_spec.ClearField(reconciliation.FieldUnreconciledItems, field.TypeInt)
 	}
-	if value, ok := _u.mutation.AddedUnmatchedTransactionCount(); ok {
-		_spec.AddField(reconciliation.FieldUnmatchedTransactionCount, field.TypeInt, value)
+	if value, ok := _u.mutation.ReconciledBy(); ok {
+		_spec.SetField(reconciliation.FieldReconciledBy, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.CompletedBy(); ok {
-		_spec.SetField(reconciliation.FieldCompletedBy, field.TypeString, value)
+	if _u.mutation.ReconciledByCleared() {
+		_spec.ClearField(reconciliation.FieldReconciledBy, field.TypeString)
 	}
-	if _u.mutation.CompletedByCleared() {
-		_spec.ClearField(reconciliation.FieldCompletedBy, field.TypeString)
+	if value, ok := _u.mutation.ReconciledAt(); ok {
+		_spec.SetField(reconciliation.FieldReconciledAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.CompletedAt(); ok {
-		_spec.SetField(reconciliation.FieldCompletedAt, field.TypeTime, value)
-	}
-	if _u.mutation.CompletedAtCleared() {
-		_spec.ClearField(reconciliation.FieldCompletedAt, field.TypeTime)
+	if _u.mutation.ReconciledAtCleared() {
+		_spec.ClearField(reconciliation.FieldReconciledAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.ApprovedBy(); ok {
 		_spec.SetField(reconciliation.FieldApprovedBy, field.TypeString, value)

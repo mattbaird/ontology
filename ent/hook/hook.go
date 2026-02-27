@@ -45,6 +45,18 @@ func (f BankAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BankAccountMutation", m)
 }
 
+// The BaseEntityFunc type is an adapter to allow the use of ordinary
+// function as BaseEntity mutator.
+type BaseEntityFunc func(context.Context, *ent.BaseEntityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f BaseEntityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.BaseEntityMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BaseEntityMutation", m)
+}
+
 // The BuildingFunc type is an adapter to allow the use of ordinary
 // function as Building mutator.
 type BuildingFunc func(context.Context, *ent.BuildingMutation) (ent.Value, error)
@@ -57,6 +69,18 @@ func (f BuildingFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.BuildingMutation", m)
 }
 
+// The ImmutableEntityFunc type is an adapter to allow the use of ordinary
+// function as ImmutableEntity mutator.
+type ImmutableEntityFunc func(context.Context, *ent.ImmutableEntityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ImmutableEntityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ImmutableEntityMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ImmutableEntityMutation", m)
+}
+
 // The JournalEntryFunc type is an adapter to allow the use of ordinary
 // function as JournalEntry mutator.
 type JournalEntryFunc func(context.Context, *ent.JournalEntryMutation) (ent.Value, error)
@@ -67,6 +91,30 @@ func (f JournalEntryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.JournalEntryMutation", m)
+}
+
+// The JurisdictionFunc type is an adapter to allow the use of ordinary
+// function as Jurisdiction mutator.
+type JurisdictionFunc func(context.Context, *ent.JurisdictionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f JurisdictionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.JurisdictionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.JurisdictionMutation", m)
+}
+
+// The JurisdictionRuleFunc type is an adapter to allow the use of ordinary
+// function as JurisdictionRule mutator.
+type JurisdictionRuleFunc func(context.Context, *ent.JurisdictionRuleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f JurisdictionRuleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.JurisdictionRuleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.JurisdictionRuleMutation", m)
 }
 
 // The LeaseFunc type is an adapter to allow the use of ordinary
@@ -165,6 +213,18 @@ func (f PropertyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PropertyMutation", m)
 }
 
+// The PropertyJurisdictionFunc type is an adapter to allow the use of ordinary
+// function as PropertyJurisdiction mutator.
+type PropertyJurisdictionFunc func(context.Context, *ent.PropertyJurisdictionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PropertyJurisdictionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PropertyJurisdictionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PropertyJurisdictionMutation", m)
+}
+
 // The ReconciliationFunc type is an adapter to allow the use of ordinary
 // function as Reconciliation mutator.
 type ReconciliationFunc func(context.Context, *ent.ReconciliationMutation) (ent.Value, error)
@@ -187,6 +247,18 @@ func (f SpaceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SpaceMutation", m)
+}
+
+// The StatefulEntityFunc type is an adapter to allow the use of ordinary
+// function as StatefulEntity mutator.
+type StatefulEntityFunc func(context.Context, *ent.StatefulEntityMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f StatefulEntityFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.StatefulEntityMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.StatefulEntityMutation", m)
 }
 
 // Condition is a hook condition function.

@@ -8,7 +8,7 @@ package propeller
 //   - Agent reasoning (understanding how entities connect)
 //   - Event routing (which subscribers care about this entity?)
 
-#OntologyRelationship: {
+#OntologyRelationship: close({
 	from:         string // Source entity type
 	to:           string // Target entity type
 	edge_name:    string // Name of the edge (lowercase)
@@ -16,7 +16,8 @@ package propeller
 	required:     bool | *false
 	semantic:     string // Human-readable relationship meaning
 	inverse_name: string // Edge name on the target side
-}
+	via?:         string // Join entity for M2M relationships
+})
 
 relationships: [...#OntologyRelationship]
 relationships: [
@@ -97,4 +98,18 @@ relationships: [
 	// Application relationships
 	{from: "Application", to: "Person", edge_name: "applicant", cardinality: "M2O", required: true,
 		semantic: "Application was submitted by Person", inverse_name: "applications"},
+
+	// Jurisdiction relationships
+	{from: "Jurisdiction", to: "Jurisdiction", edge_name: "children", cardinality: "O2M",
+		semantic: "Jurisdiction contains sub-Jurisdictions", inverse_name: "parent_jurisdiction"},
+	{from: "Jurisdiction", to: "JurisdictionRule", edge_name: "rules", cardinality: "O2M",
+		semantic: "Jurisdiction has Rules", inverse_name: "jurisdiction"},
+	{from: "JurisdictionRule", to: "JurisdictionRule", edge_name: "superseded_by", cardinality: "O2O",
+		semantic: "Rule superseded by newer Rule", inverse_name: "supersedes"},
+
+	// Property ↔ Jurisdiction (M2M via PropertyJurisdiction)
+	{from: "PropertyJurisdiction", to: "Property", edge_name: "property", cardinality: "M2O", required: true,
+		semantic: "PropertyJurisdiction links Property", inverse_name: "property_jurisdictions"},
+	{from: "PropertyJurisdiction", to: "Jurisdiction", edge_name: "jurisdiction", cardinality: "M2O", required: true,
+		semantic: "PropertyJurisdiction links Jurisdiction", inverse_name: "property_jurisdictions"},
 ]

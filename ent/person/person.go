@@ -32,10 +32,14 @@ const (
 	FieldAgentGoalID = "agent_goal_id"
 	// FieldFirstName holds the string denoting the first_name field in the database.
 	FieldFirstName = "first_name"
+	// FieldMiddleName holds the string denoting the middle_name field in the database.
+	FieldMiddleName = "middle_name"
 	// FieldLastName holds the string denoting the last_name field in the database.
 	FieldLastName = "last_name"
 	// FieldDisplayName holds the string denoting the display_name field in the database.
 	FieldDisplayName = "display_name"
+	// FieldRecordSource holds the string denoting the record_source field in the database.
+	FieldRecordSource = "record_source"
 	// FieldDateOfBirth holds the string denoting the date_of_birth field in the database.
 	FieldDateOfBirth = "date_of_birth"
 	// FieldSsnLastFour holds the string denoting the ssn_last_four field in the database.
@@ -107,8 +111,10 @@ var Columns = []string{
 	FieldCorrelationID,
 	FieldAgentGoalID,
 	FieldFirstName,
+	FieldMiddleName,
 	FieldLastName,
 	FieldDisplayName,
+	FieldRecordSource,
 	FieldDateOfBirth,
 	FieldSsnLastFour,
 	FieldContactMethods,
@@ -149,6 +155,12 @@ var (
 	CreatedByValidator func(string) error
 	// UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	UpdatedByValidator func(string) error
+	// FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
+	FirstNameValidator func(string) error
+	// LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
+	LastNameValidator func(string) error
+	// DisplayNameValidator is a validator for the "display_name" field. It is called by the builders before save.
+	DisplayNameValidator func(string) error
 	// DefaultDoNotContact holds the default value on creation for the "do_not_contact" field.
 	DefaultDoNotContact bool
 	// DefaultIdentityVerified holds the default value on creation for the "identity_verified" field.
@@ -180,6 +192,34 @@ func SourceValidator(s Source) error {
 		return nil
 	default:
 		return fmt.Errorf("person: invalid enum value for source field: %q", s)
+	}
+}
+
+// RecordSource defines the type for the "record_source" enum field.
+type RecordSource string
+
+// RecordSourceUser is the default value of the RecordSource enum.
+const DefaultRecordSource = RecordSourceUser
+
+// RecordSource values.
+const (
+	RecordSourceUser      RecordSource = "user"
+	RecordSourceApplicant RecordSource = "applicant"
+	RecordSourceImport    RecordSource = "import"
+	RecordSourceSystem    RecordSource = "system"
+)
+
+func (rs RecordSource) String() string {
+	return string(rs)
+}
+
+// RecordSourceValidator is a validator for the "record_source" field enum values. It is called by the builders before save.
+func RecordSourceValidator(rs RecordSource) error {
+	switch rs {
+	case RecordSourceUser, RecordSourceApplicant, RecordSourceImport, RecordSourceSystem:
+		return nil
+	default:
+		return fmt.Errorf("person: invalid enum value for record_source field: %q", rs)
 	}
 }
 
@@ -285,6 +325,11 @@ func ByFirstName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFirstName, opts...).ToFunc()
 }
 
+// ByMiddleName orders the results by the middle_name field.
+func ByMiddleName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMiddleName, opts...).ToFunc()
+}
+
 // ByLastName orders the results by the last_name field.
 func ByLastName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastName, opts...).ToFunc()
@@ -293,6 +338,11 @@ func ByLastName(opts ...sql.OrderTermOption) OrderOption {
 // ByDisplayName orders the results by the display_name field.
 func ByDisplayName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDisplayName, opts...).ToFunc()
+}
+
+// ByRecordSource orders the results by the record_source field.
+func ByRecordSource(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRecordSource, opts...).ToFunc()
 }
 
 // ByDateOfBirth orders the results by the date_of_birth field.

@@ -5,92 +5,116 @@ package propeller
 // These are generated into Ent hooks that reject invalid transitions at the
 // persistence layer. No code path can violate these transitions.
 
-#LeaseTransitions: {
-	draft:                   ["pending_approval", "pending_signature", "terminated"]
-	pending_approval:        ["draft", "pending_signature", "terminated"]
-	pending_signature:       ["active", "draft", "terminated"]
-	active:                  ["expired", "month_to_month_holdover", "terminated", "eviction"]
-	expired:                 ["active", "month_to_month_holdover", "renewed", "terminated"]
-	month_to_month_holdover: ["active", "renewed", "terminated", "eviction"]
-	renewed:                 [] // Terminal — a new lease is created
-	terminated:              [] // Terminal
-	eviction:                ["terminated"]
+// #StateMachine defines a state machine as a map of source state → valid target states.
+#StateMachine: {
+	[string]: [...string]
 }
 
-#SpaceTransitions: {
-	vacant:         ["occupied", "make_ready", "down", "model", "reserved"]
-	occupied:       ["notice_given"]
-	notice_given:   ["make_ready", "occupied"] // Can rescind notice
-	make_ready:     ["vacant", "down"]
-	down:           ["make_ready", "vacant"]
-	model:          ["vacant", "occupied"]
-	reserved:       ["vacant", "occupied"]
-	owner_occupied: ["vacant"]
-}
+// #StateMachines is the unified map of all entity state machines.
+// Keyed by snake_case entity name for direct lookup from generators.
+#StateMachines: {
+	lease: #StateMachine & {
+		draft:                   ["pending_approval", "pending_signature", "terminated"]
+		pending_approval:        ["draft", "pending_signature", "terminated"]
+		pending_signature:       ["active", "draft", "terminated"]
+		active:                  ["expired", "month_to_month_holdover", "terminated", "eviction"]
+		expired:                 ["active", "month_to_month_holdover", "renewed", "terminated"]
+		month_to_month_holdover: ["active", "renewed", "terminated", "eviction"]
+		renewed:                 [] // Terminal — a new lease is created
+		terminated:              [] // Terminal
+		eviction:                ["terminated"]
+	}
 
-#BuildingTransitions: {
-	active:           ["inactive", "under_renovation"]
-	inactive:         ["active"]
-	under_renovation: ["active"]
-}
+	space: #StateMachine & {
+		vacant:         ["occupied", "make_ready", "down", "model", "reserved"]
+		occupied:       ["notice_given"]
+		notice_given:   ["make_ready", "occupied"] // Can rescind notice
+		make_ready:     ["vacant", "down"]
+		down:           ["make_ready", "vacant"]
+		model:          ["vacant", "occupied"]
+		reserved:       ["vacant", "occupied"]
+		owner_occupied: ["vacant"]
+	}
 
-#ApplicationTransitions: {
-	submitted:              ["screening", "withdrawn"]
-	screening:              ["under_review", "withdrawn"]
-	under_review:           ["approved", "conditionally_approved", "denied", "withdrawn"]
-	approved:               ["expired"] // If lease not signed in time
-	conditionally_approved: ["approved", "denied", "withdrawn", "expired"]
-	denied:                 [] // Terminal
-	withdrawn:              [] // Terminal
-	expired:                [] // Terminal
-}
+	building: #StateMachine & {
+		active:           ["inactive", "under_renovation"]
+		inactive:         ["active"]
+		under_renovation: ["active"]
+	}
 
-#JournalEntryTransitions: {
-	draft:            ["pending_approval", "posted"] // Auto-generated can go straight to posted
-	pending_approval: ["posted", "draft"]             // Reject sends back to draft
-	posted:           ["voided"]
-	voided:           [] // Terminal
-}
+	application: #StateMachine & {
+		submitted:              ["screening", "withdrawn"]
+		screening:              ["under_review", "withdrawn"]
+		under_review:           ["approved", "conditionally_approved", "denied", "withdrawn"]
+		approved:               ["expired"] // If lease not signed in time
+		conditionally_approved: ["approved", "denied", "withdrawn", "expired"]
+		denied:                 [] // Terminal
+		withdrawn:              [] // Terminal
+		expired:                [] // Terminal
+	}
 
-#PortfolioTransitions: {
-	onboarding:  ["active"]
-	active:      ["inactive", "offboarding"]
-	inactive:    ["active", "offboarding"]
-	offboarding: ["inactive"] // After all properties migrated
-}
+	journal_entry: #StateMachine & {
+		draft:            ["pending_approval", "posted"] // Auto-generated can go straight to posted
+		pending_approval: ["posted", "draft"]             // Reject sends back to draft
+		posted:           ["voided"]
+		voided:           [] // Terminal
+	}
 
-#PropertyTransitions: {
-	onboarding:       ["active"]
-	active:           ["inactive", "under_renovation", "for_sale"]
-	inactive:         ["active"]
-	under_renovation: ["active", "for_sale"]
-	for_sale:         ["active", "inactive"]
-}
+	portfolio: #StateMachine & {
+		onboarding:  ["active"]
+		active:      ["inactive", "offboarding"]
+		inactive:    ["active", "offboarding"]
+		offboarding: ["inactive"] // After all properties migrated
+	}
 
-#PersonRoleTransitions: {
-	pending:    ["active", "terminated"]
-	active:     ["inactive", "terminated"]
-	inactive:   ["active", "terminated"]
-	terminated: [] // Terminal
-}
+	property: #StateMachine & {
+		onboarding:       ["active"]
+		active:           ["inactive", "under_renovation", "for_sale"]
+		inactive:         ["active"]
+		under_renovation: ["active", "for_sale"]
+		for_sale:         ["active", "inactive"]
+	}
 
-#OrganizationTransitions: {
-	active:    ["inactive", "suspended", "dissolved"]
-	inactive:  ["active", "dissolved"]
-	suspended: ["active", "dissolved"]
-	dissolved: [] // Terminal
-}
+	person_role: #StateMachine & {
+		pending:    ["active", "terminated"]
+		active:     ["inactive", "terminated"]
+		inactive:   ["active", "terminated"]
+		terminated: [] // Terminal
+	}
 
-#BankAccountTransitions: {
-	active:   ["inactive", "frozen", "closed"]
-	inactive: ["active", "closed"]
-	frozen:   ["active", "closed"]
-	closed:   [] // Terminal
-}
+	organization: #StateMachine & {
+		active:    ["inactive", "suspended", "dissolved"]
+		inactive:  ["active", "dissolved"]
+		suspended: ["active", "dissolved"]
+		dissolved: [] // Terminal
+	}
 
-#ReconciliationTransitions: {
-	in_progress: ["balanced", "unbalanced"]
-	balanced:    ["approved", "in_progress"] // Reopen if errors found
-	unbalanced:  ["in_progress"]
-	approved:    [] // Terminal
+	bank_account: #StateMachine & {
+		active:   ["inactive", "frozen", "closed"]
+		inactive: ["active", "closed"]
+		frozen:   ["active", "closed"]
+		closed:   [] // Terminal
+	}
+
+	reconciliation: #StateMachine & {
+		in_progress: ["balanced", "unbalanced"]
+		balanced:    ["approved", "in_progress"] // Reopen if errors found
+		unbalanced:  ["in_progress"]
+		approved:    [] // Terminal
+	}
+
+	jurisdiction: #StateMachine & {
+		pending:   ["active"]
+		active:    ["dissolved", "merged"]
+		dissolved: [] // Terminal
+		merged:    [] // Terminal
+	}
+
+	jurisdiction_rule: #StateMachine & {
+		draft:      ["active"]
+		active:     ["superseded", "expired", "repealed"]
+		superseded: [] // Terminal
+		expired:    [] // Terminal
+		repealed:   [] // Terminal
+	}
 }

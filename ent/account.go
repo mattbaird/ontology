@@ -52,7 +52,7 @@ type Account struct {
 	// Dimensions holds the value of the "dimensions" field.
 	Dimensions *types.AccountDimensions `json:"dimensions,omitempty"`
 	// NormalBalance holds the value of the "normal_balance" field.
-	NormalBalance string `json:"normal_balance,omitempty"`
+	NormalBalance account.NormalBalance `json:"normal_balance,omitempty"`
 	// IsHeader holds the value of the "is_header" field.
 	IsHeader bool `json:"is_header,omitempty"`
 	// IsSystem holds the value of the "is_system" field.
@@ -64,7 +64,7 @@ type Account struct {
 	// IsTrustAccount holds the value of the "is_trust_account" field.
 	IsTrustAccount bool `json:"is_trust_account,omitempty"`
 	// TrustType holds the value of the "trust_type" field.
-	TrustType *string `json:"trust_type,omitempty"`
+	TrustType *account.TrustType `json:"trust_type,omitempty"`
 	// budget_amount — amount in cents
 	BudgetAmountAmountCents *int64 `json:"budget_amount_amount_cents,omitempty"`
 	// budget_amount — ISO 4217 currency code
@@ -273,7 +273,7 @@ func (_m *Account) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field normal_balance", values[i])
 			} else if value.Valid {
-				_m.NormalBalance = value.String
+				_m.NormalBalance = account.NormalBalance(value.String)
 			}
 		case account.FieldIsHeader:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -309,8 +309,8 @@ func (_m *Account) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field trust_type", values[i])
 			} else if value.Valid {
-				_m.TrustType = new(string)
-				*_m.TrustType = value.String
+				_m.TrustType = new(account.TrustType)
+				*_m.TrustType = account.TrustType(value.String)
 			}
 		case account.FieldBudgetAmountAmountCents:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -450,7 +450,7 @@ func (_m *Account) String() string {
 	builder.WriteString(fmt.Sprintf("%v", _m.Dimensions))
 	builder.WriteString(", ")
 	builder.WriteString("normal_balance=")
-	builder.WriteString(_m.NormalBalance)
+	builder.WriteString(fmt.Sprintf("%v", _m.NormalBalance))
 	builder.WriteString(", ")
 	builder.WriteString("is_header=")
 	builder.WriteString(fmt.Sprintf("%v", _m.IsHeader))
@@ -469,7 +469,7 @@ func (_m *Account) String() string {
 	builder.WriteString(", ")
 	if v := _m.TrustType; v != nil {
 		builder.WriteString("trust_type=")
-		builder.WriteString(*v)
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	if v := _m.BudgetAmountAmountCents; v != nil {

@@ -10,7 +10,6 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
@@ -149,37 +148,23 @@ func (_u *PortfolioUpdate) SetNillableManagementType(v *portfolio.ManagementType
 	return _u
 }
 
-// SetRequiresTrustAccounting sets the "requires_trust_accounting" field.
-func (_u *PortfolioUpdate) SetRequiresTrustAccounting(v bool) *PortfolioUpdate {
-	_u.mutation.SetRequiresTrustAccounting(v)
+// SetDescription sets the "description" field.
+func (_u *PortfolioUpdate) SetDescription(v string) *PortfolioUpdate {
+	_u.mutation.SetDescription(v)
 	return _u
 }
 
-// SetNillableRequiresTrustAccounting sets the "requires_trust_accounting" field if the given value is not nil.
-func (_u *PortfolioUpdate) SetNillableRequiresTrustAccounting(v *bool) *PortfolioUpdate {
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_u *PortfolioUpdate) SetNillableDescription(v *string) *PortfolioUpdate {
 	if v != nil {
-		_u.SetRequiresTrustAccounting(*v)
+		_u.SetDescription(*v)
 	}
 	return _u
 }
 
-// SetTrustBankAccountID sets the "trust_bank_account_id" field.
-func (_u *PortfolioUpdate) SetTrustBankAccountID(v string) *PortfolioUpdate {
-	_u.mutation.SetTrustBankAccountID(v)
-	return _u
-}
-
-// SetNillableTrustBankAccountID sets the "trust_bank_account_id" field if the given value is not nil.
-func (_u *PortfolioUpdate) SetNillableTrustBankAccountID(v *string) *PortfolioUpdate {
-	if v != nil {
-		_u.SetTrustBankAccountID(*v)
-	}
-	return _u
-}
-
-// ClearTrustBankAccountID clears the value of the "trust_bank_account_id" field.
-func (_u *PortfolioUpdate) ClearTrustBankAccountID() *PortfolioUpdate {
-	_u.mutation.ClearTrustBankAccountID()
+// ClearDescription clears the value of the "description" field.
+func (_u *PortfolioUpdate) ClearDescription() *PortfolioUpdate {
+	_u.mutation.ClearDescription()
 	return _u
 }
 
@@ -197,42 +182,43 @@ func (_u *PortfolioUpdate) SetNillableStatus(v *portfolio.Status) *PortfolioUpda
 	return _u
 }
 
-// SetDefaultPaymentMethods sets the "default_payment_methods" field.
-func (_u *PortfolioUpdate) SetDefaultPaymentMethods(v []string) *PortfolioUpdate {
-	_u.mutation.SetDefaultPaymentMethods(v)
+// SetDefaultChartOfAccountsID sets the "default_chart_of_accounts_id" field.
+func (_u *PortfolioUpdate) SetDefaultChartOfAccountsID(v string) *PortfolioUpdate {
+	_u.mutation.SetDefaultChartOfAccountsID(v)
 	return _u
 }
 
-// AppendDefaultPaymentMethods appends value to the "default_payment_methods" field.
-func (_u *PortfolioUpdate) AppendDefaultPaymentMethods(v []string) *PortfolioUpdate {
-	_u.mutation.AppendDefaultPaymentMethods(v)
-	return _u
-}
-
-// ClearDefaultPaymentMethods clears the value of the "default_payment_methods" field.
-func (_u *PortfolioUpdate) ClearDefaultPaymentMethods() *PortfolioUpdate {
-	_u.mutation.ClearDefaultPaymentMethods()
-	return _u
-}
-
-// SetFiscalYearStartMonth sets the "fiscal_year_start_month" field.
-func (_u *PortfolioUpdate) SetFiscalYearStartMonth(v int) *PortfolioUpdate {
-	_u.mutation.ResetFiscalYearStartMonth()
-	_u.mutation.SetFiscalYearStartMonth(v)
-	return _u
-}
-
-// SetNillableFiscalYearStartMonth sets the "fiscal_year_start_month" field if the given value is not nil.
-func (_u *PortfolioUpdate) SetNillableFiscalYearStartMonth(v *int) *PortfolioUpdate {
+// SetNillableDefaultChartOfAccountsID sets the "default_chart_of_accounts_id" field if the given value is not nil.
+func (_u *PortfolioUpdate) SetNillableDefaultChartOfAccountsID(v *string) *PortfolioUpdate {
 	if v != nil {
-		_u.SetFiscalYearStartMonth(*v)
+		_u.SetDefaultChartOfAccountsID(*v)
 	}
 	return _u
 }
 
-// AddFiscalYearStartMonth adds value to the "fiscal_year_start_month" field.
-func (_u *PortfolioUpdate) AddFiscalYearStartMonth(v int) *PortfolioUpdate {
-	_u.mutation.AddFiscalYearStartMonth(v)
+// ClearDefaultChartOfAccountsID clears the value of the "default_chart_of_accounts_id" field.
+func (_u *PortfolioUpdate) ClearDefaultChartOfAccountsID() *PortfolioUpdate {
+	_u.mutation.ClearDefaultChartOfAccountsID()
+	return _u
+}
+
+// SetDefaultBankAccountID sets the "default_bank_account_id" field.
+func (_u *PortfolioUpdate) SetDefaultBankAccountID(v string) *PortfolioUpdate {
+	_u.mutation.SetDefaultBankAccountID(v)
+	return _u
+}
+
+// SetNillableDefaultBankAccountID sets the "default_bank_account_id" field if the given value is not nil.
+func (_u *PortfolioUpdate) SetNillableDefaultBankAccountID(v *string) *PortfolioUpdate {
+	if v != nil {
+		_u.SetDefaultBankAccountID(*v)
+	}
+	return _u
+}
+
+// ClearDefaultBankAccountID clears the value of the "default_bank_account_id" field.
+func (_u *PortfolioUpdate) ClearDefaultBankAccountID() *PortfolioUpdate {
+	_u.mutation.ClearDefaultBankAccountID()
 	return _u
 }
 
@@ -321,9 +307,7 @@ func (_u *PortfolioUpdate) ClearTrustAccount() *PortfolioUpdate {
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *PortfolioUpdate) Save(ctx context.Context) (int, error) {
-	if err := _u.defaults(); err != nil {
-		return 0, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -350,15 +334,11 @@ func (_u *PortfolioUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *PortfolioUpdate) defaults() error {
+func (_u *PortfolioUpdate) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if portfolio.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized portfolio.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := portfolio.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -376,6 +356,11 @@ func (_u *PortfolioUpdate) check() error {
 	if v, ok := _u.mutation.Source(); ok {
 		if err := portfolio.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Portfolio.source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Name(); ok {
+		if err := portfolio.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Portfolio.name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.ManagementType(); ok {
@@ -436,34 +421,26 @@ func (_u *PortfolioUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.ManagementType(); ok {
 		_spec.SetField(portfolio.FieldManagementType, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.RequiresTrustAccounting(); ok {
-		_spec.SetField(portfolio.FieldRequiresTrustAccounting, field.TypeBool, value)
+	if value, ok := _u.mutation.Description(); ok {
+		_spec.SetField(portfolio.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.TrustBankAccountID(); ok {
-		_spec.SetField(portfolio.FieldTrustBankAccountID, field.TypeString, value)
-	}
-	if _u.mutation.TrustBankAccountIDCleared() {
-		_spec.ClearField(portfolio.FieldTrustBankAccountID, field.TypeString)
+	if _u.mutation.DescriptionCleared() {
+		_spec.ClearField(portfolio.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(portfolio.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.DefaultPaymentMethods(); ok {
-		_spec.SetField(portfolio.FieldDefaultPaymentMethods, field.TypeJSON, value)
+	if value, ok := _u.mutation.DefaultChartOfAccountsID(); ok {
+		_spec.SetField(portfolio.FieldDefaultChartOfAccountsID, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.AppendedDefaultPaymentMethods(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, portfolio.FieldDefaultPaymentMethods, value)
-		})
+	if _u.mutation.DefaultChartOfAccountsIDCleared() {
+		_spec.ClearField(portfolio.FieldDefaultChartOfAccountsID, field.TypeString)
 	}
-	if _u.mutation.DefaultPaymentMethodsCleared() {
-		_spec.ClearField(portfolio.FieldDefaultPaymentMethods, field.TypeJSON)
+	if value, ok := _u.mutation.DefaultBankAccountID(); ok {
+		_spec.SetField(portfolio.FieldDefaultBankAccountID, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.FiscalYearStartMonth(); ok {
-		_spec.SetField(portfolio.FieldFiscalYearStartMonth, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedFiscalYearStartMonth(); ok {
-		_spec.AddField(portfolio.FieldFiscalYearStartMonth, field.TypeInt, value)
+	if _u.mutation.DefaultBankAccountIDCleared() {
+		_spec.ClearField(portfolio.FieldDefaultBankAccountID, field.TypeString)
 	}
 	if _u.mutation.PropertiesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -704,37 +681,23 @@ func (_u *PortfolioUpdateOne) SetNillableManagementType(v *portfolio.ManagementT
 	return _u
 }
 
-// SetRequiresTrustAccounting sets the "requires_trust_accounting" field.
-func (_u *PortfolioUpdateOne) SetRequiresTrustAccounting(v bool) *PortfolioUpdateOne {
-	_u.mutation.SetRequiresTrustAccounting(v)
+// SetDescription sets the "description" field.
+func (_u *PortfolioUpdateOne) SetDescription(v string) *PortfolioUpdateOne {
+	_u.mutation.SetDescription(v)
 	return _u
 }
 
-// SetNillableRequiresTrustAccounting sets the "requires_trust_accounting" field if the given value is not nil.
-func (_u *PortfolioUpdateOne) SetNillableRequiresTrustAccounting(v *bool) *PortfolioUpdateOne {
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_u *PortfolioUpdateOne) SetNillableDescription(v *string) *PortfolioUpdateOne {
 	if v != nil {
-		_u.SetRequiresTrustAccounting(*v)
+		_u.SetDescription(*v)
 	}
 	return _u
 }
 
-// SetTrustBankAccountID sets the "trust_bank_account_id" field.
-func (_u *PortfolioUpdateOne) SetTrustBankAccountID(v string) *PortfolioUpdateOne {
-	_u.mutation.SetTrustBankAccountID(v)
-	return _u
-}
-
-// SetNillableTrustBankAccountID sets the "trust_bank_account_id" field if the given value is not nil.
-func (_u *PortfolioUpdateOne) SetNillableTrustBankAccountID(v *string) *PortfolioUpdateOne {
-	if v != nil {
-		_u.SetTrustBankAccountID(*v)
-	}
-	return _u
-}
-
-// ClearTrustBankAccountID clears the value of the "trust_bank_account_id" field.
-func (_u *PortfolioUpdateOne) ClearTrustBankAccountID() *PortfolioUpdateOne {
-	_u.mutation.ClearTrustBankAccountID()
+// ClearDescription clears the value of the "description" field.
+func (_u *PortfolioUpdateOne) ClearDescription() *PortfolioUpdateOne {
+	_u.mutation.ClearDescription()
 	return _u
 }
 
@@ -752,42 +715,43 @@ func (_u *PortfolioUpdateOne) SetNillableStatus(v *portfolio.Status) *PortfolioU
 	return _u
 }
 
-// SetDefaultPaymentMethods sets the "default_payment_methods" field.
-func (_u *PortfolioUpdateOne) SetDefaultPaymentMethods(v []string) *PortfolioUpdateOne {
-	_u.mutation.SetDefaultPaymentMethods(v)
+// SetDefaultChartOfAccountsID sets the "default_chart_of_accounts_id" field.
+func (_u *PortfolioUpdateOne) SetDefaultChartOfAccountsID(v string) *PortfolioUpdateOne {
+	_u.mutation.SetDefaultChartOfAccountsID(v)
 	return _u
 }
 
-// AppendDefaultPaymentMethods appends value to the "default_payment_methods" field.
-func (_u *PortfolioUpdateOne) AppendDefaultPaymentMethods(v []string) *PortfolioUpdateOne {
-	_u.mutation.AppendDefaultPaymentMethods(v)
-	return _u
-}
-
-// ClearDefaultPaymentMethods clears the value of the "default_payment_methods" field.
-func (_u *PortfolioUpdateOne) ClearDefaultPaymentMethods() *PortfolioUpdateOne {
-	_u.mutation.ClearDefaultPaymentMethods()
-	return _u
-}
-
-// SetFiscalYearStartMonth sets the "fiscal_year_start_month" field.
-func (_u *PortfolioUpdateOne) SetFiscalYearStartMonth(v int) *PortfolioUpdateOne {
-	_u.mutation.ResetFiscalYearStartMonth()
-	_u.mutation.SetFiscalYearStartMonth(v)
-	return _u
-}
-
-// SetNillableFiscalYearStartMonth sets the "fiscal_year_start_month" field if the given value is not nil.
-func (_u *PortfolioUpdateOne) SetNillableFiscalYearStartMonth(v *int) *PortfolioUpdateOne {
+// SetNillableDefaultChartOfAccountsID sets the "default_chart_of_accounts_id" field if the given value is not nil.
+func (_u *PortfolioUpdateOne) SetNillableDefaultChartOfAccountsID(v *string) *PortfolioUpdateOne {
 	if v != nil {
-		_u.SetFiscalYearStartMonth(*v)
+		_u.SetDefaultChartOfAccountsID(*v)
 	}
 	return _u
 }
 
-// AddFiscalYearStartMonth adds value to the "fiscal_year_start_month" field.
-func (_u *PortfolioUpdateOne) AddFiscalYearStartMonth(v int) *PortfolioUpdateOne {
-	_u.mutation.AddFiscalYearStartMonth(v)
+// ClearDefaultChartOfAccountsID clears the value of the "default_chart_of_accounts_id" field.
+func (_u *PortfolioUpdateOne) ClearDefaultChartOfAccountsID() *PortfolioUpdateOne {
+	_u.mutation.ClearDefaultChartOfAccountsID()
+	return _u
+}
+
+// SetDefaultBankAccountID sets the "default_bank_account_id" field.
+func (_u *PortfolioUpdateOne) SetDefaultBankAccountID(v string) *PortfolioUpdateOne {
+	_u.mutation.SetDefaultBankAccountID(v)
+	return _u
+}
+
+// SetNillableDefaultBankAccountID sets the "default_bank_account_id" field if the given value is not nil.
+func (_u *PortfolioUpdateOne) SetNillableDefaultBankAccountID(v *string) *PortfolioUpdateOne {
+	if v != nil {
+		_u.SetDefaultBankAccountID(*v)
+	}
+	return _u
+}
+
+// ClearDefaultBankAccountID clears the value of the "default_bank_account_id" field.
+func (_u *PortfolioUpdateOne) ClearDefaultBankAccountID() *PortfolioUpdateOne {
+	_u.mutation.ClearDefaultBankAccountID()
 	return _u
 }
 
@@ -889,9 +853,7 @@ func (_u *PortfolioUpdateOne) Select(field string, fields ...string) *PortfolioU
 
 // Save executes the query and returns the updated Portfolio entity.
 func (_u *PortfolioUpdateOne) Save(ctx context.Context) (*Portfolio, error) {
-	if err := _u.defaults(); err != nil {
-		return nil, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -918,15 +880,11 @@ func (_u *PortfolioUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *PortfolioUpdateOne) defaults() error {
+func (_u *PortfolioUpdateOne) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if portfolio.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized portfolio.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := portfolio.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -944,6 +902,11 @@ func (_u *PortfolioUpdateOne) check() error {
 	if v, ok := _u.mutation.Source(); ok {
 		if err := portfolio.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Portfolio.source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Name(); ok {
+		if err := portfolio.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Portfolio.name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.ManagementType(); ok {
@@ -1021,34 +984,26 @@ func (_u *PortfolioUpdateOne) sqlSave(ctx context.Context) (_node *Portfolio, er
 	if value, ok := _u.mutation.ManagementType(); ok {
 		_spec.SetField(portfolio.FieldManagementType, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.RequiresTrustAccounting(); ok {
-		_spec.SetField(portfolio.FieldRequiresTrustAccounting, field.TypeBool, value)
+	if value, ok := _u.mutation.Description(); ok {
+		_spec.SetField(portfolio.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.TrustBankAccountID(); ok {
-		_spec.SetField(portfolio.FieldTrustBankAccountID, field.TypeString, value)
-	}
-	if _u.mutation.TrustBankAccountIDCleared() {
-		_spec.ClearField(portfolio.FieldTrustBankAccountID, field.TypeString)
+	if _u.mutation.DescriptionCleared() {
+		_spec.ClearField(portfolio.FieldDescription, field.TypeString)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(portfolio.FieldStatus, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.DefaultPaymentMethods(); ok {
-		_spec.SetField(portfolio.FieldDefaultPaymentMethods, field.TypeJSON, value)
+	if value, ok := _u.mutation.DefaultChartOfAccountsID(); ok {
+		_spec.SetField(portfolio.FieldDefaultChartOfAccountsID, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.AppendedDefaultPaymentMethods(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, portfolio.FieldDefaultPaymentMethods, value)
-		})
+	if _u.mutation.DefaultChartOfAccountsIDCleared() {
+		_spec.ClearField(portfolio.FieldDefaultChartOfAccountsID, field.TypeString)
 	}
-	if _u.mutation.DefaultPaymentMethodsCleared() {
-		_spec.ClearField(portfolio.FieldDefaultPaymentMethods, field.TypeJSON)
+	if value, ok := _u.mutation.DefaultBankAccountID(); ok {
+		_spec.SetField(portfolio.FieldDefaultBankAccountID, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.FiscalYearStartMonth(); ok {
-		_spec.SetField(portfolio.FieldFiscalYearStartMonth, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedFiscalYearStartMonth(); ok {
-		_spec.AddField(portfolio.FieldFiscalYearStartMonth, field.TypeInt, value)
+	if _u.mutation.DefaultBankAccountIDCleared() {
+		_spec.ClearField(portfolio.FieldDefaultBankAccountID, field.TypeString)
 	}
 	if _u.mutation.PropertiesCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -96,6 +96,11 @@ func PeriodEnd(v time.Time) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldEQ(FieldPeriodEnd, v))
 }
 
+// StatementDate applies equality check predicate on the "statement_date" field. It's identical to StatementDateEQ.
+func StatementDate(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldStatementDate, v))
+}
+
 // StatementBalanceAmountCents applies equality check predicate on the "statement_balance_amount_cents" field. It's identical to StatementBalanceAmountCentsEQ.
 func StatementBalanceAmountCents(v int64) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldEQ(FieldStatementBalanceAmountCents, v))
@@ -106,14 +111,14 @@ func StatementBalanceCurrency(v string) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldEQ(FieldStatementBalanceCurrency, v))
 }
 
-// SystemBalanceAmountCents applies equality check predicate on the "system_balance_amount_cents" field. It's identical to SystemBalanceAmountCentsEQ.
-func SystemBalanceAmountCents(v int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldSystemBalanceAmountCents, v))
+// GlBalanceAmountCents applies equality check predicate on the "gl_balance_amount_cents" field. It's identical to GlBalanceAmountCentsEQ.
+func GlBalanceAmountCents(v int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldGlBalanceAmountCents, v))
 }
 
-// SystemBalanceCurrency applies equality check predicate on the "system_balance_currency" field. It's identical to SystemBalanceCurrencyEQ.
-func SystemBalanceCurrency(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrency applies equality check predicate on the "gl_balance_currency" field. It's identical to GlBalanceCurrencyEQ.
+func GlBalanceCurrency(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldGlBalanceCurrency, v))
 }
 
 // DifferenceAmountCents applies equality check predicate on the "difference_amount_cents" field. It's identical to DifferenceAmountCentsEQ.
@@ -126,24 +131,19 @@ func DifferenceCurrency(v string) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldEQ(FieldDifferenceCurrency, v))
 }
 
-// MatchedTransactionCount applies equality check predicate on the "matched_transaction_count" field. It's identical to MatchedTransactionCountEQ.
-func MatchedTransactionCount(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldMatchedTransactionCount, v))
+// UnreconciledItems applies equality check predicate on the "unreconciled_items" field. It's identical to UnreconciledItemsEQ.
+func UnreconciledItems(v int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldUnreconciledItems, v))
 }
 
-// UnmatchedTransactionCount applies equality check predicate on the "unmatched_transaction_count" field. It's identical to UnmatchedTransactionCountEQ.
-func UnmatchedTransactionCount(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldUnmatchedTransactionCount, v))
+// ReconciledBy applies equality check predicate on the "reconciled_by" field. It's identical to ReconciledByEQ.
+func ReconciledBy(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldReconciledBy, v))
 }
 
-// CompletedBy applies equality check predicate on the "completed_by" field. It's identical to CompletedByEQ.
-func CompletedBy(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldCompletedBy, v))
-}
-
-// CompletedAt applies equality check predicate on the "completed_at" field. It's identical to CompletedAtEQ.
-func CompletedAt(v time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldCompletedAt, v))
+// ReconciledAt applies equality check predicate on the "reconciled_at" field. It's identical to ReconciledAtEQ.
+func ReconciledAt(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldReconciledAt, v))
 }
 
 // ApprovedBy applies equality check predicate on the "approved_by" field. It's identical to ApprovedByEQ.
@@ -616,6 +616,46 @@ func PeriodEndLTE(v time.Time) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldLTE(FieldPeriodEnd, v))
 }
 
+// StatementDateEQ applies the EQ predicate on the "statement_date" field.
+func StatementDateEQ(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldStatementDate, v))
+}
+
+// StatementDateNEQ applies the NEQ predicate on the "statement_date" field.
+func StatementDateNEQ(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNEQ(FieldStatementDate, v))
+}
+
+// StatementDateIn applies the In predicate on the "statement_date" field.
+func StatementDateIn(vs ...time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIn(FieldStatementDate, vs...))
+}
+
+// StatementDateNotIn applies the NotIn predicate on the "statement_date" field.
+func StatementDateNotIn(vs ...time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotIn(FieldStatementDate, vs...))
+}
+
+// StatementDateGT applies the GT predicate on the "statement_date" field.
+func StatementDateGT(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGT(FieldStatementDate, v))
+}
+
+// StatementDateGTE applies the GTE predicate on the "statement_date" field.
+func StatementDateGTE(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGTE(FieldStatementDate, v))
+}
+
+// StatementDateLT applies the LT predicate on the "statement_date" field.
+func StatementDateLT(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLT(FieldStatementDate, v))
+}
+
+// StatementDateLTE applies the LTE predicate on the "statement_date" field.
+func StatementDateLTE(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLTE(FieldStatementDate, v))
+}
+
 // StatementBalanceAmountCentsEQ applies the EQ predicate on the "statement_balance_amount_cents" field.
 func StatementBalanceAmountCentsEQ(v int64) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldEQ(FieldStatementBalanceAmountCents, v))
@@ -721,109 +761,109 @@ func StatementBalanceCurrencyContainsFold(v string) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldContainsFold(FieldStatementBalanceCurrency, v))
 }
 
-// SystemBalanceAmountCentsEQ applies the EQ predicate on the "system_balance_amount_cents" field.
-func SystemBalanceAmountCentsEQ(v int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldSystemBalanceAmountCents, v))
+// GlBalanceAmountCentsEQ applies the EQ predicate on the "gl_balance_amount_cents" field.
+func GlBalanceAmountCentsEQ(v int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldGlBalanceAmountCents, v))
 }
 
-// SystemBalanceAmountCentsNEQ applies the NEQ predicate on the "system_balance_amount_cents" field.
-func SystemBalanceAmountCentsNEQ(v int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNEQ(FieldSystemBalanceAmountCents, v))
+// GlBalanceAmountCentsNEQ applies the NEQ predicate on the "gl_balance_amount_cents" field.
+func GlBalanceAmountCentsNEQ(v int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNEQ(FieldGlBalanceAmountCents, v))
 }
 
-// SystemBalanceAmountCentsIn applies the In predicate on the "system_balance_amount_cents" field.
-func SystemBalanceAmountCentsIn(vs ...int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldIn(FieldSystemBalanceAmountCents, vs...))
+// GlBalanceAmountCentsIn applies the In predicate on the "gl_balance_amount_cents" field.
+func GlBalanceAmountCentsIn(vs ...int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIn(FieldGlBalanceAmountCents, vs...))
 }
 
-// SystemBalanceAmountCentsNotIn applies the NotIn predicate on the "system_balance_amount_cents" field.
-func SystemBalanceAmountCentsNotIn(vs ...int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNotIn(FieldSystemBalanceAmountCents, vs...))
+// GlBalanceAmountCentsNotIn applies the NotIn predicate on the "gl_balance_amount_cents" field.
+func GlBalanceAmountCentsNotIn(vs ...int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotIn(FieldGlBalanceAmountCents, vs...))
 }
 
-// SystemBalanceAmountCentsGT applies the GT predicate on the "system_balance_amount_cents" field.
-func SystemBalanceAmountCentsGT(v int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGT(FieldSystemBalanceAmountCents, v))
+// GlBalanceAmountCentsGT applies the GT predicate on the "gl_balance_amount_cents" field.
+func GlBalanceAmountCentsGT(v int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGT(FieldGlBalanceAmountCents, v))
 }
 
-// SystemBalanceAmountCentsGTE applies the GTE predicate on the "system_balance_amount_cents" field.
-func SystemBalanceAmountCentsGTE(v int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGTE(FieldSystemBalanceAmountCents, v))
+// GlBalanceAmountCentsGTE applies the GTE predicate on the "gl_balance_amount_cents" field.
+func GlBalanceAmountCentsGTE(v int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGTE(FieldGlBalanceAmountCents, v))
 }
 
-// SystemBalanceAmountCentsLT applies the LT predicate on the "system_balance_amount_cents" field.
-func SystemBalanceAmountCentsLT(v int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLT(FieldSystemBalanceAmountCents, v))
+// GlBalanceAmountCentsLT applies the LT predicate on the "gl_balance_amount_cents" field.
+func GlBalanceAmountCentsLT(v int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLT(FieldGlBalanceAmountCents, v))
 }
 
-// SystemBalanceAmountCentsLTE applies the LTE predicate on the "system_balance_amount_cents" field.
-func SystemBalanceAmountCentsLTE(v int64) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLTE(FieldSystemBalanceAmountCents, v))
+// GlBalanceAmountCentsLTE applies the LTE predicate on the "gl_balance_amount_cents" field.
+func GlBalanceAmountCentsLTE(v int64) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLTE(FieldGlBalanceAmountCents, v))
 }
 
-// SystemBalanceCurrencyEQ applies the EQ predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyEQ(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyEQ applies the EQ predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyEQ(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyNEQ applies the NEQ predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyNEQ(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNEQ(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyNEQ applies the NEQ predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyNEQ(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNEQ(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyIn applies the In predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyIn(vs ...string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldIn(FieldSystemBalanceCurrency, vs...))
+// GlBalanceCurrencyIn applies the In predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyIn(vs ...string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIn(FieldGlBalanceCurrency, vs...))
 }
 
-// SystemBalanceCurrencyNotIn applies the NotIn predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyNotIn(vs ...string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNotIn(FieldSystemBalanceCurrency, vs...))
+// GlBalanceCurrencyNotIn applies the NotIn predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyNotIn(vs ...string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotIn(FieldGlBalanceCurrency, vs...))
 }
 
-// SystemBalanceCurrencyGT applies the GT predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyGT(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGT(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyGT applies the GT predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyGT(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGT(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyGTE applies the GTE predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyGTE(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGTE(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyGTE applies the GTE predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyGTE(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGTE(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyLT applies the LT predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyLT(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLT(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyLT applies the LT predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyLT(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLT(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyLTE applies the LTE predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyLTE(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLTE(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyLTE applies the LTE predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyLTE(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLTE(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyContains applies the Contains predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyContains(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldContains(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyContains applies the Contains predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyContains(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldContains(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyHasPrefix applies the HasPrefix predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyHasPrefix(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldHasPrefix(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyHasPrefix applies the HasPrefix predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyHasPrefix(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldHasPrefix(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyHasSuffix applies the HasSuffix predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyHasSuffix(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldHasSuffix(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyHasSuffix applies the HasSuffix predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyHasSuffix(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldHasSuffix(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyEqualFold applies the EqualFold predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyEqualFold(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEqualFold(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyEqualFold applies the EqualFold predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyEqualFold(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEqualFold(FieldGlBalanceCurrency, v))
 }
 
-// SystemBalanceCurrencyContainsFold applies the ContainsFold predicate on the "system_balance_currency" field.
-func SystemBalanceCurrencyContainsFold(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldContainsFold(FieldSystemBalanceCurrency, v))
+// GlBalanceCurrencyContainsFold applies the ContainsFold predicate on the "gl_balance_currency" field.
+func GlBalanceCurrencyContainsFold(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldContainsFold(FieldGlBalanceCurrency, v))
 }
 
 // DifferenceAmountCentsEQ applies the EQ predicate on the "difference_amount_cents" field.
@@ -864,6 +904,16 @@ func DifferenceAmountCentsLT(v int64) predicate.Reconciliation {
 // DifferenceAmountCentsLTE applies the LTE predicate on the "difference_amount_cents" field.
 func DifferenceAmountCentsLTE(v int64) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldLTE(FieldDifferenceAmountCents, v))
+}
+
+// DifferenceAmountCentsIsNil applies the IsNil predicate on the "difference_amount_cents" field.
+func DifferenceAmountCentsIsNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIsNull(FieldDifferenceAmountCents))
+}
+
+// DifferenceAmountCentsNotNil applies the NotNil predicate on the "difference_amount_cents" field.
+func DifferenceAmountCentsNotNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotNull(FieldDifferenceAmountCents))
 }
 
 // DifferenceCurrencyEQ applies the EQ predicate on the "difference_currency" field.
@@ -921,6 +971,16 @@ func DifferenceCurrencyHasSuffix(v string) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldHasSuffix(FieldDifferenceCurrency, v))
 }
 
+// DifferenceCurrencyIsNil applies the IsNil predicate on the "difference_currency" field.
+func DifferenceCurrencyIsNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIsNull(FieldDifferenceCurrency))
+}
+
+// DifferenceCurrencyNotNil applies the NotNil predicate on the "difference_currency" field.
+func DifferenceCurrencyNotNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotNull(FieldDifferenceCurrency))
+}
+
 // DifferenceCurrencyEqualFold applies the EqualFold predicate on the "difference_currency" field.
 func DifferenceCurrencyEqualFold(v string) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldEqualFold(FieldDifferenceCurrency, v))
@@ -951,209 +1011,179 @@ func StatusNotIn(vs ...Status) predicate.Reconciliation {
 	return predicate.Reconciliation(sql.FieldNotIn(FieldStatus, vs...))
 }
 
-// MatchedTransactionCountEQ applies the EQ predicate on the "matched_transaction_count" field.
-func MatchedTransactionCountEQ(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldMatchedTransactionCount, v))
+// UnreconciledItemsEQ applies the EQ predicate on the "unreconciled_items" field.
+func UnreconciledItemsEQ(v int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldUnreconciledItems, v))
 }
 
-// MatchedTransactionCountNEQ applies the NEQ predicate on the "matched_transaction_count" field.
-func MatchedTransactionCountNEQ(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNEQ(FieldMatchedTransactionCount, v))
+// UnreconciledItemsNEQ applies the NEQ predicate on the "unreconciled_items" field.
+func UnreconciledItemsNEQ(v int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNEQ(FieldUnreconciledItems, v))
 }
 
-// MatchedTransactionCountIn applies the In predicate on the "matched_transaction_count" field.
-func MatchedTransactionCountIn(vs ...int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldIn(FieldMatchedTransactionCount, vs...))
+// UnreconciledItemsIn applies the In predicate on the "unreconciled_items" field.
+func UnreconciledItemsIn(vs ...int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIn(FieldUnreconciledItems, vs...))
 }
 
-// MatchedTransactionCountNotIn applies the NotIn predicate on the "matched_transaction_count" field.
-func MatchedTransactionCountNotIn(vs ...int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNotIn(FieldMatchedTransactionCount, vs...))
+// UnreconciledItemsNotIn applies the NotIn predicate on the "unreconciled_items" field.
+func UnreconciledItemsNotIn(vs ...int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotIn(FieldUnreconciledItems, vs...))
 }
 
-// MatchedTransactionCountGT applies the GT predicate on the "matched_transaction_count" field.
-func MatchedTransactionCountGT(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGT(FieldMatchedTransactionCount, v))
+// UnreconciledItemsGT applies the GT predicate on the "unreconciled_items" field.
+func UnreconciledItemsGT(v int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGT(FieldUnreconciledItems, v))
 }
 
-// MatchedTransactionCountGTE applies the GTE predicate on the "matched_transaction_count" field.
-func MatchedTransactionCountGTE(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGTE(FieldMatchedTransactionCount, v))
+// UnreconciledItemsGTE applies the GTE predicate on the "unreconciled_items" field.
+func UnreconciledItemsGTE(v int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGTE(FieldUnreconciledItems, v))
 }
 
-// MatchedTransactionCountLT applies the LT predicate on the "matched_transaction_count" field.
-func MatchedTransactionCountLT(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLT(FieldMatchedTransactionCount, v))
+// UnreconciledItemsLT applies the LT predicate on the "unreconciled_items" field.
+func UnreconciledItemsLT(v int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLT(FieldUnreconciledItems, v))
 }
 
-// MatchedTransactionCountLTE applies the LTE predicate on the "matched_transaction_count" field.
-func MatchedTransactionCountLTE(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLTE(FieldMatchedTransactionCount, v))
+// UnreconciledItemsLTE applies the LTE predicate on the "unreconciled_items" field.
+func UnreconciledItemsLTE(v int) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLTE(FieldUnreconciledItems, v))
 }
 
-// UnmatchedTransactionCountEQ applies the EQ predicate on the "unmatched_transaction_count" field.
-func UnmatchedTransactionCountEQ(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldUnmatchedTransactionCount, v))
+// UnreconciledItemsIsNil applies the IsNil predicate on the "unreconciled_items" field.
+func UnreconciledItemsIsNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIsNull(FieldUnreconciledItems))
 }
 
-// UnmatchedTransactionCountNEQ applies the NEQ predicate on the "unmatched_transaction_count" field.
-func UnmatchedTransactionCountNEQ(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNEQ(FieldUnmatchedTransactionCount, v))
+// UnreconciledItemsNotNil applies the NotNil predicate on the "unreconciled_items" field.
+func UnreconciledItemsNotNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotNull(FieldUnreconciledItems))
 }
 
-// UnmatchedTransactionCountIn applies the In predicate on the "unmatched_transaction_count" field.
-func UnmatchedTransactionCountIn(vs ...int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldIn(FieldUnmatchedTransactionCount, vs...))
+// ReconciledByEQ applies the EQ predicate on the "reconciled_by" field.
+func ReconciledByEQ(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldReconciledBy, v))
 }
 
-// UnmatchedTransactionCountNotIn applies the NotIn predicate on the "unmatched_transaction_count" field.
-func UnmatchedTransactionCountNotIn(vs ...int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNotIn(FieldUnmatchedTransactionCount, vs...))
+// ReconciledByNEQ applies the NEQ predicate on the "reconciled_by" field.
+func ReconciledByNEQ(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNEQ(FieldReconciledBy, v))
 }
 
-// UnmatchedTransactionCountGT applies the GT predicate on the "unmatched_transaction_count" field.
-func UnmatchedTransactionCountGT(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGT(FieldUnmatchedTransactionCount, v))
+// ReconciledByIn applies the In predicate on the "reconciled_by" field.
+func ReconciledByIn(vs ...string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIn(FieldReconciledBy, vs...))
 }
 
-// UnmatchedTransactionCountGTE applies the GTE predicate on the "unmatched_transaction_count" field.
-func UnmatchedTransactionCountGTE(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGTE(FieldUnmatchedTransactionCount, v))
+// ReconciledByNotIn applies the NotIn predicate on the "reconciled_by" field.
+func ReconciledByNotIn(vs ...string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotIn(FieldReconciledBy, vs...))
 }
 
-// UnmatchedTransactionCountLT applies the LT predicate on the "unmatched_transaction_count" field.
-func UnmatchedTransactionCountLT(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLT(FieldUnmatchedTransactionCount, v))
+// ReconciledByGT applies the GT predicate on the "reconciled_by" field.
+func ReconciledByGT(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGT(FieldReconciledBy, v))
 }
 
-// UnmatchedTransactionCountLTE applies the LTE predicate on the "unmatched_transaction_count" field.
-func UnmatchedTransactionCountLTE(v int) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLTE(FieldUnmatchedTransactionCount, v))
+// ReconciledByGTE applies the GTE predicate on the "reconciled_by" field.
+func ReconciledByGTE(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGTE(FieldReconciledBy, v))
 }
 
-// CompletedByEQ applies the EQ predicate on the "completed_by" field.
-func CompletedByEQ(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldCompletedBy, v))
+// ReconciledByLT applies the LT predicate on the "reconciled_by" field.
+func ReconciledByLT(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLT(FieldReconciledBy, v))
 }
 
-// CompletedByNEQ applies the NEQ predicate on the "completed_by" field.
-func CompletedByNEQ(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNEQ(FieldCompletedBy, v))
+// ReconciledByLTE applies the LTE predicate on the "reconciled_by" field.
+func ReconciledByLTE(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLTE(FieldReconciledBy, v))
 }
 
-// CompletedByIn applies the In predicate on the "completed_by" field.
-func CompletedByIn(vs ...string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldIn(FieldCompletedBy, vs...))
+// ReconciledByContains applies the Contains predicate on the "reconciled_by" field.
+func ReconciledByContains(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldContains(FieldReconciledBy, v))
 }
 
-// CompletedByNotIn applies the NotIn predicate on the "completed_by" field.
-func CompletedByNotIn(vs ...string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNotIn(FieldCompletedBy, vs...))
+// ReconciledByHasPrefix applies the HasPrefix predicate on the "reconciled_by" field.
+func ReconciledByHasPrefix(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldHasPrefix(FieldReconciledBy, v))
 }
 
-// CompletedByGT applies the GT predicate on the "completed_by" field.
-func CompletedByGT(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGT(FieldCompletedBy, v))
+// ReconciledByHasSuffix applies the HasSuffix predicate on the "reconciled_by" field.
+func ReconciledByHasSuffix(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldHasSuffix(FieldReconciledBy, v))
 }
 
-// CompletedByGTE applies the GTE predicate on the "completed_by" field.
-func CompletedByGTE(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGTE(FieldCompletedBy, v))
+// ReconciledByIsNil applies the IsNil predicate on the "reconciled_by" field.
+func ReconciledByIsNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIsNull(FieldReconciledBy))
 }
 
-// CompletedByLT applies the LT predicate on the "completed_by" field.
-func CompletedByLT(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLT(FieldCompletedBy, v))
+// ReconciledByNotNil applies the NotNil predicate on the "reconciled_by" field.
+func ReconciledByNotNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotNull(FieldReconciledBy))
 }
 
-// CompletedByLTE applies the LTE predicate on the "completed_by" field.
-func CompletedByLTE(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLTE(FieldCompletedBy, v))
+// ReconciledByEqualFold applies the EqualFold predicate on the "reconciled_by" field.
+func ReconciledByEqualFold(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEqualFold(FieldReconciledBy, v))
 }
 
-// CompletedByContains applies the Contains predicate on the "completed_by" field.
-func CompletedByContains(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldContains(FieldCompletedBy, v))
+// ReconciledByContainsFold applies the ContainsFold predicate on the "reconciled_by" field.
+func ReconciledByContainsFold(v string) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldContainsFold(FieldReconciledBy, v))
 }
 
-// CompletedByHasPrefix applies the HasPrefix predicate on the "completed_by" field.
-func CompletedByHasPrefix(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldHasPrefix(FieldCompletedBy, v))
+// ReconciledAtEQ applies the EQ predicate on the "reconciled_at" field.
+func ReconciledAtEQ(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldEQ(FieldReconciledAt, v))
 }
 
-// CompletedByHasSuffix applies the HasSuffix predicate on the "completed_by" field.
-func CompletedByHasSuffix(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldHasSuffix(FieldCompletedBy, v))
+// ReconciledAtNEQ applies the NEQ predicate on the "reconciled_at" field.
+func ReconciledAtNEQ(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNEQ(FieldReconciledAt, v))
 }
 
-// CompletedByIsNil applies the IsNil predicate on the "completed_by" field.
-func CompletedByIsNil() predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldIsNull(FieldCompletedBy))
+// ReconciledAtIn applies the In predicate on the "reconciled_at" field.
+func ReconciledAtIn(vs ...time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIn(FieldReconciledAt, vs...))
 }
 
-// CompletedByNotNil applies the NotNil predicate on the "completed_by" field.
-func CompletedByNotNil() predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNotNull(FieldCompletedBy))
+// ReconciledAtNotIn applies the NotIn predicate on the "reconciled_at" field.
+func ReconciledAtNotIn(vs ...time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotIn(FieldReconciledAt, vs...))
 }
 
-// CompletedByEqualFold applies the EqualFold predicate on the "completed_by" field.
-func CompletedByEqualFold(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEqualFold(FieldCompletedBy, v))
+// ReconciledAtGT applies the GT predicate on the "reconciled_at" field.
+func ReconciledAtGT(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGT(FieldReconciledAt, v))
 }
 
-// CompletedByContainsFold applies the ContainsFold predicate on the "completed_by" field.
-func CompletedByContainsFold(v string) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldContainsFold(FieldCompletedBy, v))
+// ReconciledAtGTE applies the GTE predicate on the "reconciled_at" field.
+func ReconciledAtGTE(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldGTE(FieldReconciledAt, v))
 }
 
-// CompletedAtEQ applies the EQ predicate on the "completed_at" field.
-func CompletedAtEQ(v time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldEQ(FieldCompletedAt, v))
+// ReconciledAtLT applies the LT predicate on the "reconciled_at" field.
+func ReconciledAtLT(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLT(FieldReconciledAt, v))
 }
 
-// CompletedAtNEQ applies the NEQ predicate on the "completed_at" field.
-func CompletedAtNEQ(v time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNEQ(FieldCompletedAt, v))
+// ReconciledAtLTE applies the LTE predicate on the "reconciled_at" field.
+func ReconciledAtLTE(v time.Time) predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldLTE(FieldReconciledAt, v))
 }
 
-// CompletedAtIn applies the In predicate on the "completed_at" field.
-func CompletedAtIn(vs ...time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldIn(FieldCompletedAt, vs...))
+// ReconciledAtIsNil applies the IsNil predicate on the "reconciled_at" field.
+func ReconciledAtIsNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldIsNull(FieldReconciledAt))
 }
 
-// CompletedAtNotIn applies the NotIn predicate on the "completed_at" field.
-func CompletedAtNotIn(vs ...time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNotIn(FieldCompletedAt, vs...))
-}
-
-// CompletedAtGT applies the GT predicate on the "completed_at" field.
-func CompletedAtGT(v time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGT(FieldCompletedAt, v))
-}
-
-// CompletedAtGTE applies the GTE predicate on the "completed_at" field.
-func CompletedAtGTE(v time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldGTE(FieldCompletedAt, v))
-}
-
-// CompletedAtLT applies the LT predicate on the "completed_at" field.
-func CompletedAtLT(v time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLT(FieldCompletedAt, v))
-}
-
-// CompletedAtLTE applies the LTE predicate on the "completed_at" field.
-func CompletedAtLTE(v time.Time) predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldLTE(FieldCompletedAt, v))
-}
-
-// CompletedAtIsNil applies the IsNil predicate on the "completed_at" field.
-func CompletedAtIsNil() predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldIsNull(FieldCompletedAt))
-}
-
-// CompletedAtNotNil applies the NotNil predicate on the "completed_at" field.
-func CompletedAtNotNil() predicate.Reconciliation {
-	return predicate.Reconciliation(sql.FieldNotNull(FieldCompletedAt))
+// ReconciledAtNotNil applies the NotNil predicate on the "reconciled_at" field.
+func ReconciledAtNotNil() predicate.Reconciliation {
+	return predicate.Reconciliation(sql.FieldNotNull(FieldReconciledAt))
 }
 
 // ApprovedByEQ applies the EQ predicate on the "approved_by" field.

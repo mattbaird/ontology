@@ -91,19 +91,19 @@ func Name(v string) predicate.Portfolio {
 	return predicate.Portfolio(sql.FieldEQ(FieldName, v))
 }
 
-// RequiresTrustAccounting applies equality check predicate on the "requires_trust_accounting" field. It's identical to RequiresTrustAccountingEQ.
-func RequiresTrustAccounting(v bool) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEQ(FieldRequiresTrustAccounting, v))
+// Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
+func Description(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEQ(FieldDescription, v))
 }
 
-// TrustBankAccountID applies equality check predicate on the "trust_bank_account_id" field. It's identical to TrustBankAccountIDEQ.
-func TrustBankAccountID(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEQ(FieldTrustBankAccountID, v))
+// DefaultChartOfAccountsID applies equality check predicate on the "default_chart_of_accounts_id" field. It's identical to DefaultChartOfAccountsIDEQ.
+func DefaultChartOfAccountsID(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEQ(FieldDefaultChartOfAccountsID, v))
 }
 
-// FiscalYearStartMonth applies equality check predicate on the "fiscal_year_start_month" field. It's identical to FiscalYearStartMonthEQ.
-func FiscalYearStartMonth(v int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEQ(FieldFiscalYearStartMonth, v))
+// DefaultBankAccountID applies equality check predicate on the "default_bank_account_id" field. It's identical to DefaultBankAccountIDEQ.
+func DefaultBankAccountID(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEQ(FieldDefaultBankAccountID, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -571,89 +571,79 @@ func ManagementTypeNotIn(vs ...ManagementType) predicate.Portfolio {
 	return predicate.Portfolio(sql.FieldNotIn(FieldManagementType, vs...))
 }
 
-// RequiresTrustAccountingEQ applies the EQ predicate on the "requires_trust_accounting" field.
-func RequiresTrustAccountingEQ(v bool) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEQ(FieldRequiresTrustAccounting, v))
+// DescriptionEQ applies the EQ predicate on the "description" field.
+func DescriptionEQ(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEQ(FieldDescription, v))
 }
 
-// RequiresTrustAccountingNEQ applies the NEQ predicate on the "requires_trust_accounting" field.
-func RequiresTrustAccountingNEQ(v bool) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNEQ(FieldRequiresTrustAccounting, v))
+// DescriptionNEQ applies the NEQ predicate on the "description" field.
+func DescriptionNEQ(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNEQ(FieldDescription, v))
 }
 
-// TrustBankAccountIDEQ applies the EQ predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDEQ(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEQ(FieldTrustBankAccountID, v))
+// DescriptionIn applies the In predicate on the "description" field.
+func DescriptionIn(vs ...string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldIn(FieldDescription, vs...))
 }
 
-// TrustBankAccountIDNEQ applies the NEQ predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDNEQ(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNEQ(FieldTrustBankAccountID, v))
+// DescriptionNotIn applies the NotIn predicate on the "description" field.
+func DescriptionNotIn(vs ...string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNotIn(FieldDescription, vs...))
 }
 
-// TrustBankAccountIDIn applies the In predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDIn(vs ...string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldIn(FieldTrustBankAccountID, vs...))
+// DescriptionGT applies the GT predicate on the "description" field.
+func DescriptionGT(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldGT(FieldDescription, v))
 }
 
-// TrustBankAccountIDNotIn applies the NotIn predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDNotIn(vs ...string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNotIn(FieldTrustBankAccountID, vs...))
+// DescriptionGTE applies the GTE predicate on the "description" field.
+func DescriptionGTE(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldGTE(FieldDescription, v))
 }
 
-// TrustBankAccountIDGT applies the GT predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDGT(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldGT(FieldTrustBankAccountID, v))
+// DescriptionLT applies the LT predicate on the "description" field.
+func DescriptionLT(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldLT(FieldDescription, v))
 }
 
-// TrustBankAccountIDGTE applies the GTE predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDGTE(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldGTE(FieldTrustBankAccountID, v))
+// DescriptionLTE applies the LTE predicate on the "description" field.
+func DescriptionLTE(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldLTE(FieldDescription, v))
 }
 
-// TrustBankAccountIDLT applies the LT predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDLT(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldLT(FieldTrustBankAccountID, v))
+// DescriptionContains applies the Contains predicate on the "description" field.
+func DescriptionContains(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldContains(FieldDescription, v))
 }
 
-// TrustBankAccountIDLTE applies the LTE predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDLTE(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldLTE(FieldTrustBankAccountID, v))
+// DescriptionHasPrefix applies the HasPrefix predicate on the "description" field.
+func DescriptionHasPrefix(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldHasPrefix(FieldDescription, v))
 }
 
-// TrustBankAccountIDContains applies the Contains predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDContains(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldContains(FieldTrustBankAccountID, v))
+// DescriptionHasSuffix applies the HasSuffix predicate on the "description" field.
+func DescriptionHasSuffix(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldHasSuffix(FieldDescription, v))
 }
 
-// TrustBankAccountIDHasPrefix applies the HasPrefix predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDHasPrefix(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldHasPrefix(FieldTrustBankAccountID, v))
+// DescriptionIsNil applies the IsNil predicate on the "description" field.
+func DescriptionIsNil() predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldIsNull(FieldDescription))
 }
 
-// TrustBankAccountIDHasSuffix applies the HasSuffix predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDHasSuffix(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldHasSuffix(FieldTrustBankAccountID, v))
+// DescriptionNotNil applies the NotNil predicate on the "description" field.
+func DescriptionNotNil() predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNotNull(FieldDescription))
 }
 
-// TrustBankAccountIDIsNil applies the IsNil predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDIsNil() predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldIsNull(FieldTrustBankAccountID))
+// DescriptionEqualFold applies the EqualFold predicate on the "description" field.
+func DescriptionEqualFold(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEqualFold(FieldDescription, v))
 }
 
-// TrustBankAccountIDNotNil applies the NotNil predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDNotNil() predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNotNull(FieldTrustBankAccountID))
-}
-
-// TrustBankAccountIDEqualFold applies the EqualFold predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDEqualFold(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEqualFold(FieldTrustBankAccountID, v))
-}
-
-// TrustBankAccountIDContainsFold applies the ContainsFold predicate on the "trust_bank_account_id" field.
-func TrustBankAccountIDContainsFold(v string) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldContainsFold(FieldTrustBankAccountID, v))
+// DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
+func DescriptionContainsFold(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldContainsFold(FieldDescription, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
@@ -676,54 +666,154 @@ func StatusNotIn(vs ...Status) predicate.Portfolio {
 	return predicate.Portfolio(sql.FieldNotIn(FieldStatus, vs...))
 }
 
-// DefaultPaymentMethodsIsNil applies the IsNil predicate on the "default_payment_methods" field.
-func DefaultPaymentMethodsIsNil() predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldIsNull(FieldDefaultPaymentMethods))
+// DefaultChartOfAccountsIDEQ applies the EQ predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDEQ(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEQ(FieldDefaultChartOfAccountsID, v))
 }
 
-// DefaultPaymentMethodsNotNil applies the NotNil predicate on the "default_payment_methods" field.
-func DefaultPaymentMethodsNotNil() predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNotNull(FieldDefaultPaymentMethods))
+// DefaultChartOfAccountsIDNEQ applies the NEQ predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDNEQ(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNEQ(FieldDefaultChartOfAccountsID, v))
 }
 
-// FiscalYearStartMonthEQ applies the EQ predicate on the "fiscal_year_start_month" field.
-func FiscalYearStartMonthEQ(v int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldEQ(FieldFiscalYearStartMonth, v))
+// DefaultChartOfAccountsIDIn applies the In predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDIn(vs ...string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldIn(FieldDefaultChartOfAccountsID, vs...))
 }
 
-// FiscalYearStartMonthNEQ applies the NEQ predicate on the "fiscal_year_start_month" field.
-func FiscalYearStartMonthNEQ(v int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNEQ(FieldFiscalYearStartMonth, v))
+// DefaultChartOfAccountsIDNotIn applies the NotIn predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDNotIn(vs ...string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNotIn(FieldDefaultChartOfAccountsID, vs...))
 }
 
-// FiscalYearStartMonthIn applies the In predicate on the "fiscal_year_start_month" field.
-func FiscalYearStartMonthIn(vs ...int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldIn(FieldFiscalYearStartMonth, vs...))
+// DefaultChartOfAccountsIDGT applies the GT predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDGT(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldGT(FieldDefaultChartOfAccountsID, v))
 }
 
-// FiscalYearStartMonthNotIn applies the NotIn predicate on the "fiscal_year_start_month" field.
-func FiscalYearStartMonthNotIn(vs ...int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldNotIn(FieldFiscalYearStartMonth, vs...))
+// DefaultChartOfAccountsIDGTE applies the GTE predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDGTE(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldGTE(FieldDefaultChartOfAccountsID, v))
 }
 
-// FiscalYearStartMonthGT applies the GT predicate on the "fiscal_year_start_month" field.
-func FiscalYearStartMonthGT(v int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldGT(FieldFiscalYearStartMonth, v))
+// DefaultChartOfAccountsIDLT applies the LT predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDLT(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldLT(FieldDefaultChartOfAccountsID, v))
 }
 
-// FiscalYearStartMonthGTE applies the GTE predicate on the "fiscal_year_start_month" field.
-func FiscalYearStartMonthGTE(v int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldGTE(FieldFiscalYearStartMonth, v))
+// DefaultChartOfAccountsIDLTE applies the LTE predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDLTE(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldLTE(FieldDefaultChartOfAccountsID, v))
 }
 
-// FiscalYearStartMonthLT applies the LT predicate on the "fiscal_year_start_month" field.
-func FiscalYearStartMonthLT(v int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldLT(FieldFiscalYearStartMonth, v))
+// DefaultChartOfAccountsIDContains applies the Contains predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDContains(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldContains(FieldDefaultChartOfAccountsID, v))
 }
 
-// FiscalYearStartMonthLTE applies the LTE predicate on the "fiscal_year_start_month" field.
-func FiscalYearStartMonthLTE(v int) predicate.Portfolio {
-	return predicate.Portfolio(sql.FieldLTE(FieldFiscalYearStartMonth, v))
+// DefaultChartOfAccountsIDHasPrefix applies the HasPrefix predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDHasPrefix(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldHasPrefix(FieldDefaultChartOfAccountsID, v))
+}
+
+// DefaultChartOfAccountsIDHasSuffix applies the HasSuffix predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDHasSuffix(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldHasSuffix(FieldDefaultChartOfAccountsID, v))
+}
+
+// DefaultChartOfAccountsIDIsNil applies the IsNil predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDIsNil() predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldIsNull(FieldDefaultChartOfAccountsID))
+}
+
+// DefaultChartOfAccountsIDNotNil applies the NotNil predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDNotNil() predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNotNull(FieldDefaultChartOfAccountsID))
+}
+
+// DefaultChartOfAccountsIDEqualFold applies the EqualFold predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDEqualFold(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEqualFold(FieldDefaultChartOfAccountsID, v))
+}
+
+// DefaultChartOfAccountsIDContainsFold applies the ContainsFold predicate on the "default_chart_of_accounts_id" field.
+func DefaultChartOfAccountsIDContainsFold(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldContainsFold(FieldDefaultChartOfAccountsID, v))
+}
+
+// DefaultBankAccountIDEQ applies the EQ predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDEQ(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEQ(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDNEQ applies the NEQ predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDNEQ(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNEQ(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDIn applies the In predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDIn(vs ...string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldIn(FieldDefaultBankAccountID, vs...))
+}
+
+// DefaultBankAccountIDNotIn applies the NotIn predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDNotIn(vs ...string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNotIn(FieldDefaultBankAccountID, vs...))
+}
+
+// DefaultBankAccountIDGT applies the GT predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDGT(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldGT(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDGTE applies the GTE predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDGTE(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldGTE(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDLT applies the LT predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDLT(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldLT(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDLTE applies the LTE predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDLTE(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldLTE(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDContains applies the Contains predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDContains(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldContains(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDHasPrefix applies the HasPrefix predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDHasPrefix(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldHasPrefix(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDHasSuffix applies the HasSuffix predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDHasSuffix(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldHasSuffix(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDIsNil applies the IsNil predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDIsNil() predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldIsNull(FieldDefaultBankAccountID))
+}
+
+// DefaultBankAccountIDNotNil applies the NotNil predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDNotNil() predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldNotNull(FieldDefaultBankAccountID))
+}
+
+// DefaultBankAccountIDEqualFold applies the EqualFold predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDEqualFold(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldEqualFold(FieldDefaultBankAccountID, v))
+}
+
+// DefaultBankAccountIDContainsFold applies the ContainsFold predicate on the "default_bank_account_id" field.
+func DefaultBankAccountIDContainsFold(v string) predicate.Portfolio {
+	return predicate.Portfolio(sql.FieldContainsFold(FieldDefaultBankAccountID, v))
 }
 
 // HasProperties applies the HasEdge predicate on the "properties" edge.

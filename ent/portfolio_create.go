@@ -110,22 +110,16 @@ func (_c *PortfolioCreate) SetManagementType(v portfolio.ManagementType) *Portfo
 	return _c
 }
 
-// SetRequiresTrustAccounting sets the "requires_trust_accounting" field.
-func (_c *PortfolioCreate) SetRequiresTrustAccounting(v bool) *PortfolioCreate {
-	_c.mutation.SetRequiresTrustAccounting(v)
+// SetDescription sets the "description" field.
+func (_c *PortfolioCreate) SetDescription(v string) *PortfolioCreate {
+	_c.mutation.SetDescription(v)
 	return _c
 }
 
-// SetTrustBankAccountID sets the "trust_bank_account_id" field.
-func (_c *PortfolioCreate) SetTrustBankAccountID(v string) *PortfolioCreate {
-	_c.mutation.SetTrustBankAccountID(v)
-	return _c
-}
-
-// SetNillableTrustBankAccountID sets the "trust_bank_account_id" field if the given value is not nil.
-func (_c *PortfolioCreate) SetNillableTrustBankAccountID(v *string) *PortfolioCreate {
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (_c *PortfolioCreate) SetNillableDescription(v *string) *PortfolioCreate {
 	if v != nil {
-		_c.SetTrustBankAccountID(*v)
+		_c.SetDescription(*v)
 	}
 	return _c
 }
@@ -136,15 +130,31 @@ func (_c *PortfolioCreate) SetStatus(v portfolio.Status) *PortfolioCreate {
 	return _c
 }
 
-// SetDefaultPaymentMethods sets the "default_payment_methods" field.
-func (_c *PortfolioCreate) SetDefaultPaymentMethods(v []string) *PortfolioCreate {
-	_c.mutation.SetDefaultPaymentMethods(v)
+// SetDefaultChartOfAccountsID sets the "default_chart_of_accounts_id" field.
+func (_c *PortfolioCreate) SetDefaultChartOfAccountsID(v string) *PortfolioCreate {
+	_c.mutation.SetDefaultChartOfAccountsID(v)
 	return _c
 }
 
-// SetFiscalYearStartMonth sets the "fiscal_year_start_month" field.
-func (_c *PortfolioCreate) SetFiscalYearStartMonth(v int) *PortfolioCreate {
-	_c.mutation.SetFiscalYearStartMonth(v)
+// SetNillableDefaultChartOfAccountsID sets the "default_chart_of_accounts_id" field if the given value is not nil.
+func (_c *PortfolioCreate) SetNillableDefaultChartOfAccountsID(v *string) *PortfolioCreate {
+	if v != nil {
+		_c.SetDefaultChartOfAccountsID(*v)
+	}
+	return _c
+}
+
+// SetDefaultBankAccountID sets the "default_bank_account_id" field.
+func (_c *PortfolioCreate) SetDefaultBankAccountID(v string) *PortfolioCreate {
+	_c.mutation.SetDefaultBankAccountID(v)
+	return _c
+}
+
+// SetNillableDefaultBankAccountID sets the "default_bank_account_id" field if the given value is not nil.
+func (_c *PortfolioCreate) SetNillableDefaultBankAccountID(v *string) *PortfolioCreate {
+	if v != nil {
+		_c.SetDefaultBankAccountID(*v)
+	}
 	return _c
 }
 
@@ -214,9 +224,7 @@ func (_c *PortfolioCreate) Mutation() *PortfolioMutation {
 
 // Save creates the Portfolio in the database.
 func (_c *PortfolioCreate) Save(ctx context.Context) (*Portfolio, error) {
-	if err := _c.defaults(); err != nil {
-		return nil, err
-	}
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -243,29 +251,19 @@ func (_c *PortfolioCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *PortfolioCreate) defaults() error {
+func (_c *PortfolioCreate) defaults() {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		if portfolio.DefaultCreatedAt == nil {
-			return fmt.Errorf("ent: uninitialized portfolio.DefaultCreatedAt (forgotten import ent/runtime?)")
-		}
 		v := portfolio.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		if portfolio.DefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized portfolio.DefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := portfolio.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
-		if portfolio.DefaultID == nil {
-			return fmt.Errorf("ent: uninitialized portfolio.DefaultID (forgotten import ent/runtime?)")
-		}
 		v := portfolio.DefaultID()
 		_c.mutation.SetID(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -303,6 +301,11 @@ func (_c *PortfolioCreate) check() error {
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Portfolio.name"`)}
 	}
+	if v, ok := _c.mutation.Name(); ok {
+		if err := portfolio.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Portfolio.name": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.ManagementType(); !ok {
 		return &ValidationError{Name: "management_type", err: errors.New(`ent: missing required field "Portfolio.management_type"`)}
 	}
@@ -311,9 +314,6 @@ func (_c *PortfolioCreate) check() error {
 			return &ValidationError{Name: "management_type", err: fmt.Errorf(`ent: validator failed for field "Portfolio.management_type": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.RequiresTrustAccounting(); !ok {
-		return &ValidationError{Name: "requires_trust_accounting", err: errors.New(`ent: missing required field "Portfolio.requires_trust_accounting"`)}
-	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Portfolio.status"`)}
 	}
@@ -321,9 +321,6 @@ func (_c *PortfolioCreate) check() error {
 		if err := portfolio.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Portfolio.status": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.FiscalYearStartMonth(); !ok {
-		return &ValidationError{Name: "fiscal_year_start_month", err: errors.New(`ent: missing required field "Portfolio.fiscal_year_start_month"`)}
 	}
 	if len(_c.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Portfolio.owner"`)}
@@ -399,25 +396,21 @@ func (_c *PortfolioCreate) createSpec() (*Portfolio, *sqlgraph.CreateSpec) {
 		_spec.SetField(portfolio.FieldManagementType, field.TypeEnum, value)
 		_node.ManagementType = value
 	}
-	if value, ok := _c.mutation.RequiresTrustAccounting(); ok {
-		_spec.SetField(portfolio.FieldRequiresTrustAccounting, field.TypeBool, value)
-		_node.RequiresTrustAccounting = value
-	}
-	if value, ok := _c.mutation.TrustBankAccountID(); ok {
-		_spec.SetField(portfolio.FieldTrustBankAccountID, field.TypeString, value)
-		_node.TrustBankAccountID = &value
+	if value, ok := _c.mutation.Description(); ok {
+		_spec.SetField(portfolio.FieldDescription, field.TypeString, value)
+		_node.Description = &value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(portfolio.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if value, ok := _c.mutation.DefaultPaymentMethods(); ok {
-		_spec.SetField(portfolio.FieldDefaultPaymentMethods, field.TypeJSON, value)
-		_node.DefaultPaymentMethods = value
+	if value, ok := _c.mutation.DefaultChartOfAccountsID(); ok {
+		_spec.SetField(portfolio.FieldDefaultChartOfAccountsID, field.TypeString, value)
+		_node.DefaultChartOfAccountsID = &value
 	}
-	if value, ok := _c.mutation.FiscalYearStartMonth(); ok {
-		_spec.SetField(portfolio.FieldFiscalYearStartMonth, field.TypeInt, value)
-		_node.FiscalYearStartMonth = value
+	if value, ok := _c.mutation.DefaultBankAccountID(); ok {
+		_spec.SetField(portfolio.FieldDefaultBankAccountID, field.TypeString, value)
+		_node.DefaultBankAccountID = &value
 	}
 	if nodes := _c.mutation.PropertiesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

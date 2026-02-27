@@ -1,33 +1,60 @@
-# Propeller Ontological Architecture Specification v2
+# Propeller Ontology Specification v3.1
 
-**Version:** 2.0  
-**Date:** February 24, 2026  
+**Version:** 3.1  
+**Date:** February 27, 2026  
 **Author:** Matthew Baird, CTO — AppFolio  
-**Status:** For Claude Code Implementation
+**Status:** For Claude Code Implementation  
+**Revision note:** Architectural reframe per chief architect review. Ontology as shared vocabulary and constraint system, not contract generator. Added CQRS commands, domain events, external API anti-corruption layer, business-defined permissions. Comprehensions reframed as scaffolding + drift detection.
 
 ---
 
 ## 1. Purpose
 
-This spec defines a canonical domain ontology for property management. An agentic coding system (Claude Code) should use this spec to generate:
+This document defines the domain model for Propeller as a CUE ontology. The ontology is a **shared vocabulary and constraint system** — it defines what things ARE, not what you can DO to them, what you TELL the outside world happened, or who is ALLOWED to do what.
 
-1. CUE ontology files (one per domain area + common types + relationships + state machines)
-2. CUE codegen mapping files (entgen.cue, apigen.cue, eventgen.cue, authzgen.cue)
-3. Go codegen tools (cmd/entgen, cmd/apigen, cmd/eventgen, cmd/authzgen, cmd/agentgen)
-4. Makefile and CI pipeline
+Commands, external APIs, domain events, and permission policies are **separately defined** concerns that **reference** the ontology for field validation, type reuse, and drift detection. They are not mechanically derived from it. Each boundary has its own shape, its own evolution pace, and its own authors.
 
-The CUE ontology is the generative kernel — the single source of truth from which all downstream code is derived:
+**This version uses real CUE syntax.** Every entity definition is valid CUE. Pseudocode is gone. `cue vet` validates the entire domain model and cross-references every command, event, and API contract that imports ontology types.
+
+### 1.1 CUE Features Used
+
+- **Closed structs** (`close()`) — prevent unexpected fields on every entity
+- **Embedding** — `#BaseEntity`, `#StatefulEntity` compose shared behavior
+- **Conditional constraints** (`if`) — business rules enforced at compile time
+- **Defaults** (`*`) — self-documenting, validated against constraints
+- **Pattern constraints** (`=~`) — format validation on strings
+- **Hidden fields** (`_`) — generator metadata that doesn't leak into data schema
+- **Comprehensions** — scaffold starter templates, generate test matrices, detect drift
+- **Unification** (`&`) — compose jurisdiction constraints (most restrictive wins)
+- **Cross-package imports** — commands, events, and API contracts import ontology types for validation without tight coupling
+
+### 1.2 Architecture
+
+The ontology sits at the center but does not generate everything. Different concerns have different coupling tightness:
 
 ```
-CUE Ontology (source of truth)
-  ├── Schema projections (Postgres via Ent, graph DB via Neo4j, search index via Meilisearch)
-  ├── API contracts (Connect-RPC services, OpenAPI, TypeScript SDK)
-  ├── Event schemas (ontologically typed, NATS JetStream with schema registry)
-  ├── Permission model (OPA/Rego, derived from relationship graph)
-  └── Agent world model (tool definitions, ONTOLOGY.md, STATE_MACHINES.md)
+TIGHT COUPLING (1:1 derivation):
+  Ontology → Data store schemas (Ent → Postgres)
+  Ontology → State machine enforcement (Ent hooks)
+  Ontology → Agent world model vocabulary (ONTOLOGY.md)
+  Ontology → Test matrices (from constraints + state machines)
+
+SHARED VOCABULARY (references ontology types, defines own shapes):
+  Commands (CQRS)     — import ontology types for field validation
+  Domain Events       — import ontology types, carry projections not full entities
+  External API (v1)   — import ontology enums, define own response/request shapes
+  Permission Policies — reference domain entities for scope, define own groups
+  View Definitions    — reference ontology fields, define own layout
+
+LOOSE COUPLING (informed by ontology, not derived):
+  Read models / projections — optimized for query patterns
+  Search indices            — subset fields, denormalized
+  Graph projections         — relationship-focused
 ```
 
-Rule: no hand-written type that represents a domain entity. Constraints belong in the ontology, not scattered in code. State machines are first-class. Relationships carry semantics.
+**Golden rule**: The ontology defines what a Lease IS. A command defines what "Move In Tenant" DOES (touching Lease, Space, PersonRole, and LedgerEntry simultaneously). An API response defines what a consumer SEES. An event defines what the rest of the system HEARS. These are different concerns with different authors, different evolution speeds, and different shapes. They share vocabulary. They do not share structure.
+
+**Anti-Zuora rule**: Internal domain model changes must not automatically break external API consumers. The external API is a versioned contract with an anti-corruption layer. Internal field renames, type restructurings, and model evolution happen behind that boundary.
 
 ---
 
@@ -35,1814 +62,2743 @@ Rule: no hand-written type that represents a domain entity. Constraints belong i
 
 ```
 propeller/
-├── ontology/
-│   ├── common.cue              # Shared types: Money, Address, DateRange, AuditMetadata, ContactMethod
-│   ├── person.cue              # Person, Organization, PersonRole with role-specific attributes
-│   ├── property.cue            # Portfolio, Property, Building, Space (replaces Unit)
-│   ├── jurisdiction.cue        # Jurisdiction, PropertyJurisdiction, JurisdictionRule
-│   ├── lease.cue               # Lease, LeaseSpace, Application, and all commercial lease structures
-│   ├── accounting.cue          # Account, LedgerEntry, JournalEntry, BankAccount, Reconciliation
-│   ├── config_schema.cue       # Configuration schema — what's tunable and valid ranges
-│   ├── relationships.cue       # All cross-model edges with cardinality and semantics
-│   └── state_machines.cue      # All entity state machines
-├── codegen/
-│   ├── entgen.cue              # Ontology → Ent schema mapping (including type projections)
-│   ├── apigen.cue              # Ontology → API service + agent tool mapping
-│   ├── eventgen.cue            # Ontology → Event schema mapping
-│   └── authzgen.cue            # Ontology → OPA policy scaffold mapping
+├── ontology/                        # DOMAIN TRUTH: What things ARE
+│   ├── common.cue                   #   Shared types: Money, Address, DateRange, AuditMetadata
+│   ├── base.cue                     #   Base entity types: #BaseEntity, #StatefulEntity
+│   ├── person.cue                   #   Person, Organization, PersonRole
+│   ├── property.cue                 #   Portfolio, Property, Building, Space
+│   ├── jurisdiction.cue             #   Jurisdiction, PropertyJurisdiction, JurisdictionRule
+│   ├── lease.cue                    #   Lease, LeaseSpace, Application, commercial structures
+│   ├── accounting.cue               #   Account, LedgerEntry, JournalEntry, BankAccount
+│   ├── config_schema.cue            #   Configuration schema — tunable values and ranges
+│   ├── relationships.cue            #   All cross-model edges with cardinality and semantics
+│   └── state_machines.cue           #   All entity state machines
+│
+├── commands/                        # ACTIONS: What you can DO (CQRS write side)
+│   ├── lease_commands.cue           #   MoveInTenant, RecordPayment, RenewLease, etc.
+│   ├── property_commands.cue        #   OnboardProperty, TransferProperty, etc.
+│   ├── accounting_commands.cue      #   PostJournalEntry, RecordPayment, Reconcile, etc.
+│   └── application_commands.cue     #   SubmitApplication, ApproveApplication, etc.
+│
+├── events/                          # NOTIFICATIONS: What HAPPENED (domain events)
+│   ├── lease_events.cue             #   TenantMovedIn, RentIncreaseApplied, LeaseRenewed, etc.
+│   ├── property_events.cue          #   PropertyOnboarded, SpaceStatusChanged, etc.
+│   ├── accounting_events.cue        #   PaymentReceived, JournalEntryPosted, etc.
+│   └── jurisdiction_events.cue      #   JurisdictionRuleActivated, ComplianceAlertTriggered, etc.
+│
+├── api/                             # EXTERNAL CONTRACTS: What the outside world SEES
+│   └── v1/
+│       ├── lease_api.cue            #   Versioned request/response shapes
+│       ├── property_api.cue
+│       ├── person_api.cue
+│       ├── accounting_api.cue
+│       └── common_api.cue           #   Shared API types (pagination, error envelope)
+│
+├── policies/                        # AUTHORIZATION: Who can do WHAT
+│   ├── permission_groups.cue        #   Business-defined role groups
+│   ├── command_permissions.cue      #   Which groups can execute which commands
+│   └── field_policies.cue           #   Per-attribute visibility rules
+│
+├── codegen/                         # GENERATION + VALIDATION
+│   ├── entgen.cue                   #   Ontology → Ent schema mapping (tight coupling, 1:1)
+│   ├── testgen.cue                  #   Constraints + state machines → test matrices
+│   ├── agentgen.cue                 #   Ontology → ONTOLOGY.md + TOOLS.md for agent context
+│   ├── uigen.cue                    #   View definitions per entity (references ontology fields)
+│   └── drift.cue                    #   Cross-reference validation (see Section 12)
+│
 ├── cmd/
-│   ├── entgen/main.go          # CUE → Ent schema generator
-│   ├── apigen/main.go          # CUE → Proto services + OpenAPI + agent tools + handler scaffolds
-│   ├── eventgen/main.go        # CUE → Event schema generator
-│   ├── authzgen/main.go        # CUE → OPA policy generator
-│   └── agentgen/main.go        # CUE → ONTOLOGY.md + STATE_MACHINES.md + TOOLS.md
+│   ├── entgen/main.go               #   CUE → Ent schema generator
+│   ├── testgen/main.go              #   CUE → test case generator
+│   ├── agentgen/main.go             #   CUE → ONTOLOGY.md + STATE_MACHINES.md + TOOLS.md
+│   ├── uigen/main.go                #   CUE → UI schema generator
+│   ├── uirender/main.go             #   UI schema → Svelte components
+│   └── driftcheck/main.go           #   Validate cross-boundary references
 └── Makefile
 ```
 
+### Boundary Responsibilities
+
+| Directory | Author | Evolution Speed | Coupling to Ontology |
+|---|---|---|---|
+| `ontology/` | Domain modelers | Slow (schema changes) | IS the ontology |
+| `commands/` | Domain experts + engineers | Medium (new actions, payload changes) | Imports types for field validation |
+| `events/` | Domain experts + engineers | Medium (new events, payload changes) | Imports types for projections |
+| `api/v1/` | API designers + product | Slow (versioned, customer-facing) | Imports enums, defines own shapes |
+| `policies/` | Business stakeholders + security | Medium (new roles, policy changes) | References entities for scope |
+| `codegen/` | Platform engineers | Follows ontology | Tightly coupled by design |
+
 ---
 
-## 3. Common Types — `ontology/common.cue`
+## 3. Base Entity Types — `ontology/base.cue`
 
-These types are shared across all domain models. They establish the foundational vocabulary.
+Every entity in the system embeds one of these base types. Cross-cutting concerns live here once, not repeated per entity.
 
-### 3.1 Monetary
+```cue
+package ontology
 
-```
-#Money: amount_cents (int), currency (ISO 4217, 3 uppercase letters, default "USD")
-#NonNegativeMoney: #Money where amount_cents >= 0
-#PositiveMoney: #Money where amount_cents > 0
-```
+import "time"
 
-CRITICAL: All financials use integer cents. No floating point anywhere in the financial chain.
+// #BaseEntity provides id and audit metadata to every entity.
+// Embed this in every entity definition.
+#BaseEntity: {
+    id: string & =~"^[a-zA-Z0-9_-]{20,36}$"
+    audit: #AuditMetadata
 
-### 3.2 Temporal
+    // Domain-level attributes readable by all generators
+    @immutable(id)           // id cannot change after creation
+    @computed(audit)         // audit fields are system-managed
+}
 
-```
-#DateRange: start (time), end (optional time)
-  CONSTRAINT: if end is set, end must be after start
-```
+// #StatefulEntity adds a status field with state machine enforcement.
+// Embed this in entities that have lifecycle states.
+#StatefulEntity: {
+    #BaseEntity
+    status: string           // refined to specific enum by each entity
 
-### 3.3 Geographic
+    _has_state_machine: true // generators check this to wire up transitions
+}
 
-```
-#Address:
-  line1 (required string)
-  line2 (optional string)
-  city (required string)
-  state (2 uppercase letters)
-  postal_code (5 digits, optionally with -4 extension)
-  country (2 uppercase letters, default "US", ISO 3166-1 alpha-2)
-  latitude (optional float, -90 to 90)
-  longitude (optional float, -180 to 180)
-  county (optional string — important for tax jurisdictions)
-```
+// #ImmutableEntity cannot be updated or deleted after creation.
+// Used for ledger entries and audit logs.
+#ImmutableEntity: {
+    #BaseEntity
 
-### 3.4 Identity and References
-
-```
-#EntityRef:
-  entity_type (#EntityType)
-  entity_id (required string)
-  relationship (#RelationshipType)
-
-#EntityType enum:
-  "person" | "organization" | "portfolio" | "property" | "building" |
-  "space" | "lease" | "lease_space" | "work_order" | "vendor" |
-  "ledger_entry" | "journal_entry" | "account" | "bank_account" |
-  "application" | "inspection" | "document"
-
-#RelationshipType enum:
-  "belongs_to" | "contains" | "managed_by" | "owned_by" |
-  "leased_to" | "occupied_by" | "reported_by" | "assigned_to" |
-  "billed_to" | "paid_by" | "performed_by" | "approved_by" |
-  "guarantor_for" | "emergency_contact_for" | "employed_by" |
-  "related_to" | "parent_of" | "child_of" | "sublease_of"
-```
-
-### 3.5 Audit
-
-```
-#AuditMetadata:
-  created_by (required string — user ID, agent ID, or "system")
-  updated_by (required string)
-  created_at (time)
-  updated_at (time)
-  source ("user" | "agent" | "import" | "system" | "migration")
-  correlation_id (optional string — links related changes across entities)
-  agent_goal_id (optional string — if source == "agent", which goal triggered this)
-```
-
-### 3.6 Contact
-
-```
-#ContactMethod:
-  type ("email" | "phone" | "sms" | "mail" | "portal")
-  value (required string)
-  primary (bool, default false)
-  verified (bool, default false)
-  opt_out (bool, default false — communication preference)
-  label (optional string — "work", "home", "mobile", etc.)
+    _immutable: true         // Ent hook: reject all Update/Delete mutations
+}
 ```
 
 ---
 
-## 4. Person Model — `ontology/person.cue`
+## 4. Common Types — `ontology/common.cue`
 
-The Person model represents all human and organizational actors. A single person can be a tenant, owner, vendor contact, and emergency contact simultaneously. Roles are relationships, not types.
+Shared types that establish the foundational vocabulary. All use `close()` to prevent unexpected fields.
 
-### 4.1 Person
+```cue
+package ontology
 
+import "time"
+
+// === Monetary ===
+// CRITICAL: All financials use integer cents. No floating point anywhere in the financial chain.
+
+#Money: close({
+    amount_cents: int
+    currency:     string & =~"^[A-Z]{3}$" | *"USD"  // ISO 4217
+})
+
+#NonNegativeMoney: #Money & close({
+    amount_cents: >=0
+})
+
+#PositiveMoney: #Money & close({
+    amount_cents: >0
+})
+
+
+// === Temporal ===
+
+#DateRange: close({
+    start: time.Time
+    end?:  time.Time
+
+    // CUE enforces: if end is set, it must be after start
+    if end != _|_ {
+        end: >start
+    }
+})
+
+
+// === Geographic ===
+
+#Address: close({
+    line1:       string & strings.MinRunes(1)
+    line2?:      string
+    city:        string & strings.MinRunes(1)
+    state:       string & =~"^[A-Z]{2}$"
+    postal_code: string & =~"^[0-9]{5}(-[0-9]{4})?$"
+    country:     string & =~"^[A-Z]{2}$" | *"US"     // ISO 3166-1 alpha-2
+    latitude?:   float & >=-90 & <=90
+    longitude?:  float & >=-180 & <=180
+    county?:     string                                // important for tax jurisdictions
+})
+
+
+// === Identity and References ===
+
+#EntityType: "person" | "organization" | "portfolio" | "property" | "building" |
+             "space" | "lease" | "lease_space" | "work_order" | "vendor" |
+             "ledger_entry" | "journal_entry" | "account" | "bank_account" |
+             "application" | "jurisdiction" | "jurisdiction_rule" | "document"
+
+#RelationshipType: "belongs_to" | "contains" | "managed_by" | "owned_by" |
+                   "leased_to" | "occupied_by" | "reported_by" | "assigned_to" |
+                   "billed_to" | "paid_by" | "performed_by" | "approved_by" |
+                   "guarantor_for" | "emergency_contact_for" | "employed_by" |
+                   "related_to" | "parent_of" | "child_of" | "sublease_of"
+
+#EntityRef: close({
+    entity_type:  #EntityType
+    entity_id:    string
+    relationship: #RelationshipType
+})
+
+
+// === Audit ===
+
+#AuditSource: "user" | "agent" | "import" | "system" | "migration"
+
+#AuditMetadata: close({
+    created_by:     string                   // user ID, agent ID, or "system"
+    updated_by:     string
+    created_at:     time.Time
+    updated_at:     time.Time
+    source:         #AuditSource | *"user"
+    correlation_id?: string                  // links related changes across entities
+    agent_goal_id?:  string                  // if source == "agent", which goal triggered this
+
+    if source != "agent" {
+        agent_goal_id: null
+    }
+})
+
+
+// === Contact ===
+
+#ContactType: "email" | "phone" | "sms" | "mail" | "portal"
+
+#ContactMethod: close({
+    type:     #ContactType
+    value:    string & strings.MinRunes(1)
+    primary:  *false | bool
+    verified: *false | bool
+    opt_out:  *false | bool                  // communication preference
+    label?:   string                         // "work", "home", "mobile"
+
+    // Email format validation
+    if type == "email" {
+        value: =~"^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$"
+    }
+
+    // Phone: digits, spaces, dashes, parens, plus sign
+    if type == "phone" || type == "sms" {
+        value: =~"^[+]?[0-9() \\-]{7,20}$"
+    }
+})
 ```
-#Person:
-  id (required string)
-  first_name (required string)
-  last_name (required string)
-  display_name (string, default "{first_name} {last_name}")
-  
-  date_of_birth (optional time — required for tenant screening)
-  ssn_last_four (optional string, exactly 4 digits — stored encrypted, only last 4 in domain model)
-  
-  contact_methods (list of #ContactMethod, minimum 1)
-  preferred_contact ("email" | "sms" | "phone" | "mail" | "portal", default "email")
-  
-  language_preference (2 lowercase letters ISO 639-1, default "en")
-  timezone (optional string — IANA timezone)
-  do_not_contact (bool, default false — legal hold, agent must respect)
-  
-  identity_verified (bool, default false)
-  verification_method (optional: "manual" | "id_check" | "credit_check" | "ssn_verify")
-  verified_at (optional time)
-  
-  tags (optional list of strings)
-  
-  CONSTRAINTS:
-    - If preferred_contact is "sms" or "phone", contact_methods must include at least one phone/sms entry
-  
-  audit: #AuditMetadata
-```
-
-### 4.2 Organization
-
-```
-#Organization:
-  id (required string)
-  legal_name (required string)
-  dba_name (optional string — "Doing Business As")
-  
-  org_type ("management_company" | "ownership_entity" | "vendor" |
-            "corporate_tenant" | "government_agency" | "hoa" |
-            "investment_fund" | "other")
-  
-  tax_id (optional string — EIN/Tax ID, stored encrypted)
-  tax_id_type (optional: "ein" | "ssn" | "itin" | "foreign")
-  
-  status ("active" | "inactive" | "suspended" | "dissolved")
-  
-  address (optional #Address)
-  contact_methods (optional list of #ContactMethod)
-  
-  state_of_incorporation (optional, 2 uppercase letters)
-  formation_date (optional time)
-  
-  management_license (optional string — for management companies)
-  license_state (optional, 2 uppercase letters)
-  license_expiry (optional time)
-  
-  audit: #AuditMetadata
-```
-
-### 4.3 PersonRole
-
-Roles are relationships between a Person and other entities, not properties of the Person. A PersonRole captures context-specific attributes that apply when a Person acts in a particular capacity.
-
-```
-#PersonRole:
-  id (required string)
-  person_id (required string)
-  role_type ("tenant" | "owner" | "property_manager" | "maintenance_tech" |
-             "leasing_agent" | "accountant" | "vendor_contact" |
-             "guarantor" | "emergency_contact" | "authorized_occupant" |
-             "co_signer")
-  
-  scope_type ("organization" | "portfolio" | "property" | "building" | "space" | "lease")
-  scope_id (required string)
-  
-  status ("active" | "inactive" | "pending" | "terminated")
-  
-  effective (#DateRange)
-  
-  attributes (optional — one of the role-specific attribute types below, determined by role_type)
-  
-  audit: #AuditMetadata
-```
-
-#### Role-Specific Attributes
-
-```
-#TenantAttributes:
-  _type: "tenant"
-  standing ("good" | "late" | "collections" | "eviction", default "good")
-  occupancy_status ("occupying" | "vacated" | "never_occupied", default "occupying")
-  liability_status ("active" | "released" | "guarantor_only", default "active")
-  screening_status ("not_started" | "in_progress" | "approved" | "denied" | "conditional")
-  screening_date (optional time)
-  current_balance (optional #Money — computed from ledger)
-  move_in_date (optional time)
-  move_out_date (optional time)
-  pet_count (optional int >= 0)
-  vehicle_count (optional int >= 0)
-
-#OwnerAttributes:
-  _type: "owner"
-  ownership_percent (float > 0 and <= 100)
-  distribution_method ("ach" | "check" | "hold", default "ach")
-  management_fee_percent (optional float >= 0 and <= 100)
-  tax_reporting ("1099" | "k1" | "none", default "1099")
-  reserve_amount (optional #NonNegativeMoney)
-
-#ManagerAttributes:
-  _type: "manager"
-  license_number (optional string)
-  license_state (optional 2 uppercase letters)
-  approval_limit (optional #NonNegativeMoney — max they can approve without escalation)
-  can_sign_leases (bool, default false)
-  can_approve_expenses (bool, default true)
-
-#GuarantorAttributes:
-  _type: "guarantor"
-  guarantee_type ("full" | "partial" | "conditional")
-  guarantee_amount (optional #PositiveMoney — for partial guarantees)
-  guarantee_term (optional #DateRange)
-  credit_score (optional int 300-850)
-```
-
-IMPORTANT: The `occupancy_status` and `liability_status` on TenantAttributes handle the roommate-departure scenario. A tenant who moves out but remains legally liable has `occupancy_status: "vacated"` and `liability_status: "active"`. This avoids needing to model the departure on the Lease entity itself.
 
 ---
 
-## 5. Property Model — `ontology/property.cue`
+## 5. Person Model — `ontology/person.cue`
+
+A single person can be a tenant, owner, vendor contact, and emergency contact simultaneously. Roles are relationships, not types.
+
+### 5.1 Person
+
+```cue
+#Person: close({
+    #BaseEntity
+
+    first_name:   string & strings.MinRunes(1)
+    last_name:    string & strings.MinRunes(1)
+    middle_name?: string
+    display_name: string | *"\(first_name) \(last_name)"
+
+    date_of_birth?:   time.Time                        // required for tenant screening
+    ssn_last_four?:   string & =~"^[0-9]{4}$"         // stored encrypted @sensitive
+
+    contact_methods:    [...#ContactMethod] & list.MinItems(1)
+    preferred_contact:  #ContactType | *"email"
+
+    language_preference: string & =~"^[a-z]{2}$" | *"en"   // ISO 639-1
+    timezone?:           string                              // IANA timezone
+    do_not_contact:      *false | bool                       // legal hold, agent must respect
+
+    identity_verified:     *false | bool
+    verification_method?:  "manual" | "id_check" | "credit_check" | "ssn_verify"
+    verified_at?:          time.Time
+
+    tags?: [...string]
+
+    source: "user" | "applicant" | "import" | "system" | *"user"
+
+    // If preferred contact is phone/sms, must have a phone/sms contact method
+    if preferred_contact == "sms" || preferred_contact == "phone" {
+        _has_phone_contact: true  // validated at Ent hook: >=1 contact_method with type phone|sms
+    }
+
+    // Hidden: generator metadata
+    _display_template: "{first_name} {last_name}"
+})
+```
+
+### 5.2 Organization
+
+```cue
+#OrgType: "management_company" | "ownership_entity" | "vendor" |
+          "corporate_tenant" | "government_agency" | "hoa" |
+          "investment_fund" | "other"
+
+#Organization: close({
+    #StatefulEntity
+
+    legal_name: string & strings.MinRunes(1)
+    dba_name?:  string                                  // "Doing Business As"
+
+    org_type: #OrgType
+
+    tax_id?:      string                                // EIN/Tax ID @sensitive
+    tax_id_type?: "ein" | "ssn" | "itin" | "foreign"
+
+    status: "active" | "inactive" | "suspended" | "dissolved"
+
+    address?:          #Address
+    contact_methods?:  [...#ContactMethod]
+
+    state_of_incorporation?: string & =~"^[A-Z]{2}$"
+    formation_date?:         time.Time
+
+    management_license?: string                         // for management companies
+    license_state?:      string & =~"^[A-Z]{2}$"
+    license_expiry?:     time.Time
+
+    _display_template: "{legal_name}"
+})
+```
+
+### 5.3 PersonRole
+
+Roles are relationships between a Person and other entities. A PersonRole captures context-specific attributes that apply when a Person acts in a particular capacity.
+
+```cue
+#RoleType: "tenant" | "owner" | "property_manager" | "maintenance_tech" |
+           "leasing_agent" | "accountant" | "vendor_contact" |
+           "guarantor" | "emergency_contact" | "authorized_occupant" |
+           "co_signer"
+
+#ScopeType: "organization" | "portfolio" | "property" | "building" | "space" | "lease"
+
+#PersonRole: close({
+    #StatefulEntity
+
+    person_id: string
+    role_type: #RoleType
+    scope_type: #ScopeType
+    scope_id:   string
+
+    status: "pending" | "active" | "inactive" | "terminated"
+
+    effective: #DateRange
+
+    // Attributes are role-specific, determined by role_type
+    attributes?: #TenantAttributes | #OwnerAttributes |
+                 #ManagerAttributes | #GuarantorAttributes
+
+    // Type-safe: tenant roles must have tenant attributes
+    if role_type == "tenant" && attributes != _|_ {
+        attributes: #TenantAttributes
+    }
+    if role_type == "owner" && attributes != _|_ {
+        attributes: #OwnerAttributes
+    }
+    if role_type == "property_manager" && attributes != _|_ {
+        attributes: #ManagerAttributes
+    }
+    if role_type == "guarantor" && attributes != _|_ {
+        attributes: #GuarantorAttributes
+    }
+})
+
+
+// === Role-Specific Attributes ===
+
+#TenantAttributes: close({
+    _type:             "tenant"
+    standing:          *"good" | "late" | "collections" | "eviction"
+    occupancy_status:  *"occupying" | "vacated" | "never_occupied"
+    liability_status:  *"active" | "released" | "guarantor_only"
+    screening_status:  "not_started" | "in_progress" | "approved" | "denied" | "conditional"
+    screening_date?:   time.Time
+    current_balance?:  #Money                          // computed from ledger @computed
+    move_in_date?:     time.Time
+    move_out_date?:    time.Time
+    pet_count?:        int & >=0
+    vehicle_count?:    int & >=0
+})
+
+#OwnerAttributes: close({
+    _type:                  "owner"
+    ownership_percent:      float & >0 & <=100
+    distribution_method:    *"ach" | "check" | "hold"
+    management_fee_percent?: float & >=0 & <=100
+    tax_reporting:          *"1099" | "k1" | "none"
+    reserve_amount?:        #NonNegativeMoney
+})
+
+#ManagerAttributes: close({
+    _type:               "manager"
+    license_number?:     string
+    license_state?:      string & =~"^[A-Z]{2}$"
+    approval_limit?:     #NonNegativeMoney             // max they can approve without escalation
+    can_sign_leases:     *false | bool
+    can_approve_expenses: *true | bool
+})
+
+#GuarantorAttributes: close({
+    _type:            "guarantor"
+    guarantee_type:   "full" | "partial" | "conditional"
+    guarantee_amount?: #PositiveMoney                  // for partial guarantees
+    guarantee_term?:  #DateRange
+    credit_score?:    int & >=300 & <=850
+})
+```
+
+IMPORTANT: The `occupancy_status` and `liability_status` on TenantAttributes handle the roommate-departure scenario. A tenant who moves out but remains legally liable has `occupancy_status: "vacated"` and `liability_status: "active"`.
+
+---
+
+## 6. Property Model — `ontology/property.cue`
 
 ### CRITICAL DESIGN DECISION: Building is Optional, Space Replaces Unit
 
-The hierarchy is:
-
 ```
-Portfolio
-  └── Property
-       ├── Building (OPTIONAL grouping — some spaces have no building)
-       │    └── Space
-       └── Space (can exist directly under property, no building)
-            └── Space (self-referential parent/child for nested spaces)
+Property Hierarchy:
+  Portfolio → Property → Building (OPTIONAL) → Space (self-referential) → Lease (M2M via LeaseSpace)
 ```
 
-Building is NOT a required hierarchy level. It's a grouping. Rationale:
-- Parking lots have rentable spaces but no building
-- Mobile home parks have no buildings (tenants own the structures)
-- Single-family homes don't benefit from a building layer
-- But apartment complexes, commercial properties, and campuses need buildings for maintenance routing, CAM calculations, and permission scoping
+- Building is an optional grouping, not a mandatory layer. Parking lots, mobile home parks, single-family homes have no buildings.
+- Space replaces "Unit" as the universal term. Apartments, offices, parking spots, storage, bed-spaces, lots, desks — all are Spaces.
+- Space is self-referential (`parent_space_id`) for apartments→bedrooms, food courts→stalls.
+- Space has `leasable` flag. In by-the-bed configs, parent Space is non-leasable.
+- Floor is an attribute, not a hierarchy level.
 
-Space replaces the concept of "Unit" as a universal term for any rentable (or non-rentable) location within a property. A residential apartment, commercial suite, parking spot, storage unit, bed-space, desk-space, mobile home lot, and common area are all Spaces with different `space_type` values.
+### 6.1 Portfolio
 
-### 5.1 Portfolio
+```cue
+#PortfolioStatus: "onboarding" | "active" | "inactive" | "offboarding"
 
-```
-#Portfolio:
-  id (required string)
-  name (required string)
-  owner_id (required string — Organization ID of ownership entity)
-  
-  management_type ("self_managed" | "third_party" | "hybrid")
-  
-  requires_trust_accounting (bool)
-  trust_bank_account_id (optional string)
-  
-  status ("active" | "inactive" | "onboarding" | "offboarding")
-  
-  default_payment_methods (optional list of: "ach" | "credit_card" | "check" | "cash" | "money_order")
-  fiscal_year_start_month (int 1-12, default 1)
-  
-  CONSTRAINTS:
-    - If requires_trust_accounting is true, trust_bank_account_id is required
-  
-  audit: #AuditMetadata
+#Portfolio: close({
+    #StatefulEntity
+
+    name:      string & strings.MinRunes(1)
+    owner_id:  string                                  // Organization ID
+
+    status: #PortfolioStatus
+
+    description?: string
+
+    // Financial defaults (can be overridden at property level)
+    default_chart_of_accounts_id?: string
+    default_bank_account_id?:      string
+
+    _display_template: "{name}"
+})
 ```
 
-### 5.2 Property
+### 6.2 Property
 
-```
-#Property:
-  id (required string)
-  portfolio_id (required string)
-  name (required string)
-  address (#Address, required)
-  
-  property_type ("single_family" | "multi_family" | "commercial_office" |
-                 "commercial_retail" | "mixed_use" | "industrial" |
-                 "affordable_housing" | "student_housing" | "senior_living" |
-                 "vacation_rental" | "mobile_home_park" | "self_storage" |
-                 "coworking" | "data_center" | "medical_office")
-  
-  status ("active" | "inactive" | "under_renovation" | "for_sale" | "onboarding")
-  
-  year_built (int 1800-2030)
-  total_square_footage (float > 0)
-  total_spaces (int >= 1 — denormalized count, replaces total_units)
-  lot_size_sqft (optional float > 0)
-  stories (optional int >= 1)
-  parking_spaces (optional int >= 0)
-  
-  # Jurisdiction: M2M via PropertyJurisdiction (see Section 5.6)
-  # A property is subject to multiple overlapping jurisdictions simultaneously.
-  # Replaces the previous single jurisdiction_id field.
-  # rent_controlled is derived from jurisdiction rules, not stored directly.
-  
-  compliance_programs (optional list of: "LIHTC" | "Section8" | "HUD" | "HOME" | "RAD" | "VASH" | "PBV")
-  
-  chart_of_accounts_id (optional string — if different from portfolio default)
-  bank_account_id (optional string — if different from portfolio trust account)
-  
-  insurance_policy_number (optional string)
-  insurance_expiry (optional time)
-  
-  CONSTRAINTS:
-    - If property_type is "single_family", total_spaces must be 1
-    - If property_type is "affordable_housing", compliance_programs must have at least one entry
-    - Property must have at least one active PropertyJurisdiction at all times
-    - If year_built < 1978, lead_paint_disclosure rule is auto-applied (federal jurisdiction)
-    - requires_lead_disclosure derived from jurisdiction rules, not stored as field
-  
-  audit: #AuditMetadata
+```cue
+#PropertyType: "single_family" | "multi_family" | "commercial_office" |
+               "commercial_retail" | "mixed_use" | "industrial" |
+               "affordable_housing" | "student_housing" | "senior_living" |
+               "vacation_rental" | "mobile_home_park" | "self_storage" |
+               "coworking" | "data_center" | "medical_office"
+
+#PropertyStatus: "onboarding" | "active" | "inactive" | "under_renovation" | "for_sale"
+
+#Property: close({
+    #StatefulEntity
+
+    name:         string & strings.MinRunes(1)
+    portfolio_id: string
+    address:      #Address
+
+    property_type: #PropertyType
+    status:        #PropertyStatus
+
+    year_built:            int & >=1800 & <=2030
+    total_square_footage:  float & >0
+    total_spaces:          int & >=1                    // denormalized count
+    lot_size_sqft?:        float & >0
+    stories?:              int & >=1
+    parking_spaces?:       int & >=0
+
+    // Jurisdiction: M2M via PropertyJurisdiction (see Section 8)
+    // rent_controlled and requires_lead_disclosure are DERIVED from jurisdiction rules
+
+    compliance_programs?: [...("LIHTC" | "Section8" | "HUD" | "HOME" | "RAD" | "VASH" | "PBV")]
+
+    chart_of_accounts_id?: string                      // override portfolio default
+    bank_account_id?:      string
+
+    insurance_policy_number?: string
+    insurance_expiry?:        time.Time
+
+    // --- Conditional constraints ---
+
+    if property_type == "single_family" {
+        total_spaces: 1
+    }
+
+    if property_type == "affordable_housing" {
+        compliance_programs: list.MinItems(1)
+    }
+
+    // Lead paint: federal rule, derived from jurisdiction, but also enforceable here
+    if year_built < 1978 {
+        _requires_lead_disclosure: true
+    }
+
+    _display_template: "{name}"
+})
 ```
 
-### 5.3 Building
+### 6.3 Building
 
 Building is an OPTIONAL grouping entity. Not all spaces belong to a building.
 
-```
-#Building:
-  id (required string)
-  property_id (required string)
-  name (required string — "Building A", "Main Tower", "Parking Garage", "North Wing")
-  
-  building_type ("residential" | "commercial" | "mixed_use" |
-                 "parking_structure" | "industrial" | "storage" | "auxiliary")
-  
-  address (optional #Address — may differ from property for multi-address campuses)
-  
-  status ("active" | "inactive" | "under_renovation")
-  
-  floors (optional int >= 1)
-  year_built (optional int — could differ from property for additions)
-  total_square_footage (optional float > 0)
-  total_rentable_square_footage (optional float > 0 — for CAM calculations)
-  
-  audit: #AuditMetadata
+```cue
+#BuildingType: "residential" | "commercial" | "mixed_use" |
+               "parking_structure" | "industrial" | "storage" | "auxiliary"
+
+#BuildingStatus: "active" | "inactive" | "under_renovation"
+
+#Building: close({
+    #StatefulEntity
+
+    property_id: string
+    name:        string & strings.MinRunes(1)           // "Building A", "Main Tower", etc.
+
+    building_type: #BuildingType
+    status:        #BuildingStatus
+
+    address?: #Address                                  // may differ from property
+
+    floors?:                        int & >=1
+    year_built?:                    int & >=1800 & <=2030
+    total_square_footage?:          float & >0
+    total_rentable_square_footage?: float & >0          // for CAM calculations
+
+    _display_template: "{name}"
+})
 ```
 
-### 5.4 Space
+### 6.4 Space
 
-Space is the universal entity for any location within a property — rentable or not. It replaces the concept of "Unit" and covers residential apartments, commercial suites, parking spots, storage units, bed-spaces, desk-spaces, mobile home lots, and common areas.
+Space is the universal entity for any rentable or non-rentable location within a property.
 
-```
-#Space:
-  id (required string)
-  property_id (required string — ALWAYS required, every space belongs to a property)
-  building_id (optional string — spaces may or may not be in a building)
-  parent_space_id (optional string — self-referential for nested spaces:
-                   apartment → bedrooms, food court → stalls, parking lot → spots)
-  
-  space_number (required string — "101", "Suite 200", "P-42", "Lot 7", "102-A")
-  
-  space_type ("residential_unit" | "commercial_office" | "commercial_retail" |
-              "industrial" | "storage" | "parking" | "lot_pad" |
-              "common_area" | "bed_space" | "desk_space")
-  
-  status ("vacant" | "occupied" | "notice_given" | "make_ready" |
-          "down" | "model" | "reserved" | "owner_occupied")
-  
-  leasable (bool, default true — can this space directly attach to a lease?
-            Parent spaces in by-the-bed configs are leasable: false because
-            only their child bed-spaces are leased. Common areas are leasable: false.)
-  
-  # Physical
-  square_footage (float > 0)
-  bedrooms (optional int >= 0)
-  bathrooms (optional float >= 0 — 1.5 = one full, one half bath)
-  floor (optional int — attribute, not a hierarchy level)
-  
-  # Features
-  amenities (optional list of strings)
-  floor_plan (optional string — reference to floor plan template)
-  ada_accessible (bool, default false)
-  pet_friendly (bool, default true)
-  furnished (bool, default false)
-  
-  # Specialized infrastructure — for medical, data center, restaurant, etc.
-  specialized_infrastructure (optional list of:
-    "medical_plumbing" | "clean_room" | "high_voltage" | "loading_dock" |
-    "commercial_kitchen" | "server_room" | "cold_storage" | "hazmat_ventilation" |
-    "grease_trap" | "exhaust_hood")
-  
-  # Financial
-  market_rent (optional #NonNegativeMoney)
-  
-  # For affordable housing — space-level income restrictions
-  ami_restriction (optional int 0-150 — % of Area Median Income)
-  
-  # Active lease (computed from LeaseSpace relationship traversal)
-  active_lease_id (optional string)
-  
-  # Shared access flag for child spaces in by-the-bed/coworking
-  shared_with_parent (bool, default false — tenant of this space can access parent space)
-  
-  CONSTRAINTS:
-    - If status is "occupied", active_lease_id is required
-    - If space_type is "residential_unit", bedrooms and bathrooms should be present
-    - If space_type is "parking" or "storage" or "lot_pad", bedrooms defaults to 0, bathrooms defaults to 0
-    - If space_type is "common_area", leasable defaults to false
-    - If parent_space_id is set, building_id should match parent's building_id (or both null)
-  
-  audit: #AuditMetadata
+```cue
+#SpaceType: "apartment" | "suite" | "office" | "retail" | "industrial" |
+            "warehouse" | "parking_spot" | "parking_garage" | "storage_unit" |
+            "bed_space" | "desk_space" | "private_office" | "common_area" |
+            "amenity" | "lot_pad" | "rack" | "cage" | "server_room" | "other"
+
+#SpaceStatus: "vacant" | "occupied" | "notice_given" | "make_ready" |
+              "down" | "model" | "reserved" | "owner_occupied"
+
+#Property: close({  // NOTE: This block extends the Property above via CUE unification
+})
+
+#Space: close({
+    #StatefulEntity
+
+    property_id:     string                             // always set
+    building_id?:    string                             // only if in a building
+    parent_space_id?: string                            // self-referential: apt→bedrooms
+
+    space_number:  string & strings.MinRunes(1)         // "101", "A-204", "P-15"
+    space_type:    #SpaceType
+    status:        #SpaceStatus
+
+    floor?:         int                                 // attribute, not hierarchy
+    square_footage?: float & >0
+    bedrooms?:      int & >=0
+    bathrooms?:     float & >=0 & <=20                  // 1.5, 2.0, etc.
+
+    leasable: *true | bool                              // false for common areas, parent in by-the-bed
+
+    market_rent?: #NonNegativeMoney                     // current asking rent
+    amenities?:   [...string]                           // "washer_dryer", "balcony", "parking"
+    specialized_infrastructure?: [...string]            // "medical_gas", "3_phase_power", "grease_trap"
+
+    _display_template: "Space {space_number}"
+})
 ```
 
 ---
 
-### 5.5 Jurisdiction — `ontology/jurisdiction.cue`
+## 7. Lease Model — `ontology/lease.cue`
 
-A property is simultaneously subject to multiple overlapping jurisdictions — federal, state, county, city, and special districts. Each jurisdiction imposes constraints on leases, deposits, notices, evictions, rent increases, and disclosures. These constraints vary by property type and lease type, change over time (new ordinances, sunset clauses, ballot measures), and override each other in a specific hierarchy.
-
-The ontology models jurisdiction as a first-class entity with self-referential hierarchy, a many-to-many relationship to Property (a property is IN multiple jurisdictions), and a rule system that projects into validation constraints and configuration overrides.
-
-```
-#Jurisdiction:
-  id (required string)
-  name (required string — "City of Santa Monica", "State of California", "United States")
-  jurisdiction_type (required: "federal" | "state" | "county" | "city" |
-                     "special_district" | "unincorporated_area")
-  
-  parent_jurisdiction_id (optional string — self-referential)
-  #   Santa Monica → Los Angeles County → California → United States
-  #   Special Fire District → County → State → Federal
-  
-  # Standard geographic identifiers
-  fips_code (optional string — Federal Information Processing Standards code)
-  state_code (optional string — two-letter, e.g., "CA")
-  country_code (required string, default "US" — ISO 3166-1 alpha-2)
-  
-  status ("active" | "dissolved" | "merged" | "pending")
-  
-  # For dissolved/merged jurisdictions
-  successor_jurisdiction_id (optional string — where rules transferred to)
-  effective_date (optional time — when jurisdiction became active)
-  dissolution_date (optional time — when jurisdiction was dissolved/merged)
-  
-  # Administrative metadata
-  governing_body (optional string — "Santa Monica City Council", "California State Legislature")
-  regulatory_url (optional string — link to official ordinance repository)
-  
-  CONSTRAINTS:
-    - If status is "dissolved" or "merged", successor_jurisdiction_id is required
-    - If status is "dissolved" or "merged", dissolution_date is required
-    - parent_jurisdiction_id cannot reference self
-    - Hierarchy depth cannot exceed 5 (federal → state → county → city → special_district)
-  
-  audit: #AuditMetadata
-```
-
-### 5.6 PropertyJurisdiction (Join Entity)
-
-A property exists within multiple jurisdictions simultaneously. The join entity carries effective dates because jurisdictions can change — annexations, incorporations, special district formations.
-
-```
-#PropertyJurisdiction:
-  id (required string)
-  property_id (required string)
-  jurisdiction_id (required string)
-  
-  effective_date (required time — when property became subject to this jurisdiction)
-  end_date (optional time — null means currently active; set on annexation/detachment)
-  
-  # How the association was determined
-  source ("address_geocode" | "manual" | "api_lookup" | "imported")
-  verified (bool, default false)
-  verified_at (optional time)
-  verified_by (optional string — person_id of verifier)
-  
-  CONSTRAINTS:
-    - (property_id, jurisdiction_id, effective_date) must be unique
-    - end_date must be after effective_date if set
-    - A property must have at least one active jurisdiction (no end_date) at all times
-  
-  audit: #AuditMetadata
-```
-
-### 5.7 JurisdictionRule
-
-The actual regulatory constraints imposed by each jurisdiction. Each rule has a type, applicability filters, and a typed constraint definition. Rules have effective and expiration dates because laws change.
-
-```
-#JurisdictionRule:
-  id (required string)
-  jurisdiction_id (required string)
-  
-  rule_type (required: "security_deposit_limit" | "notice_period" | "rent_increase_cap" |
-             "required_disclosure" | "eviction_procedure" | "late_fee_cap" |
-             "rent_control" | "habitability_standard" | "tenant_screening_restriction" |
-             "lease_term_restriction" | "fee_restriction" | "relocation_assistance" |
-             "right_to_counsel" | "just_cause_eviction" | "source_of_income_protection" |
-             "lead_paint_disclosure" | "mold_disclosure" | "bed_bug_disclosure" |
-             "flood_zone_disclosure" | "utility_billing_restriction" |
-             "short_term_rental_restriction")
-  
-  status ("draft" | "active" | "superseded" | "expired" | "repealed")
-  
-  # Applicability filters — which leases/properties does this rule apply to?
-  applies_to_lease_types (optional list of LeaseType — null means all)
-  applies_to_property_types (optional list of PropertyType — null means all)
-  applies_to_space_types (optional list of SpaceType — null means all)
-  
-  # Exemption criteria
-  exemptions (optional #RuleExemptions)
-  
-  # The actual constraint — typed JSON based on rule_type
-  rule_definition (required JSON — schema varies by rule_type, see below)
-  
-  # Legal reference
-  statute_reference (optional string — "CA Civil Code § 1947.12")
-  ordinance_number (optional string — "Ordinance 2024-1234")
-  statute_url (optional string — link to legal text)
-  
-  # Temporal validity
-  effective_date (required time — when rule takes effect)
-  expiration_date (optional time — sunset clause; null means no expiration)
-  superseded_by_id (optional string — when a newer rule replaces this one)
-  
-  # Verification
-  last_verified (optional time — when was this rule last confirmed current)
-  verified_by (optional string — person_id or "system")
-  verification_source (optional string — "municipal code review", "legal counsel", "automated check")
-  
-  CONSTRAINTS:
-    - If status is "superseded", superseded_by_id is required
-    - If status is "expired", expiration_date is required and must be in the past
-    - effective_date is required for all statuses
-    - expiration_date must be after effective_date if set
-    - rule_definition must validate against the schema for rule_type
-  
-  audit: #AuditMetadata
-```
-
-### 5.8 Rule Exemptions
-
-```
-#RuleExemptions:
-  # Common exemption criteria across US jurisdictions
-  owner_occupied (optional bool — owner-occupied with <= N units exempt)
-  owner_occupied_max_units (optional int >= 1)
-  units_built_after (optional time — newer construction exempt)
-  units_built_within_years (optional int — e.g., 15 years for CA AB 1482)
-  single_family_exempt (optional bool)
-  small_property_max_units (optional int — some ordinances exempt small buildings)
-  subsidized_exempt (optional bool — some rules don't apply to subsidized housing)
-  corporate_owner_only (optional bool — applies only to corporate/LLC owners)
-  custom_exemptions (optional list of string — free-text for unusual exemptions)
-```
-
-### 5.9 Rule Definition Schemas
-
-Each `rule_type` has a specific JSON schema for `rule_definition`. These are defined in CUE so they can be validated:
-
-```
-#SecurityDepositLimitRule:
-  max_months (float > 0 — maximum security deposit as multiple of monthly rent)
-  furnished_max_months (optional float > 0 — may be higher for furnished units)
-  additional_pet_deposit_allowed (optional bool)
-  max_pet_deposit (optional #NonNegativeMoney)
-  refund_deadline_days (int > 0 — days after move-out to return deposit)
-  itemization_required (bool)
-  interest_required (optional bool — some jurisdictions require interest on deposits)
-  interest_rate (optional float — if interest required, what rate)
-  notes (optional string)
-
-#NoticePeriodRule:
-  tenancy_under_1_year_days (int >= 0)
-  tenancy_over_1_year_days (int >= 0)
-  increase_over_threshold_days (optional int >= 0)
-  increase_threshold_percent (optional float — what % increase triggers longer notice)
-  month_to_month_termination_days (int >= 0)
-  fixed_term_non_renewal_days (optional int >= 0)
-  notes (optional string)
-
-#RentIncreaseCAPRule:
-  cap_type ("fixed_percent" | "cpi_plus_fixed" | "cpi_only" | "board_determined" | "none")
-  fixed_percent (optional float — for fixed_percent or as the "plus" in cpi_plus)
-  max_percent (optional float — absolute ceiling regardless of CPI)
-  cpi_index (optional string — which CPI index, e.g., "CPI-U Los Angeles")
-  frequency ("annual" | "biannual" | "per_tenancy")
-  applies_to ("existing_tenants_only" | "all_tenants" | "rent_controlled_units")
-  vacancy_decontrol (optional bool — can reset to market on turnover?)
-  notes (optional string)
-
-#LateFeeCapRule:
-  max_flat (optional #NonNegativeMoney — maximum flat late fee)
-  max_percent (optional float — maximum as % of rent)
-  grace_period_min_days (int >= 0 — minimum grace period required)
-  compound_prohibited (optional bool — can't charge late fees on late fees)
-  notes (optional string)
-
-#EvictionProcedureRule:
-  just_cause_required (bool)
-  just_causes (optional list of string — enumerated valid reasons)
-  cure_period_days (int >= 0 — days to cure before filing)
-  notice_type (string — "3-day", "30-day", "60-day", varies)
-  mandatory_mediation (optional bool)
-  relocation_assistance_required (optional bool)
-  relocation_amount (optional #NonNegativeMoney)
-  right_to_counsel (optional bool — tenant entitled to free attorney)
-  winter_eviction_moratorium (optional bool)
-  moratorium_months (optional list of int 1-12)
-  notes (optional string)
-
-#RequiredDisclosureRule:
-  disclosure_type (string — "lead_paint", "mold", "flood_zone", "sex_offender",
-                   "bed_bug_history", "death_on_premises", "military_ordnance",
-                   "environmental_hazard", "rent_control_rights", "utility_billing")
-  timing ("before_signing" | "at_signing" | "within_days_of_signing" | "annually")
-  timing_days (optional int — if "within_days_of_signing")
-  form_required (optional bool — must use specific government form)
-  form_reference (optional string — "EPA Form 10-6303")
-  notes (optional string)
-
-#ShortTermRentalRestrictionRule:
-  permitted (bool — are STRs allowed at all)
-  license_required (optional bool)
-  max_days_per_year (optional int)
-  hosted_only (optional bool — must be owner-present)
-  primary_residence_only (optional bool)
-  transient_occupancy_tax_rate (optional float)
-  platform_registration_required (optional bool)
-  notes (optional string)
-
-#UtilityBillingRestrictionRule:
-  ratio_billing_allowed (bool — RUBS allowed?)
-  submetering_required_for_new (optional bool)
-  max_admin_fee_percent (optional float)
-  common_area_allocation_cap (optional float — max % allocable to tenants)
-  notes (optional string)
-```
-
-### 5.10 Jurisdiction Resolution
-
-When the system needs to evaluate a jurisdiction-dependent constraint (e.g., "what's the maximum security deposit for this lease?"), it resolves the jurisdiction stack:
-
-```
-Resolution algorithm:
-  1. Get property's active jurisdictions (PropertyJurisdiction where end_date is null)
-  2. For each jurisdiction, get active rules of the requested rule_type
-  3. Filter rules by applicability (lease_type, property_type, space_type)
-  4. Filter rules by exemptions (check property and lease against exemption criteria)
-  5. Order remaining rules by jurisdiction hierarchy depth (city > county > state > federal)
-  6. Apply composition rule:
-     - For limits (deposit, fee caps, notice periods): most restrictive wins
-     - For requirements (disclosures, just cause): all applicable rules accumulate
-     - For procedures (eviction steps): most specific jurisdiction wins
-  7. Return resolved constraint set
-```
-
-The resolution result is cached per property and invalidated when:
-- Property's jurisdictions change (PropertyJurisdiction added/removed)
-- Any applicable JurisdictionRule changes status
-- A new JurisdictionRule is added to an applicable jurisdiction
-
-### 5.11 Jurisdiction in Validation
-
-Jurisdiction rules project into the validation layer at two levels:
-
-**Hard validation (reject the operation):**
-- Security deposit exceeds jurisdiction maximum → block lease creation
-- Notice period below jurisdiction minimum → block notice recording
-- Rent increase exceeds jurisdiction cap → block rent adjustment
-- Missing required disclosure → block lease activation
-
-**Soft validation (warn but allow with override):**
-- Late fee exceeds jurisdiction cap → warn, require manager override
-- Eviction filed without mandatory mediation → warn
-- Short-term rental in restricted jurisdiction → warn
-
-The Ent hooks generated from jurisdiction rules check the property's resolved jurisdiction constraints on every relevant mutation. This is computed at write time, not just read time — the system actively prevents illegal leases from being created.
-
----
-
-The Lease is the central contractual entity. It connects one or more Spaces to one or more Persons via a many-to-many join entity (LeaseSpace) with effective dates and relationship semantics.
+The Lease is the central contractual entity. It connects one or more Spaces to one or more Persons via LeaseSpace (M2M join entity).
 
 ### CRITICAL DESIGN DECISIONS
 
-1. **Lease ↔ Space is M2M via LeaseSpace.** A commercial tenant can lease multiple suites. A residential lease can include a parking spot. A tenant can move from Space A to Space B mid-lease.
+1. **Lease ↔ Space is M2M via LeaseSpace.** A commercial tenant can lease multiple suites. A residential lease can include a parking spot.
+2. **LeaseSpace is a first-class entity**, not a join table. It carries effective dates, relationship types, and optional per-space data.
+3. **Lease has NO space_id or tenant_id.** All connections go through LeaseSpace (for spaces) and PersonRole (for tenants).
 
-2. **LeaseSpace is a first-class entity**, not just a join table. It carries effective dates, relationship types, and optional per-space financial data.
+### 7.1 Lease
 
-3. **State transitions are explicit named API operations**, not generic status updates. "ActivateLease" not "UpdateLease(status=active)".
+This is where CUE conditional constraints shine. Every business rule is a `if` block. `cue vet` validates them. `cmd/entgen` generates Ent hooks from them. `cmd/testgen` generates both positive and negative tests from them.
 
-4. **`lease_commencement_date` and `rent_commencement_date` are separate.** The legal lease may commence before rent starts (free rent periods, build-to-suit).
+```cue
+#LeaseType: "fixed_term" | "month_to_month" |
+            "commercial_nnn" | "commercial_nn" | "commercial_n" |
+            "commercial_gross" | "commercial_modified_gross" |
+            "affordable" | "section_8" | "student" |
+            "ground_lease" | "short_term" | "membership"
 
-### 6.1 Lease
+#LeaseStatus: "draft" | "pending_approval" | "pending_signature" | "active" |
+              "expired" | "month_to_month_holdover" | "renewed" |
+              "terminated" | "eviction"
 
-```
-#Lease:
-  id (required string)
-  property_id (required string — denormalized for query efficiency)
-  
-  # Tenant references via PersonRole
-  tenant_role_ids (list of strings, minimum 1)
-  guarantor_role_ids (optional list of strings)
-  
-  lease_type ("fixed_term" | "month_to_month" |
-              "commercial_nnn" | "commercial_nn" | "commercial_n" |
-              "commercial_gross" | "commercial_modified_gross" |
-              "affordable" | "section_8" | "student" |
-              "ground_lease" | "short_term" | "membership")
-  
-  liability_type ("joint_and_several" | "individual" | "by_the_bed" | "proportional",
-                  default "joint_and_several")
-  
-  status ("draft" | "pending_approval" | "pending_signature" | "active" |
-          "expired" | "month_to_month_holdover" | "renewed" |
-          "terminated" | "eviction")
-  
-  # Term
-  term (#DateRange)
-  
-  # Commencement — these can differ from term dates
-  lease_commencement_date (optional time — when legal obligations begin)
-  rent_commencement_date (optional time — when rent payments begin, may be after commencement for free rent)
-  
-  # Financial
-  base_rent (#NonNegativeMoney)
-  security_deposit (#NonNegativeMoney)
-  
-  # Rent schedule — handles escalations, concessions, free periods, CPI adjustments
-  rent_schedule (optional list of #RentScheduleEntry)
-  
-  # Recurring charges beyond base rent
-  recurring_charges (optional list of #RecurringCharge)
-  
-  # Usage-based charges (metered utilities, data center power, RUBS)
-  usage_charges (optional list of #UsageBasedCharge)
-  
-  # Late fee policy (can override property/portfolio defaults)
-  late_fee_policy (optional #LateFeePolicy)
-  
-  # Percentage rent (retail)
-  percentage_rent (optional #PercentageRent)
-  
-  # Commercial-specific
-  cam_terms (optional #CAMTerms)
-  tenant_improvement (optional #TenantImprovement)
-  renewal_options (optional list of #RenewalOption)
-  expansion_rights (optional list of #ExpansionRight)
-  contraction_rights (optional list of #ContractionRight)
-  
-  # Affordable housing-specific
-  subsidy (optional #SubsidyTerms)
-  
-  # Short-term rental-specific
-  check_in_time (optional string — "3:00 PM")
-  check_out_time (optional string — "11:00 AM")
-  cleaning_fee (optional #NonNegativeMoney)
-  platform_booking_id (optional string — Airbnb/VRBO reference)
-  
-  # Membership-specific (coworking)
-  membership_tier (optional: "hot_desk" | "dedicated_desk" | "office" | "suite" | "virtual")
-  
-  # Sublease
-  parent_lease_id (optional string — references master lease for subleases)
-  is_sublease (bool, default false)
-  sublease_billing ("direct_to_landlord" | "through_master_tenant", default "through_master_tenant")
-  
-  # Move-in / move-out
-  move_in_date (optional time)
-  move_out_date (optional time)
-  notice_date (optional time)
-  notice_required_days (int >= 0, default 30 — NOTE: this default is overridable via configuration)
-  
-  # Signing
-  signing_method (optional: "electronic" | "wet_ink" | "both")
-  signed_at (optional time)
-  document_id (optional string)
-  
-  CONSTRAINTS:
-    - If lease_type is "fixed_term" or "student", term must have an end date
-    - If lease_type is "commercial_nnn" or "commercial_nn" or "commercial_n" or
-      "commercial_gross" or "commercial_modified_gross", cam_terms is required
-    - If lease_type is "commercial_nnn":
-        cam_terms.includes_property_tax must be true
-        cam_terms.includes_insurance must be true
-        cam_terms.includes_utilities must be true
-    - If lease_type is "commercial_nn":
-        cam_terms.includes_property_tax must be true
-        cam_terms.includes_insurance must be true
-    - If lease_type is "commercial_n":
-        cam_terms.includes_property_tax must be true
-    - If lease_type is "section_8", subsidy is required
-    - If status is "active", move_in_date is required
-    - If status is "active" or "expired" or "renewed", signed_at is required
-    - If is_sublease is true, parent_lease_id is required
-    - If lease_type is "membership", LeaseSpace may have zero entries (e.g., hot desk with no assigned space)
-    - If rent_commencement_date is set and lease_commencement_date is set,
-      rent_commencement_date must be on or after lease_commencement_date
-  
-  audit: #AuditMetadata
-```
+#LiabilityType: "joint_and_several" | "several" | "individual"
 
-### 6.2 LeaseSpace (First-Class Join Entity)
+// Groups of lease types for conditional logic
+_commercial_types: ["commercial_nnn", "commercial_nn", "commercial_n",
+                    "commercial_gross", "commercial_modified_gross"]
 
-LeaseSpace connects Leases to Spaces with temporal and semantic context. It is NOT just a join table.
+_net_lease_types: ["commercial_nnn", "commercial_nn", "commercial_n"]
 
-```
-#LeaseSpace:
-  id (required string)
-  lease_id (required string)
-  space_id (required string)
-  
-  is_primary (bool, default true — primary space vs ancillary)
-  
-  relationship ("primary" | "expansion" | "sublease" | "shared_access" |
-                "parking" | "storage" | "loading_dock" | "rooftop" |
-                "patio" | "signage" | "included" | "membership")
-  
-  effective (#DateRange — when this space was part of this lease)
-  
-  square_footage_leased (optional float — for partial-floor commercial leases)
-  
-  audit: #AuditMetadata
-```
+#Lease: close({
+    #StatefulEntity
 
-### 6.3 Rent Schedule and Adjustments
+    lease_type:     #LeaseType
+    liability_type: #LiabilityType | *"joint_and_several"
+    status:         #LeaseStatus
 
-```
-#RentScheduleEntry:
-  effective_period (#DateRange)
-  description (required string — "Year 1", "Move-in concession", "Year 2 CPI adjustment")
-  charge_code (required string — links to chart of accounts)
-  
-  # Exactly one of these two:
-  fixed_amount (optional #NonNegativeMoney — for known amounts)
-  adjustment (optional #RentAdjustment — for formula-based amounts)
+    property_id: string                                @immutable
 
-#RentAdjustment:
-  method ("cpi" | "fixed_percent" | "fixed_amount_increase" | "market_review")
-  base_amount (#NonNegativeMoney — starting point for the calculation)
-  
-  # For CPI
-  cpi_index (optional: "CPI-U" | "CPI-W" | "regional")
-  cpi_floor (optional float >= 0 — minimum annual increase, e.g. 2%)
-  cpi_ceiling (optional float > 0 — maximum annual increase, e.g. 5%)
-  
-  # For fixed percent
-  percent_increase (optional float > 0)
-  
-  # For fixed amount
-  amount_increase (optional #PositiveMoney)
-  
-  # For market review
-  market_review_mechanism (optional string — description of appraisal process)
+    // Financial
+    base_rent:        #NonNegativeMoney
+    security_deposit: #NonNegativeMoney
+
+    // Term
+    term:                    #DateRange
+    lease_commencement_date: time.Time
+    rent_commencement_date?: time.Time                 // may differ for free rent periods
+    notice_required_days:    int & >=0 & <=365 | *30
+    move_in_date?:           time.Time
+    move_out_date?:          time.Time
+
+    // Flags
+    is_sublease:     *false | bool
+    parent_lease_id?: string                           // if is_sublease
+    sublease_billing?: "direct" | "pass_through"
+
+    // Commercial structures (all optional, conditionally required)
+    cam_terms?:              #CAMTerms
+    percentage_rent?:        #PercentageRent
+    tenant_improvement?:     #TenantImprovement
+    rent_schedule?:          [...#RentScheduleEntry]
+    recurring_charges?:      [...#RecurringCharge]
+    usage_charges?:          [...#UsageBasedCharge]
+    renewal_options?:        [...#RenewalOption]
+    expansion_rights?:       [...#ExpansionRight]
+    contraction_rights?:     [...#ContractionRight]
+    late_fee_policy?:        #LateFeePolicy
+
+    // Affordable housing
+    subsidy?: #SubsidyTerms
+
+    // Short-term rental
+    check_in_time?:        string                      // "15:00"
+    check_out_time?:       string                      // "11:00"
+    cleaning_fee?:         #NonNegativeMoney
+    platform_booking_id?:  string
+
+    // Membership (coworking)
+    membership_tier?: string
+
+    // Signing
+    signing_method?: "wet_ink" | "e_sign" | "docusign" | "hellosign"
+    signed_at?:      time.Time
+    document_id?:    string
+
+    // ===================================================================
+    // CONDITIONAL CONSTRAINTS
+    // Every business rule expressed as a CUE conditional.
+    // These generate: Ent hooks, API validation, test cases, UI visibility.
+    // ===================================================================
+
+    // Fixed-term and student leases MUST have an end date
+    if lease_type == "fixed_term" || lease_type == "student" {
+        term: close({
+            start: time.Time
+            end:   time.Time       // required (not optional) for these types
+            end:   >start
+        })
+    }
+
+    // All commercial leases require CAM terms
+    if list.Contains(_commercial_types, lease_type) {
+        cam_terms: #CAMTerms
+    }
+
+    // NNN: landlord passes through ALL three operating costs
+    if lease_type == "commercial_nnn" {
+        cam_terms: includes_property_tax: true
+        cam_terms: includes_insurance:    true
+        cam_terms: includes_utilities:    true
+    }
+
+    // NN: property tax + insurance (tenant pays), landlord covers utilities
+    if lease_type == "commercial_nn" {
+        cam_terms: includes_property_tax: true
+        cam_terms: includes_insurance:    true
+    }
+
+    // N: tenant pays property tax only
+    if lease_type == "commercial_n" {
+        cam_terms: includes_property_tax: true
+    }
+
+    // Section 8 requires subsidy terms
+    if lease_type == "section_8" {
+        subsidy: #SubsidyTerms
+    }
+
+    // Active leases must have move-in date
+    if status == "active" {
+        move_in_date: time.Time
+    }
+
+    // Post-signing statuses require signed_at
+    if status == "active" || status == "expired" || status == "renewed" {
+        signed_at: time.Time
+    }
+
+    // Subleases require parent lease
+    if is_sublease == true {
+        parent_lease_id: string
+    }
+
+    // Rent commencement cannot be before lease commencement
+    if rent_commencement_date != _|_ {
+        rent_commencement_date: >=lease_commencement_date
+    }
+
+    // Hidden: generator metadata
+    _display_template: "{property.name} — {lease_type}"
+
+    // Hidden: test generation hints
+    _test_scenarios: {
+        cross_field: [
+            "NNN requires all three CAM flags",
+            "fixed_term requires end date",
+            "section_8 requires subsidy",
+            "sublease requires parent_lease_id",
+            "active requires move_in_date",
+        ]
+    }
+})
 ```
 
-### 6.4 Recurring Charges
+### 7.2 LeaseSpace (First-Class Join Entity)
 
-```
-#RecurringCharge:
-  id (required string)
-  charge_code (required string — links to chart of accounts)
-  description (required string)
-  amount (#NonNegativeMoney)
-  frequency ("monthly" | "quarterly" | "annually" | "one_time")
-  effective_period (#DateRange)
-  taxable (bool, default false)
-  space_id (optional string — which space this charge relates to, for per-space rates
-            in multi-space leases like flex industrial with different office vs warehouse rates)
-```
+```cue
+#LeaseSpaceRelationship: "primary" | "expansion" | "sublease" | "shared_access" |
+                         "parking" | "storage" | "loading_dock" | "rooftop" |
+                         "patio" | "signage" | "included" | "membership"
 
-### 6.5 Usage-Based Charges
+#LeaseSpace: close({
+    #BaseEntity
 
-For metered utilities, data center power, RUBS, and any consumption-based billing.
+    lease_id: string                                   @immutable
+    space_id: string                                   @immutable
 
-```
-#UsageBasedCharge:
-  id (required string)
-  charge_code (required string)
-  description (required string)
-  unit_of_measure ("kwh" | "gallon" | "cubic_foot" | "therm" | "hour" | "gb")
-  rate_per_unit (#PositiveMoney)
-  meter_id (optional string)
-  billing_frequency ("monthly" | "quarterly")
-  cap (optional #NonNegativeMoney — maximum charge per period)
-  space_id (optional string — which space this meter/charge relates to)
+    is_primary:   *true | bool
+    relationship: #LeaseSpaceRelationship
+
+    effective: #DateRange                              // when this space was part of this lease
+
+    square_footage_leased?: float & >0                 // partial-floor commercial
+})
 ```
 
-### 6.6 Late Fee Policy
+### 7.3 Commercial Lease Structures
 
-```
-#LateFeePolicy:
-  grace_period_days (int >= 0, default 5)
-  fee_type ("flat" | "percent" | "per_day" | "tiered")
-  flat_amount (optional #NonNegativeMoney)
-  percent (optional float > 0 and <= 100)
-  per_day_amount (optional #NonNegativeMoney)
-  max_fee (optional #NonNegativeMoney)
-  tiers (optional list of:
-    { days_late_min (int >= 0), days_late_max (int), amount (#NonNegativeMoney) }
-  )
+```cue
+// --- Rent Schedule and Adjustments ---
+
+#RentAdjustmentMethod: "cpi" | "fixed_percent" | "fixed_amount_increase" | "market_review"
+
+#RentScheduleEntry: close({
+    effective_period: #DateRange
+    description:      string                           // "Year 1", "Move-in concession"
+    charge_code:      string                           // links to chart of accounts
+
+    // Exactly one of these two:
+    fixed_amount?: #NonNegativeMoney
+    adjustment?:   #RentAdjustment
+})
+
+#RentAdjustment: close({
+    method:      #RentAdjustmentMethod
+    base_amount: #NonNegativeMoney
+
+    // For CPI
+    cpi_index?:   "CPI-U" | "CPI-W" | "regional"
+    cpi_floor?:   float & >=0                          // minimum annual increase
+    cpi_ceiling?: float & >0                           // maximum annual increase
+
+    // For fixed percent
+    percent_increase?: float & >0
+
+    // For fixed amount
+    amount_increase?: #PositiveMoney
+
+    // For market review
+    market_review_mechanism?: string
+
+    // Conditional: CPI fields required for CPI method
+    if method == "cpi" {
+        cpi_index: "CPI-U" | "CPI-W" | "regional"
+    }
+    if method == "fixed_percent" {
+        percent_increase: float & >0
+    }
+    if method == "fixed_amount_increase" {
+        amount_increase: #PositiveMoney
+    }
+})
+
+
+// --- Recurring Charges ---
+
+#ChargeFrequency: "monthly" | "quarterly" | "annually" | "one_time"
+
+#RecurringCharge: close({
+    #BaseEntity
+    charge_code: string
+    description: string
+    amount:      #NonNegativeMoney
+    frequency:   #ChargeFrequency
+    effective_period: #DateRange
+    taxable:     *false | bool
+    space_id?:   string                                // per-space rates in multi-space leases
+})
+
+
+// --- Usage-Based Charges ---
+
+#UnitOfMeasure: "kwh" | "gallon" | "cubic_foot" | "therm" | "hour" | "gb"
+
+#UsageBasedCharge: close({
+    #BaseEntity
+    charge_code:      string
+    description:      string
+    unit_of_measure:  #UnitOfMeasure
+    rate_per_unit:    #PositiveMoney
+    meter_id?:        string
+    billing_frequency: "monthly" | "quarterly"
+    cap?:             #NonNegativeMoney                // max charge per period
+    space_id?:        string
+})
+
+
+// --- Late Fee Policy ---
+
+#LateFeeType: "flat" | "percent" | "per_day" | "tiered"
+
+#LateFeePolicy: close({
+    grace_period_days: int & >=0 & <=30 | *5
+    fee_type:          #LateFeeType
+    flat_amount?:      #NonNegativeMoney
+    percent?:          float & >0 & <=100
+    per_day_amount?:   #NonNegativeMoney
+    max_fee?:          #NonNegativeMoney
+    tiers?:            [...close({
+        days_late_min: int & >=0
+        days_late_max: int
+        amount:        #NonNegativeMoney
+    })]
+
+    // Conditional: fee details match fee type
+    if fee_type == "flat"    { flat_amount:    #NonNegativeMoney }
+    if fee_type == "percent" { percent:        float & >0 & <=100 }
+    if fee_type == "per_day" { per_day_amount: #NonNegativeMoney }
+    if fee_type == "tiered"  { tiers:          list.MinItems(1) }
+})
+
+
+// --- Percentage Rent (Retail) ---
+
+#PercentageRent: close({
+    rate:                float & >0 & <=100            // typically 3-8%
+    breakpoint_type:     "natural" | "artificial"
+    natural_breakpoint?: #NonNegativeMoney
+    artificial_breakpoint?: #NonNegativeMoney
+    reporting_frequency: "monthly" | "quarterly" | "annually"
+    audit_rights:        *true | bool
+})
+
+
+// --- CAM Terms ---
+
+#CAMReconciliationType: "estimated_with_annual_reconciliation" | "fixed" | "actual"
+
+#CAMTerms: close({
+    reconciliation_type:     #CAMReconciliationType
+    pro_rata_share_percent:  float & >0 & <=100
+    estimated_monthly_cam:   #NonNegativeMoney
+    annual_cap?:             #NonNegativeMoney
+    includes_property_tax:   bool
+    includes_insurance:      bool
+    includes_utilities:      bool
+    excluded_categories?:    [...string]
+
+    // Gross lease expense stops
+    base_year?:          int                           // year against which overages are measured
+    base_year_expenses?: #NonNegativeMoney
+    expense_stop?:       #NonNegativeMoney             // fixed dollar cap instead of base year
+
+    // Per-category controls for modified gross
+    category_terms?: [...#CAMCategoryTerms]
+
+    // Fixed reconciliation = no cap (no reconciliation means no cap)
+    if reconciliation_type == "fixed" {
+        annual_cap: null
+    }
+
+    // base_year and expense_stop are mutually exclusive
+    if base_year != _|_ {
+        expense_stop: null
+    }
+    if expense_stop != _|_ {
+        base_year: null
+    }
+})
+
+#CAMCategory: "property_tax" | "insurance" | "utilities" | "janitorial" |
+              "landscaping" | "security" | "management_fee" | "repairs" |
+              "snow_removal" | "elevator" | "hvac_maintenance" | "other"
+
+#CAMCategoryTerms: close({
+    category:     #CAMCategory
+    tenant_pays:  bool
+    landlord_cap?: #NonNegativeMoney
+    tenant_cap?:  #NonNegativeMoney
+    escalation?:  float                                // annual increase cap
+})
+
+
+// --- Tenant Improvement ---
+
+#TenantImprovement: close({
+    allowance:                #NonNegativeMoney
+    amortized:                *false | bool
+    amortization_term_months?: int & >0
+    interest_rate_percent?:   float & >=0
+    completion_deadline?:     time.Time
+
+    // If amortized, must have term
+    if amortized == true {
+        amortization_term_months: int & >0
+    }
+})
+
+
+// --- Renewal Options ---
+
+#RenewalOption: close({
+    option_number:       int & >=1
+    term_months:         int & >0
+    rent_adjustment:     "fixed" | "cpi" | "percent_increase" | "market"
+    fixed_rent?:         #NonNegativeMoney
+    percent_increase?:   float & >=0
+    cpi_floor?:          float & >=0
+    cpi_ceiling?:        float & >0
+    notice_required_days: int & >=0 | *90
+    must_exercise_by?:   time.Time
+
+    if rent_adjustment == "fixed"           { fixed_rent:       #NonNegativeMoney }
+    if rent_adjustment == "percent_increase" { percent_increase: float & >=0 }
+})
+
+
+// --- Expansion and Contraction Rights ---
+
+#ExpansionType: "first_right_of_refusal" | "first_right_to_negotiate" | "must_take" | "option"
+
+#ExpansionRight: close({
+    type:                 #ExpansionType
+    target_space_ids:     [...string]
+    exercise_deadline?:   time.Time
+    terms?:               string                       // description of economic terms
+    notice_required_days: int & >=0
+})
+
+#ContractionRight: close({
+    minimum_retained_sqft: float & >0
+    earliest_exercise_date: time.Time
+    penalty?:              #NonNegativeMoney
+    notice_required_days:  int & >=0
+})
+
+
+// --- Subsidy Terms (Affordable Housing) ---
+
+#SubsidyProgram: "section_8" | "pbv" | "vash" | "home" | "lihtc"
+
+#SubsidyTerms: close({
+    program:            #SubsidyProgram
+    housing_authority:  string
+    hap_contract_id?:   string
+    contract_rent:      #NonNegativeMoney
+    tenant_portion:     #NonNegativeMoney
+    subsidy_portion:    #NonNegativeMoney
+    utility_allowance:  #NonNegativeMoney
+    annual_recert_date?: time.Time
+    income_limit_ami_percent: int & >0 & <=150
+})
 ```
 
-### 6.7 Percentage Rent (Retail)
+### 7.4 Application
 
-```
-#PercentageRent:
-  rate (float > 0 and <= 100 — typically 3-8%)
-  breakpoint_type ("natural" | "artificial")
-  natural_breakpoint (optional #NonNegativeMoney — equals base_rent / percentage_rate)
-  artificial_breakpoint (optional #NonNegativeMoney)
-  reporting_frequency ("monthly" | "quarterly" | "annually")
-  audit_rights (bool, default true — landlord can audit tenant's books)
-```
+```cue
+#ApplicationStatus: "submitted" | "screening" | "under_review" | "approved" |
+                    "conditionally_approved" | "denied" | "withdrawn" | "expired"
 
-### 6.8 CAM Terms
+#Application: close({
+    #StatefulEntity
 
-```
-#CAMTerms:
-  reconciliation_type ("estimated_with_annual_reconciliation" | "fixed" | "actual")
-  pro_rata_share_percent (float > 0 and <= 100)
-  estimated_monthly_cam (#NonNegativeMoney)
-  annual_cap (optional #NonNegativeMoney)
-  includes_property_tax (bool)
-  includes_insurance (bool)
-  includes_utilities (bool)
-  excluded_categories (optional list of strings)
-  
-  # Gross lease expense stops
-  base_year (optional int — for gross leases, the year against which overages are measured)
-  base_year_expenses (optional #NonNegativeMoney — total operating expenses in base year)
-  expense_stop (optional #NonNegativeMoney — fixed dollar cap instead of base year)
-  
-  # Per-category controls for modified gross
-  category_terms (optional list of #CAMCategoryTerms)
-  
-  CONSTRAINTS:
-    - If reconciliation_type is "fixed", annual_cap is not allowed (no reconciliation = no cap)
-    - base_year and expense_stop are mutually exclusive (use one or the other)
-```
+    property_id:         string
+    space_id?:           string                        // may apply without specific space
+    applicant_person_id: string
 
-```
-#CAMCategoryTerms:
-  category ("property_tax" | "insurance" | "utilities" | "janitorial" |
-            "landscaping" | "security" | "management_fee" | "repairs" |
-            "snow_removal" | "elevator" | "hvac_maintenance" | "other")
-  tenant_pays (bool)
-  landlord_cap (optional #NonNegativeMoney — landlord pays up to this, tenant pays overage)
-  tenant_cap (optional #NonNegativeMoney — tenant's maximum contribution)
-  escalation (optional float — annual increase cap on this category)
-```
+    status: #ApplicationStatus
 
-### 6.9 Tenant Improvement
+    desired_move_in:          time.Time
+    desired_lease_term_months: int & >0
 
-```
-#TenantImprovement:
-  allowance (#NonNegativeMoney)
-  amortized (bool, default false)
-  amortization_term_months (optional int > 0)
-  interest_rate_percent (optional float >= 0)
-  completion_deadline (optional time)
-```
+    screening_request_id?: string
+    screening_completed?:  time.Time
+    credit_score?:         int & >=300 & <=850
+    background_clear:      *false | bool
+    income_verified:       *false | bool
+    income_to_rent_ratio?: float & >=0
 
-### 6.10 Renewal Options
+    decision_by?:     string                           // Person ID
+    decision_at?:     time.Time
+    decision_reason?: string
+    conditions?:      [...string]                      // for conditional approval
 
-```
-#RenewalOption:
-  option_number (int >= 1)
-  term_months (int > 0)
-  rent_adjustment ("fixed" | "cpi" | "percent_increase" | "market")
-  fixed_rent (optional #NonNegativeMoney)
-  percent_increase (optional float >= 0)
-  cpi_floor (optional float >= 0)
-  cpi_ceiling (optional float > 0)
-  notice_required_days (int >= 0, default 90)
-  must_exercise_by (optional time)
-```
+    application_fee: #NonNegativeMoney
+    fee_paid:        *false | bool
 
-### 6.11 Expansion and Contraction Rights
+    // Decisions require decision metadata
+    if status == "approved" || status == "conditionally_approved" || status == "denied" {
+        decision_by: string
+        decision_at: time.Time
+    }
 
-```
-#ExpansionRight:
-  type ("first_right_of_refusal" | "first_right_to_negotiate" | "must_take" | "option")
-  target_space_ids (list of strings — Space IDs the tenant has rights to)
-  exercise_deadline (optional time)
-  terms (optional string — description of economic terms)
-  notice_required_days (int >= 0)
+    // Denial requires reason (fair housing compliance)
+    if status == "denied" {
+        decision_reason: string
+    }
 
-#ContractionRight:
-  minimum_retained_sqft (float > 0 — floor on how much space tenant must keep)
-  earliest_exercise_date (time)
-  penalty (optional #NonNegativeMoney — early contraction penalty)
-  notice_required_days (int >= 0)
-```
-
-### 6.12 Subsidy Terms (Affordable Housing)
-
-```
-#SubsidyTerms:
-  program ("section_8" | "pbv" | "vash" | "home" | "lihtc")
-  housing_authority (required string)
-  hap_contract_id (optional string)
-  contract_rent (#NonNegativeMoney — total per HAP contract)
-  tenant_portion (#NonNegativeMoney)
-  subsidy_portion (#NonNegativeMoney)
-  utility_allowance (#NonNegativeMoney)
-  annual_recert_date (optional time)
-  income_limit_ami_percent (int > 0 and <= 150)
-```
-
-### 6.13 Application
-
-```
-#Application:
-  id (required string)
-  property_id (required string)
-  space_id (optional string — may apply to property without specific space)
-  applicant_person_id (required string)
-  
-  status ("submitted" | "screening" | "under_review" | "approved" |
-          "conditionally_approved" | "denied" | "withdrawn" | "expired")
-  
-  desired_move_in (time)
-  desired_lease_term_months (int > 0)
-  
-  screening_request_id (optional string)
-  screening_completed (optional time)
-  credit_score (optional int 300-850)
-  background_clear (bool, default false)
-  income_verified (bool, default false)
-  income_to_rent_ratio (optional float >= 0)
-  
-  decision_by (optional string — Person ID)
-  decision_at (optional time)
-  decision_reason (optional string)
-  conditions (optional list of strings — for conditional approval)
-  
-  application_fee (#NonNegativeMoney)
-  fee_paid (bool, default false)
-  
-  CONSTRAINTS:
-    - If status is "approved" or "conditionally_approved" or "denied":
-      decision_by and decision_at are required
-    - If status is "denied": decision_reason is required (fair housing compliance)
-  
-  audit: #AuditMetadata
+    // Conditional approval must have conditions listed
+    if status == "conditionally_approved" {
+        conditions: list.MinItems(1)
+    }
+})
 ```
 
 ---
 
-## 7. Accounting Model — `ontology/accounting.cue`
+## 8. Jurisdiction Model — `ontology/jurisdiction.cue`
 
-### 7.1 Account (Chart of Accounts)
+Jurisdiction demonstrates CUE's **unification** for constraint composition. Multiple jurisdiction rules compose automatically — most restrictive wins for limits, accumulate for requirements.
 
-```
-#Account:
-  id (required string)
-  account_number (required string — "1000", "4100.001")
-  name (required string)
-  description (optional string)
-  
-  account_type ("asset" | "liability" | "equity" | "revenue" | "expense")
-  
-  account_subtype ("cash" | "accounts_receivable" | "prepaid" | "fixed_asset" |
-                   "accumulated_depreciation" | "other_asset" |
-                   "accounts_payable" | "accrued_liability" | "unearned_revenue" |
-                   "security_deposits_held" | "other_liability" |
-                   "owners_equity" | "retained_earnings" | "distributions" |
-                   "rental_income" | "other_income" | "cam_recovery" | "percentage_rent_income" |
-                   "operating_expense" | "maintenance_expense" | "utility_expense" |
-                   "management_fee_expense" | "depreciation_expense" | "other_expense")
-  
-  parent_account_id (optional string — for hierarchy)
-  depth (int >= 0 — 0 = top-level)
-  
-  dimensions (optional #AccountDimensions)
-  
-  normal_balance ("debit" | "credit")
-  is_header (bool, default false)
-  is_system (bool, default false — system accounts cannot be deleted)
-  allows_direct_posting (bool, default true)
-  
-  status ("active" | "inactive" | "archived")
-  
-  is_trust_account (bool, default false)
-  trust_type (optional: "operating" | "security_deposit" | "escrow")
-  
-  budget_amount (optional #Money)
-  tax_line (optional string — maps to tax form line)
-  
-  CONSTRAINTS:
-    - If account_type is "asset" or "expense": normal_balance must be "debit"
-    - If account_type is "liability" or "equity" or "revenue": normal_balance must be "credit"
-    - If is_header is true: allows_direct_posting must be false
-    - If is_trust_account is true: trust_type is required
-  
-  audit: #AuditMetadata
+### 8.1 Jurisdiction
 
-#AccountDimensions:
-  entity_id (optional string — legal entity: LLC, fund)
-  property_id (optional string — property-level tracking)
-  dimension_1 (optional string — commonly department)
-  dimension_2 (optional string — commonly cost center)
-  dimension_3 (optional string — commonly project/job code)
+```cue
+#JurisdictionType: "federal" | "state" | "county" | "city" |
+                   "special_district" | "unincorporated_area"
+
+#JurisdictionStatus: "active" | "dissolved" | "merged" | "pending"
+
+#Jurisdiction: close({
+    #StatefulEntity
+
+    name:              string & strings.MinRunes(1)
+    jurisdiction_type: #JurisdictionType
+
+    parent_jurisdiction_id?: string                    // self-referential hierarchy
+
+    fips_code?:    string & =~"^[0-9]{5,10}$"
+    state_code?:   string & =~"^[A-Z]{2}$"
+    country_code:  string & =~"^[A-Z]{2}$" | *"US"
+
+    status: #JurisdictionStatus
+
+    successor_jurisdiction_id?: string
+    effective_date?:            time.Time
+    dissolution_date?:          time.Time
+
+    governing_body?: string
+    regulatory_url?: string
+
+    // Dissolved/merged must have successor and date
+    if status == "dissolved" || status == "merged" {
+        successor_jurisdiction_id: string
+        dissolution_date:          time.Time
+    }
+
+    _display_template: "{name}"
+})
 ```
 
-### 7.2 Ledger Entry
+### 8.2 PropertyJurisdiction (Join Entity)
 
-Ledger entries are IMMUTABLE. Errors are corrected with adjustment entries, never by modifying existing entries.
+```cue
+#PropertyJurisdiction: close({
+    #BaseEntity
 
-```
-#LedgerEntry:
-  id (required string)
-  account_id (required string)
-  
-  entry_type ("charge" | "payment" | "credit" | "adjustment" |
-              "refund" | "deposit" | "nsf" | "write_off" |
-              "late_fee" | "management_fee" | "owner_draw")
-  
-  amount (#Money)
-  
-  journal_entry_id (required string — double-entry: every entry belongs to a journal entry)
-  
-  effective_date (time — when the economic event occurred)
-  posted_date (time — when it was recorded)
-  
-  description (required string)
-  charge_code (required string — links to CoA)
-  memo (optional string)
-  
-  # Dimensional references
-  property_id (required string — always required)
-  space_id (optional string)
-  lease_id (optional string)
-  person_id (optional string — tenant, owner, vendor)
-  
-  # Bank/trust
-  bank_account_id (optional string)
-  bank_transaction_id (optional string — reference to bank feed)
-  
-  # Reconciliation
-  reconciled (bool, default false)
-  reconciliation_id (optional string)
-  reconciled_at (optional time)
-  
-  # For adjustments
-  adjusts_entry_id (optional string — what entry is this correcting)
-  
-  CONSTRAINTS:
-    - If entry_type is "payment" or "refund" or "nsf": person_id is required
-    - If entry_type is "charge" or "late_fee": lease_id is required
-    - If entry_type is "adjustment": adjusts_entry_id is required
-    - If reconciled is true: reconciliation_id and reconciled_at are required
-    - IMMUTABILITY: LedgerEntries cannot be updated or deleted (enforced at Ent hook level)
-  
-  audit: #AuditMetadata
+    property_id:     string                            @immutable
+    jurisdiction_id: string                            @immutable
+
+    effective_date: time.Time
+    end_date?:      time.Time                          // null = currently active
+
+    source:   "address_geocode" | "manual" | "api_lookup" | "imported"
+    verified: *false | bool
+    verified_at?: time.Time
+    verified_by?: string
+
+    if end_date != _|_ {
+        end_date: >effective_date
+    }
+})
 ```
 
-### 7.3 Journal Entry
+### 8.3 JurisdictionRule
+
+```cue
+#JurisdictionRuleType: "security_deposit_limit" | "notice_period" | "rent_increase_cap" |
+                       "required_disclosure" | "eviction_procedure" | "late_fee_cap" |
+                       "rent_control" | "habitability_standard" | "tenant_screening_restriction" |
+                       "lease_term_restriction" | "fee_restriction" | "relocation_assistance" |
+                       "right_to_counsel" | "just_cause_eviction" | "source_of_income_protection" |
+                       "lead_paint_disclosure" | "mold_disclosure" | "bed_bug_disclosure" |
+                       "flood_zone_disclosure" | "utility_billing_restriction" |
+                       "short_term_rental_restriction"
+
+#JurisdictionRuleStatus: "draft" | "active" | "superseded" | "expired" | "repealed"
+
+#JurisdictionRule: close({
+    #StatefulEntity
+
+    jurisdiction_id: string
+    rule_type:       #JurisdictionRuleType
+    status:          #JurisdictionRuleStatus
+
+    // Applicability filters
+    applies_to_lease_types?:    [...#LeaseType]
+    applies_to_property_types?: [...#PropertyType]
+    applies_to_space_types?:    [...#SpaceType]
+
+    exemptions?: #RuleExemptions
+
+    // Typed rule definition — schema varies by rule_type
+    rule_definition: _                                 // validated by _rule_schema below
+
+    // Legal reference
+    statute_reference?: string
+    ordinance_number?:  string
+    statute_url?:       string
+
+    // Temporal validity
+    effective_date:     time.Time
+    expiration_date?:   time.Time
+    superseded_by_id?:  string
+
+    // Verification
+    last_verified?:       time.Time
+    verified_by?:         string
+    verification_source?: string
+
+    // Conditional constraints
+    if status == "superseded" { superseded_by_id: string }
+    if expiration_date != _|_ { expiration_date: >effective_date }
+
+    // Rule definition schema dispatch based on rule_type
+    _rule_schema: {
+        if rule_type == "security_deposit_limit" { rule_definition: #SecurityDepositLimitRule }
+        if rule_type == "notice_period"           { rule_definition: #NoticePeriodRule }
+        if rule_type == "rent_increase_cap"       { rule_definition: #RentIncreaseCapRule }
+        if rule_type == "late_fee_cap"            { rule_definition: #LateFeeCapRule }
+        if rule_type == "eviction_procedure"      { rule_definition: #EvictionProcedureRule }
+        if rule_type == "required_disclosure"     { rule_definition: #RequiredDisclosureRule }
+        if rule_type == "short_term_rental_restriction" { rule_definition: #ShortTermRentalRestrictionRule }
+    }
+})
+```
+
+### 8.4 Rule Exemptions
+
+```cue
+#RuleExemptions: close({
+    owner_occupied?:           bool
+    owner_occupied_max_units?: int & >=1
+    units_built_after?:        time.Time
+    units_built_within_years?: int & >0
+    single_family_exempt?:     bool
+    small_property_max_units?: int & >=1
+    subsidized_exempt?:        bool
+    corporate_owner_only?:     bool
+    custom_exemptions?:        [...string]
+})
+```
+
+### 8.5 Rule Definition Schemas
+
+Each `rule_type` has a typed definition. CUE validates the definition matches the rule type.
+
+```cue
+#SecurityDepositLimitRule: close({
+    max_months:                    float & >0
+    furnished_max_months?:         float & >0
+    additional_pet_deposit_allowed?: bool
+    max_pet_deposit?:              #NonNegativeMoney
+    refund_deadline_days:          int & >0
+    itemization_required:          bool
+    interest_required?:            bool
+    interest_rate?:                float
+    notes?:                        string
+})
+
+#NoticePeriodRule: close({
+    tenancy_under_1_year_days:      int & >=0
+    tenancy_over_1_year_days:       int & >=0
+    increase_over_threshold_days?:  int & >=0
+    increase_threshold_percent?:    float
+    month_to_month_termination_days: int & >=0
+    fixed_term_non_renewal_days?:   int & >=0
+    notes?:                         string
+})
+
+#RentIncreaseCapRule: close({
+    cap_type:       "fixed_percent" | "cpi_plus_fixed" | "cpi_only" | "board_determined" | "none"
+    fixed_percent?: float
+    max_percent?:   float
+    cpi_index?:     string
+    frequency:      "annual" | "biannual" | "per_tenancy"
+    applies_to:     "existing_tenants_only" | "all_tenants" | "rent_controlled_units"
+    vacancy_decontrol?: bool
+    notes?:         string
+})
+
+#LateFeeCapRule: close({
+    max_flat?:                #NonNegativeMoney
+    max_percent?:             float
+    grace_period_min_days:    int & >=0
+    compound_prohibited?:     bool
+    notes?:                   string
+})
+
+#EvictionProcedureRule: close({
+    just_cause_required:             bool
+    just_causes?:                    [...string]
+    cure_period_days:                int & >=0
+    notice_type:                     string
+    mandatory_mediation?:            bool
+    relocation_assistance_required?: bool
+    relocation_amount?:              #NonNegativeMoney
+    right_to_counsel?:               bool
+    winter_eviction_moratorium?:     bool
+    moratorium_months?:              [...int & >=1 & <=12]
+    notes?:                          string
+})
+
+#RequiredDisclosureRule: close({
+    disclosure_type: string
+    timing:         "before_signing" | "at_signing" | "within_days_of_signing" | "annually"
+    timing_days?:   int
+    form_required?: bool
+    form_reference?: string
+    notes?:         string
+})
+
+#ShortTermRentalRestrictionRule: close({
+    permitted:                      bool
+    license_required?:              bool
+    max_days_per_year?:             int
+    hosted_only?:                   bool
+    primary_residence_only?:        bool
+    transient_occupancy_tax_rate?:  float
+    platform_registration_required?: bool
+    notes?:                         string
+})
+```
+
+### 8.6 Jurisdiction Composition via CUE Unification
+
+This is where CUE shines. Jurisdiction constraints compose through unification. Define constraints at each level and CUE computes the combined result:
+
+```cue
+// Base residential lease constraints (universal)
+#ResidentialLeaseConstraints: {
+    security_deposit_max_months: number      // no universal limit
+    notice_period_min_days:      int & >=0
+    rent_increase_max_percent?:  number
+    disclosures_required:        [...string]
+}
+
+// California constraints — compose with base
+#CaliforniaResidential: #ResidentialLeaseConstraints & {
+    security_deposit_max_months: <=1         // AB 12 (effective 2025)
+    notice_period_min_days:      >=30        // < 1 year tenancy
+    rent_increase_max_percent:   <=10        // AB 1482 ceiling
+    disclosures_required: [
+        "lead_paint_pre1978",
+        "mold",
+        "bed_bugs",
+        "flood_zone",
+        "sex_offender_database",
+    ]
+}
+
+// Santa Monica constraints — compose with California
+#SantaMonicaResidential: #CaliforniaResidential & {
+    notice_period_min_days: >=90             // city requires more
+    disclosures_required: [
+        "lead_paint_pre1978",
+        "mold",
+        "bed_bugs",
+        "flood_zone",
+        "sex_offender_database",
+        "rent_control_rights",               // city-specific disclosure
+    ]
+    _just_cause_required:         true
+    _mandatory_mediation:         true
+    _relocation_assistance:       true
+    _rent_control_board_approval: true
+}
+
+// CUE computes the result automatically:
+// - security_deposit_max_months: <=1 (California, Santa Monica doesn't override)
+// - notice_period_min_days: >=90 (Santa Monica overrides California's >=30 because >=90 ⊂ >=30)
+// - rent_increase_max_percent: <=10 (California ceiling)
+// - disclosures: Santa Monica list (superset of California)
+//
+// If Santa Monica tried notice_period_min_days: >=15 (less restrictive than state):
+// CUE ERROR: >=30 & >=15 would be valid BUT if a specific value like 20 is tested,
+// it satisfies >=15 but fails >=30 → the state constraint catches it.
+//
+// If constraints truly conflict (state says >100, city says <50):
+// CUE unification FAILS at `cue vet` time. You can't deploy contradictory rules.
+```
+
+This is demonstrative — the runtime jurisdiction resolver (Section 5.10 of the ontology spec v2) handles the actual per-property resolution. But CUE lets you **validate the rule definitions themselves** for consistency at build time, before they reach the database.
+
+---
+
+## 9. Accounting Model — `ontology/accounting.cue`
+
+### 9.1 Account (Chart of Accounts)
+
+```cue
+#AccountType: "asset" | "liability" | "equity" | "revenue" | "expense"
+
+#AccountSubtype: "cash" | "accounts_receivable" | "prepaid" | "fixed_asset" |
+                 "accumulated_depreciation" | "other_asset" |
+                 "accounts_payable" | "accrued_liability" | "unearned_revenue" |
+                 "security_deposits_held" | "other_liability" |
+                 "owners_equity" | "retained_earnings" | "distributions" |
+                 "rental_income" | "other_income" | "cam_recovery" | "percentage_rent_income" |
+                 "operating_expense" | "maintenance_expense" | "utility_expense" |
+                 "management_fee_expense" | "depreciation_expense" | "other_expense"
+
+#NormalBalance: "debit" | "credit"
+
+#Account: close({
+    #BaseEntity
+
+    account_number: string & =~"^[0-9]{4}(\\.[0-9]{1,3})?$"   // "1000", "4100.001"
+    name:           string
+    description?:   string
+
+    account_type:    #AccountType
+    account_subtype: #AccountSubtype
+    normal_balance:  #NormalBalance
+
+    parent_account_id?: string
+    depth:              int & >=0 | *0
+
+    dimensions?: #AccountDimensions
+
+    is_header:            *false | bool
+    is_system:            *false | bool                // system accounts cannot be deleted
+    allows_direct_posting: *true | bool
+
+    status: "active" | "inactive" | "archived"
+
+    is_trust_account: *false | bool
+    trust_type?:      "operating" | "security_deposit" | "escrow"
+
+    budget_amount?: #Money
+    tax_line?:      string                             // maps to tax form line
+
+    // Normal balance is determined by account type
+    if account_type == "asset" || account_type == "expense" {
+        normal_balance: "debit"
+    }
+    if account_type == "liability" || account_type == "equity" || account_type == "revenue" {
+        normal_balance: "credit"
+    }
+
+    // Header accounts cannot have direct postings
+    if is_header == true {
+        allows_direct_posting: false
+    }
+
+    // Trust accounts must specify trust type
+    if is_trust_account == true {
+        trust_type: "operating" | "security_deposit" | "escrow"
+    }
+
+    _display_template: "{account_number} — {name}"
+})
+
+#AccountDimensions: close({
+    entity_id?:   string                               // legal entity
+    property_id?: string
+    dimension_1?: string                               // department
+    dimension_2?: string                               // cost center
+    dimension_3?: string                               // project/job code
+})
+```
+
+### 9.2 Ledger Entry
+
+Ledger entries are **IMMUTABLE**. Errors are corrected with adjustment entries, never by modifying existing entries.
+
+```cue
+#EntryType: "charge" | "payment" | "credit" | "adjustment" |
+            "refund" | "deposit" | "nsf" | "write_off" |
+            "late_fee" | "management_fee" | "owner_draw"
+
+#LedgerEntry: close({
+    #ImmutableEntity                                   // cannot be updated or deleted
+
+    account_id: string
+    entry_type: #EntryType
+    amount:     #Money
+
+    journal_entry_id: string                           // double-entry: every entry belongs to a JE
+
+    effective_date: time.Time                          // when the economic event occurred
+    posted_date:    time.Time                          // when it was recorded
+
+    description: string
+    charge_code: string
+    memo?:       string
+
+    // Dimensional references
+    property_id:       string                          // always required
+    space_id?:         string
+    lease_id?:         string
+    person_id?:        string                          // tenant, owner, vendor @sensitive
+
+    // Bank/trust
+    bank_account_id?:     string
+    bank_transaction_id?: string
+
+    // Reconciliation
+    reconciled:        *false | bool
+    reconciliation_id?: string
+    reconciled_at?:    time.Time
+
+    // For adjustments
+    adjusts_entry_id?: string
+
+    // Payments and refunds require a person
+    if entry_type == "payment" || entry_type == "refund" || entry_type == "nsf" {
+        person_id: string
+    }
+
+    // Charges and late fees require a lease
+    if entry_type == "charge" || entry_type == "late_fee" {
+        lease_id: string
+    }
+
+    // Adjustments reference what they're correcting
+    if entry_type == "adjustment" {
+        adjusts_entry_id: string
+    }
+
+    // Reconciled entries must have reconciliation metadata
+    if reconciled == true {
+        reconciliation_id: string
+        reconciled_at:     time.Time
+    }
+})
+```
+
+### 9.3 Journal Entry
 
 Groups LedgerEntries that must balance (debits = credits).
 
-```
-#JournalEntry:
-  id (required string)
-  
-  entry_date (time)
-  posted_date (time)
-  
-  description (required string)
-  
-  source_type ("manual" | "auto_charge" | "payment" | "bank_import" |
-               "cam_reconciliation" | "depreciation" | "accrual" |
-               "intercompany" | "management_fee" | "system")
-  source_id (optional string)
-  
-  status ("draft" | "pending_approval" | "posted" | "voided")
-  approved_by (optional string)
-  approved_at (optional time)
-  
-  batch_id (optional string)
-  entity_id (optional string — legal entity)
-  property_id (optional string)
-  
-  reverses_journal_id (optional string)
-  reversed_by_journal_id (optional string)
-  
-  lines (list of #JournalLine, minimum 2)
-  
-  CONSTRAINTS:
-    - If status is "posted" and source_type is "manual": approved_by and approved_at are required
-    - If status is "voided": reversed_by_journal_id is required
-    - Sum of all line debits must equal sum of all line credits (enforced at Ent hook)
-  
-  audit: #AuditMetadata
+```cue
+#JournalEntrySource: "manual" | "auto_charge" | "payment" | "bank_import" |
+                     "cam_reconciliation" | "depreciation" | "accrual" |
+                     "intercompany" | "management_fee" | "system"
 
-#JournalLine:
-  account_id (required string)
-  debit (optional #NonNegativeMoney)
-  credit (optional #NonNegativeMoney)
-  description (optional string)
-  dimensions (optional #AccountDimensions)
-  # Must have exactly one of debit or credit (not both, not neither)
-```
+#JournalEntryStatus: "draft" | "pending_approval" | "posted" | "voided"
 
-### 7.4 Bank Account
+#JournalEntry: close({
+    #StatefulEntity
 
-```
-#BankAccount:
-  id (required string)
-  name (required string)
-  
-  account_type ("operating" | "trust" | "security_deposit" | "escrow" | "reserve")
-  
-  gl_account_id (required string — linked CoA account)
-  
-  bank_name (required string)
-  routing_number (optional string — stored encrypted)
-  account_number_last_four (4 digits)
-  
-  portfolio_id (optional string)
-  property_id (optional string)
-  entity_id (optional string — legal entity)
-  
-  status ("active" | "inactive" | "frozen" | "closed")
-  
-  current_balance (optional #Money — computed from reconciled transactions)
-  last_reconciled_at (optional time)
-  
-  is_trust (bool, default false)
-  trust_state (optional 2 uppercase letters — regulations vary by state)
-  commingling_allowed (bool, default false)
-  
-  CONSTRAINTS:
-    - If is_trust is true: trust_state is required and commingling_allowed must be false
-  
-  audit: #AuditMetadata
+    entry_date:  time.Time
+    posted_date: time.Time
+    description: string
+
+    source_type: #JournalEntrySource
+    source_id?:  string
+
+    status: #JournalEntryStatus
+
+    approved_by?: string
+    approved_at?: time.Time
+
+    batch_id?:    string
+    entity_id?:   string                               // legal entity
+    property_id?: string
+
+    reverses_journal_id?:    string
+    reversed_by_journal_id?: string
+
+    lines: [...#JournalLine] & list.MinItems(2)        // double-entry: at least 2 lines
+
+    // Manual postings require approval
+    if status == "posted" && source_type == "manual" {
+        approved_by: string
+        approved_at: time.Time
+    }
+
+    // Voided entries must have reversal
+    if status == "voided" {
+        reversed_by_journal_id: string
+    }
+
+    // Hidden: runtime validation (enforced at Ent hook, not CUE)
+    _invariant: "sum(lines[*].debit) == sum(lines[*].credit)"
+})
+
+#JournalLine: close({
+    account_id:  string
+    debit?:      #NonNegativeMoney
+    credit?:     #NonNegativeMoney
+    description?: string
+    dimensions?: #AccountDimensions
+
+    // Must have exactly one of debit or credit
+    // CUE cannot express XOR directly; enforced at Ent hook
+    _invariant: "exactly_one_of(debit, credit)"
+})
 ```
 
-### 7.5 Reconciliation
+### 9.4 Bank Account
 
-```
-#Reconciliation:
-  id (required string)
-  bank_account_id (required string)
-  
-  period_start (time)
-  period_end (time)
-  
-  statement_balance (#Money)
-  system_balance (#Money)
-  difference (#Money)
-  
-  status ("in_progress" | "balanced" | "unbalanced" | "approved")
-  
-  matched_transaction_count (int >= 0)
-  unmatched_transaction_count (int >= 0)
-  
-  completed_by (optional string)
-  completed_at (optional time)
-  approved_by (optional string)
-  approved_at (optional time)
-  
-  CONSTRAINTS:
-    - If status is "balanced" or "approved": difference.amount_cents must be 0
-  
-  audit: #AuditMetadata
-```
+```cue
+#BankAccountType: "operating" | "trust" | "security_deposit" | "escrow" | "reserve"
+#BankAccountStatus: "active" | "inactive" | "frozen" | "closed"
 
----
+#BankAccount: close({
+    #StatefulEntity
 
-## 8. Configuration Schema — `ontology/config_schema.cue`
+    name:         string
+    account_type: #BankAccountType
+    status:       #BankAccountStatus
 
-This defines what's TUNABLE at runtime and the valid ranges. The ontology defines the envelope of valid configuration; runtime values live in the database with a cascade resolution.
+    gl_account_id: string                              // linked CoA account
 
-### 8.1 Resolution Hierarchy
+    institution_name:  string
+    routing_number:    string & =~"^[0-9]{9}$"         @sensitive
+    account_mask:      string & =~"^\\*{4}[0-9]{4}$"  // "****1234" — last 4 only @sensitive
+    account_number_encrypted?: string                  @sensitive
 
-```
-platform → organization → portfolio → property → lease_type → jurisdiction (most restrictive wins)
+    plaid_account_id?: string
+    plaid_access_token?: string                        @sensitive
+
+    current_balance?:    #Money                        @computed
+    last_statement_date?: time.Time
+
+    is_default:          *false | bool
+    accepts_deposits:    *true | bool
+    accepts_payments:    *true | bool
+})
 ```
 
-**Critical distinction:** Most configuration levels follow "last wins" (a property setting overrides its portfolio setting). Jurisdiction is different — **jurisdiction follows "most restrictive wins."** This is because jurisdiction rules are legal requirements, not business preferences.
+### 9.5 Reconciliation
 
-Resolution example for security deposit maximum:
-```
-platform default:        2 months
-organization override:   (none)
-portfolio override:      (none)
-property override:       1.5 months
-jurisdiction (federal):  (no federal limit)
-jurisdiction (CA state): 1 month (AB 12, effective 2025)
-jurisdiction (city):     (no additional restriction)
-→ Resolved: 1 month (jurisdiction trumps property preference because it's more restrictive)
-```
+```cue
+#ReconciliationStatus: "in_progress" | "balanced" | "unbalanced" | "approved"
 
-Resolution example for notice period:
-```
-platform default:        30 days
-property override:       45 days (company preference)
-jurisdiction (state):    30 days minimum for < 1 year tenancy, 60 days for > 1 year
-jurisdiction (city):     90 days for any increase > 10%
-→ Resolved: max(property_preference, jurisdiction_minimum) per scenario
-   - Tenant < 1 year, increase ≤ 10%: 45 days (property preference exceeds jurisdiction minimum)
-   - Tenant > 1 year, increase ≤ 10%: 60 days (jurisdiction minimum exceeds property preference)
-   - Any tenure, increase > 10%: 90 days (city rule most restrictive)
-```
+#Reconciliation: close({
+    #StatefulEntity
 
-### 8.2 Configuration Schemas
+    bank_account_id:  string
+    status:           #ReconciliationStatus
 
-```
-#LeaseConfiguration:
-  notice_required_days (int 0-365, default 30)
-  late_fee_grace_period_days (int 0-30, default 5)
-  late_fee_type ("flat" | "percent" | "per_day", default "flat")
-  late_fee_flat_amount (optional #NonNegativeMoney)
-  late_fee_percent (optional float > 0 and <= 25)
-  security_deposit_max_months (float > 0 and <= 6, default 2)
-  auto_renewal_enabled (bool, default false)
-  auto_renewal_notice_days (int 30-180, default 60)
-  allow_partial_payments (bool, default true)
-  minimum_payment_percent (optional float > 0 and <= 100)
+    period_start:     time.Time
+    period_end:       time.Time
+    statement_balance: #Money
+    gl_balance?:      #Money                           @computed
+    difference?:      #Money                           @computed
 
-#PropertyConfiguration:
-  maintenance_auto_approve_limit (#NonNegativeMoney, max $10,000)
-  screening_required (bool, default true)
-  screening_income_ratio (float 1-10, default 3)
-  pet_policy ("allowed" | "restricted" | "prohibited", default "allowed")
-  max_pets (optional int 0-10)
-  pet_deposit (optional #NonNegativeMoney)
-  pet_rent (optional #NonNegativeMoney)
+    statement_date:   time.Time
 
-#ConfigurationScope:
-  level ("platform" | "organization" | "portfolio" | "property" | "lease_type")
-  # Lower levels override higher for business preferences.
-  # Jurisdiction constraints are applied AFTER resolution via separate path.
-  # See Section 5.10 for jurisdiction resolution algorithm.
-```
+    reconciled_by?:   string
+    reconciled_at?:   time.Time
+    approved_by?:     string
+    approved_at?:     time.Time
 
-### 8.3 Jurisdiction Override Behavior
+    unreconciled_items?: int & >=0                     @computed
 
-The configuration resolver has two phases:
-
-**Phase 1: Business preference resolution** (platform → org → portfolio → property → lease_type, last wins)
-Returns the organization's *desired* configuration values.
-
-**Phase 2: Jurisdiction constraint application** (resolved jurisdiction rules for property)
-Compares Phase 1 values against applicable jurisdiction rules. For each configurable parameter that has a corresponding jurisdiction rule:
-- If jurisdiction imposes a limit and Phase 1 value violates it → use jurisdiction value
-- If jurisdiction imposes a minimum and Phase 1 value exceeds it → keep Phase 1 value (business can be stricter than law)
-- If no applicable jurisdiction rule → keep Phase 1 value
-
-The resolver returns both the effective value AND any jurisdiction overrides that were applied, so the UI can show: "Notice period: 60 days (California law requires minimum 60 days for tenancies over 1 year; your default of 45 days was overridden)."
-
----
-
-## 9. State Machines — `ontology/state_machines.cue`
-
-Every entity with a status field has an explicit state machine. These are generated into Ent hooks that reject invalid transitions at the persistence layer.
-
-```
-#LeaseTransitions:
-  draft → [pending_approval, pending_signature, terminated]
-  pending_approval → [draft, pending_signature, terminated]
-  pending_signature → [active, draft, terminated]
-  active → [expired, month_to_month_holdover, terminated, eviction]
-  expired → [active, month_to_month_holdover, renewed, terminated]
-  month_to_month_holdover → [active, renewed, terminated, eviction]
-  renewed → [] (terminal — a new lease is created)
-  terminated → [] (terminal)
-  eviction → [terminated]
-
-#SpaceTransitions:
-  vacant → [occupied, make_ready, down, model, reserved]
-  occupied → [notice_given]
-  notice_given → [make_ready, occupied] (can rescind notice)
-  make_ready → [vacant, down]
-  down → [make_ready, vacant]
-  model → [vacant, occupied]
-  reserved → [vacant, occupied]
-  owner_occupied → [vacant] (owner moves out)
-
-#ApplicationTransitions:
-  submitted → [screening, withdrawn]
-  screening → [under_review, withdrawn]
-  under_review → [approved, conditionally_approved, denied, withdrawn]
-  approved → [expired]
-  conditionally_approved → [approved, denied, withdrawn, expired]
-  denied → [] (terminal)
-  withdrawn → [] (terminal)
-  expired → [] (terminal)
-
-#JournalEntryTransitions:
-  draft → [pending_approval, posted] (auto-generated can skip approval)
-  pending_approval → [posted, draft]
-  posted → [voided]
-  voided → [] (terminal)
-
-#PortfolioTransitions:
-  onboarding → [active]
-  active → [inactive, offboarding]
-  inactive → [active, offboarding]
-  offboarding → [inactive]
-
-#PropertyTransitions:
-  onboarding → [active]
-  active → [inactive, under_renovation, for_sale]
-  inactive → [active]
-  under_renovation → [active, for_sale]
-  for_sale → [active, inactive]
-
-#BuildingTransitions:
-  active → [inactive, under_renovation]
-  inactive → [active]
-  under_renovation → [active]
-
-#PersonRoleTransitions:
-  pending → [active, terminated]
-  active → [inactive, terminated]
-  inactive → [active, terminated]
-  terminated → [] (terminal)
-
-#BankAccountTransitions:
-  active → [inactive, frozen, closed]
-  inactive → [active, closed]
-  frozen → [active, closed]
-  closed → [] (terminal)
-
-#ReconciliationTransitions:
-  in_progress → [balanced, unbalanced]
-  balanced → [approved, in_progress] (reopen if errors found)
-  unbalanced → [in_progress]
-  approved → [] (terminal)
-
-#JurisdictionTransitions:
-  active → [dissolved, merged]
-  dissolved → [] (terminal — rules transfer to successor)
-  merged → [] (terminal — rules transfer to successor)
-  pending → [active]
-
-#JurisdictionRuleTransitions:
-  draft → [active]
-  active → [superseded, expired, repealed]
-  superseded → [] (terminal — replaced by newer rule)
-  expired → [] (terminal — sunset clause reached)
-  repealed → [] (terminal — explicitly removed by jurisdiction)
+    if period_end != _|_ {
+        period_end: >period_start
+    }
+})
 ```
 
 ---
 
-## 10. Relationships — `ontology/relationships.cue`
+## 10. State Machines — `ontology/state_machines.cue`
+
+Every entity with a status field has an explicit state machine. These generate into Ent hooks that reject invalid transitions at the persistence layer.
+
+```cue
+package ontology
+
+// State machines defined as maps from state → valid target states.
+// Generators read these to produce:
+//   - Ent hooks (reject invalid transitions)
+//   - API transition endpoints (one per valid transition)
+//   - UI action buttons (only valid transitions shown)
+//   - Test matrices (every valid + every invalid transition)
+
+#StateMachine: {
+    [string]: [...string]                              // from_state → [valid_target_states]
+}
+
+_state_machines: {
+    lease: #StateMachine & {
+        draft:                    ["pending_approval", "pending_signature", "terminated"]
+        pending_approval:         ["draft", "pending_signature", "terminated"]
+        pending_signature:        ["active", "draft", "terminated"]
+        active:                   ["expired", "month_to_month_holdover", "terminated", "eviction"]
+        expired:                  ["active", "month_to_month_holdover", "renewed", "terminated"]
+        month_to_month_holdover:  ["active", "renewed", "terminated", "eviction"]
+        renewed:                  []
+        terminated:               []
+        eviction:                 ["terminated"]
+    }
+
+    space: #StateMachine & {
+        vacant:         ["occupied", "make_ready", "down", "model", "reserved"]
+        occupied:       ["notice_given"]
+        notice_given:   ["make_ready", "occupied"]
+        make_ready:     ["vacant", "down"]
+        down:           ["make_ready", "vacant"]
+        model:          ["vacant", "occupied"]
+        reserved:       ["vacant", "occupied"]
+        owner_occupied: ["vacant"]
+    }
+
+    application: #StateMachine & {
+        submitted:              ["screening", "withdrawn"]
+        screening:              ["under_review", "withdrawn"]
+        under_review:           ["approved", "conditionally_approved", "denied", "withdrawn"]
+        approved:               ["expired"]
+        conditionally_approved: ["approved", "denied", "withdrawn", "expired"]
+        denied:                 []
+        withdrawn:              []
+        expired:                []
+    }
+
+    journal_entry: #StateMachine & {
+        draft:            ["pending_approval", "posted"]
+        pending_approval: ["posted", "draft"]
+        posted:           ["voided"]
+        voided:           []
+    }
+
+    portfolio: #StateMachine & {
+        onboarding: ["active"]
+        active:     ["inactive", "offboarding"]
+        inactive:   ["active", "offboarding"]
+        offboarding: ["inactive"]
+    }
+
+    property: #StateMachine & {
+        onboarding:       ["active"]
+        active:           ["inactive", "under_renovation", "for_sale"]
+        inactive:         ["active"]
+        under_renovation: ["active", "for_sale"]
+        for_sale:         ["active", "inactive"]
+    }
+
+    building: #StateMachine & {
+        active:           ["inactive", "under_renovation"]
+        inactive:         ["active"]
+        under_renovation: ["active"]
+    }
+
+    person_role: #StateMachine & {
+        pending:    ["active", "terminated"]
+        active:     ["inactive", "terminated"]
+        inactive:   ["active", "terminated"]
+        terminated: []
+    }
+
+    bank_account: #StateMachine & {
+        active:   ["inactive", "frozen", "closed"]
+        inactive: ["active", "closed"]
+        frozen:   ["active", "closed"]
+        closed:   []
+    }
+
+    reconciliation: #StateMachine & {
+        in_progress: ["balanced", "unbalanced"]
+        balanced:    ["approved", "in_progress"]
+        unbalanced:  ["in_progress"]
+        approved:    []
+    }
+
+    jurisdiction: #StateMachine & {
+        pending:   ["active"]
+        active:    ["dissolved", "merged"]
+        dissolved: []
+        merged:    []
+    }
+
+    jurisdiction_rule: #StateMachine & {
+        draft:      ["active"]
+        active:     ["superseded", "expired", "repealed"]
+        superseded: []
+        expired:    []
+        repealed:   []
+    }
+}
+```
+
+---
+
+## 11. Relationships — `ontology/relationships.cue`
 
 These define all edges between entities. Each relationship drives Ent edge generation, permission path evaluation, agent reasoning, and event routing.
 
-Format: `from → to (edge_name, cardinality, required?, semantic, inverse_name)`
+```cue
+package ontology
 
-### Portfolio relationships
+#Cardinality: "O2O" | "O2M" | "M2O" | "M2M"
 
-```
-Portfolio → Property ("properties", O2M, "Portfolio contains Properties", inverse: "portfolio")
-Portfolio → Organization ("owner", M2O, required, "Portfolio is owned by Organization", inverse: "owned_portfolios")
-Portfolio → BankAccount ("trust_account", O2O, "Portfolio uses BankAccount for trust funds", inverse: "trust_portfolio")
-```
+#Relationship: close({
+    from:        string
+    to:          string
+    edge_name:   string
+    cardinality: #Cardinality
+    required:    *false | bool
+    semantic:    string
+    inverse:     string
+    via?:        string                                // for M2M: join entity
+})
 
-### Property relationships
+_relationships: [...#Relationship] & [
+    // --- Portfolio ---
+    {from: "Portfolio", to: "Property",    edge_name: "properties",      cardinality: "O2M", semantic: "Portfolio contains Properties",          inverse: "portfolio"},
+    {from: "Portfolio", to: "Organization", edge_name: "owner",          cardinality: "M2O", required: true, semantic: "Portfolio owned by Organization", inverse: "owned_portfolios"},
+    {from: "Portfolio", to: "BankAccount", edge_name: "trust_account",   cardinality: "O2O", semantic: "Portfolio uses BankAccount",              inverse: "trust_portfolio"},
 
-```
-Property → Building ("buildings", O2M, "Property has Buildings", inverse: "property")
-Property → Space ("spaces", O2M, "Property contains Spaces", inverse: "property")
-Property → BankAccount ("bank_account", M2O, "Property uses BankAccount", inverse: "properties")
-Property → Application ("applications", O2M, "Property receives Applications", inverse: "property")
-Property → Jurisdiction ("jurisdictions", M2M via PropertyJurisdiction, "Property is subject to Jurisdictions", inverse: "properties")
-```
+    // --- Property ---
+    {from: "Property",  to: "Building",    edge_name: "buildings",       cardinality: "O2M", semantic: "Property has Buildings",                  inverse: "property"},
+    {from: "Property",  to: "Space",       edge_name: "spaces",          cardinality: "O2M", semantic: "Property contains Spaces",                inverse: "property"},
+    {from: "Property",  to: "BankAccount", edge_name: "bank_account",    cardinality: "M2O", semantic: "Property uses BankAccount",               inverse: "properties"},
+    {from: "Property",  to: "Application", edge_name: "applications",    cardinality: "O2M", semantic: "Property receives Applications",          inverse: "property"},
+    {from: "Property",  to: "Jurisdiction", edge_name: "jurisdictions",  cardinality: "M2M", via: "PropertyJurisdiction", semantic: "Property subject to Jurisdictions", inverse: "properties"},
 
-### Jurisdiction relationships
+    // --- Jurisdiction ---
+    {from: "Jurisdiction", to: "Jurisdiction",     edge_name: "children",  cardinality: "O2M", semantic: "Jurisdiction contains sub-Jurisdictions", inverse: "parent_jurisdiction"},
+    {from: "Jurisdiction", to: "JurisdictionRule", edge_name: "rules",    cardinality: "O2M", semantic: "Jurisdiction has Rules",                  inverse: "jurisdiction"},
+    {from: "JurisdictionRule", to: "JurisdictionRule", edge_name: "superseded_by", cardinality: "O2O", semantic: "Rule superseded by newer Rule", inverse: "supersedes"},
 
-```
-Jurisdiction → Jurisdiction ("children", O2M, "Jurisdiction contains sub-Jurisdictions", inverse: "parent_jurisdiction")
-Jurisdiction → JurisdictionRule ("rules", O2M, "Jurisdiction has Rules", inverse: "jurisdiction")
-Jurisdiction → Property ("properties", M2M via PropertyJurisdiction, "Jurisdiction covers Properties", inverse: "jurisdictions")
-```
+    // --- Building ---
+    {from: "Building", to: "Space", edge_name: "spaces", cardinality: "O2M", semantic: "Building contains Spaces", inverse: "building"},
 
-### PropertyJurisdiction relationships
+    // --- Space ---
+    {from: "Space", to: "Space",       edge_name: "children",     cardinality: "O2M", semantic: "Space contains child Spaces",  inverse: "parent_space"},
+    {from: "Space", to: "Lease",       edge_name: "leases",       cardinality: "M2M", via: "LeaseSpace", semantic: "Space has Leases", inverse: "spaces"},
+    {from: "Space", to: "Application", edge_name: "applications", cardinality: "O2M", semantic: "Space receives Applications",  inverse: "space"},
 
-```
-PropertyJurisdiction → Property ("property", M2O, required, "PropertyJurisdiction belongs to Property", inverse: "property_jurisdictions")
-PropertyJurisdiction → Jurisdiction ("jurisdiction", M2O, required, "PropertyJurisdiction references Jurisdiction", inverse: "property_jurisdictions")
-```
+    // --- Lease ---
+    {from: "Lease", to: "PersonRole",  edge_name: "tenant_roles",    cardinality: "M2M", semantic: "Lease held by tenant PersonRoles",        inverse: "leases"},
+    {from: "Lease", to: "PersonRole",  edge_name: "guarantor_roles", cardinality: "M2M", semantic: "Lease guaranteed by guarantor PersonRoles", inverse: "guaranteed_leases"},
+    {from: "Lease", to: "LedgerEntry", edge_name: "ledger_entries",  cardinality: "O2M", semantic: "Lease generates LedgerEntries",            inverse: "lease"},
+    {from: "Lease", to: "Application", edge_name: "application",     cardinality: "O2O", semantic: "Lease originated from Application",        inverse: "resulting_lease"},
+    {from: "Lease", to: "Lease",       edge_name: "subleases",       cardinality: "O2M", semantic: "Master lease has subleases",               inverse: "parent_lease"},
 
-### JurisdictionRule relationships
+    // --- LeaseSpace ---
+    {from: "LeaseSpace", to: "Lease", edge_name: "lease", cardinality: "M2O", required: true, semantic: "LeaseSpace belongs to Lease", inverse: "lease_spaces"},
+    {from: "LeaseSpace", to: "Space", edge_name: "space", cardinality: "M2O", required: true, semantic: "LeaseSpace references Space", inverse: "lease_spaces"},
 
-```
-JurisdictionRule → Jurisdiction ("jurisdiction", M2O, required, "Rule belongs to Jurisdiction", inverse: "rules")
-JurisdictionRule → JurisdictionRule ("superseded_by", O2O, "Rule was superseded by newer Rule", inverse: "supersedes")
-```
+    // --- Person ---
+    {from: "Person", to: "PersonRole",   edge_name: "roles",         cardinality: "O2M", semantic: "Person has Roles",                  inverse: "person"},
+    {from: "Person", to: "Organization", edge_name: "organizations", cardinality: "M2M", semantic: "Person affiliated with Organizations", inverse: "people"},
+    {from: "Person", to: "Application",  edge_name: "applications",  cardinality: "O2M", semantic: "Person submits Applications",       inverse: "applicant"},
+    {from: "Person", to: "LedgerEntry",  edge_name: "ledger_entries", cardinality: "O2M", semantic: "Person has financial entries",      inverse: "person"},
 
-### Building relationships
+    // --- Organization ---
+    {from: "Organization", to: "Organization", edge_name: "subsidiaries",     cardinality: "O2M", semantic: "Organization has subsidiaries",    inverse: "parent_org"},
+    {from: "Organization", to: "Portfolio",    edge_name: "owned_portfolios", cardinality: "O2M", semantic: "Organization owns Portfolios",     inverse: "owner"},
 
-```
-Building → Space ("spaces", O2M, "Building contains Spaces", inverse: "building")
-```
-
-### Space relationships
-
-```
-Space → Space ("children", O2M, "Space contains child Spaces (apt→bedrooms)", inverse: "parent_space")
-Space → Lease ("leases", M2M via LeaseSpace, "Space has Leases over time", inverse: "spaces")
-Space → Application ("applications", O2M, "Space receives Applications", inverse: "space")
-```
-
-NOTE: There are TWO paths from Property to Space:
-- Property → Space (direct, for spaces not in a building)
-- Property → Building → Space (via building)
-Both are valid. The property_id on Space is always set regardless of whether building_id is set.
-
-### Lease relationships
-
-```
-Lease → PersonRole ("tenant_roles", M2M, "Lease is held by tenant PersonRoles", inverse: "leases")
-Lease → PersonRole ("guarantor_roles", M2M, "Lease is guaranteed by guarantor PersonRoles", inverse: "guaranteed_leases")
-Lease → LedgerEntry ("ledger_entries", O2M, "Lease generates LedgerEntries", inverse: "lease")
-Lease → Application ("application", O2O, "Lease originated from Application", inverse: "resulting_lease")
-Lease → Lease ("subleases", O2M, "Master lease has subleases", inverse: "parent_lease")
-```
-
-### LeaseSpace relationships
-
-```
-LeaseSpace → Lease ("lease", M2O, required, "LeaseSpace belongs to Lease", inverse: "lease_spaces")
-LeaseSpace → Space ("space", M2O, required, "LeaseSpace references Space", inverse: "lease_spaces")
-```
-
-### Person relationships
-
-```
-Person → PersonRole ("roles", O2M, "Person has Roles", inverse: "person")
-Person → Organization ("organizations", M2M, "Person is affiliated with Organizations", inverse: "people")
-Person → Application ("applications", O2M, "Person submits Applications", inverse: "applicant")
-Person → LedgerEntry ("ledger_entries", O2M, "Person has financial entries", inverse: "person")
-```
-
-### Organization relationships
-
-```
-Organization → Organization ("subsidiaries", O2M, "Organization has subsidiaries", inverse: "parent_org")
-Organization → Portfolio ("owned_portfolios", O2M, "Organization owns Portfolios", inverse: "owner")
-```
-
-### Accounting relationships
-
-```
-Account → Account ("children", O2M, "Account has sub-Accounts", inverse: "parent")
-LedgerEntry → JournalEntry ("journal_entry", M2O, required, "Entry belongs to JournalEntry", inverse: "lines")
-LedgerEntry → Account ("account", M2O, required, "Entry posts to Account", inverse: "entries")
-LedgerEntry → Property ("property", M2O, required, "Entry relates to Property", inverse: "ledger_entries")
-LedgerEntry → Space ("space", M2O, "Entry relates to Space", inverse: "ledger_entries")
-LedgerEntry → Lease ("lease", M2O, "Entry relates to Lease", inverse: "ledger_entries")
-LedgerEntry → Person ("person", M2O, "Entry relates to Person", inverse: "ledger_entries")
-BankAccount → Account ("gl_account", M2O, required, "BankAccount tracked via GL Account", inverse: "bank_accounts")
-Reconciliation → BankAccount ("bank_account", M2O, required, "Reconciliation for BankAccount", inverse: "reconciliations")
+    // --- Accounting ---
+    {from: "Account",        to: "Account",        edge_name: "children",       cardinality: "O2M", semantic: "Account has sub-Accounts",        inverse: "parent"},
+    {from: "LedgerEntry",    to: "JournalEntry",   edge_name: "journal_entry",  cardinality: "M2O", required: true, semantic: "Entry belongs to JournalEntry", inverse: "lines"},
+    {from: "LedgerEntry",    to: "Account",        edge_name: "account",        cardinality: "M2O", required: true, semantic: "Entry posts to Account",  inverse: "entries"},
+    {from: "LedgerEntry",    to: "Property",       edge_name: "property",       cardinality: "M2O", required: true, semantic: "Entry relates to Property", inverse: "ledger_entries"},
+    {from: "LedgerEntry",    to: "Space",          edge_name: "space",          cardinality: "M2O", semantic: "Entry relates to Space",          inverse: "ledger_entries"},
+    {from: "LedgerEntry",    to: "Lease",          edge_name: "lease",          cardinality: "M2O", semantic: "Entry relates to Lease",          inverse: "ledger_entries"},
+    {from: "LedgerEntry",    to: "Person",         edge_name: "person",         cardinality: "M2O", semantic: "Entry relates to Person",         inverse: "ledger_entries"},
+    {from: "BankAccount",    to: "Account",        edge_name: "gl_account",     cardinality: "M2O", required: true, semantic: "BankAccount tracked via GL Account", inverse: "bank_accounts"},
+    {from: "Reconciliation", to: "BankAccount",    edge_name: "bank_account",   cardinality: "M2O", required: true, semantic: "Reconciliation for BankAccount",  inverse: "reconciliations"},
+]
 ```
 
 ---
 
-## 11. Type Projection Rules — `codegen/entgen.cue`
+## 12. Commands — `commands/*.cue`
 
-The codegen mapping layer defines how ontological types project into Ent field types. The ontology stays clean; the projection layer handles storage decisions.
+In a CQRS architecture, mutations are **actions** that modify the state of one or more domain objects. "Move In Tenant" does not create a "move in" entity — it transitions a Lease to active, transitions a Space to occupied, updates PersonRole attributes, and creates LedgerEntries for deposit and first month rent. The command payload is loosely related to any single domain object.
 
-### 11.1 Composite Type Projections
+Commands are **separately authored** by domain experts. They import ontology types for field validation but define their own shapes. The ontology tells you what a Lease IS. A command tells you what "Move In Tenant" NEEDS.
 
-```
-#Money → flatten into two columns:
-  {field_name}_cents (int64)
-  {field_name}_currency (string, default "USD")
+### 12.1 Command Schema
 
-#NonNegativeMoney → same as #Money with validation: cents >= 0
-#PositiveMoney → same as #Money with validation: cents > 0
+```cue
+package commands
 
-#Address → flatten with prefix "address_":
-  address_line1 (string)
-  address_line2 (optional string)
-  address_city (string)
-  address_state (string)
-  address_postal_code (string)
-  address_country (string, default "US")
-  address_latitude (optional float)
-  address_longitude (optional float)
-  address_county (optional string)
+import "propeller.io/ontology"
 
-#DateRange → flatten:
-  {field_name}_start (time)
-  {field_name}_end (optional time)
-
-#AuditMetadata → Ent mixin (AuditMixin):
-  id (UUID, auto-generated, immutable)
-  created_by (string)
-  updated_by (string)
-  created_at (time, auto-set)
-  updated_at (time, auto-update)
-  source (enum)
-  correlation_id (optional string)
-  agent_goal_id (optional string)
+// Every command follows this structure:
+#Command: {
+    // Payload fields defined per command (NOT derived from entity)
+    ...
+    
+    // Metadata: what this command touches
+    _affects:              [...ontology.#EntityType]   // which entity types are mutated
+    _requires_permission:  string                      // permission key
+    _jurisdiction_checks?: [...string]                 // jurisdiction rules to evaluate
+    _idempotency_key?:     string                      // for safe retry
+}
 ```
 
-### 11.2 Complex Embedded Types
+### 12.2 Lease Commands
 
-These types are stored as JSON columns with Go struct typing:
+```cue
+#MoveInTenant: close({
+    lease_id:             string
+    actual_move_in_date:  time.Time
+    key_handoff_notes?:   string
+    inspection_completed: bool
+    initial_meter_readings?: [...close({
+        meter_id:  string
+        reading:   float & >=0
+        photo_id?: string
+    })]
+    
+    // Execution plan (documentation for implementers + agent reasoning):
+    // 1. Validate lease is in status "pending_signature" or "active" (for late move-in recording)
+    // 2. Lease: set move_in_date = actual_move_in_date
+    // 3. Lease: if status is "pending_signature", transition → active
+    // 4. Space(s): transition primary space(s) → occupied
+    // 5. PersonRole(tenant): set move_in_date on TenantAttributes
+    // 6. Create LedgerEntries: security deposit charge, prorated first month rent
+    // 7. If initial_meter_readings provided, record baseline readings
+    // 8. Emit: TenantMovedIn event
+    
+    _affects:             ["lease", "space", "person_role", "ledger_entry"]
+    _requires_permission: "lease:move_in"
+})
+
+#RecordPayment: close({
+    lease_id:           string
+    amount:             ontology.#PositiveMoney          // reuses ontology type
+    payment_method:     "ach" | "check" | "cash" | "money_order" | "credit_card"
+    reference_number?:  string
+    received_date:      time.Time
+    memo?:              string
+    bank_account_id?:   string
+    allocations?: [...close({
+        charge_id: string
+        amount:    ontology.#PositiveMoney
+    })]
+    
+    // Execution plan:
+    // 1. Create JournalEntry with lines: debit cash, credit receivable
+    // 2. Create LedgerEntry(payment) linked to lease and person
+    // 3. If allocations provided, apply to specific charges; else auto-allocate oldest first
+    // 4. Update TenantAttributes.current_balance
+    // 5. If balance reaches $0, update TenantAttributes.standing → "good"
+    // 6. Emit: PaymentReceived event
+    
+    _affects:             ["ledger_entry", "journal_entry", "person_role"]
+    _requires_permission: "payment:record"
+})
+
+#RenewLease: close({
+    lease_id:             string
+    new_term:             ontology.#DateRange
+    new_base_rent:        ontology.#NonNegativeMoney
+    rent_change_reason?:  string
+    retain_existing_charges: *true | bool
+    updated_charges?: [...close({
+        charge_id?: string                               // existing charge to modify, or omit for new
+        charge_code: string
+        description: string
+        amount:     ontology.#NonNegativeMoney
+        frequency:  ontology.#ChargeFrequency
+    })]
+    updated_cam_terms?:   ontology.#CAMTerms
+    renewal_option_exercised?: int                       // which renewal option number, if applicable
+    
+    // Execution plan:
+    // 1. Validate jurisdiction constraints (rent increase cap, notice period)
+    // 2. Create new Lease entity (renewal = new lease, not mutation of old)
+    // 3. Copy LeaseSpace records to new lease
+    // 4. Transition old lease status → renewed
+    // 5. Transition new lease status → active (or pending_signature if signing required)
+    // 6. If renewal_option_exercised, mark option as used
+    // 7. Emit: LeaseRenewed event
+    
+    _affects:             ["lease", "lease_space"]
+    _requires_permission: "lease:renew"
+    _jurisdiction_checks: ["rent_increase_cap", "notice_period", "required_disclosure"]
+})
+
+#InitiateEviction: close({
+    lease_id:           string
+    reason:             "nonpayment" | "lease_violation" | "nuisance" | 
+                        "illegal_activity" | "owner_move_in" | "renovation" | "no_cause"
+    violation_details?: string
+    balance_owed?:      ontology.#NonNegativeMoney
+    cure_offered:       bool
+    cure_deadline?:     time.Time
+    
+    // Execution plan:
+    // 1. Validate jurisdiction: is this a valid eviction reason? (just cause check)
+    // 2. Validate jurisdiction: cure period requirements met?
+    // 3. Validate jurisdiction: is there a winter moratorium?
+    // 4. Transition lease status → eviction
+    // 5. Update TenantAttributes.standing → "eviction"
+    // 6. If relocation_assistance_required by jurisdiction, calculate amount
+    // 7. If right_to_counsel jurisdiction, note in communications
+    // 8. Emit: EvictionInitiated event
+    
+    _affects:             ["lease", "person_role"]
+    _requires_permission: "lease:eviction"
+    _jurisdiction_checks: ["just_cause_eviction", "eviction_procedure", "relocation_assistance",
+                           "right_to_counsel"]
+})
+
+#OnboardProperty: close({
+    name:           string
+    portfolio_id:   string
+    address:        ontology.#Address                    // reuses ontology type
+    property_type:  ontology.#PropertyType               // reuses ontology enum
+    year_built:     int & >=1800 & <=2030
+    total_spaces:   int & >=1
+    
+    // Optional: bulk space creation during onboarding
+    spaces?: [...close({
+        space_number: string
+        space_type:   ontology.#SpaceType
+        floor?:       int
+        square_footage?: float & >0
+        bedrooms?:    int & >=0
+        bathrooms?:   float & >=0
+        market_rent?: ontology.#NonNegativeMoney
+    })]
+    
+    // Execution plan:
+    // 1. Create Property entity (status: onboarding)
+    // 2. Geocode address → derive jurisdiction stack
+    // 3. Create PropertyJurisdiction records for each jurisdiction
+    // 4. Resolve jurisdiction rules for this property
+    // 5. If spaces provided, create Space entities
+    // 6. Create default chart of accounts if portfolio has one
+    // 7. Emit: PropertyOnboarded event
+    
+    _affects:             ["property", "property_jurisdiction", "space"]
+    _requires_permission: "property:create"
+})
+```
+
+### 12.3 What Commands Import vs. Define
 
 ```
-#RentScheduleEntry → JSON column "rent_schedule" (array)
-#RecurringCharge → JSON column "recurring_charges" (array)
-#UsageBasedCharge → JSON column "usage_charges" (array)
-#LateFeePolicy → JSON column "late_fee_policy" (object)
-#PercentageRent → JSON column "percentage_rent" (object)
-#CAMTerms → JSON column "cam_terms" (object)
-#CAMCategoryTerms → embedded within CAMTerms JSON
-#TenantImprovement → JSON column "tenant_improvement" (object)
-#RenewalOption → JSON column "renewal_options" (array)
-#ExpansionRight → JSON column "expansion_rights" (array)
-#ContractionRight → JSON column "contraction_rights" (array)
-#SubsidyTerms → JSON column "subsidy" (object)
-#ContactMethod → JSON column "contact_methods" (array)
-Role-specific attributes → JSON column "attributes" (object, discriminated by _type)
+FROM ONTOLOGY (imported):              DEFINED BY COMMAND (authored):
+─────────────────────────              ──────────────────────────────
+#PositiveMoney (type validation)       Payload shape and fields
+#Address (composite type reuse)        Execution plan (which entities, what order)
+#LeaseType, #SpaceType (enum reuse)    Business-specific fields (key_handoff_notes,
+#DateRange (constraint enforcement)      inspection_completed, cure_offered)
+#CAMTerms (embedded structure reuse)   Permission requirements
+#EntityType (metadata)                 Jurisdiction checks needed
+                                       Idempotency semantics
 ```
 
-### 11.3 Reconstitution at API Boundary
-
-The codegen produces `toEnt` and `toProto` mapping functions. The API speaks the ontology's language (single `#Money` object), while the database stores the flattened projection (two columns). The mapping is generated, not hand-written.
+The ontology provides type safety. The command provides domain semantics. They are separate concerns.
 
 ---
 
-## 12. API Design Principles — `codegen/apigen.cue`
+## 13. Domain Events — `events/*.cue`
 
-### 12.1 Service Organization
+Domain events describe what HAPPENED. They carry enough context for consumers to act without refetching the full entity, but they are NOT entity dumps. Each event is a projection — a specific view of what changed, authored for its consumers.
 
-One service per domain area:
+Events reference ontology types for field validation but define their own shapes. A `TenantMovedIn` event does not carry the full Lease, Person, Space, and LedgerEntry — it carries the facts a subscriber needs.
+
+### 13.1 Lease Events
+
+```cue
+package events
+
+import "propeller.io/ontology"
+
+#TenantMovedIn: close({
+    // Identifiers — enough for consumers to query their own read models
+    lease_id:     string
+    property_id:  string
+    space_ids:    [...string]
+    person_id:    string
+    
+    // Facts about what happened
+    move_in_date: time.Time
+    
+    // Contextual data consumers commonly need (avoids N+1 fetches)
+    lease_type:   ontology.#LeaseType
+    base_rent:    ontology.#NonNegativeMoney
+    space_number: string                               // denormalized for convenience
+    
+    // NOT included: full lease, full person, security deposit amount,
+    // all tenant attributes, all audit metadata. Consumers query if needed.
+})
+
+#PaymentReceived: close({
+    lease_id:        string
+    property_id:     string
+    person_id:       string
+    
+    amount:          ontology.#PositiveMoney
+    payment_method:  string
+    received_date:   time.Time
+    reference_number?: string
+    
+    // Post-payment state (consumers need this without refetching)
+    new_balance:     ontology.#Money
+    standing:        ontology.#TenantAttributes.standing
+    
+    journal_entry_id: string                           // for audit trail
+})
+
+#LeaseRenewed: close({
+    old_lease_id:     string
+    new_lease_id:     string
+    property_id:      string
+    
+    previous_rent:    ontology.#NonNegativeMoney
+    new_rent:         ontology.#NonNegativeMoney
+    new_term:         ontology.#DateRange
+    
+    rent_change_percent: float                         // computed, not stored on entity
+    
+    // Jurisdiction context for compliance audit
+    jurisdiction_rule_ids?: [...string]
+    within_cap:             bool
+})
+
+#EvictionInitiated: close({
+    lease_id:      string
+    property_id:   string
+    person_id:     string
+    
+    reason:        string
+    balance_owed?: ontology.#NonNegativeMoney
+    
+    // Jurisdiction context
+    just_cause_jurisdiction: bool
+    cure_period_days:        int
+    relocation_required:     bool
+    right_to_counsel:        bool
+})
+```
+
+### 13.2 Property Events
+
+```cue
+#PropertyOnboarded: close({
+    property_id:   string
+    portfolio_id:  string
+    property_type: ontology.#PropertyType
+    address:       ontology.#Address
+    
+    jurisdiction_ids: [...string]                      // resolved from address
+    space_count:      int
+})
+
+#JurisdictionRuleActivated: close({
+    jurisdiction_rule_id: string
+    jurisdiction_id:      string
+    rule_type:            ontology.#JurisdictionRuleType
+    effective_date:       time.Time
+    
+    // Which properties are affected?
+    affected_property_ids: [...string]
+    affected_lease_count:  int
+    
+    statute_reference?: string
+})
+```
+
+### 13.3 Events vs. Entity State
+
+Key principle: events carry **what changed** and **why it matters**. They do not carry **current entity state**. The distinction:
 
 ```
-PersonService:       Person, Organization, PersonRole      /v1/persons
-PropertyService:     Portfolio, Property, Building, Space  /v1/properties
-LeaseService:        Lease, LeaseSpace, Application        /v1/leases
-AccountingService:   Account, LedgerEntry, JournalEntry,   /v1/accounting
-                     BankAccount, Reconciliation
+WRONG (entity dump as event):
+  LeaseUpdated: { lease: <entire Lease object> }
+  
+  Problems:
+  - Consumers must diff to figure out what changed
+  - Couples consumers to internal Lease shape
+  - Internal field renames break all consumers
+  - Payload is enormous, mostly irrelevant
+
+RIGHT (meaningful domain event):
+  RentIncreaseApplied: {
+    lease_id, previous_rent, new_rent, effective_date,
+    rent_change_percent, within_cap, jurisdiction_rule_ids
+  }
+  
+  Benefits:
+  - Self-describing: consumers know exactly what happened
+  - Decoupled: internal Lease shape can change freely
+  - Compact: only relevant facts
+  - Audit-ready: jurisdiction compliance data included
 ```
 
-### 12.2 State Transitions as Named Operations
-
-Every state transition is its own RPC with specific request type, auth, and event:
-
-```
-LeaseService:
-  CreateLease         POST   /v1/leases
-  GetLease            GET    /v1/leases/{id}
-  ListLeases          GET    /v1/leases
-  UpdateLease         PATCH  /v1/leases/{id}
-  SearchLeases        POST   /v1/leases/search
-  SubmitForApproval   POST   /v1/leases/{id}/submit
-  ApproveLease        POST   /v1/leases/{id}/approve
-  SendForSignature    POST   /v1/leases/{id}/sign
-  ActivateLease       POST   /v1/leases/{id}/activate
-  RecordNotice        POST   /v1/leases/{id}/notice
-  RenewLease          POST   /v1/leases/{id}/renew
-  TerminateLease      POST   /v1/leases/{id}/terminate
-  InitiateEviction    POST   /v1/leases/{id}/evict
-  GetLeaseLedger      GET    /v1/leases/{id}/ledger
-  RecordPayment       POST   /v1/leases/{id}/payments
-  PostCharge          POST   /v1/leases/{id}/charges
-  ApplyCredit         POST   /v1/leases/{id}/credits
-```
-
-### 12.3 Side Effects in Responses
-
-Operations that cause downstream changes report them:
-
-```
-ActivateLeaseResponse:
-  lease: Lease
-  side_effects: [
-    {entity_type: "Space", entity_id: "...", description: "Space status changed to occupied"},
-    {entity_type: "LedgerEntry", description: "Security deposit charge created"},
-    {entity_type: "LedgerEntry", description: "First month rent charge scheduled"},
-  ]
-```
-
-### 12.4 Agent Tool Generation
-
-Every API operation generates a corresponding agent tool definition with:
-- Input schema derived from request spec (with enum constraints)
-- Description written for LLM comprehension
-- `when_to_use` guidance
-- `common_mistakes` to avoid
+For simple CRUD (entity created, entity field updated), the event carries the entity ID + changed fields + previous values — enough to invalidate caches and trigger reindexing. These DO use comprehensions for scaffolding (see Section 16).
 
 ---
 
-## 13. Event Catalog — `codegen/eventgen.cue`
+## 14. External API — `api/v1/*.cue`
 
-### Person Events
-PersonCreated, PersonUpdated, PersonRoleAssigned, PersonRoleDeactivated, PersonRoleTerminated, OrganizationCreated, OrganizationUpdated
+The external API is a **versioned contract** with its own shapes. It imports ontology enums and constraint types for validation, but defines its own request/response structures. This is the anti-corruption layer that insulates consumers from internal model evolution.
 
-### Property Events
-PortfolioCreated, PortfolioActivated, PropertyCreated, PropertyUpdated, PropertyStatusChanged, BuildingCreated, BuildingUpdated, SpaceCreated, SpaceUpdated, SpaceStatusChanged
+### 14.1 Design Principles
 
-### Jurisdiction Events
-JurisdictionCreated, JurisdictionUpdated, JurisdictionDissolved, JurisdictionMerged, PropertyJurisdictionAdded, PropertyJurisdictionRemoved, JurisdictionRuleCreated, JurisdictionRuleActivated, JurisdictionRuleSuperseded, JurisdictionRuleExpired, JurisdictionRuleRepealed
+1. **Internal renames don't break consumers.** Renaming `base_rent` to `monthly_rent` in the ontology updates the database and internal services. The API v1 contract still returns `base_rent` until v2 is cut.
 
-### Lease Events
-LeaseCreated, LeaseSubmittedForApproval, LeaseApproved, LeaseSentForSignature, LeaseSigned, LeaseActivated, TenantNoticeRecorded, LeaseRenewed, LeaseTerminated, EvictionInitiated, LeaseSpaceAdded, LeaseSpaceRemoved, ApplicationSubmitted, ApplicationScreeningComplete, ApplicationApproved, ApplicationDenied
+2. **Responses are projections, not entity dumps.** A lease API response includes the property name and primary space number (denormalized for convenience) even though internally those live on different entities.
 
-### Accounting Events
-ChargePosted, PaymentRecorded, CreditApplied, LateFeeAssessed, NSFRecorded, WriteOffPosted, JournalEntryPosted, JournalEntryVoided, ReconciliationCompleted, ReconciliationApproved, ManagementFeeCalculated, OwnerDistributionProcessed
+3. **Requests map to commands, not entity mutations.** `POST /v1/leases/{id}/move-in` maps to the `#MoveInTenant` command, not to `PATCH /v1/leases/{id}` with `{status: "active", move_in_date: ...}`.
 
-### Event Envelope
+4. **Enums are shared, shapes are not.** Both internal and external use `#LeaseType: "fixed_term" | "month_to_month" | ...` — redefining enums is pure drift risk. But the response structure (which fields, what nesting, what names) belongs to the API contract.
 
-Every event carries: event_id, event_type, entity_type, entity_id, occurred_at, recorded_at, correlation_id, causation_id, actor_id, actor_type, agent_goal_id, payload, changed_fields, previous_values.
+### 14.2 API Contract Example
+
+```cue
+package api_v1
+
+import "propeller.io/ontology"
+
+// === Shared API types ===
+
+#PaginationRequest: close({
+    page?:      int & >=1 | *1
+    page_size?: int & >=1 & <=100 | *25
+    sort_by?:   string
+    sort_dir?:  "asc" | "desc" | *"desc"
+})
+
+#PaginationResponse: close({
+    page:       int
+    page_size:  int
+    total:      int
+    has_more:   bool
+})
+
+#ErrorResponse: close({
+    code:    string
+    message: string
+    details?: [...close({
+        field?:  string
+        reason:  string
+    })]
+})
+
+#MoneyResponse: close({
+    amount:   number                                   // dollars, not cents (API consumers expect this)
+    currency: string
+})
+
+// === Lease API ===
+
+#LeaseListResponse: close({
+    leases: [...#LeaseSummary]
+    pagination: #PaginationResponse
+})
+
+#LeaseSummary: close({
+    id:             string
+    lease_type:     ontology.#LeaseType                 // shared enum
+    status:         ontology.#LeaseStatus               // shared enum
+    base_rent:      #MoneyResponse
+    term_start:     string                             // ISO date string
+    term_end?:      string
+    
+    // Denormalized (not on Lease entity internally)
+    property_name:  string
+    primary_space:  string
+    tenant_name:    string
+    
+    // Computed
+    days_remaining?: int
+})
+
+#LeaseDetailResponse: close({
+    #LeaseSummary
+    
+    security_deposit:  #MoneyResponse
+    liability_type:    ontology.#LiabilityType
+    move_in_date?:     string
+    
+    // Flattened from relationships
+    spaces: [...close({
+        space_id:     string
+        space_number: string
+        space_type:   ontology.#SpaceType
+        relationship: ontology.#LeaseSpaceRelationship
+        square_footage?: float
+    })]
+    
+    tenants: [...close({
+        person_id:  string
+        name:       string
+        standing:   string
+        balance:    #MoneyResponse
+    })]
+    
+    // Commercial structures (conditionally present, flattened)
+    cam_terms?:        _                               // API-specific subset
+    percentage_rent?:  _
+    
+    // Jurisdiction constraints currently in effect
+    jurisdiction_constraints?: close({
+        deposit_limit?:       #MoneyResponse
+        rent_increase_cap?:   string                   // "5% + CPI, max 10%"
+        notice_period_days?:  int
+        just_cause_required?: bool
+        rent_controlled?:     bool
+    })
+    
+    // Explicitly EXCLUDED from API:
+    // - ssn_last_four, tax_id (PII)
+    // - agent_goal_id, correlation_id (internal)
+    // - audit metadata (internal)
+    // - journal_entry_ids (internal plumbing)
+})
+
+// === Command-mapped endpoints ===
+
+// POST /v1/leases/{id}/move-in → MoveInTenant command
+#MoveInRequest: close({
+    actual_move_in_date:  string                       // ISO date
+    key_handoff_notes?:   string
+    inspection_completed: bool
+    initial_meter_readings?: [...close({
+        meter_id: string
+        reading:  number
+    })]
+})
+
+// POST /v1/leases/{id}/renew → RenewLease command
+#RenewLeaseRequest: close({
+    new_term_start:  string                            // ISO date
+    new_term_end:    string                            // ISO date
+    new_base_rent:   #MoneyResponse
+    rent_change_reason?: string
+})
+```
+
+### 14.3 API vs. Internal Shape Differences
+
+| Concern | Internal (Ontology) | External (API v1) |
+|---|---|---|
+| Money | `{amount_cents: int, currency: string}` | `{amount: number, currency: string}` |
+| Dates | `time.Time` | ISO 8601 string |
+| Entity references | `property_id: string` | `property_name: string` (denormalized) |
+| Nested entities | Separate entities via relationships | Flattened into response |
+| PII fields | Present with `@sensitive` | Excluded entirely |
+| Audit fields | Present on every entity | Not exposed |
+| Mutations | Command payloads (CQRS) | Named endpoints mapping to commands |
+| Enums | Shared via import | Shared via import |
+| Constraints | CUE conditionals | Validated server-side, errors returned |
+
+The transformation between internal and external happens in the **API handler layer** — not in generated code. API handlers are authored code that maps between command payloads and API requests, and between internal entities and API responses. This layer is where field renames, format conversions (cents → dollars), denormalization, and PII filtering happen.
 
 ---
 
-## 14. Permission Model — `codegen/authzgen.cue`
+## 15. Permission Policies — `policies/*.cue`
 
-### 14.1 Access Paths
+Permissions are **business decisions** that reference the domain model but are not derived from it. The ontology tells you Lease has a `security_deposit` field. Business policy decides that leasing agents can see it but maintenance coordinators cannot.
 
-Authorization is determined by traversing the relationship graph from the user to the target entity:
+### 15.1 Permission Groups
+
+```cue
+package policies
+
+// Permission groups are defined by business stakeholders.
+// They are NOT generated from entity schemas.
+
+#PermissionGroup: close({
+    name:        string
+    description: string
+    inherits?:   [...string]                           // inherit from other groups
+    commands:    [...string]                            // which commands this group can execute
+    queries:     [...string]                            // which query endpoints this group can access
+})
+
+_permission_groups: {
+    organization_admin: #PermissionGroup & {
+        name:        "Organization Admin"
+        description: "Full access to all operations within the organization"
+        commands:    ["*"]
+        queries:     ["*"]
+    }
+    
+    portfolio_admin: #PermissionGroup & {
+        name:        "Portfolio Admin"
+        description: "Full access within assigned portfolios"
+        inherits:    ["property_manager"]
+        commands: [
+            "property:create", "property:transfer",
+            "account:create", "account:modify",
+            "bank_account:create",
+            "journal_entry:approve",
+            "reconciliation:approve",
+        ]
+        queries: ["portfolio:*", "property:*", "accounting:*"]
+    }
+    
+    property_manager: #PermissionGroup & {
+        name:        "Property Manager"
+        description: "Day-to-day property operations"
+        inherits:    ["leasing_agent", "maintenance_coordinator"]
+        commands: [
+            "lease:move_in", "lease:move_out", "lease:renew",
+            "lease:eviction",
+            "payment:record", "payment:reverse",
+            "charge:create", "charge:waive",
+            "journal_entry:create",
+        ]
+        queries: ["property:detail", "lease:*", "person:*", "accounting:property_level"]
+    }
+    
+    leasing_agent: #PermissionGroup & {
+        name:        "Leasing Agent"
+        description: "Leasing operations only"
+        commands: [
+            "application:process", "application:approve", "application:deny",
+            "lease:create", "lease:submit_for_approval",
+            "lease:send_for_signature",
+        ]
+        queries: ["property:list", "space:list", "application:*", "lease:read"]
+    }
+    
+    maintenance_coordinator: #PermissionGroup & {
+        name:        "Maintenance Coordinator"
+        description: "Work order and maintenance operations"
+        commands: [
+            "work_order:create", "work_order:assign", "work_order:complete",
+            "inspection:schedule", "inspection:record",
+        ]
+        queries: ["property:detail", "space:detail", "work_order:*"]
+    }
+    
+    accountant: #PermissionGroup & {
+        name:        "Accountant"
+        description: "Financial operations"
+        commands: [
+            "payment:record", "charge:create",
+            "journal_entry:create", "journal_entry:post",
+            "reconciliation:start", "reconciliation:complete",
+            "owner_distribution:calculate", "owner_distribution:process",
+        ]
+        queries: ["accounting:*", "lease:financial", "property:financial"]
+    }
+    
+    viewer: #PermissionGroup & {
+        name:        "Viewer"
+        description: "Read-only access"
+        commands:    []
+        queries:     ["property:list", "lease:list", "person:list"]
+    }
+}
+```
+
+### 15.2 Field-Level Policies
+
+Per-attribute visibility is a separate concern from command permissions. Some roles can see a lease but not the security deposit amount. This is defined here, not on the entity.
+
+```cue
+// Field policies: which attributes are visible/hidden per group
+_field_policies: {
+    person: {
+        ssn_last_four: {
+            visible_to:  ["organization_admin", "portfolio_admin", "accountant"]
+            hidden_from: ["*"]                         // default deny
+        }
+        date_of_birth: {
+            visible_to:  ["organization_admin", "portfolio_admin", "leasing_agent"]
+            hidden_from: ["maintenance_coordinator", "viewer"]
+        }
+    }
+    
+    lease: {
+        security_deposit: {
+            visible_to:  ["organization_admin", "portfolio_admin", "property_manager", "accountant"]
+            hidden_from: ["maintenance_coordinator"]
+        }
+    }
+    
+    bank_account: {
+        routing_number: {
+            visible_to:  ["organization_admin", "accountant"]
+            hidden_from: ["*"]
+        }
+        account_number_encrypted: {
+            visible_to:  []                            // nobody sees this in UI; system-only
+            hidden_from: ["*"]
+        }
+    }
+}
+```
+
+### 15.3 Authorization Mechanism
+
+Permission evaluation uses the PersonRole scope chain from the ontology:
 
 ```
 Person → PersonRole (scoped to) → Scope Entity → (contains) → Target Entity
 ```
 
-Examples:
-
-```
-View a Property:      Person → Role(viewer+) → Portfolio → contains → Property
-Create a Lease:       Person → Role(manager+) → Property → contains → Space
-Activate a Lease:     Person → Role(manager+) → Property → contains → Space → has → Lease
-Post a Journal Entry: Person → Role(accountant+) → Portfolio → contains → Property
-Record a Payment:     Person → Role(manager+) → Property → ... → Lease
-```
-
-### 14.2 Role Hierarchy
-
-```
-Organization Admin
-  └── Portfolio Admin
-       └── Property Manager
-            ├── Leasing Agent (leasing operations only)
-            ├── Maintenance Coordinator (work orders only)
-            └── Accountant (financial operations only)
-       └── Viewer (read-only)
-```
-
-Higher roles inherit permissions of lower roles within their scope.
-
-### 14.3 Agent Authorization
-
-AI agents use the same PersonRole system. An agent has a Person record (source: "system"), PersonRole assignments with explicit scopes, and an approval_limit on ManagerAttributes.
+But the **what they can do** at the end of that chain is defined here in policies, not derived from entity schemas. The ontology provides the scope traversal mechanism. Business policy provides the access decisions.
 
 ---
 
-## 15. Implementation Sequence
+## 16. Drift Detection and Scaffolding — `codegen/drift.cue`
+
+Comprehensions still play a role — but for **validation and scaffolding**, not for whole-cloth generation of contracts. The ontology validates that separately-defined commands, events, and API contracts stay consistent with the domain model.
+
+### 16.1 What CUE Comprehensions Still Generate (Tight Coupling)
+
+These ARE mechanically derived because they have a 1:1 relationship with the domain model:
+
+```cue
+// Data store schemas — Ent always mirrors ontology exactly
+// Generated by cmd/entgen, no human override needed
+
+// State machine enforcement — Ent hooks from state_machines.cue
+// Every valid transition generates a hook. No business judgment involved.
+
+// Test matrices — every constraint and transition generates test cases
+_state_machine_tests: {
+    for entity_name, machine in ontology._state_machines {
+        _valid_transitions: {
+            for from_state, targets in machine {
+                for _, target in targets {
+                    "Test_\(entity_name)_\(from_state)_to_\(target)_succeeds": {
+                        entity: entity_name, from: from_state, to: target, expected: "success"
+                    }
+                }
+            }
+        }
+        _all_states: [ for state, _ in machine { state } ]
+        _invalid_transitions: {
+            for from_state, valid_targets in machine {
+                for _, candidate in _all_states {
+                    if !list.Contains(valid_targets, candidate) && candidate != from_state {
+                        "Test_\(entity_name)_\(from_state)_to_\(candidate)_rejected": {
+                            entity: entity_name, from: from_state, to: candidate, expected: "error"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Agent world model — ONTOLOGY.md, STATE_MACHINES.md generated from ontology
+// Agent needs to know what things ARE; that's exactly what the ontology defines.
+```
+
+### 16.2 What CUE Comprehensions Scaffold (Starting Point, Human Override)
+
+For commands, events, and API contracts, comprehensions generate **starter templates** that domain experts edit:
+
+```cue
+// Scaffold: generate a CRUD event pair for every entity
+// Domain experts then replace generic "LeaseUpdated" with meaningful events
+// like "RentIncreaseApplied", "TenantMovedIn", etc.
+
+_scaffolded_events: {
+    for name, _ in ontology._entities {
+        "\(name).created": {
+            _scaffold: true                            // flag: human should review/replace
+            entity_type: name
+            description: "\(name) was created"
+        }
+        "\(name).updated": {
+            _scaffold: true
+            entity_type: name
+            description: "\(name) was updated"
+            changed_fields: [...string]
+            previous_values: _
+        }
+        "\(name).deleted": {
+            _scaffold: true
+            entity_type: name
+            description: "\(name) was deleted"
+        }
+    }
+}
+
+// The scaffold gives you 45+ events for 15 entities in one expression.
+// Domain experts then:
+// 1. Keep generic CRUD events for simple entities (Account, Building)
+// 2. Replace generic events with domain-specific ones for rich entities (Lease, Payment)
+// 3. Add domain events that don't correspond to any single entity change (ComplianceAlertTriggered)
+```
+
+### 16.3 What CUE Validates Across Boundaries (Drift Detection)
+
+This is the key role for CUE in a loosely-coupled architecture. Commands, events, and API contracts are separately authored, but CUE validates that they stay consistent with the ontology:
+
+```cue
+package drift
+
+import (
+    "propeller.io/ontology"
+    "propeller.io/commands"
+    "propeller.io/events"
+    "propeller.io/api/v1"
+)
+
+// DRIFT CHECK 1: Every command's _affects list references valid entity types
+_command_entity_check: {
+    for cmd_name, cmd in commands {
+        for _, entity_type in cmd._affects {
+            _valid: ontology.#EntityType & entity_type  // fails if entity_type not in enum
+        }
+    }
+}
+
+// DRIFT CHECK 2: Events that reference ontology enums stay in sync
+// If we add a new LeaseStatus to the ontology, any event that
+// uses ontology.#LeaseStatus automatically accepts it.
+// If we REMOVE a status, any event referencing it fails at cue vet.
+
+// DRIFT CHECK 3: API responses that import ontology enums stay in sync
+// api_v1.#LeaseSummary.lease_type is ontology.#LeaseType.
+// Add a new lease type → API accepts it. Remove one → cue vet fails.
+
+// DRIFT CHECK 4: Commands that reference ontology types validate field constraints
+// commands.#RecordPayment.amount is ontology.#PositiveMoney.
+// If we change PositiveMoney to require currency != "USD" (hypothetically),
+// any test fixture passing "USD" to that command would fail.
+
+// DRIFT CHECK 5: Permission commands reference actual commands
+_permission_command_check: {
+    for group_name, group in policies._permission_groups {
+        for _, perm in group.commands {
+            if perm != "*" {
+                // Validate permission key exists as a command
+                // (implementation: check against command registry)
+            }
+        }
+    }
+}
+
+// Run: cue vet ./ontology/... ./commands/... ./events/... ./api/... ./policies/...
+// This validates ALL cross-boundary references in one command.
+// Result: shared vocabulary stays in sync. Shapes evolve independently.
+```
+
+### 16.4 The Coupling Spectrum
+
+```
+          TIGHT (generated)              LOOSE (authored, validated)
+          ─────────────────              ──────────────────────────
+          
+Data store ◄──────── Ontology ────────► Commands
+(Ent/Postgres)         │                   (CQRS payloads)
+                       │
+Test matrices ◄────────┤────────► Events  
+(pos + neg tests)      │           (domain projections)
+                       │
+State machine ◄────────┤────────► External API
+(Ent hooks)            │           (versioned contracts)
+                       │
+Agent world model ◄────┤────────► Permissions
+(ONTOLOGY.md)          │           (business-defined groups)
+                       │
+                       ├────────► View Definitions
+                       │           (UI layout decisions)
+                       │
+                       └────────► Read Models
+                                   (query-optimized projections)
+```
+
+Left side: generated, 1:1, changes automatically. Right side: authored, loosely coupled, validated for consistency. Both reference the same vocabulary. Neither is subordinate to the other.
+
+---
+
+## 17. Domain-Level Attributes
+
+CUE attributes mark metadata that is true about the field as a domain fact. Each consumer interprets these attributes according to its own concerns — the ontology doesn't prescribe how, it just declares the truth.
+
+```cue
+// Attributes used in this ontology:
+//
+// @immutable        — field cannot change after entity creation
+//                     Domain truth: this field is write-once.
+//                     Ent interprets:  reject updates to this field
+//                     Commands interpret: exclude from update payloads
+//                     API interprets:    reject in PATCH requests
+//                     UI interprets:     disable in edit forms
+//                     Agent interprets:  exclude from update tool parameters
+//
+// @sensitive         — field contains PII or sensitive data
+//                     Domain truth: this field needs protection.
+//                     Ent interprets:  encrypt at rest
+//                     Events interpret: exclude from event payloads (consumers must query)
+//                     API interprets:   exclude from responses unless field policy allows
+//                     Logs interpret:   mask value
+//                     Agent interprets: omit from context window by default
+//                     Policies interpret: field-level visibility rules apply (Section 15.2)
+//
+// @computed          — field is calculated, not user-supplied
+//                     Domain truth: system owns this value.
+//                     Commands interpret: exclude from payloads
+//                     API interprets:    exclude from request schemas, include in responses
+//                     UI interprets:     display-only, never editable
+//
+// @deprecated(reason, since)  — field is being phased out
+//                     Domain truth: this field should not be used in new code.
+//                     All consumers interpret: warn at build time if referenced
+
+// Key insight: the ontology declares the attribute.
+// Each consumer decides what to do with it.
+// The ontology does NOT prescribe "@immutable means disable in edit forms" —
+// that's a UI decision made in codegen/uigen.cue.
+// The ontology says "this field is write-once" and each consumer acts accordingly.
+```
+
+---
+
+## 18. Configuration Schema — `ontology/config_schema.cue`
+
+What's TUNABLE at runtime and the valid ranges. Business preferences resolved in two phases: preference cascade then jurisdiction constraint application.
+
+```cue
+package ontology
+
+// Phase 1: Business preference resolution (last wins)
+// platform → organization → portfolio → property → lease_type
+
+#LeaseConfiguration: close({
+    notice_required_days:        int & >=0 & <=365 | *30
+    late_fee_grace_period_days:  int & >=0 & <=30 | *5
+    late_fee_type:               #LateFeeType | *"flat"
+    late_fee_flat_amount?:       #NonNegativeMoney
+    late_fee_percent?:           float & >0 & <=25
+    security_deposit_max_months: float & >0 & <=6 | *2
+    auto_renewal_enabled:        *false | bool
+    auto_renewal_notice_days:    int & >=30 & <=180 | *60
+    allow_partial_payments:      *true | bool
+    minimum_payment_percent?:    float & >0 & <=100
+})
+
+#PropertyConfiguration: close({
+    maintenance_auto_approve_limit: #NonNegativeMoney & {amount_cents: <=1000000}  // max $10K
+    screening_required:             *true | bool
+    screening_income_ratio:         float & >=1 & <=10 | *3
+    pet_policy:                     *"allowed" | "restricted" | "prohibited"
+    max_pets?:                      int & >=0 & <=10
+    pet_deposit?:                   #NonNegativeMoney
+    pet_rent?:                      #NonNegativeMoney
+})
+
+#ConfigurationScope: "platform" | "organization" | "portfolio" | "property" | "lease_type"
+
+// Phase 2: Jurisdiction constraint application (most restrictive wins)
+// See Section 8.6 for how jurisdiction rules compose via CUE unification.
+// The resolver compares Phase 1 values against applicable jurisdiction rules.
+// Business can be stricter than law, but not more lenient.
+```
+
+---
+
+## 19. Implementation Sequence
 
 ### Phase 1: Foundation (Weeks 1-2)
-- Set up CUE toolchain, project structure
-- Implement common.cue with all shared types
-- Build cmd/entgen (CUE → Ent schema generator) with type projection rules
+- Set up CUE toolchain, project structure with ontology/, commands/, events/, api/v1/, policies/ directories
+- Implement base.cue, common.cue with all shared types
+- Build cmd/entgen (CUE → Ent schema generator) — tightly coupled, 1:1 derivation
 - Validate: Property + Space + simple Lease round-trip through Ent to Postgres
+- Demonstrate: `cue vet` catches invalid data against constraints
 
 ### Phase 2: Core Ontology (Weeks 2-4)
 - Complete all domain model CUE files (person, property, jurisdiction, lease, accounting)
 - Complete relationships.cue and state_machines.cue
-- Run cue vet, resolve inconsistencies
+- Run `cue vet`, resolve inconsistencies
 - Generate full Ent schema set, verify migrations
 - Seed jurisdiction reference data (US federal + 50 states + major cities)
+- Demonstrate: state machine comprehensions generating test matrices
 
-### Phase 3: API Layer (Weeks 4-6)
-- Build cmd/apigen (CUE → Connect-RPC + OpenAPI + agent tools)
-- Define services in apigen.cue
-- Generate protos, handler scaffolds
-- Implement LeaseService handlers as reference implementation
+### Phase 3: Commands + Events (Weeks 4-6)
+- Define lease commands (MoveInTenant, RecordPayment, RenewLease, InitiateEviction)
+- Define property commands (OnboardProperty, TransferProperty)
+- Define accounting commands (PostJournalEntry, RecordPayment, Reconcile)
+- Define corresponding domain events for each command
+- Build command execution infrastructure (command bus → handlers → Ent mutations → event emission)
+- Implement MoveInTenant as reference: single command touching 4 entity types
+- Demonstrate: command payload validates against ontology types via CUE imports
 
-### Phase 4: Events + Projections (Weeks 6-8)
-- Build cmd/eventgen, set up NATS JetStream
-- Implement Ent hooks for event emission
-- Build graph sync (Neo4j) and search sync (Meilisearch) workers
+### Phase 4: External API (Weeks 6-8)
+- Define api/v1/ contracts — separate shapes from internal model
+- Build API handler layer (request → command → response transformation)
+- Implement anti-corruption layer: cents↔dollars, time.Time↔ISO strings, denormalization
+- Set up NATS JetStream for domain event distribution
+- Build event consumers: graph sync (Neo4j), search sync (Meilisearch), cache invalidation
+- Demonstrate: internal field rename does NOT break API contract
 
 ### Phase 5: Permissions (Weeks 8-10)
-- Build cmd/authzgen, implement OPA rules
-- Implement Ent privacy policies
-- Integrate with PersonRole system
+- Define permission groups in policies/ (business-defined, not derived)
+- Define field-level policies for PII and sensitive data
+- Build authorization middleware: PersonRole scope chain + permission group evaluation
+- Integrate with command execution (check _requires_permission before executing)
+- Demonstrate: same entity, different field visibility per role
 
-### Phase 6: Agent Integration (Weeks 10-12)
-- Build cmd/agentgen (ONTOLOGY.md, STATE_MACHINES.md, TOOLS.md)
-- Integrate tools with Propeller agent runtime
+### Phase 6: Drift Detection + Agent Integration (Weeks 10-12)
+- Build codegen/drift.cue — cross-boundary validation
+- Run `cue vet` across ontology + commands + events + api + policies
+- Build cmd/agentgen (ONTOLOGY.md, STATE_MACHINES.md, COMMANDS.md for agent context)
+- Agent tools map to commands (not entity CRUD) — agent executes MoveInTenant, not PATCH Lease
 - Test agent goal execution against live system
+- Demonstrate: add new ontology enum → drift check catches stale API contract
 
 ---
 
@@ -1853,7 +2809,7 @@ This ontology was validated against the following property types and lease struc
 | Scenario | Result |
 |---|---|
 | Single-family rental (with ADU) | ✅ Works |
-| Duplex/fourplex (owner-occupied unit) | ✅ Works (added owner_occupied status) |
+| Duplex/fourplex (owner-occupied unit) | ✅ Works (owner_occupied status) |
 | Garden-style apartment complex | ✅ Works |
 | Mid/high-rise apartment | ✅ Works |
 | Mixed-use building (retail + residential) | ✅ Works |
@@ -1861,7 +2817,7 @@ This ontology was validated against the following property types and lease struc
 | Student housing (mixed whole-unit and by-the-bed) | ✅ Works |
 | Senior living / assisted living | ✅ Works |
 | Affordable housing (LIHTC, Section 8) | ✅ Works |
-| Vacation / short-term rental | ✅ Works (added short_term lease type) |
+| Vacation / short-term rental | ✅ Works (short_term lease type) |
 | Manufactured housing / mobile home park | ✅ Works (lot_pad space type, no building) |
 | Commercial office (multi-tenant) | ✅ Works |
 | Commercial office (full-floor tenant) | ✅ Works (M2M LeaseSpace) |
@@ -1871,26 +2827,26 @@ This ontology was validated against the following property types and lease struc
 | Industrial / warehouse | ✅ Works |
 | Flex space (office + warehouse, different rates) | ✅ Works (RecurringCharge.space_id) |
 | Medical office building | ✅ Works (specialized_infrastructure) |
-| Data center (rack/cage/suite) | ✅ Works (added UsageBasedCharge) |
+| Data center (rack/cage/suite) | ✅ Works (UsageBasedCharge) |
 | Self-storage facility | ✅ Works |
 | Coworking (hot desk, dedicated, private office) | ⚠️ Partial (membership lease; hourly bookings out of scope) |
 | Triple Net (NNN) lease | ✅ Works |
 | Double Net (NN) lease | ✅ Works |
 | Single Net (N) lease | ✅ Works |
-| Gross / Full Service lease | ✅ Works (added base_year, expense_stop) |
-| Modified Gross lease | ✅ Works (added CAMCategoryTerms) |
-| Percentage rent (retail) | ✅ Works (added PercentageRent) |
+| Gross / Full Service lease | ✅ Works (base_year, expense_stop) |
+| Modified Gross lease | ✅ Works (CAMCategoryTerms) |
+| Percentage rent (retail) | ✅ Works (PercentageRent) |
 | Graduated / step-up lease | ✅ Works (RentScheduleEntry) |
-| CPI-indexed lease | ✅ Works (added RentAdjustment) |
-| Ground lease | ✅ Works (added ground_lease type) |
+| CPI-indexed lease | ✅ Works (RentAdjustment) |
+| Ground lease | ✅ Works (ground_lease type) |
 | Sublease (standard) | ✅ Works (parent_lease_id) |
-| Sublease (direct-to-landlord billing) | ✅ Works (added sublease_billing) |
+| Sublease (direct-to-landlord billing) | ✅ Works (sublease_billing) |
 | Commercial expansion (mid-term) | ✅ Works (LeaseSpace with effective dates) |
-| Commercial contraction | ✅ Works (added ContractionRight) |
+| Commercial contraction | ✅ Works (ContractionRight) |
 | Joint and several liability | ✅ Works (liability_type on Lease) |
-| Roommate departure mid-lease | ✅ Works (occupancy_status + liability_status on TenantAttributes) |
+| Roommate departure mid-lease | ✅ Works (occupancy_status + liability_status) |
 | Build-to-suit | ✅ Works (lease_commencement vs rent_commencement dates) |
-| Flex/hybrid post-COVID | ✅ Works (added ExpansionRight) |
+| Flex/hybrid post-COVID | ✅ Works (ExpansionRight) |
 
 **Jurisdiction stress test:**
 
@@ -1912,6 +2868,19 @@ This ontology was validated against the following property types and lease struc
 | Just cause eviction + right to counsel (dual requirement) | ✅ Works — requirements accumulate, don't override |
 | Lead paint disclosure (federal, applies via year_built) | ✅ Works — federal rule with property-level exemption criteria |
 
+**Command stress test:**
+
+| Scenario | Result |
+|---|---|
+| MoveInTenant touching 4 entity types atomically | ✅ Works — single command, multi-entity mutation |
+| RecordPayment with auto-allocation to oldest charges | ✅ Works — command handler logic, not entity CRUD |
+| RenewLease with jurisdiction rent cap validation | ✅ Works — command checks _jurisdiction_checks |
+| InitiateEviction with just cause + right to counsel | ✅ Works — jurisdiction rules inform command execution |
+| OnboardProperty with address geocoding + jurisdiction resolution | ✅ Works — command creates Property + PropertyJurisdictions |
+| API v1 response after internal field rename | ✅ Works — API contract decoupled from ontology |
+| Permission check: leasing agent tries to post journal entry | ✅ Blocked — command_permissions check |
+| Permission check: accountant sees deposit, maintenance tech doesn't | ✅ Works — field_policies per group |
+
 ## Appendix B: Technology Stack
 
 | Component | Technology |
@@ -1926,3 +2895,44 @@ This ontology was validated against the following property types and lease struc
 | Message bus | NATS JetStream 2.10+ |
 | Authorization | OPA 0.62+ |
 | Language | Go 1.22+ |
+| Frontend | Svelte + Skeleton UI + Tailwind CSS |
+
+## Appendix C: CUE Feature Demonstration Checklist
+
+For the POC, demonstrate these CUE features:
+
+| Feature | Where Demonstrated |
+|---|---|
+| `close()` — closed structs | Every entity + command + event + API response (extra fields rejected) |
+| Embedding (`#BaseEntity`) | Every entity inherits id + audit |
+| `#StatefulEntity` | Entities with status get state machine wiring |
+| `#ImmutableEntity` | LedgerEntry cannot be updated/deleted |
+| `if` conditionals | Lease: NNN requires CAM, fixed_term requires end date |
+| `*` defaults | `liability_type: *"joint_and_several"`, `leasable: *true` |
+| `=~` patterns | Address postal_code, routing_number, email, state codes |
+| `_` hidden fields | `_display_template`, `_affects`, `_requires_permission`, `_jurisdiction_checks` |
+| Comprehensions | Test matrices from state machines, scaffolded events, drift detection |
+| Unification (`&`) | Jurisdiction constraint composition (CA + Santa Monica) |
+| `list.MinItems()` | contact_methods requires ≥1, journal lines requires ≥2 |
+| Type unions | Enum types as `"a" \| "b" \| "c"` with full exhaustiveness |
+| Nested conditionals | CAMTerms: base_year and expense_stop mutually exclusive |
+| Conditional type refinement | PersonRole attributes match role_type |
+| Cross-package import | Commands import `ontology.#PositiveMoney` for field validation |
+| Drift detection | `cue vet` across ontology + commands + events + api catches stale references |
+
+## Appendix D: Coupling Decisions Rationale
+
+This table documents why each boundary has the coupling level it does.
+
+| Boundary | Coupling | Why This Level | Risk of Tighter | Risk of Looser |
+|---|---|---|---|---|
+| Data store (Ent) | Tight/1:1 | Store IS the model. No valid reason for divergence. | None (this is correct) | Data loss, inconsistency |
+| State machines (Ent hooks) | Tight/1:1 | Enforcement must match definition. | None | Invalid transitions reach DB |
+| Test matrices | Tight/generated | Tests SHOULD break when model changes. | None | Stale tests, false confidence |
+| Agent world model | Tight/generated | Agent must know current model truth. | None | Agent hallucinates fields |
+| Commands (CQRS) | Shared vocabulary | Actions span entities. Payload ≠ any single entity. | Zuora problem: internal refactoring breaks everything | Type drift, validation gaps |
+| Domain Events | Shared vocabulary | Events are projections, not dumps. Consumers need stability. | Consumers coupled to internal schema | Wrong types in event payloads |
+| External API (v1) | Shared vocabulary | Versioned contract. Customer consistency. | Zuora problem at its worst | Enum drift, inconsistent types |
+| Permissions | References only | Business logic, not schema logic. | Over-coupling: schema change = policy change | Stale permission checks |
+| Read models | Loose | Optimized for queries, not normalized truth. | Performance bottleneck | Eventual consistency surprises |
+| Search indices | Loose | Subset, denormalized for speed. | Indexing overhead | Missing search fields |

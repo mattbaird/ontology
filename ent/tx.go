@@ -18,10 +18,18 @@ type Tx struct {
 	Application *ApplicationClient
 	// BankAccount is the client for interacting with the BankAccount builders.
 	BankAccount *BankAccountClient
+	// BaseEntity is the client for interacting with the BaseEntity builders.
+	BaseEntity *BaseEntityClient
 	// Building is the client for interacting with the Building builders.
 	Building *BuildingClient
+	// ImmutableEntity is the client for interacting with the ImmutableEntity builders.
+	ImmutableEntity *ImmutableEntityClient
 	// JournalEntry is the client for interacting with the JournalEntry builders.
 	JournalEntry *JournalEntryClient
+	// Jurisdiction is the client for interacting with the Jurisdiction builders.
+	Jurisdiction *JurisdictionClient
+	// JurisdictionRule is the client for interacting with the JurisdictionRule builders.
+	JurisdictionRule *JurisdictionRuleClient
 	// Lease is the client for interacting with the Lease builders.
 	Lease *LeaseClient
 	// LeaseSpace is the client for interacting with the LeaseSpace builders.
@@ -38,10 +46,14 @@ type Tx struct {
 	Portfolio *PortfolioClient
 	// Property is the client for interacting with the Property builders.
 	Property *PropertyClient
+	// PropertyJurisdiction is the client for interacting with the PropertyJurisdiction builders.
+	PropertyJurisdiction *PropertyJurisdictionClient
 	// Reconciliation is the client for interacting with the Reconciliation builders.
 	Reconciliation *ReconciliationClient
 	// Space is the client for interacting with the Space builders.
 	Space *SpaceClient
+	// StatefulEntity is the client for interacting with the StatefulEntity builders.
+	StatefulEntity *StatefulEntityClient
 
 	// lazily loaded.
 	client     *Client
@@ -176,8 +188,12 @@ func (tx *Tx) init() {
 	tx.Account = NewAccountClient(tx.config)
 	tx.Application = NewApplicationClient(tx.config)
 	tx.BankAccount = NewBankAccountClient(tx.config)
+	tx.BaseEntity = NewBaseEntityClient(tx.config)
 	tx.Building = NewBuildingClient(tx.config)
+	tx.ImmutableEntity = NewImmutableEntityClient(tx.config)
 	tx.JournalEntry = NewJournalEntryClient(tx.config)
+	tx.Jurisdiction = NewJurisdictionClient(tx.config)
+	tx.JurisdictionRule = NewJurisdictionRuleClient(tx.config)
 	tx.Lease = NewLeaseClient(tx.config)
 	tx.LeaseSpace = NewLeaseSpaceClient(tx.config)
 	tx.LedgerEntry = NewLedgerEntryClient(tx.config)
@@ -186,8 +202,10 @@ func (tx *Tx) init() {
 	tx.PersonRole = NewPersonRoleClient(tx.config)
 	tx.Portfolio = NewPortfolioClient(tx.config)
 	tx.Property = NewPropertyClient(tx.config)
+	tx.PropertyJurisdiction = NewPropertyJurisdictionClient(tx.config)
 	tx.Reconciliation = NewReconciliationClient(tx.config)
 	tx.Space = NewSpaceClient(tx.config)
+	tx.StatefulEntity = NewStatefulEntityClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

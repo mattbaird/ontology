@@ -149,16 +149,16 @@ func (_u *BankAccountUpdate) SetNillableAccountType(v *bankaccount.AccountType) 
 	return _u
 }
 
-// SetBankName sets the "bank_name" field.
-func (_u *BankAccountUpdate) SetBankName(v string) *BankAccountUpdate {
-	_u.mutation.SetBankName(v)
+// SetInstitutionName sets the "institution_name" field.
+func (_u *BankAccountUpdate) SetInstitutionName(v string) *BankAccountUpdate {
+	_u.mutation.SetInstitutionName(v)
 	return _u
 }
 
-// SetNillableBankName sets the "bank_name" field if the given value is not nil.
-func (_u *BankAccountUpdate) SetNillableBankName(v *string) *BankAccountUpdate {
+// SetNillableInstitutionName sets the "institution_name" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillableInstitutionName(v *string) *BankAccountUpdate {
 	if v != nil {
-		_u.SetBankName(*v)
+		_u.SetInstitutionName(*v)
 	}
 	return _u
 }
@@ -177,23 +177,77 @@ func (_u *BankAccountUpdate) SetNillableRoutingNumber(v *string) *BankAccountUpd
 	return _u
 }
 
-// ClearRoutingNumber clears the value of the "routing_number" field.
-func (_u *BankAccountUpdate) ClearRoutingNumber() *BankAccountUpdate {
-	_u.mutation.ClearRoutingNumber()
+// SetAccountMask sets the "account_mask" field.
+func (_u *BankAccountUpdate) SetAccountMask(v string) *BankAccountUpdate {
+	_u.mutation.SetAccountMask(v)
 	return _u
 }
 
-// SetAccountNumberLastFour sets the "account_number_last_four" field.
-func (_u *BankAccountUpdate) SetAccountNumberLastFour(v string) *BankAccountUpdate {
-	_u.mutation.SetAccountNumberLastFour(v)
-	return _u
-}
-
-// SetNillableAccountNumberLastFour sets the "account_number_last_four" field if the given value is not nil.
-func (_u *BankAccountUpdate) SetNillableAccountNumberLastFour(v *string) *BankAccountUpdate {
+// SetNillableAccountMask sets the "account_mask" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillableAccountMask(v *string) *BankAccountUpdate {
 	if v != nil {
-		_u.SetAccountNumberLastFour(*v)
+		_u.SetAccountMask(*v)
 	}
+	return _u
+}
+
+// SetAccountNumberEncrypted sets the "account_number_encrypted" field.
+func (_u *BankAccountUpdate) SetAccountNumberEncrypted(v string) *BankAccountUpdate {
+	_u.mutation.SetAccountNumberEncrypted(v)
+	return _u
+}
+
+// SetNillableAccountNumberEncrypted sets the "account_number_encrypted" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillableAccountNumberEncrypted(v *string) *BankAccountUpdate {
+	if v != nil {
+		_u.SetAccountNumberEncrypted(*v)
+	}
+	return _u
+}
+
+// ClearAccountNumberEncrypted clears the value of the "account_number_encrypted" field.
+func (_u *BankAccountUpdate) ClearAccountNumberEncrypted() *BankAccountUpdate {
+	_u.mutation.ClearAccountNumberEncrypted()
+	return _u
+}
+
+// SetPlaidAccountID sets the "plaid_account_id" field.
+func (_u *BankAccountUpdate) SetPlaidAccountID(v string) *BankAccountUpdate {
+	_u.mutation.SetPlaidAccountID(v)
+	return _u
+}
+
+// SetNillablePlaidAccountID sets the "plaid_account_id" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillablePlaidAccountID(v *string) *BankAccountUpdate {
+	if v != nil {
+		_u.SetPlaidAccountID(*v)
+	}
+	return _u
+}
+
+// ClearPlaidAccountID clears the value of the "plaid_account_id" field.
+func (_u *BankAccountUpdate) ClearPlaidAccountID() *BankAccountUpdate {
+	_u.mutation.ClearPlaidAccountID()
+	return _u
+}
+
+// SetPlaidAccessToken sets the "plaid_access_token" field.
+func (_u *BankAccountUpdate) SetPlaidAccessToken(v string) *BankAccountUpdate {
+	_u.mutation.SetPlaidAccessToken(v)
+	return _u
+}
+
+// SetNillablePlaidAccessToken sets the "plaid_access_token" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillablePlaidAccessToken(v *string) *BankAccountUpdate {
+	if v != nil {
+		_u.SetPlaidAccessToken(*v)
+	}
+	return _u
+}
+
+// ClearPlaidAccessToken clears the value of the "plaid_access_token" field.
+func (_u *BankAccountUpdate) ClearPlaidAccessToken() *BankAccountUpdate {
+	_u.mutation.ClearPlaidAccessToken()
 	return _u
 }
 
@@ -251,6 +305,48 @@ func (_u *BankAccountUpdate) SetNillableStatus(v *bankaccount.Status) *BankAccou
 	return _u
 }
 
+// SetIsDefault sets the "is_default" field.
+func (_u *BankAccountUpdate) SetIsDefault(v bool) *BankAccountUpdate {
+	_u.mutation.SetIsDefault(v)
+	return _u
+}
+
+// SetNillableIsDefault sets the "is_default" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillableIsDefault(v *bool) *BankAccountUpdate {
+	if v != nil {
+		_u.SetIsDefault(*v)
+	}
+	return _u
+}
+
+// SetAcceptsDeposits sets the "accepts_deposits" field.
+func (_u *BankAccountUpdate) SetAcceptsDeposits(v bool) *BankAccountUpdate {
+	_u.mutation.SetAcceptsDeposits(v)
+	return _u
+}
+
+// SetNillableAcceptsDeposits sets the "accepts_deposits" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillableAcceptsDeposits(v *bool) *BankAccountUpdate {
+	if v != nil {
+		_u.SetAcceptsDeposits(*v)
+	}
+	return _u
+}
+
+// SetAcceptsPayments sets the "accepts_payments" field.
+func (_u *BankAccountUpdate) SetAcceptsPayments(v bool) *BankAccountUpdate {
+	_u.mutation.SetAcceptsPayments(v)
+	return _u
+}
+
+// SetNillableAcceptsPayments sets the "accepts_payments" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillableAcceptsPayments(v *bool) *BankAccountUpdate {
+	if v != nil {
+		_u.SetAcceptsPayments(*v)
+	}
+	return _u
+}
+
 // SetCurrentBalanceAmountCents sets the "current_balance_amount_cents" field.
 func (_u *BankAccountUpdate) SetCurrentBalanceAmountCents(v int64) *BankAccountUpdate {
 	_u.mutation.ResetCurrentBalanceAmountCents()
@@ -298,71 +394,23 @@ func (_u *BankAccountUpdate) ClearCurrentBalanceCurrency() *BankAccountUpdate {
 	return _u
 }
 
-// SetLastReconciledAt sets the "last_reconciled_at" field.
-func (_u *BankAccountUpdate) SetLastReconciledAt(v time.Time) *BankAccountUpdate {
-	_u.mutation.SetLastReconciledAt(v)
+// SetLastStatementDate sets the "last_statement_date" field.
+func (_u *BankAccountUpdate) SetLastStatementDate(v time.Time) *BankAccountUpdate {
+	_u.mutation.SetLastStatementDate(v)
 	return _u
 }
 
-// SetNillableLastReconciledAt sets the "last_reconciled_at" field if the given value is not nil.
-func (_u *BankAccountUpdate) SetNillableLastReconciledAt(v *time.Time) *BankAccountUpdate {
+// SetNillableLastStatementDate sets the "last_statement_date" field if the given value is not nil.
+func (_u *BankAccountUpdate) SetNillableLastStatementDate(v *time.Time) *BankAccountUpdate {
 	if v != nil {
-		_u.SetLastReconciledAt(*v)
+		_u.SetLastStatementDate(*v)
 	}
 	return _u
 }
 
-// ClearLastReconciledAt clears the value of the "last_reconciled_at" field.
-func (_u *BankAccountUpdate) ClearLastReconciledAt() *BankAccountUpdate {
-	_u.mutation.ClearLastReconciledAt()
-	return _u
-}
-
-// SetIsTrust sets the "is_trust" field.
-func (_u *BankAccountUpdate) SetIsTrust(v bool) *BankAccountUpdate {
-	_u.mutation.SetIsTrust(v)
-	return _u
-}
-
-// SetNillableIsTrust sets the "is_trust" field if the given value is not nil.
-func (_u *BankAccountUpdate) SetNillableIsTrust(v *bool) *BankAccountUpdate {
-	if v != nil {
-		_u.SetIsTrust(*v)
-	}
-	return _u
-}
-
-// SetTrustState sets the "trust_state" field.
-func (_u *BankAccountUpdate) SetTrustState(v string) *BankAccountUpdate {
-	_u.mutation.SetTrustState(v)
-	return _u
-}
-
-// SetNillableTrustState sets the "trust_state" field if the given value is not nil.
-func (_u *BankAccountUpdate) SetNillableTrustState(v *string) *BankAccountUpdate {
-	if v != nil {
-		_u.SetTrustState(*v)
-	}
-	return _u
-}
-
-// ClearTrustState clears the value of the "trust_state" field.
-func (_u *BankAccountUpdate) ClearTrustState() *BankAccountUpdate {
-	_u.mutation.ClearTrustState()
-	return _u
-}
-
-// SetComminglingAllowed sets the "commingling_allowed" field.
-func (_u *BankAccountUpdate) SetComminglingAllowed(v bool) *BankAccountUpdate {
-	_u.mutation.SetComminglingAllowed(v)
-	return _u
-}
-
-// SetNillableComminglingAllowed sets the "commingling_allowed" field if the given value is not nil.
-func (_u *BankAccountUpdate) SetNillableComminglingAllowed(v *bool) *BankAccountUpdate {
-	if v != nil {
-		_u.SetComminglingAllowed(*v)
-	}
+// ClearLastStatementDate clears the value of the "last_statement_date" field.
+func (_u *BankAccountUpdate) ClearLastStatementDate() *BankAccountUpdate {
+	_u.mutation.ClearLastStatementDate()
 	return _u
 }
 
@@ -487,9 +535,7 @@ func (_u *BankAccountUpdate) RemoveReconciliations(v ...*Reconciliation) *BankAc
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *BankAccountUpdate) Save(ctx context.Context) (int, error) {
-	if err := _u.defaults(); err != nil {
-		return 0, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -516,15 +562,11 @@ func (_u *BankAccountUpdate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *BankAccountUpdate) defaults() error {
+func (_u *BankAccountUpdate) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if bankaccount.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized bankaccount.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := bankaccount.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -607,17 +649,32 @@ func (_u *BankAccountUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.AccountType(); ok {
 		_spec.SetField(bankaccount.FieldAccountType, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.BankName(); ok {
-		_spec.SetField(bankaccount.FieldBankName, field.TypeString, value)
+	if value, ok := _u.mutation.InstitutionName(); ok {
+		_spec.SetField(bankaccount.FieldInstitutionName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.RoutingNumber(); ok {
 		_spec.SetField(bankaccount.FieldRoutingNumber, field.TypeString, value)
 	}
-	if _u.mutation.RoutingNumberCleared() {
-		_spec.ClearField(bankaccount.FieldRoutingNumber, field.TypeString)
+	if value, ok := _u.mutation.AccountMask(); ok {
+		_spec.SetField(bankaccount.FieldAccountMask, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.AccountNumberLastFour(); ok {
-		_spec.SetField(bankaccount.FieldAccountNumberLastFour, field.TypeString, value)
+	if value, ok := _u.mutation.AccountNumberEncrypted(); ok {
+		_spec.SetField(bankaccount.FieldAccountNumberEncrypted, field.TypeString, value)
+	}
+	if _u.mutation.AccountNumberEncryptedCleared() {
+		_spec.ClearField(bankaccount.FieldAccountNumberEncrypted, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlaidAccountID(); ok {
+		_spec.SetField(bankaccount.FieldPlaidAccountID, field.TypeString, value)
+	}
+	if _u.mutation.PlaidAccountIDCleared() {
+		_spec.ClearField(bankaccount.FieldPlaidAccountID, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlaidAccessToken(); ok {
+		_spec.SetField(bankaccount.FieldPlaidAccessToken, field.TypeString, value)
+	}
+	if _u.mutation.PlaidAccessTokenCleared() {
+		_spec.ClearField(bankaccount.FieldPlaidAccessToken, field.TypeString)
 	}
 	if value, ok := _u.mutation.PropertyID(); ok {
 		_spec.SetField(bankaccount.FieldPropertyID, field.TypeString, value)
@@ -634,6 +691,15 @@ func (_u *BankAccountUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(bankaccount.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.IsDefault(); ok {
+		_spec.SetField(bankaccount.FieldIsDefault, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.AcceptsDeposits(); ok {
+		_spec.SetField(bankaccount.FieldAcceptsDeposits, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.AcceptsPayments(); ok {
+		_spec.SetField(bankaccount.FieldAcceptsPayments, field.TypeBool, value)
+	}
 	if value, ok := _u.mutation.CurrentBalanceAmountCents(); ok {
 		_spec.SetField(bankaccount.FieldCurrentBalanceAmountCents, field.TypeInt64, value)
 	}
@@ -649,23 +715,11 @@ func (_u *BankAccountUpdate) sqlSave(ctx context.Context) (_node int, err error)
 	if _u.mutation.CurrentBalanceCurrencyCleared() {
 		_spec.ClearField(bankaccount.FieldCurrentBalanceCurrency, field.TypeString)
 	}
-	if value, ok := _u.mutation.LastReconciledAt(); ok {
-		_spec.SetField(bankaccount.FieldLastReconciledAt, field.TypeTime, value)
+	if value, ok := _u.mutation.LastStatementDate(); ok {
+		_spec.SetField(bankaccount.FieldLastStatementDate, field.TypeTime, value)
 	}
-	if _u.mutation.LastReconciledAtCleared() {
-		_spec.ClearField(bankaccount.FieldLastReconciledAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.IsTrust(); ok {
-		_spec.SetField(bankaccount.FieldIsTrust, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.TrustState(); ok {
-		_spec.SetField(bankaccount.FieldTrustState, field.TypeString, value)
-	}
-	if _u.mutation.TrustStateCleared() {
-		_spec.ClearField(bankaccount.FieldTrustState, field.TypeString)
-	}
-	if value, ok := _u.mutation.ComminglingAllowed(); ok {
-		_spec.SetField(bankaccount.FieldComminglingAllowed, field.TypeBool, value)
+	if _u.mutation.LastStatementDateCleared() {
+		_spec.ClearField(bankaccount.FieldLastStatementDate, field.TypeTime)
 	}
 	if _u.mutation.TrustPortfolioCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -951,16 +1005,16 @@ func (_u *BankAccountUpdateOne) SetNillableAccountType(v *bankaccount.AccountTyp
 	return _u
 }
 
-// SetBankName sets the "bank_name" field.
-func (_u *BankAccountUpdateOne) SetBankName(v string) *BankAccountUpdateOne {
-	_u.mutation.SetBankName(v)
+// SetInstitutionName sets the "institution_name" field.
+func (_u *BankAccountUpdateOne) SetInstitutionName(v string) *BankAccountUpdateOne {
+	_u.mutation.SetInstitutionName(v)
 	return _u
 }
 
-// SetNillableBankName sets the "bank_name" field if the given value is not nil.
-func (_u *BankAccountUpdateOne) SetNillableBankName(v *string) *BankAccountUpdateOne {
+// SetNillableInstitutionName sets the "institution_name" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillableInstitutionName(v *string) *BankAccountUpdateOne {
 	if v != nil {
-		_u.SetBankName(*v)
+		_u.SetInstitutionName(*v)
 	}
 	return _u
 }
@@ -979,23 +1033,77 @@ func (_u *BankAccountUpdateOne) SetNillableRoutingNumber(v *string) *BankAccount
 	return _u
 }
 
-// ClearRoutingNumber clears the value of the "routing_number" field.
-func (_u *BankAccountUpdateOne) ClearRoutingNumber() *BankAccountUpdateOne {
-	_u.mutation.ClearRoutingNumber()
+// SetAccountMask sets the "account_mask" field.
+func (_u *BankAccountUpdateOne) SetAccountMask(v string) *BankAccountUpdateOne {
+	_u.mutation.SetAccountMask(v)
 	return _u
 }
 
-// SetAccountNumberLastFour sets the "account_number_last_four" field.
-func (_u *BankAccountUpdateOne) SetAccountNumberLastFour(v string) *BankAccountUpdateOne {
-	_u.mutation.SetAccountNumberLastFour(v)
-	return _u
-}
-
-// SetNillableAccountNumberLastFour sets the "account_number_last_four" field if the given value is not nil.
-func (_u *BankAccountUpdateOne) SetNillableAccountNumberLastFour(v *string) *BankAccountUpdateOne {
+// SetNillableAccountMask sets the "account_mask" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillableAccountMask(v *string) *BankAccountUpdateOne {
 	if v != nil {
-		_u.SetAccountNumberLastFour(*v)
+		_u.SetAccountMask(*v)
 	}
+	return _u
+}
+
+// SetAccountNumberEncrypted sets the "account_number_encrypted" field.
+func (_u *BankAccountUpdateOne) SetAccountNumberEncrypted(v string) *BankAccountUpdateOne {
+	_u.mutation.SetAccountNumberEncrypted(v)
+	return _u
+}
+
+// SetNillableAccountNumberEncrypted sets the "account_number_encrypted" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillableAccountNumberEncrypted(v *string) *BankAccountUpdateOne {
+	if v != nil {
+		_u.SetAccountNumberEncrypted(*v)
+	}
+	return _u
+}
+
+// ClearAccountNumberEncrypted clears the value of the "account_number_encrypted" field.
+func (_u *BankAccountUpdateOne) ClearAccountNumberEncrypted() *BankAccountUpdateOne {
+	_u.mutation.ClearAccountNumberEncrypted()
+	return _u
+}
+
+// SetPlaidAccountID sets the "plaid_account_id" field.
+func (_u *BankAccountUpdateOne) SetPlaidAccountID(v string) *BankAccountUpdateOne {
+	_u.mutation.SetPlaidAccountID(v)
+	return _u
+}
+
+// SetNillablePlaidAccountID sets the "plaid_account_id" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillablePlaidAccountID(v *string) *BankAccountUpdateOne {
+	if v != nil {
+		_u.SetPlaidAccountID(*v)
+	}
+	return _u
+}
+
+// ClearPlaidAccountID clears the value of the "plaid_account_id" field.
+func (_u *BankAccountUpdateOne) ClearPlaidAccountID() *BankAccountUpdateOne {
+	_u.mutation.ClearPlaidAccountID()
+	return _u
+}
+
+// SetPlaidAccessToken sets the "plaid_access_token" field.
+func (_u *BankAccountUpdateOne) SetPlaidAccessToken(v string) *BankAccountUpdateOne {
+	_u.mutation.SetPlaidAccessToken(v)
+	return _u
+}
+
+// SetNillablePlaidAccessToken sets the "plaid_access_token" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillablePlaidAccessToken(v *string) *BankAccountUpdateOne {
+	if v != nil {
+		_u.SetPlaidAccessToken(*v)
+	}
+	return _u
+}
+
+// ClearPlaidAccessToken clears the value of the "plaid_access_token" field.
+func (_u *BankAccountUpdateOne) ClearPlaidAccessToken() *BankAccountUpdateOne {
+	_u.mutation.ClearPlaidAccessToken()
 	return _u
 }
 
@@ -1053,6 +1161,48 @@ func (_u *BankAccountUpdateOne) SetNillableStatus(v *bankaccount.Status) *BankAc
 	return _u
 }
 
+// SetIsDefault sets the "is_default" field.
+func (_u *BankAccountUpdateOne) SetIsDefault(v bool) *BankAccountUpdateOne {
+	_u.mutation.SetIsDefault(v)
+	return _u
+}
+
+// SetNillableIsDefault sets the "is_default" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillableIsDefault(v *bool) *BankAccountUpdateOne {
+	if v != nil {
+		_u.SetIsDefault(*v)
+	}
+	return _u
+}
+
+// SetAcceptsDeposits sets the "accepts_deposits" field.
+func (_u *BankAccountUpdateOne) SetAcceptsDeposits(v bool) *BankAccountUpdateOne {
+	_u.mutation.SetAcceptsDeposits(v)
+	return _u
+}
+
+// SetNillableAcceptsDeposits sets the "accepts_deposits" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillableAcceptsDeposits(v *bool) *BankAccountUpdateOne {
+	if v != nil {
+		_u.SetAcceptsDeposits(*v)
+	}
+	return _u
+}
+
+// SetAcceptsPayments sets the "accepts_payments" field.
+func (_u *BankAccountUpdateOne) SetAcceptsPayments(v bool) *BankAccountUpdateOne {
+	_u.mutation.SetAcceptsPayments(v)
+	return _u
+}
+
+// SetNillableAcceptsPayments sets the "accepts_payments" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillableAcceptsPayments(v *bool) *BankAccountUpdateOne {
+	if v != nil {
+		_u.SetAcceptsPayments(*v)
+	}
+	return _u
+}
+
 // SetCurrentBalanceAmountCents sets the "current_balance_amount_cents" field.
 func (_u *BankAccountUpdateOne) SetCurrentBalanceAmountCents(v int64) *BankAccountUpdateOne {
 	_u.mutation.ResetCurrentBalanceAmountCents()
@@ -1100,71 +1250,23 @@ func (_u *BankAccountUpdateOne) ClearCurrentBalanceCurrency() *BankAccountUpdate
 	return _u
 }
 
-// SetLastReconciledAt sets the "last_reconciled_at" field.
-func (_u *BankAccountUpdateOne) SetLastReconciledAt(v time.Time) *BankAccountUpdateOne {
-	_u.mutation.SetLastReconciledAt(v)
+// SetLastStatementDate sets the "last_statement_date" field.
+func (_u *BankAccountUpdateOne) SetLastStatementDate(v time.Time) *BankAccountUpdateOne {
+	_u.mutation.SetLastStatementDate(v)
 	return _u
 }
 
-// SetNillableLastReconciledAt sets the "last_reconciled_at" field if the given value is not nil.
-func (_u *BankAccountUpdateOne) SetNillableLastReconciledAt(v *time.Time) *BankAccountUpdateOne {
+// SetNillableLastStatementDate sets the "last_statement_date" field if the given value is not nil.
+func (_u *BankAccountUpdateOne) SetNillableLastStatementDate(v *time.Time) *BankAccountUpdateOne {
 	if v != nil {
-		_u.SetLastReconciledAt(*v)
+		_u.SetLastStatementDate(*v)
 	}
 	return _u
 }
 
-// ClearLastReconciledAt clears the value of the "last_reconciled_at" field.
-func (_u *BankAccountUpdateOne) ClearLastReconciledAt() *BankAccountUpdateOne {
-	_u.mutation.ClearLastReconciledAt()
-	return _u
-}
-
-// SetIsTrust sets the "is_trust" field.
-func (_u *BankAccountUpdateOne) SetIsTrust(v bool) *BankAccountUpdateOne {
-	_u.mutation.SetIsTrust(v)
-	return _u
-}
-
-// SetNillableIsTrust sets the "is_trust" field if the given value is not nil.
-func (_u *BankAccountUpdateOne) SetNillableIsTrust(v *bool) *BankAccountUpdateOne {
-	if v != nil {
-		_u.SetIsTrust(*v)
-	}
-	return _u
-}
-
-// SetTrustState sets the "trust_state" field.
-func (_u *BankAccountUpdateOne) SetTrustState(v string) *BankAccountUpdateOne {
-	_u.mutation.SetTrustState(v)
-	return _u
-}
-
-// SetNillableTrustState sets the "trust_state" field if the given value is not nil.
-func (_u *BankAccountUpdateOne) SetNillableTrustState(v *string) *BankAccountUpdateOne {
-	if v != nil {
-		_u.SetTrustState(*v)
-	}
-	return _u
-}
-
-// ClearTrustState clears the value of the "trust_state" field.
-func (_u *BankAccountUpdateOne) ClearTrustState() *BankAccountUpdateOne {
-	_u.mutation.ClearTrustState()
-	return _u
-}
-
-// SetComminglingAllowed sets the "commingling_allowed" field.
-func (_u *BankAccountUpdateOne) SetComminglingAllowed(v bool) *BankAccountUpdateOne {
-	_u.mutation.SetComminglingAllowed(v)
-	return _u
-}
-
-// SetNillableComminglingAllowed sets the "commingling_allowed" field if the given value is not nil.
-func (_u *BankAccountUpdateOne) SetNillableComminglingAllowed(v *bool) *BankAccountUpdateOne {
-	if v != nil {
-		_u.SetComminglingAllowed(*v)
-	}
+// ClearLastStatementDate clears the value of the "last_statement_date" field.
+func (_u *BankAccountUpdateOne) ClearLastStatementDate() *BankAccountUpdateOne {
+	_u.mutation.ClearLastStatementDate()
 	return _u
 }
 
@@ -1302,9 +1404,7 @@ func (_u *BankAccountUpdateOne) Select(field string, fields ...string) *BankAcco
 
 // Save executes the query and returns the updated BankAccount entity.
 func (_u *BankAccountUpdateOne) Save(ctx context.Context) (*BankAccount, error) {
-	if err := _u.defaults(); err != nil {
-		return nil, err
-	}
+	_u.defaults()
 	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
@@ -1331,15 +1431,11 @@ func (_u *BankAccountUpdateOne) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_u *BankAccountUpdateOne) defaults() error {
+func (_u *BankAccountUpdateOne) defaults() {
 	if _, ok := _u.mutation.UpdatedAt(); !ok {
-		if bankaccount.UpdateDefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized bankaccount.UpdateDefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := bankaccount.UpdateDefaultUpdatedAt()
 		_u.mutation.SetUpdatedAt(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -1439,17 +1535,32 @@ func (_u *BankAccountUpdateOne) sqlSave(ctx context.Context) (_node *BankAccount
 	if value, ok := _u.mutation.AccountType(); ok {
 		_spec.SetField(bankaccount.FieldAccountType, field.TypeEnum, value)
 	}
-	if value, ok := _u.mutation.BankName(); ok {
-		_spec.SetField(bankaccount.FieldBankName, field.TypeString, value)
+	if value, ok := _u.mutation.InstitutionName(); ok {
+		_spec.SetField(bankaccount.FieldInstitutionName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.RoutingNumber(); ok {
 		_spec.SetField(bankaccount.FieldRoutingNumber, field.TypeString, value)
 	}
-	if _u.mutation.RoutingNumberCleared() {
-		_spec.ClearField(bankaccount.FieldRoutingNumber, field.TypeString)
+	if value, ok := _u.mutation.AccountMask(); ok {
+		_spec.SetField(bankaccount.FieldAccountMask, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.AccountNumberLastFour(); ok {
-		_spec.SetField(bankaccount.FieldAccountNumberLastFour, field.TypeString, value)
+	if value, ok := _u.mutation.AccountNumberEncrypted(); ok {
+		_spec.SetField(bankaccount.FieldAccountNumberEncrypted, field.TypeString, value)
+	}
+	if _u.mutation.AccountNumberEncryptedCleared() {
+		_spec.ClearField(bankaccount.FieldAccountNumberEncrypted, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlaidAccountID(); ok {
+		_spec.SetField(bankaccount.FieldPlaidAccountID, field.TypeString, value)
+	}
+	if _u.mutation.PlaidAccountIDCleared() {
+		_spec.ClearField(bankaccount.FieldPlaidAccountID, field.TypeString)
+	}
+	if value, ok := _u.mutation.PlaidAccessToken(); ok {
+		_spec.SetField(bankaccount.FieldPlaidAccessToken, field.TypeString, value)
+	}
+	if _u.mutation.PlaidAccessTokenCleared() {
+		_spec.ClearField(bankaccount.FieldPlaidAccessToken, field.TypeString)
 	}
 	if value, ok := _u.mutation.PropertyID(); ok {
 		_spec.SetField(bankaccount.FieldPropertyID, field.TypeString, value)
@@ -1466,6 +1577,15 @@ func (_u *BankAccountUpdateOne) sqlSave(ctx context.Context) (_node *BankAccount
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(bankaccount.FieldStatus, field.TypeEnum, value)
 	}
+	if value, ok := _u.mutation.IsDefault(); ok {
+		_spec.SetField(bankaccount.FieldIsDefault, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.AcceptsDeposits(); ok {
+		_spec.SetField(bankaccount.FieldAcceptsDeposits, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.AcceptsPayments(); ok {
+		_spec.SetField(bankaccount.FieldAcceptsPayments, field.TypeBool, value)
+	}
 	if value, ok := _u.mutation.CurrentBalanceAmountCents(); ok {
 		_spec.SetField(bankaccount.FieldCurrentBalanceAmountCents, field.TypeInt64, value)
 	}
@@ -1481,23 +1601,11 @@ func (_u *BankAccountUpdateOne) sqlSave(ctx context.Context) (_node *BankAccount
 	if _u.mutation.CurrentBalanceCurrencyCleared() {
 		_spec.ClearField(bankaccount.FieldCurrentBalanceCurrency, field.TypeString)
 	}
-	if value, ok := _u.mutation.LastReconciledAt(); ok {
-		_spec.SetField(bankaccount.FieldLastReconciledAt, field.TypeTime, value)
+	if value, ok := _u.mutation.LastStatementDate(); ok {
+		_spec.SetField(bankaccount.FieldLastStatementDate, field.TypeTime, value)
 	}
-	if _u.mutation.LastReconciledAtCleared() {
-		_spec.ClearField(bankaccount.FieldLastReconciledAt, field.TypeTime)
-	}
-	if value, ok := _u.mutation.IsTrust(); ok {
-		_spec.SetField(bankaccount.FieldIsTrust, field.TypeBool, value)
-	}
-	if value, ok := _u.mutation.TrustState(); ok {
-		_spec.SetField(bankaccount.FieldTrustState, field.TypeString, value)
-	}
-	if _u.mutation.TrustStateCleared() {
-		_spec.ClearField(bankaccount.FieldTrustState, field.TypeString)
-	}
-	if value, ok := _u.mutation.ComminglingAllowed(); ok {
-		_spec.SetField(bankaccount.FieldComminglingAllowed, field.TypeBool, value)
+	if _u.mutation.LastStatementDateCleared() {
+		_spec.ClearField(bankaccount.FieldLastStatementDate, field.TypeTime)
 	}
 	if _u.mutation.TrustPortfolioCleared() {
 		edge := &sqlgraph.EdgeSpec{

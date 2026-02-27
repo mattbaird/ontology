@@ -44,19 +44,11 @@ type EventTypeDef struct {
 	NATSSubject   string   `json:"nats_subject"`
 }
 
-// entityTransitionMap maps entity names to their CUE state machine definition names.
-var entityTransitionMap = map[string]string{
-	"Lease":          "#LeaseTransitions",
-	"Space":          "#SpaceTransitions",
-	"Building":       "#BuildingTransitions",
-	"Application":    "#ApplicationTransitions",
-	"JournalEntry":   "#JournalEntryTransitions",
-	"Portfolio":      "#PortfolioTransitions",
-	"Property":       "#PropertyTransitions",
-	"PersonRole":     "#PersonRoleTransitions",
-	"Organization":   "#OrganizationTransitions",
-	"BankAccount":    "#BankAccountTransitions",
-	"Reconciliation": "#ReconciliationTransitions",
+// statefulEntities lists all entities that have state machines, for deterministic iteration.
+var statefulEntities = []string{
+	"Application", "BankAccount", "Building", "Jurisdiction", "JurisdictionRule",
+	"JournalEntry", "Lease", "Organization", "PersonRole", "Portfolio",
+	"Property", "Reconciliation", "Space",
 }
 
 func main() {
@@ -77,8 +69,8 @@ func main() {
 
 	var allEvents []EventTypeDef
 
-	for entName, cueName := range entityTransitionMap {
-		smVal := val.LookupPath(cue.ParsePath(cueName))
+	for _, entName := range statefulEntities {
+		smVal := val.LookupPath(cue.ParsePath("#StateMachines." + toSnake(entName)))
 		if smVal.Err() != nil {
 			continue
 		}

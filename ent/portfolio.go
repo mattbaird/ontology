@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -40,16 +39,14 @@ type Portfolio struct {
 	Name string `json:"name,omitempty"`
 	// ManagementType holds the value of the "management_type" field.
 	ManagementType portfolio.ManagementType `json:"management_type,omitempty"`
-	// RequiresTrustAccounting holds the value of the "requires_trust_accounting" field.
-	RequiresTrustAccounting bool `json:"requires_trust_accounting,omitempty"`
-	// TrustBankAccountID holds the value of the "trust_bank_account_id" field.
-	TrustBankAccountID *string `json:"trust_bank_account_id,omitempty"`
+	// Description holds the value of the "description" field.
+	Description *string `json:"description,omitempty"`
 	// Status holds the value of the "status" field.
 	Status portfolio.Status `json:"status,omitempty"`
-	// DefaultPaymentMethods holds the value of the "default_payment_methods" field.
-	DefaultPaymentMethods []string `json:"default_payment_methods,omitempty"`
-	// FiscalYearStartMonth holds the value of the "fiscal_year_start_month" field.
-	FiscalYearStartMonth int `json:"fiscal_year_start_month,omitempty"`
+	// DefaultChartOfAccountsID holds the value of the "default_chart_of_accounts_id" field.
+	DefaultChartOfAccountsID *string `json:"default_chart_of_accounts_id,omitempty"`
+	// DefaultBankAccountID holds the value of the "default_bank_account_id" field.
+	DefaultBankAccountID *string `json:"default_bank_account_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PortfolioQuery when eager-loading is set.
 	Edges                         PortfolioEdges `json:"edges"`
@@ -107,13 +104,7 @@ func (*Portfolio) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case portfolio.FieldDefaultPaymentMethods:
-			values[i] = new([]byte)
-		case portfolio.FieldRequiresTrustAccounting:
-			values[i] = new(sql.NullBool)
-		case portfolio.FieldFiscalYearStartMonth:
-			values[i] = new(sql.NullInt64)
-		case portfolio.FieldCreatedBy, portfolio.FieldUpdatedBy, portfolio.FieldSource, portfolio.FieldCorrelationID, portfolio.FieldAgentGoalID, portfolio.FieldName, portfolio.FieldManagementType, portfolio.FieldTrustBankAccountID, portfolio.FieldStatus:
+		case portfolio.FieldCreatedBy, portfolio.FieldUpdatedBy, portfolio.FieldSource, portfolio.FieldCorrelationID, portfolio.FieldAgentGoalID, portfolio.FieldName, portfolio.FieldManagementType, portfolio.FieldDescription, portfolio.FieldStatus, portfolio.FieldDefaultChartOfAccountsID, portfolio.FieldDefaultBankAccountID:
 			values[i] = new(sql.NullString)
 		case portfolio.FieldCreatedAt, portfolio.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -200,18 +191,12 @@ func (_m *Portfolio) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ManagementType = portfolio.ManagementType(value.String)
 			}
-		case portfolio.FieldRequiresTrustAccounting:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field requires_trust_accounting", values[i])
-			} else if value.Valid {
-				_m.RequiresTrustAccounting = value.Bool
-			}
-		case portfolio.FieldTrustBankAccountID:
+		case portfolio.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field trust_bank_account_id", values[i])
+				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				_m.TrustBankAccountID = new(string)
-				*_m.TrustBankAccountID = value.String
+				_m.Description = new(string)
+				*_m.Description = value.String
 			}
 		case portfolio.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -219,19 +204,19 @@ func (_m *Portfolio) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Status = portfolio.Status(value.String)
 			}
-		case portfolio.FieldDefaultPaymentMethods:
-			if value, ok := values[i].(*[]byte); !ok {
-				return fmt.Errorf("unexpected type %T for field default_payment_methods", values[i])
-			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &_m.DefaultPaymentMethods); err != nil {
-					return fmt.Errorf("unmarshal field default_payment_methods: %w", err)
-				}
-			}
-		case portfolio.FieldFiscalYearStartMonth:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field fiscal_year_start_month", values[i])
+		case portfolio.FieldDefaultChartOfAccountsID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field default_chart_of_accounts_id", values[i])
 			} else if value.Valid {
-				_m.FiscalYearStartMonth = int(value.Int64)
+				_m.DefaultChartOfAccountsID = new(string)
+				*_m.DefaultChartOfAccountsID = value.String
+			}
+		case portfolio.FieldDefaultBankAccountID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field default_bank_account_id", values[i])
+			} else if value.Valid {
+				_m.DefaultBankAccountID = new(string)
+				*_m.DefaultBankAccountID = value.String
 			}
 		case portfolio.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -329,22 +314,23 @@ func (_m *Portfolio) String() string {
 	builder.WriteString("management_type=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ManagementType))
 	builder.WriteString(", ")
-	builder.WriteString("requires_trust_accounting=")
-	builder.WriteString(fmt.Sprintf("%v", _m.RequiresTrustAccounting))
-	builder.WriteString(", ")
-	if v := _m.TrustBankAccountID; v != nil {
-		builder.WriteString("trust_bank_account_id=")
+	if v := _m.Description; v != nil {
+		builder.WriteString("description=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
-	builder.WriteString("default_payment_methods=")
-	builder.WriteString(fmt.Sprintf("%v", _m.DefaultPaymentMethods))
+	if v := _m.DefaultChartOfAccountsID; v != nil {
+		builder.WriteString("default_chart_of_accounts_id=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("fiscal_year_start_month=")
-	builder.WriteString(fmt.Sprintf("%v", _m.FiscalYearStartMonth))
+	if v := _m.DefaultBankAccountID; v != nil {
+		builder.WriteString("default_bank_account_id=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

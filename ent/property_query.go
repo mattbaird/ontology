@@ -20,23 +20,25 @@ import (
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/propertyjurisdiction"
 	"github.com/matthewbaird/ontology/ent/space"
 )
 
 // PropertyQuery is the builder for querying Property entities.
 type PropertyQuery struct {
 	config
-	ctx               *QueryContext
-	order             []property.OrderOption
-	inters            []Interceptor
-	predicates        []predicate.Property
-	withPortfolio     *PortfolioQuery
-	withBuildings     *BuildingQuery
-	withSpaces        *SpaceQuery
-	withBankAccount   *BankAccountQuery
-	withApplications  *ApplicationQuery
-	withLedgerEntries *LedgerEntryQuery
-	withFKs           bool
+	ctx                       *QueryContext
+	order                     []property.OrderOption
+	inters                    []Interceptor
+	predicates                []predicate.Property
+	withPortfolio             *PortfolioQuery
+	withBuildings             *BuildingQuery
+	withSpaces                *SpaceQuery
+	withBankAccount           *BankAccountQuery
+	withApplications          *ApplicationQuery
+	withLedgerEntries         *LedgerEntryQuery
+	withPropertyJurisdictions *PropertyJurisdictionQuery
+	withFKs                   bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -198,6 +200,28 @@ func (_q *PropertyQuery) QueryLedgerEntries() *LedgerEntryQuery {
 			sqlgraph.From(property.Table, property.FieldID, selector),
 			sqlgraph.To(ledgerentry.Table, ledgerentry.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, property.LedgerEntriesTable, property.LedgerEntriesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPropertyJurisdictions chains the current query on the "property_jurisdictions" edge.
+func (_q *PropertyQuery) QueryPropertyJurisdictions() *PropertyJurisdictionQuery {
+	query := (&PropertyJurisdictionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(property.Table, property.FieldID, selector),
+			sqlgraph.To(propertyjurisdiction.Table, propertyjurisdiction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, property.PropertyJurisdictionsTable, property.PropertyJurisdictionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -392,17 +416,18 @@ func (_q *PropertyQuery) Clone() *PropertyQuery {
 		return nil
 	}
 	return &PropertyQuery{
-		config:            _q.config,
-		ctx:               _q.ctx.Clone(),
-		order:             append([]property.OrderOption{}, _q.order...),
-		inters:            append([]Interceptor{}, _q.inters...),
-		predicates:        append([]predicate.Property{}, _q.predicates...),
-		withPortfolio:     _q.withPortfolio.Clone(),
-		withBuildings:     _q.withBuildings.Clone(),
-		withSpaces:        _q.withSpaces.Clone(),
-		withBankAccount:   _q.withBankAccount.Clone(),
-		withApplications:  _q.withApplications.Clone(),
-		withLedgerEntries: _q.withLedgerEntries.Clone(),
+		config:                    _q.config,
+		ctx:                       _q.ctx.Clone(),
+		order:                     append([]property.OrderOption{}, _q.order...),
+		inters:                    append([]Interceptor{}, _q.inters...),
+		predicates:                append([]predicate.Property{}, _q.predicates...),
+		withPortfolio:             _q.withPortfolio.Clone(),
+		withBuildings:             _q.withBuildings.Clone(),
+		withSpaces:                _q.withSpaces.Clone(),
+		withBankAccount:           _q.withBankAccount.Clone(),
+		withApplications:          _q.withApplications.Clone(),
+		withLedgerEntries:         _q.withLedgerEntries.Clone(),
+		withPropertyJurisdictions: _q.withPropertyJurisdictions.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -472,6 +497,17 @@ func (_q *PropertyQuery) WithLedgerEntries(opts ...func(*LedgerEntryQuery)) *Pro
 		opt(query)
 	}
 	_q.withLedgerEntries = query
+	return _q
+}
+
+// WithPropertyJurisdictions tells the query-builder to eager-load the nodes that are connected to
+// the "property_jurisdictions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PropertyQuery) WithPropertyJurisdictions(opts ...func(*PropertyJurisdictionQuery)) *PropertyQuery {
+	query := (&PropertyJurisdictionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withPropertyJurisdictions = query
 	return _q
 }
 
@@ -554,13 +590,14 @@ func (_q *PropertyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pro
 		nodes       = []*Property{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [7]bool{
 			_q.withPortfolio != nil,
 			_q.withBuildings != nil,
 			_q.withSpaces != nil,
 			_q.withBankAccount != nil,
 			_q.withApplications != nil,
 			_q.withLedgerEntries != nil,
+			_q.withPropertyJurisdictions != nil,
 		}
 	)
 	if _q.withPortfolio != nil || _q.withBankAccount != nil {
@@ -624,6 +661,15 @@ func (_q *PropertyQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pro
 		if err := _q.loadLedgerEntries(ctx, query, nodes,
 			func(n *Property) { n.Edges.LedgerEntries = []*LedgerEntry{} },
 			func(n *Property, e *LedgerEntry) { n.Edges.LedgerEntries = append(n.Edges.LedgerEntries, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withPropertyJurisdictions; query != nil {
+		if err := _q.loadPropertyJurisdictions(ctx, query, nodes,
+			func(n *Property) { n.Edges.PropertyJurisdictions = []*PropertyJurisdiction{} },
+			func(n *Property, e *PropertyJurisdiction) {
+				n.Edges.PropertyJurisdictions = append(n.Edges.PropertyJurisdictions, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -813,6 +859,37 @@ func (_q *PropertyQuery) loadLedgerEntries(ctx context.Context, query *LedgerEnt
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "property_ledger_entries" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PropertyQuery) loadPropertyJurisdictions(ctx context.Context, query *PropertyJurisdictionQuery, nodes []*Property, init func(*Property), assign func(*Property, *PropertyJurisdiction)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Property)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.PropertyJurisdiction(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(property.PropertyJurisdictionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.property_property_jurisdictions
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "property_property_jurisdictions" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "property_property_jurisdictions" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

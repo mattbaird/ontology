@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -35,28 +34,28 @@ const (
 	FieldPeriodStart = "period_start"
 	// FieldPeriodEnd holds the string denoting the period_end field in the database.
 	FieldPeriodEnd = "period_end"
+	// FieldStatementDate holds the string denoting the statement_date field in the database.
+	FieldStatementDate = "statement_date"
 	// FieldStatementBalanceAmountCents holds the string denoting the statement_balance_amount_cents field in the database.
 	FieldStatementBalanceAmountCents = "statement_balance_amount_cents"
 	// FieldStatementBalanceCurrency holds the string denoting the statement_balance_currency field in the database.
 	FieldStatementBalanceCurrency = "statement_balance_currency"
-	// FieldSystemBalanceAmountCents holds the string denoting the system_balance_amount_cents field in the database.
-	FieldSystemBalanceAmountCents = "system_balance_amount_cents"
-	// FieldSystemBalanceCurrency holds the string denoting the system_balance_currency field in the database.
-	FieldSystemBalanceCurrency = "system_balance_currency"
+	// FieldGlBalanceAmountCents holds the string denoting the gl_balance_amount_cents field in the database.
+	FieldGlBalanceAmountCents = "gl_balance_amount_cents"
+	// FieldGlBalanceCurrency holds the string denoting the gl_balance_currency field in the database.
+	FieldGlBalanceCurrency = "gl_balance_currency"
 	// FieldDifferenceAmountCents holds the string denoting the difference_amount_cents field in the database.
 	FieldDifferenceAmountCents = "difference_amount_cents"
 	// FieldDifferenceCurrency holds the string denoting the difference_currency field in the database.
 	FieldDifferenceCurrency = "difference_currency"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldMatchedTransactionCount holds the string denoting the matched_transaction_count field in the database.
-	FieldMatchedTransactionCount = "matched_transaction_count"
-	// FieldUnmatchedTransactionCount holds the string denoting the unmatched_transaction_count field in the database.
-	FieldUnmatchedTransactionCount = "unmatched_transaction_count"
-	// FieldCompletedBy holds the string denoting the completed_by field in the database.
-	FieldCompletedBy = "completed_by"
-	// FieldCompletedAt holds the string denoting the completed_at field in the database.
-	FieldCompletedAt = "completed_at"
+	// FieldUnreconciledItems holds the string denoting the unreconciled_items field in the database.
+	FieldUnreconciledItems = "unreconciled_items"
+	// FieldReconciledBy holds the string denoting the reconciled_by field in the database.
+	FieldReconciledBy = "reconciled_by"
+	// FieldReconciledAt holds the string denoting the reconciled_at field in the database.
+	FieldReconciledAt = "reconciled_at"
 	// FieldApprovedBy holds the string denoting the approved_by field in the database.
 	FieldApprovedBy = "approved_by"
 	// FieldApprovedAt holds the string denoting the approved_at field in the database.
@@ -86,17 +85,17 @@ var Columns = []string{
 	FieldAgentGoalID,
 	FieldPeriodStart,
 	FieldPeriodEnd,
+	FieldStatementDate,
 	FieldStatementBalanceAmountCents,
 	FieldStatementBalanceCurrency,
-	FieldSystemBalanceAmountCents,
-	FieldSystemBalanceCurrency,
+	FieldGlBalanceAmountCents,
+	FieldGlBalanceCurrency,
 	FieldDifferenceAmountCents,
 	FieldDifferenceCurrency,
 	FieldStatus,
-	FieldMatchedTransactionCount,
-	FieldUnmatchedTransactionCount,
-	FieldCompletedBy,
-	FieldCompletedAt,
+	FieldUnreconciledItems,
+	FieldReconciledBy,
+	FieldReconciledAt,
 	FieldApprovedBy,
 	FieldApprovedAt,
 }
@@ -123,13 +122,7 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// Note that the variables below are initialized by the runtime
-// package on the initialization of the application. Therefore,
-// it should be imported in the main as follows:
-//
-//	import _ "github.com/matthewbaird/ontology/ent/runtime"
 var (
-	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -144,10 +137,10 @@ var (
 	DefaultStatementBalanceCurrency string
 	// StatementBalanceCurrencyValidator is a validator for the "statement_balance_currency" field. It is called by the builders before save.
 	StatementBalanceCurrencyValidator func(string) error
-	// DefaultSystemBalanceCurrency holds the default value on creation for the "system_balance_currency" field.
-	DefaultSystemBalanceCurrency string
-	// SystemBalanceCurrencyValidator is a validator for the "system_balance_currency" field. It is called by the builders before save.
-	SystemBalanceCurrencyValidator func(string) error
+	// DefaultGlBalanceCurrency holds the default value on creation for the "gl_balance_currency" field.
+	DefaultGlBalanceCurrency string
+	// GlBalanceCurrencyValidator is a validator for the "gl_balance_currency" field. It is called by the builders before save.
+	GlBalanceCurrencyValidator func(string) error
 	// DefaultDifferenceCurrency holds the default value on creation for the "difference_currency" field.
 	DefaultDifferenceCurrency string
 	// DifferenceCurrencyValidator is a validator for the "difference_currency" field. It is called by the builders before save.
@@ -260,6 +253,11 @@ func ByPeriodEnd(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPeriodEnd, opts...).ToFunc()
 }
 
+// ByStatementDate orders the results by the statement_date field.
+func ByStatementDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStatementDate, opts...).ToFunc()
+}
+
 // ByStatementBalanceAmountCents orders the results by the statement_balance_amount_cents field.
 func ByStatementBalanceAmountCents(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatementBalanceAmountCents, opts...).ToFunc()
@@ -270,14 +268,14 @@ func ByStatementBalanceCurrency(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatementBalanceCurrency, opts...).ToFunc()
 }
 
-// BySystemBalanceAmountCents orders the results by the system_balance_amount_cents field.
-func BySystemBalanceAmountCents(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSystemBalanceAmountCents, opts...).ToFunc()
+// ByGlBalanceAmountCents orders the results by the gl_balance_amount_cents field.
+func ByGlBalanceAmountCents(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGlBalanceAmountCents, opts...).ToFunc()
 }
 
-// BySystemBalanceCurrency orders the results by the system_balance_currency field.
-func BySystemBalanceCurrency(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldSystemBalanceCurrency, opts...).ToFunc()
+// ByGlBalanceCurrency orders the results by the gl_balance_currency field.
+func ByGlBalanceCurrency(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGlBalanceCurrency, opts...).ToFunc()
 }
 
 // ByDifferenceAmountCents orders the results by the difference_amount_cents field.
@@ -295,24 +293,19 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
-// ByMatchedTransactionCount orders the results by the matched_transaction_count field.
-func ByMatchedTransactionCount(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldMatchedTransactionCount, opts...).ToFunc()
+// ByUnreconciledItems orders the results by the unreconciled_items field.
+func ByUnreconciledItems(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUnreconciledItems, opts...).ToFunc()
 }
 
-// ByUnmatchedTransactionCount orders the results by the unmatched_transaction_count field.
-func ByUnmatchedTransactionCount(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUnmatchedTransactionCount, opts...).ToFunc()
+// ByReconciledBy orders the results by the reconciled_by field.
+func ByReconciledBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReconciledBy, opts...).ToFunc()
 }
 
-// ByCompletedBy orders the results by the completed_by field.
-func ByCompletedBy(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCompletedBy, opts...).ToFunc()
-}
-
-// ByCompletedAt orders the results by the completed_at field.
-func ByCompletedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCompletedAt, opts...).ToFunc()
+// ByReconciledAt orders the results by the reconciled_at field.
+func ByReconciledAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReconciledAt, opts...).ToFunc()
 }
 
 // ByApprovedBy orders the results by the approved_by field.

@@ -1,7 +1,7 @@
-# Propeller UI Generation Specification v2
+# Propeller UI Generation Specification v3
 
-**Version:** 2.0  
-**Date:** February 25, 2026  
+**Version:** 3.0  
+**Date:** February 26, 2026  
 **Author:** Matthew Baird, CTO — AppFolio  
 **Status:** For Claude Code Implementation  
 **Depends on:** propeller-ontology-spec-v2.md
@@ -10,21 +10,29 @@
 
 ## 1. Purpose
 
-This spec defines deterministic rules for generating UI components from the CUE ontology. The system has two layers:
+This spec defines how UI components are generated from two CUE inputs:
 
-**Layer 1: UI Schema Generator (`cmd/uigen`).** Reads ontology CUE files, applies mapping rules, outputs a framework-agnostic UI schema (JSON). This is the hard part — all the ontological logic lives here. It knows nothing about Svelte, React, or any framework.
+**Ontology CUE** (`ontology/*.cue`) — domain truth. Field types, constraints, state machines, relationships. Knows what a Lease IS. Says nothing about how to display one.
 
-**Layer 2: Svelte Renderer (`cmd/uirender`).** Reads the UI schema, outputs Svelte components using Skeleton UI and Tailwind CSS. This is the thin part — roughly 500 lines of template logic. Swapping to a different framework means writing a new renderer, not touching the schema generator.
+**View Definitions CUE** (`codegen/uigen.cue`) — UI decisions. Which fields appear in which views, column ordering, section grouping, filter configuration, display labels. Explicit declarations, not inferred heuristics.
+
+The generator merges them: view definitions say WHAT to show, the ontology says HOW it behaves (types, validation, transitions, relationships). Neither is complete without the other.
 
 ```
-Ontology (CUE)
-    ↓
-cmd/uigen → UI Schema (framework-agnostic JSON)
-    ↓
-cmd/uirender → Svelte + Skeleton + Tailwind components
+Ontology (CUE) ──────────┐
+                          ├──→ cmd/uigen → UI Schema (JSON) → cmd/uirender → Svelte + Skeleton + Tailwind
+View Definitions (CUE) ───┘
 ```
 
-Both run in `make generate`. One CUE change regenerates the schema and all components.
+Three layers:
+
+**Layer 0: View Definitions** (`codegen/uigen.cue`). CUE file where humans (or Claude Code) declare what each entity's list, form, and detail views contain. CUE validates that every field reference actually exists in the ontology. This is where all UI decisions live.
+
+**Layer 1: UI Schema Generator** (`cmd/uigen`). Reads both inputs. Resolves field references against ontology for type information, constraints, state machines, and relationships. Outputs framework-agnostic UI schema JSON. Does NOT guess or infer which fields to show — that's declared in Layer 0.
+
+**Layer 2: Svelte Renderer** (`cmd/uirender`). Reads UI schema JSON, outputs Svelte components using Skeleton UI and Tailwind CSS. Thin template layer (~500 lines). Swap to another framework by writing a new renderer.
+
+All three run in `make generate`. Change a CUE file, everything regenerates.
 
 **What gets generated per entity:**
 - UI schema (forms, detail views, list views, status config, actions)
@@ -54,7 +62,7 @@ Both run in `make generate`. One CUE change regenerates the schema and all compo
 ```
 ontology/*.cue                  — Entity definitions, constraints, state machines, relationships
 codegen/apigen.cue              — API service definitions
-codegen/uigen.cue               — UI mapping rules (field type → component mapping)
+codegen/uigen.cue               — View definitions per entity (list, form, detail, shared components)
 ```
 
 ### Output — Layer 1 (framework-agnostic)
@@ -74,6 +82,8 @@ gen/ui/schema/
 ├── journal_entry.schema.json
 ├── bank_account.schema.json
 ├── reconciliation.schema.json
+├── jurisdiction.schema.json
+├── jurisdiction_rule.schema.json
 └── _enums.schema.json           — All enum definitions with labels
 ```
 
@@ -160,19 +170,1245 @@ gen/ui/
 
 ---
 
-## 3. Layer 1: UI Schema Format
+## 3. Layer 0: View Definitions — `codegen/uigen.cue`
 
-The UI schema is a JSON document per entity that describes everything needed to render forms, detail views, list views, status badges, and actions. It contains zero framework-specific information.
+This is the CUE file where all UI decisions are declared. It imports ontology types for field reference validation. CUE guarantees every field name referenced here actually exists in the ontology — a typo is a compile error, not a silent omission.
 
-### 3.1 Top-Level Schema Structure
+### 3.1 View Definition Schema
+
+```cue
+package uigen
+
+import "propeller.io/ontology"
+
+// ===================================================================
+// Schema: the shapes that view definitions must conform to
+// ===================================================================
+
+#FieldType: "string" | "text" | "int" | "float" | "bool" | "date" |
+            "datetime" | "enum" | "money" | "address" | "date_range" |
+            "contact_method" | "entity_ref" | "entity_ref_list" |
+            "embedded_object" | "embedded_array" | "string_list"
+
+#ColumnAlign: "left" | "right" | "center"
+#SortDirection: "asc" | "desc"
+#LayoutMode: "grid_2col" | "grid_3col" | "stacked"
+#DisplayMode: "list" | "table" | "cards"
+#FilterType: "multi_enum" | "entity_ref" | "date_range" | "money_range" | "bool" | "text_search"
+
+#VisibilityRule: {
+    field:     string
+    operator:  "eq" | "neq" | "in" | "not_in" | "truthy" | "falsy"
+    value?:    _
+    values?:   [...]
+}
+
+// --- List View ---
+
+#ListColumn: {
+    field:          string                    // ontology field path (e.g., "base_rent", "term.end")
+    label?:         string                    // override default label
+    width?:         string                    // CSS width
+    align?:         #ColumnAlign              // default: left
+    sortable?:      bool                      // default: false
+    component?:     string                    // override component: "status_badge", "money", "date", "enum_badge"
+    display_as?:    string                    // for entity refs: "property.name"
+}
+
+#ListFilter: {
+    field:      string
+    type:       #FilterType
+    label?:     string                        // override default label
+    enum_ref?:  string                        // for multi_enum: which enum
+    ref_entity?: string                       // for entity_ref: which entity type
+}
+
+#ListView: {
+    columns:        [...#ListColumn]
+    filters?:       [...#ListFilter]
+    default_sort?:  {field: string, direction: #SortDirection}
+    row_click?:     "navigate_to_detail" | "expand_inline" | "none"
+    bulk_actions?:  bool
+}
+
+// --- Form View ---
+
+#FormField: string                           // simple: just the field name
+
+#FormSection: {
+    id:                 string
+    title:              string
+    collapsible?:       bool
+    initially_collapsed?: bool
+    fields?:            [...#FormField]
+    embedded_object?:   string               // render a sub-form for this type
+    embedded_array?:    string               // render an array editor for this type
+    visible_when?:      #VisibilityRule
+    required_when?:     #VisibilityRule
+}
+
+#FormView: {
+    sections:   [...#FormSection]
+}
+
+// --- Detail View ---
+
+#DetailField: string | {
+    field:      string
+    label?:     string
+    component?: string
+}
+
+#DetailSection: {
+    id:             string
+    title:          string
+    layout?:        #LayoutMode              // default: grid_2col
+    collapsible?:   bool
+    visible_when?:  #VisibilityRule
+    fields?:        [...#DetailField]
+    embedded_object?: string
+}
+
+#RelatedSection: {
+    title:          string
+    relationship:   string                   // from relationships.cue
+    entity:         string                   // target entity type
+    display:        #DisplayMode
+    include:        [...string]              // fields to show from related entity
+}
+
+#DetailView: {
+    header: {
+        title_template:  string              // e.g., "Lease: {space_number}"
+        status_field?:   string
+        show_actions?:   bool
+    }
+    sections:           [...#DetailSection]
+    related?:           [...#RelatedSection]
+}
+
+// --- Status Badge ---
+
+#StatusColor: "surface" | "primary" | "secondary" | "tertiary" |
+              "success" | "warning" | "error"
+
+#StatusConfig: {
+    field:      string
+    colors:     {[string]: #StatusColor}
+}
+
+// --- Entity View Bundle ---
+
+#EntityViews: {
+    entity_ref:     _                        // reference to ontology type for CUE validation
+    display_name:   string
+    display_name_plural: string
+    
+    list:           #ListView
+    form:           #FormView
+    detail:         #DetailView
+    status?:        #StatusConfig
+}
+```
+
+### 3.2 Lease View Definition (Complete Example)
+
+```cue
+lease: #EntityViews & {
+    entity_ref:         ontology.#Lease
+    display_name:       "Lease"
+    display_name_plural: "Leases"
+    
+    list: {
+        columns: [
+            {field: "status",      width: "100px",  component: "status_badge", sortable: true},
+            {field: "lease_type",  width: "140px",  sortable: true},
+            {field: "property_id", width: "180px",  display_as: "property.name", sortable: true},
+            {field: "base_rent",   width: "120px",  align: "right", sortable: true},
+            {field: "term.end",    width: "120px",  label: "Expiration", sortable: true},
+            {field: "updated_at",  width: "140px",  label: "Last Updated", sortable: true},
+        ]
+        filters: [
+            {field: "status",      type: "multi_enum", enum_ref: "LeaseStatus"},
+            {field: "lease_type",  type: "multi_enum", enum_ref: "LeaseType"},
+            {field: "property_id", type: "entity_ref", ref_entity: "property"},
+            {field: "term.end",    type: "date_range", label: "Expiration Date"},
+            {field: "base_rent",   type: "money_range"},
+        ]
+        default_sort: {field: "updated_at", direction: "desc"}
+        row_click: "navigate_to_detail"
+    }
+    
+    form: {
+        sections: [
+            {
+                id: "identity"
+                title: "Lease Details"
+                fields: ["lease_type", "liability_type", "property_id", "tenant_role_ids", "guarantor_role_ids"]
+            },
+            {
+                id: "term"
+                title: "Lease Term"
+                fields: ["term", "lease_commencement_date", "rent_commencement_date"]
+            },
+            {
+                id: "financial"
+                title: "Financial Terms"
+                fields: ["base_rent", "security_deposit"]
+            },
+            {
+                id: "cam"
+                title: "Common Area Maintenance"
+                collapsible: true
+                embedded_object: "CAMTerms"
+                visible_when:  {field: "lease_type", operator: "in", values: ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]}
+                required_when: {field: "lease_type", operator: "in", values: ["commercial_nnn", "commercial_nn", "commercial_n"]}
+            },
+            {
+                id: "percentage_rent"
+                title: "Percentage Rent"
+                collapsible: true
+                initially_collapsed: true
+                embedded_object: "PercentageRent"
+                visible_when: {field: "lease_type", operator: "in", values: ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]}
+            },
+            {
+                id: "subsidy"
+                title: "Subsidy Terms"
+                collapsible: true
+                embedded_object: "SubsidyTerms"
+                visible_when:  {field: "lease_type", operator: "in", values: ["section_8", "affordable"]}
+                required_when: {field: "lease_type", operator: "eq", value: "section_8"}
+            },
+            {
+                id: "short_term"
+                title: "Short-Term Rental"
+                collapsible: true
+                fields: ["check_in_time", "check_out_time", "cleaning_fee", "platform_booking_id"]
+                visible_when: {field: "lease_type", operator: "eq", value: "short_term"}
+            },
+            {
+                id: "membership"
+                title: "Membership"
+                collapsible: true
+                fields: ["membership_tier"]
+                visible_when: {field: "lease_type", operator: "eq", value: "membership"}
+            },
+            {
+                id: "rent_schedule"
+                title: "Rent Schedule"
+                collapsible: true
+                initially_collapsed: true
+                embedded_array: "RentScheduleEntry"
+            },
+            {
+                id: "recurring_charges"
+                title: "Recurring Charges"
+                collapsible: true
+                initially_collapsed: true
+                embedded_array: "RecurringCharge"
+            },
+            {
+                id: "usage_charges"
+                title: "Usage-Based Charges"
+                collapsible: true
+                initially_collapsed: true
+                embedded_array: "UsageBasedCharge"
+                visible_when: {field: "lease_type", operator: "in", values: ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]}
+            },
+            {
+                id: "renewal_options"
+                title: "Renewal Options"
+                collapsible: true
+                initially_collapsed: true
+                embedded_array: "RenewalOption"
+            },
+            {
+                id: "expansion"
+                title: "Expansion Rights"
+                collapsible: true
+                initially_collapsed: true
+                embedded_array: "ExpansionRight"
+                visible_when: {field: "lease_type", operator: "in", values: ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]}
+            },
+            {
+                id: "contraction"
+                title: "Contraction Rights"
+                collapsible: true
+                initially_collapsed: true
+                embedded_array: "ContractionRight"
+                visible_when: {field: "lease_type", operator: "in", values: ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]}
+            },
+            {
+                id: "tenant_improvement"
+                title: "Tenant Improvement Allowance"
+                collapsible: true
+                initially_collapsed: true
+                embedded_object: "TenantImprovement"
+                visible_when: {field: "lease_type", operator: "in", values: ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]}
+            },
+            {
+                id: "sublease"
+                title: "Sublease Details"
+                collapsible: true
+                initially_collapsed: true
+                fields: ["parent_lease_id", "sublease_billing"]
+                visible_when: {field: "is_sublease", operator: "eq", value: true}
+            },
+            {
+                id: "late_fee"
+                title: "Late Fee Policy"
+                collapsible: true
+                initially_collapsed: true
+                embedded_object: "LateFeePolicy"
+            },
+            {
+                id: "signing"
+                title: "Signing"
+                collapsible: true
+                initially_collapsed: true
+                fields: ["signing_method", "document_id"]
+            },
+        ]
+    }
+    
+    detail: {
+        header: {
+            title_template: "Lease: {space_number}"
+            status_field: "status"
+            show_actions: true
+        }
+        sections: [
+            {
+                id: "overview"
+                title: "Overview"
+                layout: "grid_2col"
+                fields: ["lease_type", "liability_type", "status", "property_id", "term"]
+            },
+            {
+                id: "financial"
+                title: "Financial"
+                layout: "grid_2col"
+                fields: ["base_rent", "security_deposit"]
+            },
+            {
+                id: "cam"
+                title: "CAM Terms"
+                collapsible: true
+                embedded_object: "CAMTerms"
+                visible_when: {field: "cam_terms", operator: "truthy"}
+            },
+            {
+                id: "subsidy"
+                title: "Subsidy Terms"
+                collapsible: true
+                embedded_object: "SubsidyTerms"
+                visible_when: {field: "subsidy", operator: "truthy"}
+            },
+            {
+                id: "jurisdiction"
+                title: "Jurisdiction Constraints"
+                collapsible: true
+                fields: [
+                    {field: "resolved_deposit_limit", label: "Max Security Deposit"},
+                    {field: "resolved_rent_cap", label: "Rent Increase Cap"},
+                    {field: "resolved_notice_period", label: "Required Notice Period"},
+                ]
+            },
+        ]
+        related: [
+            {
+                title: "Spaces"
+                relationship: "lease_spaces"
+                entity: "lease_space"
+                display: "list"
+                include: ["space.space_number", "space.space_type", "relationship", "effective"]
+            },
+            {
+                title: "Tenants"
+                relationship: "tenant_roles"
+                entity: "person_role"
+                display: "list"
+                include: ["person.first_name", "person.last_name", "attributes.standing", "attributes.current_balance"]
+            },
+            {
+                title: "Ledger"
+                relationship: "ledger_entries"
+                entity: "ledger_entry"
+                display: "table"
+                include: ["effective_date", "entry_type", "description", "amount", "reconciled"]
+            },
+        ]
+    }
+    
+    status: {
+        field: "status"
+        colors: {
+            draft:                    "surface"
+            pending_approval:         "secondary"
+            pending_signature:        "secondary"
+            active:                   "success"
+            expired:                  "warning"
+            month_to_month_holdover:  "warning"
+            renewed:                  "surface"
+            terminated:               "surface"
+            eviction:                 "error"
+        }
+    }
+}
+```
+
+### 3.3 Property View Definition
+
+```cue
+property: #EntityViews & {
+    entity_ref:         ontology.#Property
+    display_name:       "Property"
+    display_name_plural: "Properties"
+    
+    list: {
+        columns: [
+            {field: "status",         width: "100px",  component: "status_badge", sortable: true},
+            {field: "name",           width: "200px",  sortable: true},
+            {field: "property_type",  width: "140px",  sortable: true},
+            {field: "address",        width: "250px",  component: "address_short"},
+            {field: "total_spaces",   width: "80px",   label: "Spaces", align: "right", sortable: true},
+            {field: "portfolio_id",   width: "160px",  display_as: "portfolio.name", sortable: true},
+        ]
+        filters: [
+            {field: "status",        type: "multi_enum", enum_ref: "PropertyStatus"},
+            {field: "property_type", type: "multi_enum", enum_ref: "PropertyType"},
+            {field: "portfolio_id",  type: "entity_ref", ref_entity: "portfolio"},
+        ]
+        default_sort: {field: "name", direction: "asc"}
+        row_click: "navigate_to_detail"
+    }
+    
+    form: {
+        sections: [
+            {
+                id: "identity"
+                title: "Property Details"
+                fields: ["name", "property_type", "portfolio_id", "status"]
+            },
+            {
+                id: "address"
+                title: "Address"
+                embedded_object: "Address"
+            },
+            {
+                id: "physical"
+                title: "Physical Characteristics"
+                fields: ["year_built", "total_square_footage", "total_spaces", "lot_size_sqft", "stories", "parking_spaces"]
+            },
+            {
+                id: "compliance"
+                title: "Compliance"
+                collapsible: true
+                fields: ["compliance_programs"]
+                visible_when: {field: "property_type", operator: "in", values: ["affordable_housing", "senior_living"]}
+            },
+            {
+                id: "financial"
+                title: "Financial"
+                collapsible: true
+                fields: ["chart_of_accounts_id", "bank_account_id"]
+            },
+            {
+                id: "insurance"
+                title: "Insurance"
+                collapsible: true
+                initially_collapsed: true
+                fields: ["insurance_policy_number", "insurance_expiry"]
+            },
+        ]
+    }
+    
+    detail: {
+        header: {
+            title_template: "{name}"
+            status_field: "status"
+            show_actions: true
+        }
+        sections: [
+            {
+                id: "overview"
+                title: "Overview"
+                layout: "grid_2col"
+                fields: ["property_type", "status", "portfolio_id", "year_built", "total_square_footage", "total_spaces"]
+            },
+            {
+                id: "address"
+                title: "Address"
+                embedded_object: "Address"
+            },
+            {
+                id: "jurisdictions"
+                title: "Jurisdictions"
+                collapsible: true
+                // Special: rendered from PropertyJurisdiction relationship, not a field
+                fields: [{field: "_jurisdictions", component: "jurisdiction_stack"}]
+            },
+        ]
+        related: [
+            {title: "Buildings", relationship: "buildings", entity: "building", display: "list", include: ["name", "building_type", "status", "floors"]},
+            {title: "Spaces",    relationship: "spaces",    entity: "space",    display: "table", include: ["space_number", "space_type", "status", "square_footage"]},
+            {title: "Leases",    relationship: "leases",    entity: "lease",    display: "table", include: ["status", "lease_type", "base_rent", "term.end"]},
+        ]
+    }
+    
+    status: {
+        field: "status"
+        colors: {
+            onboarding:        "secondary"
+            active:            "success"
+            inactive:          "surface"
+            under_renovation:  "warning"
+            for_sale:          "warning"
+        }
+    }
+}
+```
+
+### 3.4 Space View Definition
+
+```cue
+space: #EntityViews & {
+    entity_ref:         ontology.#Space
+    display_name:       "Space"
+    display_name_plural: "Spaces"
+    
+    list: {
+        columns: [
+            {field: "status",          width: "100px",  component: "status_badge", sortable: true},
+            {field: "space_number",    width: "100px",  sortable: true},
+            {field: "space_type",      width: "120px",  sortable: true},
+            {field: "property_id",     width: "180px",  display_as: "property.name", sortable: true},
+            {field: "square_footage",  width: "100px",  align: "right", sortable: true},
+            {field: "market_rent",     width: "120px",  align: "right", sortable: true},
+        ]
+        filters: [
+            {field: "status",      type: "multi_enum", enum_ref: "SpaceStatus"},
+            {field: "space_type",  type: "multi_enum", enum_ref: "SpaceType"},
+            {field: "property_id", type: "entity_ref", ref_entity: "property"},
+            {field: "leasable",    type: "bool", label: "Leasable Only"},
+            {field: "market_rent", type: "money_range"},
+        ]
+        default_sort: {field: "space_number", direction: "asc"}
+        row_click: "navigate_to_detail"
+    }
+    
+    form: {
+        sections: [
+            {
+                id: "identity"
+                title: "Space Details"
+                fields: ["space_number", "space_type", "property_id", "building_id", "parent_space_id"]
+            },
+            {
+                id: "physical"
+                title: "Physical"
+                fields: ["floor", "square_footage", "bedrooms", "bathrooms", "leasable"]
+            },
+            {
+                id: "pricing"
+                title: "Pricing"
+                fields: ["market_rent"]
+            },
+            {
+                id: "amenities"
+                title: "Amenities & Features"
+                collapsible: true
+                fields: ["amenities", "specialized_infrastructure"]
+            },
+        ]
+    }
+    
+    detail: {
+        header: {
+            title_template: "Space {space_number}"
+            status_field: "status"
+            show_actions: true
+        }
+        sections: [
+            {
+                id: "overview"
+                title: "Overview"
+                layout: "grid_2col"
+                fields: ["space_type", "status", "property_id", "building_id", "floor", "square_footage", "leasable"]
+            },
+            {
+                id: "pricing"
+                title: "Pricing"
+                fields: ["market_rent"]
+            },
+        ]
+        related: [
+            {title: "Current Lease", relationship: "leases", entity: "lease", display: "list", include: ["status", "lease_type", "base_rent", "term.end"]},
+            {title: "Sub-Spaces",    relationship: "children", entity: "space", display: "list", include: ["space_number", "space_type", "status"]},
+            {title: "Work Orders",   relationship: "work_orders", entity: "work_order", display: "table", include: ["status", "priority", "description", "created_at"]},
+        ]
+    }
+    
+    status: {
+        field: "status"
+        colors: {
+            vacant:         "success"
+            occupied:       "surface"
+            notice_given:   "warning"
+            make_ready:     "secondary"
+            down:           "error"
+            model:          "tertiary"
+            reserved:       "secondary"
+            owner_occupied: "surface"
+        }
+    }
+}
+```
+
+### 3.5 Person View Definition
+
+```cue
+person: #EntityViews & {
+    entity_ref:         ontology.#Person
+    display_name:       "Person"
+    display_name_plural: "People"
+    
+    list: {
+        columns: [
+            {field: "first_name",    width: "140px",  sortable: true},
+            {field: "last_name",     width: "140px",  sortable: true},
+            {field: "email",         width: "220px"},
+            {field: "phone",         width: "140px"},
+            {field: "source",        width: "100px",  sortable: true},
+        ]
+        filters: [
+            {field: "source",  type: "multi_enum", enum_ref: "PersonSource"},
+        ]
+        default_sort: {field: "last_name", direction: "asc"}
+        row_click: "navigate_to_detail"
+    }
+    
+    form: {
+        sections: [
+            {
+                id: "identity"
+                title: "Personal Information"
+                fields: ["first_name", "middle_name", "last_name", "date_of_birth"]
+            },
+            {
+                id: "contact"
+                title: "Contact"
+                embedded_array: "ContactMethod"
+            },
+            {
+                id: "address"
+                title: "Address"
+                embedded_object: "Address"
+            },
+        ]
+    }
+    
+    detail: {
+        header: {
+            title_template: "{first_name} {last_name}"
+            show_actions: false
+        }
+        sections: [
+            {
+                id: "overview"
+                title: "Overview"
+                layout: "grid_2col"
+                fields: ["first_name", "last_name", "date_of_birth", "source"]
+            },
+            {
+                id: "contact"
+                title: "Contact Methods"
+                embedded_object: "ContactMethod"
+            },
+        ]
+        related: [
+            {title: "Roles",         relationship: "roles",        entity: "person_role",  display: "list",  include: ["role_type", "status", "scope_description"]},
+            {title: "Applications",  relationship: "applications", entity: "application",  display: "table", include: ["status", "property_id", "space_id", "created_at"]},
+        ]
+    }
+}
+```
+
+### 3.6 Accounting View Definitions
+
+```cue
+account: #EntityViews & {
+    entity_ref:         ontology.#Account
+    display_name:       "Account"
+    display_name_plural: "Chart of Accounts"
+    
+    list: {
+        columns: [
+            {field: "account_number",  width: "120px", sortable: true},
+            {field: "name",            width: "250px", sortable: true},
+            {field: "account_type",    width: "140px", sortable: true},
+            {field: "normal_balance",  width: "100px"},
+            {field: "parent_id",       width: "180px", display_as: "parent.name"},
+        ]
+        filters: [
+            {field: "account_type",   type: "multi_enum", enum_ref: "AccountType"},
+            {field: "normal_balance", type: "multi_enum", enum_ref: "NormalBalance"},
+        ]
+        default_sort: {field: "account_number", direction: "asc"}
+        row_click: "navigate_to_detail"
+    }
+    
+    form: {
+        sections: [
+            {
+                id: "identity"
+                title: "Account"
+                fields: ["account_number", "name", "account_type", "normal_balance", "parent_id"]
+            },
+            {
+                id: "dimensions"
+                title: "Dimensions"
+                collapsible: true
+                fields: ["dimensions"]
+            },
+        ]
+    }
+    
+    detail: {
+        header: {
+            title_template: "{account_number} — {name}"
+            show_actions: false
+        }
+        sections: [
+            {
+                id: "overview"
+                title: "Overview"
+                layout: "grid_2col"
+                fields: ["account_number", "account_type", "normal_balance", "parent_id"]
+            },
+        ]
+        related: [
+            {title: "Sub-Accounts", relationship: "children", entity: "account", display: "list", include: ["account_number", "name", "account_type"]},
+            {title: "Entries",      relationship: "entries",  entity: "ledger_entry", display: "table", include: ["effective_date", "description", "amount", "reconciled"]},
+        ]
+    }
+}
+
+journal_entry: #EntityViews & {
+    entity_ref:         ontology.#JournalEntry
+    display_name:       "Journal Entry"
+    display_name_plural: "Journal Entries"
+    
+    list: {
+        columns: [
+            {field: "status",          width: "100px",  component: "status_badge", sortable: true},
+            {field: "entry_date",      width: "120px",  sortable: true},
+            {field: "source",          width: "120px",  sortable: true},
+            {field: "memo",            width: "300px"},
+            {field: "total_debits",    width: "120px",  align: "right", label: "Total"},
+        ]
+        filters: [
+            {field: "status", type: "multi_enum", enum_ref: "JournalEntryStatus"},
+            {field: "source", type: "multi_enum", enum_ref: "JournalEntrySource"},
+            {field: "entry_date", type: "date_range"},
+        ]
+        default_sort: {field: "entry_date", direction: "desc"}
+        row_click: "navigate_to_detail"
+    }
+    
+    form: {
+        sections: [
+            {
+                id: "header"
+                title: "Journal Entry"
+                fields: ["entry_date", "memo", "source"]
+            },
+            {
+                id: "lines"
+                title: "Lines"
+                embedded_array: "LedgerEntry"
+            },
+        ]
+    }
+    
+    detail: {
+        header: {
+            title_template: "Journal Entry — {entry_date}"
+            status_field: "status"
+            show_actions: true
+        }
+        sections: [
+            {id: "overview", title: "Overview", layout: "grid_2col", fields: ["entry_date", "status", "source", "memo"]},
+        ]
+        related: [
+            {title: "Lines", relationship: "lines", entity: "ledger_entry", display: "table", include: ["account_id", "description", "debit", "credit", "property_id"]},
+        ]
+    }
+    
+    status: {
+        field: "status"
+        colors: {
+            draft:            "surface"
+            pending_approval: "secondary"
+            posted:           "success"
+            voided:           "error"
+        }
+    }
+}
+```
+
+### 3.7 Jurisdiction View Definitions
+
+```cue
+jurisdiction: #EntityViews & {
+    entity_ref:         ontology.#Jurisdiction
+    display_name:       "Jurisdiction"
+    display_name_plural: "Jurisdictions"
+    
+    list: {
+        columns: [
+            {field: "status",            width: "100px",  component: "status_badge"},
+            {field: "name",              width: "250px",  sortable: true},
+            {field: "jurisdiction_type", width: "140px",  sortable: true},
+            {field: "state_code",        width: "80px",   sortable: true},
+            {field: "parent_jurisdiction_id", width: "200px", display_as: "parent_jurisdiction.name"},
+        ]
+        filters: [
+            {field: "status",            type: "multi_enum", enum_ref: "JurisdictionStatus"},
+            {field: "jurisdiction_type", type: "multi_enum", enum_ref: "JurisdictionType"},
+            {field: "state_code",        type: "text_search"},
+        ]
+        default_sort: {field: "name", direction: "asc"}
+        row_click: "navigate_to_detail"
+    }
+    
+    form: {
+        sections: [
+            {
+                id: "identity"
+                title: "Jurisdiction"
+                fields: ["name", "jurisdiction_type", "parent_jurisdiction_id", "country_code", "state_code", "fips_code"]
+            },
+            {
+                id: "admin"
+                title: "Administrative"
+                collapsible: true
+                fields: ["governing_body", "regulatory_url"]
+            },
+            {
+                id: "dissolution"
+                title: "Dissolution"
+                collapsible: true
+                initially_collapsed: true
+                fields: ["successor_jurisdiction_id", "dissolution_date"]
+                visible_when: {field: "status", operator: "in", values: ["dissolved", "merged"]}
+            },
+        ]
+    }
+    
+    detail: {
+        header: {
+            title_template: "{name}"
+            status_field: "status"
+            show_actions: true
+        }
+        sections: [
+            {id: "overview", title: "Overview", layout: "grid_2col", fields: ["jurisdiction_type", "status", "parent_jurisdiction_id", "state_code", "fips_code", "country_code"]},
+            {id: "admin", title: "Administrative", fields: ["governing_body", "regulatory_url"]},
+        ]
+        related: [
+            {title: "Rules",           relationship: "rules",    entity: "jurisdiction_rule", display: "table", include: ["rule_type", "status", "effective_date", "expiration_date", "statute_reference"]},
+            {title: "Sub-Jurisdictions", relationship: "children", entity: "jurisdiction", display: "list", include: ["name", "jurisdiction_type", "status"]},
+            {title: "Properties",      relationship: "properties", entity: "property", display: "table", include: ["name", "property_type", "address"]},
+        ]
+    }
+    
+    status: {
+        field: "status"
+        colors: {
+            active:   "success"
+            dissolved: "surface"
+            merged:   "surface"
+            pending:  "secondary"
+        }
+    }
+}
+
+jurisdiction_rule: #EntityViews & {
+    entity_ref:         ontology.#JurisdictionRule
+    display_name:       "Jurisdiction Rule"
+    display_name_plural: "Jurisdiction Rules"
+    
+    list: {
+        columns: [
+            {field: "status",            width: "100px",  component: "status_badge", sortable: true},
+            {field: "rule_type",         width: "180px",  sortable: true},
+            {field: "jurisdiction_id",   width: "200px",  display_as: "jurisdiction.name", sortable: true},
+            {field: "effective_date",    width: "120px",  sortable: true},
+            {field: "expiration_date",   width: "120px",  sortable: true},
+            {field: "statute_reference", width: "180px"},
+        ]
+        filters: [
+            {field: "status",          type: "multi_enum", enum_ref: "JurisdictionRuleStatus"},
+            {field: "rule_type",       type: "multi_enum", enum_ref: "JurisdictionRuleType"},
+            {field: "jurisdiction_id", type: "entity_ref", ref_entity: "jurisdiction"},
+            {field: "effective_date",  type: "date_range"},
+        ]
+        default_sort: {field: "effective_date", direction: "desc"}
+        row_click: "navigate_to_detail"
+    }
+    
+    form: {
+        sections: [
+            {
+                id: "identity"
+                title: "Rule"
+                fields: ["rule_type", "jurisdiction_id", "status"]
+            },
+            {
+                id: "applicability"
+                title: "Applies To"
+                fields: ["applies_to_lease_types", "applies_to_property_types", "applies_to_space_types"]
+            },
+            {
+                id: "exemptions"
+                title: "Exemptions"
+                collapsible: true
+                embedded_object: "RuleExemptions"
+            },
+            {
+                id: "definition"
+                title: "Rule Definition"
+                // Component determined dynamically by rule_type
+                embedded_object: "_dynamic_rule_definition"
+            },
+            {
+                id: "legal"
+                title: "Legal Reference"
+                collapsible: true
+                fields: ["statute_reference", "ordinance_number", "statute_url"]
+            },
+            {
+                id: "dates"
+                title: "Effective Dates"
+                fields: ["effective_date", "expiration_date"]
+            },
+            {
+                id: "verification"
+                title: "Verification"
+                collapsible: true
+                initially_collapsed: true
+                fields: ["last_verified", "verified_by", "verification_source"]
+            },
+            {
+                id: "supersession"
+                title: "Supersession"
+                collapsible: true
+                initially_collapsed: true
+                fields: ["superseded_by_id"]
+                visible_when: {field: "status", operator: "eq", value: "superseded"}
+            },
+        ]
+    }
+    
+    detail: {
+        header: {
+            title_template: "{rule_type} — {jurisdiction.name}"
+            status_field: "status"
+            show_actions: true
+        }
+        sections: [
+            {id: "overview", title: "Overview", layout: "grid_2col", fields: ["rule_type", "status", "jurisdiction_id", "effective_date", "expiration_date"]},
+            {id: "applicability", title: "Applies To", layout: "grid_3col", fields: ["applies_to_lease_types", "applies_to_property_types", "applies_to_space_types"]},
+            {id: "definition", title: "Rule Definition", embedded_object: "_dynamic_rule_definition"},
+            {id: "legal", title: "Legal Reference", fields: ["statute_reference", "ordinance_number", "statute_url"]},
+            {id: "verification", title: "Verification", collapsible: true, fields: ["last_verified", "verified_by", "verification_source"]},
+        ]
+        related: [
+            {title: "Affected Properties", relationship: "affected_properties", entity: "property", display: "table", include: ["name", "property_type", "address"]},
+            {title: "Supersedes",          relationship: "supersedes",          entity: "jurisdiction_rule", display: "list", include: ["rule_type", "status", "effective_date"]},
+        ]
+    }
+    
+    status: {
+        field: "status"
+        colors: {
+            draft:      "surface"
+            active:     "success"
+            superseded: "surface"
+            expired:    "surface"
+            repealed:   "error"
+        }
+    }
+}
+```
+
+### 3.8 Remaining Entity View Definitions
+
+The following entities follow the same pattern. For brevity, showing compact form:
+
+```cue
+// Portfolio, Building, PersonRole, Application, LedgerEntry, BankAccount, Reconciliation
+// all follow #EntityViews with explicit list/form/detail/status declarations.
+// Complete definitions in the actual codegen/uigen.cue file.
+
+portfolio: #EntityViews & {
+    entity_ref: ontology.#Portfolio
+    display_name: "Portfolio"
+    display_name_plural: "Portfolios"
+    list: {columns: [{field: "status", ...}, {field: "name", ...}, {field: "owner", ...}], ...}
+    form: {sections: [...]}
+    detail: {header: {title_template: "{name}", ...}, sections: [...], related: [...]}
+    status: {field: "status", colors: {onboarding: "secondary", active: "success", ...}}
+}
+
+building: #EntityViews & {
+    entity_ref: ontology.#Building
+    display_name: "Building"
+    display_name_plural: "Buildings"
+    // ...
+}
+
+application: #EntityViews & {
+    entity_ref: ontology.#Application
+    display_name: "Application"
+    display_name_plural: "Applications"
+    // ...
+}
+
+// etc. for all entities with UI views
+```
+
+### 3.9 Claude Code Authoring View Definitions
+
+View definitions are an excellent candidate for Claude Code generation with human review:
+
+1. Claude Code reads the ontology entity definition
+2. Applies property management domain knowledge to decide:
+   - Which fields a PM would want in a list view (the 5-7 most important)
+   - How form sections should group logically (identity → dates → financial → conditional → optional)
+   - Which fields belong in the detail overview vs collapsible sections
+   - Which relationships are most useful to show
+3. Generates the `#EntityViews` CUE block
+4. Human reviews, adjusts column selection, reorders sections, tweaks labels
+5. `cue vet` validates all field references exist
+
+This mirrors the signal annotation pattern exactly: Claude Code as domain expert at build time, humans as editors.
+
+---
+
+## 4. Layer 1: What the Generator Still Derives from the Ontology
+
+View definitions declare WHAT to show. The ontology provides HOW it behaves. The generator merges both. Here's what comes from the ontology, not from view definitions:
+
+### 4.1 Field Type → Component Mapping
+
+The generator reads each referenced field's ontology type and maps it to a UI component:
+
+```
+CUE type                    → UI component type
+──────────────────────────────────────────────────
+string (short)              → "string"
+string (long/description)   → "text"
+int                         → "int"
+float                       → "float"
+bool                        → "bool"
+time                        → "datetime"
+time (date-only context)    → "date"
+enum ("|" separated)        → "enum"
+#Money                      → "money"
+#NonNegativeMoney           → "money" (variant: non_negative)
+#PositiveMoney              → "money" (variant: positive)
+#Address                    → "address"
+#DateRange                  → "date_range"
+#ContactMethod              → "contact_method"
+list of strings             → "string_list"
+list of #X                  → "embedded_array"
+single #X                   → "embedded_object"
+entity reference (*_id)     → "entity_ref"
+list of entity refs (*_ids) → "entity_ref_list"
+```
+
+How to distinguish "string" from "text": if field name contains "description", "memo", "notes", "reason", or "guidance" → "text". Everything else → "string". (This is the one heuristic that survives — it's about the field's nature, not about where to display it.)
+
+### 4.2 Constraints → Validation Rules
+
+For every field referenced in a view definition, the generator extracts its constraints from the ontology:
+
+```
+CUE constraint              → Validation rule
+──────────────────────────────────────────────────
+"required string"           → required: true
+"optional string"           → required: false
+field with default value    → required: false, default: <value>
+int with min/max            → min/max validation
+float > 0                   → positive validation
+money variant               → non-negative/positive validation
+```
+
+### 4.3 Cross-Field Constraints → Validation Rules
+
+For every CONSTRAINT block in the ontology:
+```
+"If [field_A] is [value], then [field_B] is required"
+```
+
+The generator produces a cross-field validation rule:
+
+```json
+{
+    "id": "nnn_requires_cam",
+    "condition": {"field": "lease_type", "operator": "eq", "value": "commercial_nnn"},
+    "then": {"field": "cam_terms", "rule": "required"},
+    "message": "CAM terms are required for NNN leases"
+}
+```
+
+These exist independent of view definitions — they're domain constraints that apply regardless of where fields are displayed.
+
+### 4.4 State Machines → Actions and Transitions
+
+The generator reads state_machines.cue and for each entity that has a state machine:
+
+1. Extracts valid transitions from each state
+2. Generates action button metadata:
+   - Forward-progress transitions → variant: "primary"
+   - Backward/lateral transitions → variant: "secondary"
+   - Terminal/negative transitions → variant: "danger"
+3. All danger variants get `confirm: true` with generated confirmation messages
+4. Cross-references ontology constraints for `requires_fields` on each transition target
+5. Maps to API endpoints from apigen.cue
+
+This is entirely ontology-driven. View definitions only control whether actions are shown at all (`show_actions: true` in the detail header).
+
+### 4.5 Relationships → Related Entity Sections
+
+View definitions declare which relationships to show and which fields to include:
+
+```cue
+related: [
+    {title: "Tenants", relationship: "tenant_roles", entity: "person_role", display: "list", include: ["person.first_name", ...]}
+]
+```
+
+The generator resolves the relationship from relationships.cue to get:
+- Cardinality (O2M, M2M)
+- API endpoint for fetching related entities
+- Inverse relationship name
+
+### 4.6 Enum Labels
+
+Generated deterministically from enum values:
+- Split on underscore, capitalize each word
+- Known abbreviations stay uppercase: NNN, NN, N, CAM, ACH, CPI, NSF, HUD, LIHTC, AMI
+- Known phrases get proper casing: "Section 8", "Month to Month"
+
+Enum grouping (for dropdowns) declared in uigen.cue if needed:
+
+```cue
+#EnumGroups: {
+    LeaseType: [
+        {label: "Residential", values: ["fixed_term", "month_to_month", "affordable", "section_8", "student", "short_term"]},
+        {label: "Commercial",  values: ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross", "ground_lease"]},
+        {label: "Other",       values: ["membership"]},
+    ]
+}
+```
+
+### 4.7 API Endpoint Mapping
+
+Derived from apigen.cue, not from view definitions:
+
+```json
+{
+    "api": {
+        "operations": {
+            "create": {"method": "POST", "path": "/v1/leases"},
+            "get":    {"method": "GET",  "path": "/v1/leases/{id}"},
+            "list":   {"method": "GET",  "path": "/v1/leases"},
+            "update": {"method": "PATCH","path": "/v1/leases/{id}"},
+            "search": {"method": "POST", "path": "/v1/leases/search"}
+        },
+        "transitions": {
+            "submit":    {"method": "POST", "path": "/v1/leases/{id}/submit"},
+            "approve":   {"method": "POST", "path": "/v1/leases/{id}/approve"},
+            // ... from apigen.cue
+        }
+    }
+}
+```
+
+### 4.8 Immutability
+
+Fields marked `@immutable` in the ontology:
+- Shown in create form
+- Hidden or disabled in edit form
+- Shown in detail view
+
+The view definition doesn't need to know about this — the generator handles it.
+
+### 4.9 Audit Fields
+
+Fields from `#AuditMetadata` (created_at, updated_at, created_by, updated_by):
+- Never shown in forms
+- Available in detail views (collapsed by default)
+- `updated_at` available as list column if declared in view definition
+
+### 4.10 Summary: What Comes From Where
+
+```
+                        View Definition (uigen.cue)    Ontology (*.cue)
+                        ───────────────────────────    ─────────────────
+Which fields in list    ✓ explicit columns             
+Column width/align      ✓                              
+Column labels           ✓ (override) or                ✓ (default from field name)
+Column sortable         ✓                              
+Filter config           ✓                              
+List default sort       ✓                              
+Form section grouping   ✓                              
+Form section ordering   ✓                              
+Section titles          ✓                              
+Section visibility      ✓ visible_when                 
+Section required_when   ✓                              ← (references ontology constraint)
+Collapsible/collapsed   ✓                              
+Detail layout           ✓                              
+Detail sections         ✓                              
+Related sections        ✓                              
+Related display mode    ✓                              
+Which related fields    ✓                              
+Status badge colors     ✓                              
+Display name            ✓                              
+Title template          ✓                              
+                                                       
+Field type              from field name reference  →   ✓ CUE type
+Component mapping                                      ✓ type → component
+Required/optional                                      ✓ CUE required/optional
+Validation rules                                       ✓ constraints
+Cross-field validation                                 ✓ CONSTRAINT blocks
+Enum options                                           ✓ union types
+State machine actions                                  ✓ state_machines.cue
+Transition buttons                                     ✓ state_machines.cue
+Confirmation messages                                  ✓ generated from transition
+API endpoints                                          ✓ apigen.cue
+Relationship details                                   ✓ relationships.cue
+Immutability                                           ✓ @immutable
+Audit field handling                                   ✓ #AuditMetadata
+```
+
+---
+
+## 5. Layer 1: UI Schema Output Format
+
+The generator outputs one JSON file per entity. This is the contract between Layer 1 and Layer 2 (the Svelte renderer). The format is identical to v2 spec Section 3 — it hasn't changed, only the generation method has.
+
+### 5.1 Top-Level Structure
 
 ```json
 {
   "entity": "lease",
   "display_name": "Lease",
   "display_name_plural": "Leases",
-  "primary_display_field": "id",
-  "primary_display_template": "{space_number} — {tenant_name}",
 
   "fields": [ ... ],
   "enums": { ... },
@@ -183,960 +1419,44 @@ The UI schema is a JSON document per entity that describes everything needed to 
   "state_machine": { ... },
   "relationships": [ ... ],
   "validation": { ... },
-  "api": { ... }
+  "api": { ... },
+  "realtime": { ... }
 }
 ```
 
-### 3.2 Field Definitions
+Each section is populated by merging the view definition (layout, field selection) with ontology-derived data (types, constraints, transitions, endpoints). The JSON schema format remains exactly as specified in v2 Sections 3.2–3.13. It is framework-agnostic.
 
-Every field from the ontology entity, with UI-relevant metadata:
+### 5.2 Field Definitions in Schema
+
+For every field referenced in any view definition for an entity, the generator emits:
 
 ```json
 {
-  "fields": [
-    {
-      "name": "lease_type",
-      "type": "enum",
-      "enum_ref": "LeaseType",
-      "required": true,
-      "default": null,
-      "immutable": false,
-      "label": "Lease Type",
-      "help_text": null,
-      "controls_visibility": true,
-      "show_in_create": true,
-      "show_in_update": false,
-      "show_in_list": true,
-      "show_in_detail": true,
-      "sortable": true,
-      "filterable": true
-    },
-    {
-      "name": "base_rent",
-      "type": "money",
-      "money_variant": "non_negative",
-      "required": true,
-      "default": null,
-      "immutable": false,
-      "label": "Base Rent",
-      "help_text": "Monthly base rent amount",
-      "show_in_create": true,
-      "show_in_update": true,
-      "show_in_list": true,
-      "show_in_detail": true,
-      "sortable": true,
-      "filterable": true,
-      "filter_type": "money_range"
-    },
-    {
-      "name": "cam_terms",
-      "type": "embedded_object",
-      "object_ref": "CAMTerms",
-      "required": false,
-      "conditionally_required": true,
-      "label": "CAM Terms",
-      "show_in_create": true,
-      "show_in_update": true,
-      "show_in_list": false,
-      "show_in_detail": true,
-      "sortable": false,
-      "filterable": false
-    },
-    {
-      "name": "property_id",
-      "type": "entity_ref",
-      "ref_entity": "property",
-      "ref_display": "name",
-      "required": true,
-      "immutable": true,
-      "label": "Property",
-      "show_in_create": true,
-      "show_in_update": false,
-      "show_in_list": true,
-      "show_in_detail": true,
-      "sortable": true,
-      "filterable": true,
-      "filter_type": "entity_ref"
-    },
-    {
-      "name": "tenant_role_ids",
-      "type": "entity_ref_list",
-      "ref_entity": "person_role",
-      "ref_filter": { "role_type": "tenant" },
-      "ref_display": "{person.first_name} {person.last_name}",
-      "required": true,
-      "min_items": 1,
-      "label": "Tenants",
-      "show_in_create": true,
-      "show_in_update": true,
-      "show_in_list": false,
-      "show_in_detail": true,
-      "sortable": false,
-      "filterable": false
-    },
-    {
-      "name": "term",
-      "type": "date_range",
-      "required": true,
-      "end_required": false,
-      "end_conditionally_required": true,
-      "label": "Lease Term",
-      "show_in_create": true,
-      "show_in_update": true,
-      "show_in_list": true,
-      "show_in_detail": true,
-      "list_display_field": "end",
-      "list_column_label": "Expiration",
-      "sortable": true,
-      "filterable": true,
-      "filter_type": "date_range"
-    }
-  ]
+  "name": "base_rent",
+  "type": "money",
+  "money_variant": "non_negative",
+  "required": true,
+  "default": null,
+  "immutable": false,
+  "label": "Base Rent",
+  "help_text": "Monthly base rent amount"
 }
 ```
 
-### 3.3 Field Type Enumeration
-
-Every possible field type in the schema:
-
-```
-"string"             — plain text input
-"text"               — multiline textarea
-"int"                — integer number input, with optional min/max
-"float"              — decimal number input, with optional min/max/step
-"bool"               — toggle/checkbox
-"date"               — date picker
-"datetime"           — datetime picker
-"enum"               — single-select from defined options
-"money"              — cents-based money input (variants: "any", "non_negative", "positive")
-"address"            — structured address input
-"date_range"         — start/end date pair with optional end
-"contact_method"     — type/value/primary/verified structure
-"entity_ref"         — single reference to another entity (searchable select)
-"entity_ref_list"    — multiple references to entities (multi-select)
-"embedded_object"    — inline JSON sub-form
-"embedded_array"     — list of JSON objects with add/remove
-"string_list"        — list of strings (tags, amenities, etc.)
-```
-
-### 3.4 Enum Definitions
-
-Separate file with all enums and display labels:
-
-```json
-{
-  "LeaseType": {
-    "values": [
-      { "value": "fixed_term", "label": "Fixed Term" },
-      { "value": "month_to_month", "label": "Month to Month" },
-      { "value": "commercial_nnn", "label": "Triple Net (NNN)" },
-      { "value": "commercial_nn", "label": "Double Net (NN)" },
-      { "value": "commercial_n", "label": "Single Net (N)" },
-      { "value": "commercial_gross", "label": "Gross / Full Service" },
-      { "value": "commercial_modified_gross", "label": "Modified Gross" },
-      { "value": "affordable", "label": "Affordable Housing" },
-      { "value": "section_8", "label": "Section 8" },
-      { "value": "student", "label": "Student" },
-      { "value": "ground_lease", "label": "Ground Lease" },
-      { "value": "short_term", "label": "Short Term" },
-      { "value": "membership", "label": "Membership" }
-    ],
-    "groups": [
-      {
-        "label": "Residential",
-        "values": ["fixed_term", "month_to_month", "affordable", "section_8", "student", "short_term"]
-      },
-      {
-        "label": "Commercial",
-        "values": ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross", "ground_lease"]
-      },
-      {
-        "label": "Other",
-        "values": ["membership"]
-      }
-    ]
-  },
-  "LeaseStatus": {
-    "values": [
-      { "value": "draft", "label": "Draft" },
-      { "value": "pending_approval", "label": "Pending Approval" },
-      { "value": "pending_signature", "label": "Pending Signature" },
-      { "value": "active", "label": "Active" },
-      { "value": "expired", "label": "Expired" },
-      { "value": "month_to_month_holdover", "label": "Month-to-Month" },
-      { "value": "renewed", "label": "Renewed" },
-      { "value": "terminated", "label": "Terminated" },
-      { "value": "eviction", "label": "Eviction" }
-    ]
-  }
-}
-```
-
-Enum label generation rules (deterministic string transforms):
-- Split on underscore, capitalize each word
-- Known abbreviations stay uppercase: NNN, NN, N, CAM, ACH, CPI, NSF, HUD, LIHTC, AMI
-- Known phrases get proper casing: "Section 8", "Month to Month"
-
-Enum grouping rules (derived from ontology knowledge):
-- Lease types: group by residential vs commercial
-- Space types: group by residential vs commercial vs utility
-- If no natural grouping exists: no groups (flat list)
-
-### 3.5 Form Schema
-
-Describes field grouping, ordering, conditional visibility, and section structure:
-
-```json
-{
-  "form": {
-    "sections": [
-      {
-        "id": "identity",
-        "title": "Lease Details",
-        "collapsible": false,
-        "fields": ["lease_type", "liability_type", "property_id", "tenant_role_ids", "guarantor_role_ids"]
-      },
-      {
-        "id": "term",
-        "title": "Lease Term",
-        "collapsible": false,
-        "fields": ["term", "lease_commencement_date", "rent_commencement_date"]
-      },
-      {
-        "id": "financial",
-        "title": "Financial Terms",
-        "collapsible": false,
-        "fields": ["base_rent", "security_deposit"]
-      },
-      {
-        "id": "cam",
-        "title": "Common Area Maintenance",
-        "collapsible": true,
-        "initially_collapsed": false,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "in",
-          "values": ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]
-        },
-        "required_when": {
-          "field": "lease_type",
-          "operator": "in",
-          "values": ["commercial_nnn", "commercial_nn", "commercial_n"]
-        },
-        "embedded_object": "CAMTerms"
-      },
-      {
-        "id": "percentage_rent",
-        "title": "Percentage Rent",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "in",
-          "values": ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]
-        },
-        "embedded_object": "PercentageRent"
-      },
-      {
-        "id": "subsidy",
-        "title": "Subsidy Terms",
-        "collapsible": true,
-        "initially_collapsed": false,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "in",
-          "values": ["section_8", "affordable"]
-        },
-        "required_when": {
-          "field": "lease_type",
-          "operator": "eq",
-          "value": "section_8"
-        },
-        "embedded_object": "SubsidyTerms"
-      },
-      {
-        "id": "short_term",
-        "title": "Short-Term Rental",
-        "collapsible": true,
-        "initially_collapsed": false,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "eq",
-          "value": "short_term"
-        },
-        "fields": ["check_in_time", "check_out_time", "cleaning_fee", "platform_booking_id"]
-      },
-      {
-        "id": "membership",
-        "title": "Membership",
-        "collapsible": true,
-        "initially_collapsed": false,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "eq",
-          "value": "membership"
-        },
-        "fields": ["membership_tier"]
-      },
-      {
-        "id": "rent_schedule",
-        "title": "Rent Schedule",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "embedded_array": "RentScheduleEntry"
-      },
-      {
-        "id": "recurring_charges",
-        "title": "Recurring Charges",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "embedded_array": "RecurringCharge"
-      },
-      {
-        "id": "usage_charges",
-        "title": "Usage-Based Charges",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "in",
-          "values": ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]
-        },
-        "embedded_array": "UsageBasedCharge"
-      },
-      {
-        "id": "renewal_options",
-        "title": "Renewal Options",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "embedded_array": "RenewalOption"
-      },
-      {
-        "id": "expansion",
-        "title": "Expansion Rights",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "in",
-          "values": ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]
-        },
-        "embedded_array": "ExpansionRight"
-      },
-      {
-        "id": "contraction",
-        "title": "Contraction Rights",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "in",
-          "values": ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]
-        },
-        "embedded_array": "ContractionRight"
-      },
-      {
-        "id": "tenant_improvement",
-        "title": "Tenant Improvement Allowance",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "visible_when": {
-          "field": "lease_type",
-          "operator": "in",
-          "values": ["commercial_nnn", "commercial_nn", "commercial_n", "commercial_gross", "commercial_modified_gross"]
-        },
-        "embedded_object": "TenantImprovement"
-      },
-      {
-        "id": "sublease",
-        "title": "Sublease Details",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "visible_when": {
-          "field": "is_sublease",
-          "operator": "eq",
-          "value": true
-        },
-        "fields": ["parent_lease_id", "sublease_billing"]
-      },
-      {
-        "id": "late_fee",
-        "title": "Late Fee Policy",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "embedded_object": "LateFeePolicy"
-      },
-      {
-        "id": "signing",
-        "title": "Signing",
-        "collapsible": true,
-        "initially_collapsed": true,
-        "fields": ["signing_method", "document_id"]
-      }
-    ],
-    "field_order_rule": "required_first"
-  }
-}
-```
-
-Section ordering rules (deterministic):
-1. Identity and type selectors (they control conditional visibility — must be first)
-2. Dates and term
-3. Core financial (base rent, deposit)
-4. Type-specific conditional sections (ordered by frequency: CAM, subsidy, short-term, membership)
-5. Optional arrays (rent schedule, recurring charges, usage charges)
-6. Optional commercial structures (renewal, expansion, contraction, TI)
-7. Flags and secondary fields (sublease, late fees, signing)
-
-Within each section: required fields before optional fields.
-
-### 3.6 Visibility Rule Format
-
-```json
-{
-  "visible_when": {
-    "field": "lease_type",
-    "operator": "in",
-    "values": ["commercial_nnn", "commercial_nn"]
-  }
-}
-```
-
-Supported operators:
-```
-"eq"      — field equals value
-"neq"     — field does not equal value
-"in"      — field value is in list
-"not_in"  — field value is not in list
-"truthy"  — field is non-null and non-empty
-"falsy"   — field is null or empty
-```
-
-Derivation from ontology: every CONSTRAINT block with "If [field] is [value], then [other_field] is required" produces a visibility rule where the other_field's section becomes visible when field matches value.
-
-### 3.7 Detail View Schema
-
-```json
-{
-  "detail": {
-    "header": {
-      "title_template": "Lease: {space_number}",
-      "status_field": "status",
-      "actions": true
-    },
-    "sections": [
-      {
-        "id": "overview",
-        "title": "Overview",
-        "layout": "grid_2col",
-        "fields": ["lease_type", "liability_type", "status", "property_id", "term"]
-      },
-      {
-        "id": "financial",
-        "title": "Financial",
-        "layout": "grid_2col",
-        "fields": ["base_rent", "security_deposit"]
-      },
-      {
-        "id": "cam",
-        "title": "CAM Terms",
-        "visible_when": { "field": "cam_terms", "operator": "truthy" },
-        "embedded_object": "CAMTerms",
-        "display_mode": "readonly"
-      }
-    ],
-    "related_sections": [
-      {
-        "title": "Spaces",
-        "relationship": "lease_spaces",
-        "entity": "lease_space",
-        "display": "list",
-        "include_fields": ["space.space_number", "space.space_type", "relationship", "effective"]
-      },
-      {
-        "title": "Tenants",
-        "relationship": "tenant_roles",
-        "entity": "person_role",
-        "display": "list",
-        "include_fields": ["person.first_name", "person.last_name", "attributes.standing", "attributes.current_balance"]
-      },
-      {
-        "title": "Ledger",
-        "relationship": "ledger_entries",
-        "entity": "ledger_entry",
-        "display": "table",
-        "include_fields": ["effective_date", "entry_type", "description", "amount", "reconciled"]
-      }
-    ]
-  }
-}
-```
-
-### 3.8 List View Schema
-
-```json
-{
-  "list": {
-    "default_columns": [
-      { "field": "status", "width": "100px" },
-      { "field": "lease_type", "width": "140px" },
-      { "field": "property_id", "display_as": "property.name", "width": "180px" },
-      { "field": "base_rent", "width": "120px", "align": "right" },
-      { "field": "term.end", "label": "Expiration", "width": "120px" },
-      { "field": "updated_at", "label": "Last Updated", "width": "140px" }
-    ],
-    "max_default_columns": 7,
-    "filters": [
-      { "field": "status", "type": "multi_enum", "enum_ref": "LeaseStatus" },
-      { "field": "lease_type", "type": "multi_enum", "enum_ref": "LeaseType" },
-      { "field": "property_id", "type": "entity_ref", "ref_entity": "property" },
-      { "field": "term.end", "type": "date_range", "label": "Expiration Date" },
-      { "field": "base_rent", "type": "money_range", "label": "Base Rent" }
-    ],
-    "default_sort": { "field": "updated_at", "direction": "desc" },
-    "row_click_action": "navigate_to_detail",
-    "bulk_actions": false
-  }
-}
-```
-
-Column selection rules (deterministic):
-- Priority 1 (always visible): primary display field, status, most important reference
-- Priority 2 (visible by default): money fields, key date fields, type enums
-- Priority 3 (available via column picker): everything else
-- Max 7 default columns
-- Audit fields: hidden by default, available in column picker
-- JSON embedded objects: never shown as columns
-
-### 3.9 Status Configuration
-
-```json
-{
-  "status": {
-    "field": "status",
-    "color_mapping": {
-      "draft": "surface",
-      "pending_approval": "secondary",
-      "pending_signature": "secondary",
-      "active": "success",
-      "expired": "warning",
-      "month_to_month_holdover": "warning",
-      "renewed": "surface",
-      "terminated": "surface",
-      "eviction": "error"
-    }
-  }
-}
-```
-
-Color derivation rules (from state machine structure):
-```
-initial state           → "surface"    (gray/neutral)
-forward progression     → "secondary"  (blue/info)
-active/operational      → "success"    (green)
-warning/attention       → "warning"    (yellow/amber)
-negative/problem        → "error"      (red)
-terminal (completed)    → "surface"    (gray/neutral)
-```
-
-Classification:
-- Initial: first state in state machine (has `[*] -->`)
-- Terminal: states with no outgoing transitions
-- Active: states named "active", "occupied", "posted", "approved", "balanced"
-- Negative: states named "eviction", "denied", "down", "frozen", "voided"
-- Warning: states indicating action needed but not negative ("expired", "notice_given", "make_ready", "unbalanced")
-- Forward: states between initial and active
-
-### 3.10 State Machine Actions
-
-```json
-{
-  "state_machine": {
-    "transitions": {
-      "draft": [
-        {
-          "target": "pending_approval",
-          "label": "Submit for Approval",
-          "variant": "primary",
-          "confirm": false,
-          "api_endpoint": "POST /v1/leases/{id}/submit"
-        },
-        {
-          "target": "pending_signature",
-          "label": "Send for Signature",
-          "variant": "primary",
-          "confirm": false,
-          "api_endpoint": "POST /v1/leases/{id}/sign"
-        },
-        {
-          "target": "terminated",
-          "label": "Cancel",
-          "variant": "danger",
-          "confirm": true,
-          "confirm_message": "Are you sure you want to cancel this lease? This cannot be undone.",
-          "api_endpoint": "POST /v1/leases/{id}/terminate"
-        }
-      ],
-      "pending_approval": [
-        {
-          "target": "pending_signature",
-          "label": "Approve",
-          "variant": "primary",
-          "confirm": false,
-          "api_endpoint": "POST /v1/leases/{id}/approve"
-        },
-        {
-          "target": "draft",
-          "label": "Return to Draft",
-          "variant": "secondary",
-          "confirm": false,
-          "api_endpoint": "POST /v1/leases/{id}/reject"
-        },
-        {
-          "target": "terminated",
-          "label": "Reject",
-          "variant": "danger",
-          "confirm": true,
-          "confirm_message": "Are you sure you want to reject this lease?",
-          "api_endpoint": "POST /v1/leases/{id}/terminate"
-        }
-      ],
-      "pending_signature": [
-        {
-          "target": "active",
-          "label": "Activate",
-          "variant": "primary",
-          "confirm": false,
-          "requires_fields": ["move_in_date", "signed_at"],
-          "api_endpoint": "POST /v1/leases/{id}/activate"
-        },
-        {
-          "target": "draft",
-          "label": "Return to Draft",
-          "variant": "secondary",
-          "confirm": false,
-          "api_endpoint": "POST /v1/leases/{id}/reject"
-        },
-        {
-          "target": "terminated",
-          "label": "Cancel",
-          "variant": "danger",
-          "confirm": true,
-          "confirm_message": "Are you sure you want to cancel this lease?",
-          "api_endpoint": "POST /v1/leases/{id}/terminate"
-        }
-      ],
-      "active": [
-        {
-          "target": "expired",
-          "label": "Mark Expired",
-          "variant": "secondary",
-          "confirm": true,
-          "api_endpoint": "POST /v1/leases/{id}/expire"
-        },
-        {
-          "target": "month_to_month_holdover",
-          "label": "Convert to Month-to-Month",
-          "variant": "secondary",
-          "confirm": true,
-          "api_endpoint": "POST /v1/leases/{id}/holdover"
-        },
-        {
-          "target": "terminated",
-          "label": "Terminate",
-          "variant": "danger",
-          "confirm": true,
-          "confirm_message": "Are you sure you want to terminate this lease? This will begin the move-out process.",
-          "api_endpoint": "POST /v1/leases/{id}/terminate"
-        },
-        {
-          "target": "eviction",
-          "label": "Initiate Eviction",
-          "variant": "danger",
-          "confirm": true,
-          "confirm_message": "Are you sure you want to initiate eviction proceedings?",
-          "api_endpoint": "POST /v1/leases/{id}/evict"
-        }
-      ],
-      "terminated": [],
-      "renewed": []
-    }
-  }
-}
-```
-
-Action button derivation rules:
-- `variant: "primary"`: forward-progress transitions (toward active/completed)
-- `variant: "secondary"`: backward or lateral transitions (return to draft, convert)
-- `variant: "danger"`: transitions to terminal or negative states
-- `confirm: true`: all danger variants, all irreversible transitions
-- `confirm_message`: generated from target state and entity name
-- `requires_fields`: derived from ontology constraints on target state ("active requires move_in_date and signed_at")
-- `api_endpoint`: derived from apigen.cue service definitions
-
-### 3.11 Relationship Definitions
-
-```json
-{
-  "relationships": [
-    {
-      "name": "tenant_roles",
-      "target_entity": "person_role",
-      "cardinality": "many_to_many",
-      "api_endpoint": "GET /v1/leases/{id}/tenant-roles",
-      "display_in_detail": true,
-      "display_mode": "list"
-    },
-    {
-      "name": "spaces",
-      "target_entity": "lease_space",
-      "cardinality": "one_to_many",
-      "api_endpoint": "GET /v1/leases/{id}/spaces",
-      "display_in_detail": true,
-      "display_mode": "list"
-    },
-    {
-      "name": "ledger_entries",
-      "target_entity": "ledger_entry",
-      "cardinality": "one_to_many",
-      "api_endpoint": "GET /v1/leases/{id}/ledger",
-      "display_in_detail": true,
-      "display_mode": "table"
-    }
-  ]
-}
-```
-
-### 3.12 Validation Rules
-
-```json
-{
-  "validation": {
-    "field_rules": [
-      { "field": "property_id", "rule": "required" },
-      { "field": "tenant_role_ids", "rule": "min_length", "value": 1 },
-      { "field": "lease_type", "rule": "required" },
-      { "field": "base_rent.amount_cents", "rule": "min", "value": 0 },
-      { "field": "security_deposit.amount_cents", "rule": "min", "value": 0 }
-    ],
-    "cross_field_rules": [
-      {
-        "id": "fixed_term_requires_end",
-        "description": "Fixed-term and student leases require an end date",
-        "condition": { "field": "lease_type", "operator": "in", "values": ["fixed_term", "student"] },
-        "then": { "field": "term.end", "rule": "required" },
-        "message": "End date is required for fixed-term and student leases"
-      },
-      {
-        "id": "nnn_requires_cam",
-        "description": "NNN leases require CAM terms",
-        "condition": { "field": "lease_type", "operator": "eq", "value": "commercial_nnn" },
-        "then": { "field": "cam_terms", "rule": "required" },
-        "message": "CAM terms are required for NNN leases"
-      },
-      {
-        "id": "nnn_cam_requires_tax",
-        "description": "NNN CAM must include property tax",
-        "condition": { "field": "lease_type", "operator": "eq", "value": "commercial_nnn" },
-        "then": { "field": "cam_terms.includes_property_tax", "rule": "eq", "value": true },
-        "message": "NNN leases must include property tax in CAM"
-      },
-      {
-        "id": "nnn_cam_requires_insurance",
-        "description": "NNN CAM must include insurance",
-        "condition": { "field": "lease_type", "operator": "eq", "value": "commercial_nnn" },
-        "then": { "field": "cam_terms.includes_insurance", "rule": "eq", "value": true },
-        "message": "NNN leases must include insurance in CAM"
-      },
-      {
-        "id": "nnn_cam_requires_utilities",
-        "description": "NNN CAM must include utilities",
-        "condition": { "field": "lease_type", "operator": "eq", "value": "commercial_nnn" },
-        "then": { "field": "cam_terms.includes_utilities", "rule": "eq", "value": true },
-        "message": "NNN leases must include utilities in CAM"
-      },
-      {
-        "id": "section8_requires_subsidy",
-        "description": "Section 8 leases require subsidy terms",
-        "condition": { "field": "lease_type", "operator": "eq", "value": "section_8" },
-        "then": { "field": "subsidy", "rule": "required" },
-        "message": "Subsidy terms are required for Section 8 leases"
-      },
-      {
-        "id": "sublease_requires_parent",
-        "description": "Subleases require parent lease",
-        "condition": { "field": "is_sublease", "operator": "eq", "value": true },
-        "then": { "field": "parent_lease_id", "rule": "required" },
-        "message": "Parent lease is required for subleases"
-      },
-      {
-        "id": "rent_commencement_after_lease",
-        "description": "Rent commencement must be on or after lease commencement",
-        "condition": { "field": "rent_commencement_date", "operator": "truthy" },
-        "then": { "field": "rent_commencement_date", "rule": "gte_field", "value": "lease_commencement_date" },
-        "message": "Rent commencement cannot be before lease commencement"
-      }
-    ]
-  }
-}
-```
-
-### 3.13 API Endpoint Mapping
-
-```json
-{
-  "api": {
-    "base_path": "/v1/leases",
-    "operations": {
-      "create": { "method": "POST", "path": "/v1/leases" },
-      "get": { "method": "GET", "path": "/v1/leases/{id}" },
-      "list": { "method": "GET", "path": "/v1/leases" },
-      "update": { "method": "PATCH", "path": "/v1/leases/{id}" },
-      "search": { "method": "POST", "path": "/v1/leases/search" }
-    },
-    "transitions": {
-      "submit": { "method": "POST", "path": "/v1/leases/{id}/submit" },
-      "approve": { "method": "POST", "path": "/v1/leases/{id}/approve" },
-      "sign": { "method": "POST", "path": "/v1/leases/{id}/sign" },
-      "activate": { "method": "POST", "path": "/v1/leases/{id}/activate" },
-      "notice": { "method": "POST", "path": "/v1/leases/{id}/notice" },
-      "renew": { "method": "POST", "path": "/v1/leases/{id}/renew" },
-      "terminate": { "method": "POST", "path": "/v1/leases/{id}/terminate" },
-      "evict": { "method": "POST", "path": "/v1/leases/{id}/evict" }
-    },
-    "related": {
-      "tenant_roles": { "method": "GET", "path": "/v1/leases/{id}/tenant-roles" },
-      "guarantor_roles": { "method": "GET", "path": "/v1/leases/{id}/guarantor-roles" },
-      "spaces": { "method": "GET", "path": "/v1/leases/{id}/spaces" },
-      "ledger": { "method": "GET", "path": "/v1/leases/{id}/ledger" }
-    }
-  }
-}
-```
+Where:
+- `name` — from view definition field reference
+- `type`, `money_variant` — from ontology type mapping (Section 4.1)
+- `required`, `default`, `immutable` — from ontology
+- `label` — from view definition (if provided) or generated from field name
+- `help_text` — from ontology (if docstring exists)
 
 ---
 
-## 4. Layer 1: Schema Generation Rules
+## 6. Layer 2: Svelte + Skeleton + Tailwind Renderer
 
-These are the deterministic rules that `cmd/uigen` applies when reading ontology CUE files and producing UI schemas.
+The renderer reads UI schema JSON and applies Svelte templates. This section is unchanged from v2.
 
-### 4.1 Field Type Mapping
-
-```
-CUE type                    → Schema field type
-──────────────────────────────────────────────────
-string (short)              → "string"
-string (long/description)   → "text"
-int                         → "int"
-float                       → "float"
-bool                        → "bool"
-time                        → "datetime"
-time (date-only context)    → "date"
-enum ("|" separated)        → "enum"
-#Money                      → "money" with money_variant: "any"
-#NonNegativeMoney           → "money" with money_variant: "non_negative"
-#PositiveMoney              → "money" with money_variant: "positive"
-#Address                    → "address"
-#DateRange                  → "date_range"
-#ContactMethod              → "contact_method"
-list of strings             → "string_list"
-list of #X                  → "embedded_array" with object_ref
-single #X                   → "embedded_object" with object_ref
-entity reference (string)   → "entity_ref" with ref_entity
-list of entity refs         → "entity_ref_list" with ref_entity
-```
-
-How to distinguish "string" from "text": if field name contains "description", "memo", "notes", "reason", or "guidance" → "text". Everything else → "string".
-
-How to distinguish entity_ref from plain string: if field name ends in "_id" and a relationship exists in relationships.cue referencing that entity → "entity_ref". If field name ends in "_ids" → "entity_ref_list".
-
-### 4.2 Required / Optional Derivation
-
-```
-CUE "required string"      → required: true
-CUE "optional string"      → required: false
-CUE field with default      → required: false (has default)
-CUE field in CONSTRAINT     → conditionally_required: true + visible_when rule
-```
-
-### 4.3 Show/Hide in Views
-
-```
-Field category          → create  update  list   detail
-──────────────────────────────────────────────────────────
-id                      → no      no      no     yes
-audit fields            → no      no      no     yes (collapsible)
-status                  → no      no      yes    yes (as badge)
-immutable refs          → yes     no      yes    yes
-mutable fields          → yes     yes     maybe  yes
-JSON embedded objects   → yes     yes     no     yes (as section)
-JSON embedded arrays    → yes     yes     no     yes (as sub-list)
-computed fields         → no      no      maybe  yes
-```
-
-List view column selection (deterministic priority):
-1. Status field (if exists)
-2. Primary type enum (lease_type, space_type)
-3. Most important entity_ref (property, person)
-4. Money fields
-5. Key date fields
-6. Max 7 columns default; remaining available via column picker
-
-### 4.4 Constraint → Visibility Rule Derivation
-
-For every CONSTRAINT in the ontology of the form:
-```
-"If [field_A] is [value], then [field_B] is required"
-```
-
-Generate:
-```json
-{
-  "visible_when": { "field": "field_A", "operator": "eq/in", "value/values": "..." },
-  "required_when": { "field": "field_A", "operator": "eq/in", "value/values": "..." }
-}
-```
-
-Applied to the form section containing field_B. If multiple fields share the same visibility condition, they're grouped into one conditional section.
-
-### 4.5 State Machine → Color + Action Derivation
-
-Read state_machines.cue. For each state machine:
-
-1. Build directed graph of states and transitions
-2. Classify each state by position (initial, forward, active, warning, negative, terminal)
-3. Map classification to Skeleton color token
-4. For each state, list valid transitions as action buttons
-5. Classify each transition button variant:
-   - Target is "closer to active/completed" → "primary"
-   - Target is "backward" → "secondary"
-   - Target is "terminal or negative" → "danger"
-6. Set `confirm: true` for all danger variants
-7. Cross-reference ontology constraints to find `requires_fields` for each transition target state
-
-### 4.6 Relationship → Detail Section Derivation
-
-Read relationships.cue. For each relationship where this entity is the "from" side:
-- Generate a related_section in the detail schema
-- Set display_mode: "table" for O2M with many expected items (ledger_entries, work_orders)
-- Set display_mode: "list" for O2M/M2M with fewer expected items (tenant_roles, spaces)
-- Include fields: select 3-5 most relevant fields from the target entity (prioritize status, type, amount, date fields)
-
-### 4.7 Embedded Object → Form Section Derivation
-
-For every JSON embedded type (CAMTerms, PercentageRent, SubsidyTerms, etc.):
-1. Read the embedded type definition from the ontology
-2. Generate a form section schema with all the embedded type's fields
-3. Apply the same field type mapping rules recursively
-4. Generate a `sections/` Svelte component from the section schema
-
----
-
-## 5. Layer 2: Svelte + Skeleton + Tailwind Renderer
-
-### 5.1 Component Mapping
-
-The renderer reads the UI schema and maps component types to Svelte + Skeleton implementations:
+### 6.1 Component Mapping
 
 ```
 Schema field type       → Svelte component
@@ -1160,11 +1480,11 @@ Schema field type       → Svelte component
 "string_list"           → <InputChip /> from Skeleton
 ```
 
-### 5.2 Form Component Template
+### 6.2 Form Component Template
 
 ```svelte
 <!-- gen/ui/components/entities/lease/LeaseForm.svelte -->
-<!-- GENERATED FROM ONTOLOGY. DO NOT HAND-EDIT. -->
+<!-- GENERATED FROM ONTOLOGY + VIEW DEFINITIONS. DO NOT HAND-EDIT. -->
 
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
@@ -1182,7 +1502,7 @@ Schema field type       → Svelte component
   import { LEASE_TYPE_OPTIONS, LIABILITY_TYPE_OPTIONS } from '../../../types/enums';
   import type { LeaseCreateInput } from '../../../types/lease.types';
 
-  // Generated from schema: form.sections[*].visible_when
+  // Generated from uigen.cue form.sections[*].visible_when
   import { LEASE_FORM_VISIBILITY } from './lease.config';
 
   export let initialValues: Partial<LeaseCreateInput> = {};
@@ -1231,94 +1551,17 @@ Schema field type       → Svelte component
         on:change={(e) => handleChange('lease_type', e.detail)}
       />
     </FormField>
-
-    <FormField label="Liability Type" error={errors['liability_type']}>
-      <EnumSelect
-        options={LIABILITY_TYPE_OPTIONS}
-        value={values.liability_type ?? 'joint_and_several'}
-        on:change={(e) => handleChange('liability_type', e.detail)}
-      />
-    </FormField>
-
-    <FormField label="Property" required error={errors['property_id']}>
-      <EntityRefSelect
-        entityType="property"
-        displayField="name"
-        value={values.property_id}
-        on:change={(e) => handleChange('property_id', e.detail)}
-      />
-    </FormField>
-
-    <FormField label="Tenants" required error={errors['tenant_role_ids']}>
-      <EntityRefSelect
-        entityType="person_role"
-        filter={{ role_type: 'tenant' }}
-        displayTemplate="{person.first_name} {person.last_name}"
-        multiple
-        value={values.tenant_role_ids}
-        on:change={(e) => handleChange('tenant_role_ids', e.detail)}
-      />
-    </FormField>
+    <!-- ... remaining fields from section declaration -->
   </FormSection>
 
-  <!-- Section: Lease Term -->
-  <FormSection title="Lease Term">
-    <FormField label="Term" required error={errors['term']}>
-      <DateRangeInput
-        value={values.term}
-        requireEnd={['fixed_term', 'student'].includes(values.lease_type ?? '')}
-        on:change={(e) => handleChange('term', e.detail)}
-      />
-    </FormField>
-  </FormSection>
-
-  <!-- Section: Financial Terms -->
-  <FormSection title="Financial Terms">
-    <FormField label="Base Rent" required error={errors['base_rent']}>
-      <MoneyInput
-        value={values.base_rent}
-        min={0}
-        on:change={(e) => handleChange('base_rent', e.detail)}
-      />
-    </FormField>
-
-    <FormField label="Security Deposit" required error={errors['security_deposit']}>
-      <MoneyInput
-        value={values.security_deposit}
-        min={0}
-        on:change={(e) => handleChange('security_deposit', e.detail)}
-      />
-    </FormField>
-  </FormSection>
-
-  <!-- Section: CAM Terms (conditional) -->
+  <!-- Conditional sections driven by visible_when from uigen.cue -->
   {#if isVisible('cam')}
-    <FormSection
-      title="Common Area Maintenance"
-      collapsible
-      required={['commercial_nnn', 'commercial_nn', 'commercial_n'].includes(values.lease_type ?? '')}
-    >
-      <CAMTermsSection
-        value={values.cam_terms}
-        leaseType={values.lease_type}
-        errors={errors}
-        on:change={(e) => handleChange('cam_terms', e.detail)}
-      />
+    <FormSection title="Common Area Maintenance" collapsible required={...}>
+      <CAMTermsSection ... />
     </FormSection>
   {/if}
 
-  <!-- Section: Subsidy Terms (conditional) -->
-  {#if isVisible('subsidy')}
-    <FormSection title="Subsidy Terms" collapsible required>
-      <SubsidyTermsSection
-        value={values.subsidy}
-        errors={errors}
-        on:change={(e) => handleChange('subsidy', e.detail)}
-      />
-    </FormSection>
-  {/if}
-
-  <!-- ... remaining conditional sections follow same pattern -->
+  <!-- ... remaining sections exactly as declared in uigen.cue -->
 
   <div class="flex justify-end gap-2 pt-4">
     <button type="button" class="btn variant-soft" on:click={() => dispatch('cancel')}>
@@ -1331,11 +1574,11 @@ Schema field type       → Svelte component
 </form>
 ```
 
-### 5.3 Status Badge Component Template
+### 6.3 Status Badge Component Template
 
 ```svelte
 <!-- gen/ui/components/entities/lease/LeaseStatusBadge.svelte -->
-<!-- GENERATED FROM ONTOLOGY. DO NOT HAND-EDIT. -->
+<!-- GENERATED FROM ONTOLOGY + VIEW DEFINITIONS. DO NOT HAND-EDIT. -->
 
 <script lang="ts">
   import type { LeaseStatus } from '../../../types/lease.types';
@@ -1343,7 +1586,7 @@ Schema field type       → Svelte component
 
   export let status: LeaseStatus;
 
-  // Generated from state machine position analysis
+  // Generated from uigen.cue status.colors
   const colorMap: Record<LeaseStatus, string> = {
     draft: 'variant-soft',
     pending_approval: 'variant-soft-secondary',
@@ -1362,427 +1605,56 @@ Schema field type       → Svelte component
 </span>
 ```
 
-### 5.4 Actions Component Template
+### 6.4 Actions Component Template
 
-```svelte
-<!-- gen/ui/components/entities/lease/LeaseActions.svelte -->
-<!-- GENERATED FROM ONTOLOGY. DO NOT HAND-EDIT. -->
+Generated from state_machines.cue (ontology-driven, not view-definition-driven). Same as v2 Section 5.4.
 
-<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import TransitionButton from '../../shared/TransitionButton.svelte';
-  import type { LeaseStatus } from '../../../types/lease.types';
+### 6.5 List Component Template
 
-  export let entityId: string;
-  export let currentStatus: LeaseStatus;
+Same as v2 Section 5.5 but columns and filters come from uigen.cue declarations.
 
-  const dispatch = createEventDispatcher();
+### 6.6 Detail Component Template
 
-  // Generated from state_machines.cue: LeaseTransitions
-  const transitions: Record<LeaseStatus, Array<{
-    target: LeaseStatus;
-    label: string;
-    variant: 'primary' | 'secondary' | 'danger';
-    confirm: boolean;
-    confirmMessage?: string;
-    endpoint: string;
-    requiresFields?: string[];
-  }>> = {
-    draft: [
-      { target: 'pending_approval', label: 'Submit for Approval', variant: 'primary', confirm: false, endpoint: `/v1/leases/${entityId}/submit` },
-      { target: 'pending_signature', label: 'Send for Signature', variant: 'primary', confirm: false, endpoint: `/v1/leases/${entityId}/sign` },
-      { target: 'terminated', label: 'Cancel', variant: 'danger', confirm: true, confirmMessage: 'Are you sure you want to cancel this lease? This cannot be undone.', endpoint: `/v1/leases/${entityId}/terminate` },
-    ],
-    pending_approval: [
-      { target: 'pending_signature', label: 'Approve', variant: 'primary', confirm: false, endpoint: `/v1/leases/${entityId}/approve` },
-      { target: 'draft', label: 'Return to Draft', variant: 'secondary', confirm: false, endpoint: `/v1/leases/${entityId}/reject` },
-      { target: 'terminated', label: 'Reject', variant: 'danger', confirm: true, confirmMessage: 'Are you sure you want to reject this lease?', endpoint: `/v1/leases/${entityId}/terminate` },
-    ],
-    pending_signature: [
-      { target: 'active', label: 'Activate', variant: 'primary', confirm: false, endpoint: `/v1/leases/${entityId}/activate`, requiresFields: ['move_in_date', 'signed_at'] },
-      { target: 'draft', label: 'Return to Draft', variant: 'secondary', confirm: false, endpoint: `/v1/leases/${entityId}/reject` },
-      { target: 'terminated', label: 'Cancel', variant: 'danger', confirm: true, confirmMessage: 'Are you sure you want to cancel this lease?', endpoint: `/v1/leases/${entityId}/terminate` },
-    ],
-    active: [
-      { target: 'month_to_month_holdover', label: 'Convert to Month-to-Month', variant: 'secondary', confirm: true, endpoint: `/v1/leases/${entityId}/holdover` },
-      { target: 'terminated', label: 'Terminate', variant: 'danger', confirm: true, confirmMessage: 'Are you sure you want to terminate this lease? This will begin the move-out process.', endpoint: `/v1/leases/${entityId}/terminate` },
-      { target: 'eviction', label: 'Initiate Eviction', variant: 'danger', confirm: true, confirmMessage: 'Are you sure you want to initiate eviction proceedings?', endpoint: `/v1/leases/${entityId}/evict` },
-    ],
-    expired: [
-      { target: 'month_to_month_holdover', label: 'Convert to Month-to-Month', variant: 'secondary', confirm: true, endpoint: `/v1/leases/${entityId}/holdover` },
-      { target: 'renewed', label: 'Renew', variant: 'primary', confirm: false, endpoint: `/v1/leases/${entityId}/renew` },
-      { target: 'terminated', label: 'Terminate', variant: 'danger', confirm: true, confirmMessage: 'Terminate expired lease?', endpoint: `/v1/leases/${entityId}/terminate` },
-    ],
-    month_to_month_holdover: [
-      { target: 'renewed', label: 'Renew', variant: 'primary', confirm: false, endpoint: `/v1/leases/${entityId}/renew` },
-      { target: 'terminated', label: 'Terminate', variant: 'danger', confirm: true, confirmMessage: 'Terminate month-to-month lease?', endpoint: `/v1/leases/${entityId}/terminate` },
-      { target: 'eviction', label: 'Initiate Eviction', variant: 'danger', confirm: true, confirmMessage: 'Initiate eviction on month-to-month tenant?', endpoint: `/v1/leases/${entityId}/evict` },
-    ],
-    terminated: [],
-    renewed: [],
-    eviction: [
-      { target: 'terminated', label: 'Complete Eviction', variant: 'danger', confirm: true, confirmMessage: 'Mark eviction as complete?', endpoint: `/v1/leases/${entityId}/terminate` },
-    ],
-  };
+Same as v2 Section 5.6 but sections and related sections come from uigen.cue declarations.
 
-  $: availableTransitions = transitions[currentStatus] ?? [];
-</script>
+### 6.7 Shared Components
 
-{#if availableTransitions.length > 0}
-  <div class="flex gap-2">
-    {#each availableTransitions as transition}
-      <TransitionButton
-        label={transition.label}
-        variant={transition.variant}
-        confirm={transition.confirm}
-        confirmMessage={transition.confirmMessage}
-        endpoint={transition.endpoint}
-        requiresFields={transition.requiresFields}
-        on:complete={(e) => dispatch('transition', e.detail)}
-      />
-    {/each}
-  </div>
-{/if}
-```
-
-### 5.5 List Component Template
-
-```svelte
-<!-- gen/ui/components/entities/lease/LeaseList.svelte -->
-<!-- GENERATED FROM ONTOLOGY. DO NOT HAND-EDIT. -->
-
-<script lang="ts">
-  import { Paginator, Table } from '@skeletonlabs/skeleton';
-  import LeaseStatusBadge from './LeaseStatusBadge.svelte';
-  import MoneyDisplay from '../../shared/MoneyDisplay.svelte';
-  import EnumBadge from '../../shared/EnumBadge.svelte';
-  import { entityListStore } from '../../../stores/entityList';
-  import { LEASE_TYPE_LABELS, LEASE_STATUS_LABELS } from '../../../types/enums';
-  import type { Lease } from '../../../types/lease.types';
-
-  const store = entityListStore<Lease>('lease', {
-    defaultSort: { field: 'updated_at', direction: 'desc' },
-  });
-
-  // Generated from list schema
-  const columns = [
-    { field: 'status', label: 'Status', width: '100px', component: 'status_badge' },
-    { field: 'lease_type', label: 'Type', width: '140px', component: 'enum_badge' },
-    { field: 'property_id', label: 'Property', width: '180px', display: 'property.name' },
-    { field: 'base_rent', label: 'Base Rent', width: '120px', align: 'right', component: 'money' },
-    { field: 'term.end', label: 'Expiration', width: '120px', component: 'date' },
-    { field: 'updated_at', label: 'Last Updated', width: '140px', component: 'datetime' },
-  ];
-
-  // Generated from list schema filters
-  const filterConfig = [
-    { field: 'status', type: 'multi_enum', options: LEASE_STATUS_LABELS, label: 'Status' },
-    { field: 'lease_type', type: 'multi_enum', options: LEASE_TYPE_LABELS, label: 'Type' },
-    { field: 'property_id', type: 'entity_ref', entityType: 'property', label: 'Property' },
-    { field: 'term.end', type: 'date_range', label: 'Expiration' },
-    { field: 'base_rent', type: 'money_range', label: 'Base Rent' },
-  ];
-</script>
-
-<!-- Filter bar -->
-<div class="flex gap-2 mb-4">
-  {#each filterConfig as filter}
-    <!-- Skeleton filter components based on filter.type -->
-  {/each}
-</div>
-
-<!-- Table using Skeleton Table component -->
-<div class="table-container">
-  <!-- Table rendering with sortable columns -->
-  <!-- Row click navigates to detail view -->
-</div>
-
-<!-- Pagination -->
-<Paginator
-  bind:settings={$store.pagination}
-  on:page={(e) => store.setPage(e.detail)}
-/>
-```
-
-### 5.6 Detail Component Template
-
-```svelte
-<!-- gen/ui/components/entities/lease/LeaseDetail.svelte -->
-<!-- GENERATED FROM ONTOLOGY. DO NOT HAND-EDIT. -->
-
-<script lang="ts">
-  import LeaseStatusBadge from './LeaseStatusBadge.svelte';
-  import LeaseActions from './LeaseActions.svelte';
-  import MoneyDisplay from '../../shared/MoneyDisplay.svelte';
-  import DateRangeDisplay from '../../shared/DateRangeDisplay.svelte';
-  import AddressDisplay from '../../shared/AddressDisplay.svelte';
-  import EnumBadge from '../../shared/EnumBadge.svelte';
-  import FormSection from '../../shared/FormSection.svelte';
-  import { entityStore } from '../../../stores/entity';
-  import { relatedStore } from '../../../stores/related';
-  import type { Lease } from '../../../types/lease.types';
-
-  export let id: string;
-
-  const lease = entityStore<Lease>('lease', id, ['spaces', 'tenant_roles']);
-  const ledger = relatedStore('lease', id, 'ledger_entries');
-</script>
-
-{#if $lease.data}
-  {@const l = $lease.data}
-
-  <!-- Header with status and actions -->
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-3">
-      <h1 class="h2">Lease</h1>
-      <LeaseStatusBadge status={l.status} />
-    </div>
-    <LeaseActions
-      entityId={l.id}
-      currentStatus={l.status}
-      on:transition={() => lease.refetch()}
-    />
-  </div>
-
-  <!-- Overview section -->
-  <FormSection title="Overview">
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <dt class="text-sm text-surface-500">Lease Type</dt>
-        <dd><EnumBadge value={l.lease_type} labels={LEASE_TYPE_LABELS} /></dd>
-      </div>
-      <div>
-        <dt class="text-sm text-surface-500">Liability</dt>
-        <dd><EnumBadge value={l.liability_type} labels={LIABILITY_TYPE_LABELS} /></dd>
-      </div>
-      <div>
-        <dt class="text-sm text-surface-500">Term</dt>
-        <dd><DateRangeDisplay value={l.term} /></dd>
-      </div>
-      <div>
-        <dt class="text-sm text-surface-500">Base Rent</dt>
-        <dd><MoneyDisplay value={l.base_rent} /></dd>
-      </div>
-    </div>
-  </FormSection>
-
-  <!-- CAM Terms (conditional — only show if present) -->
-  {#if l.cam_terms}
-    <FormSection title="CAM Terms" collapsible>
-      <!-- CAM terms display fields -->
-    </FormSection>
-  {/if}
-
-  <!-- Related: Tenants -->
-  <FormSection title="Tenants">
-    <!-- Tenant list from relationship -->
-  </FormSection>
-
-  <!-- Related: Spaces -->
-  <FormSection title="Spaces">
-    <!-- Space list from relationship -->
-  </FormSection>
-
-  <!-- Related: Ledger -->
-  <FormSection title="Ledger" collapsible>
-    <!-- Ledger entry table from relationship -->
-  </FormSection>
-{/if}
-```
-
-### 5.7 Shared Component: MoneyInput
-
-```svelte
-<!-- gen/ui/components/shared/MoneyInput.svelte -->
-
-<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import type { Money } from '../../types/common.types';
-
-  export let value: Money | null = null;
-  export let min: number | null = null;
-  export let currencies: string[] = ['USD'];
-  export let disabled = false;
-
-  const dispatch = createEventDispatcher();
-
-  let displayValue = value ? (value.amount_cents / 100).toFixed(2) : '';
-  let currency = value?.currency ?? 'USD';
-
-  function handleBlur() {
-    const parsed = parseFloat(displayValue);
-    if (isNaN(parsed)) return;
-    if (min !== null && parsed * 100 < min) return;
-
-    const cents = Math.round(parsed * 100);
-    dispatch('change', { amount_cents: cents, currency });
-  }
-
-  // Format on blur
-  function formatDisplay() {
-    const parsed = parseFloat(displayValue);
-    if (!isNaN(parsed)) {
-      displayValue = parsed.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    }
-  }
-</script>
-
-<div class="input-group input-group-divider grid-cols-[auto_1fr_auto]">
-  <div class="input-group-shim">$</div>
-  <input
-    type="text"
-    inputmode="decimal"
-    bind:value={displayValue}
-    on:blur={() => { handleBlur(); formatDisplay(); }}
-    {disabled}
-    class="input"
-    placeholder="0.00"
-  />
-  {#if currencies.length > 1}
-    <select bind:value={currency} class="select" on:change={handleBlur}>
-      {#each currencies as c}
-        <option value={c}>{c}</option>
-      {/each}
-    </select>
-  {:else}
-    <div class="input-group-shim">{currency}</div>
-  {/if}
-</div>
-```
-
-### 5.8 Shared Component: EntityRefSelect
-
-```svelte
-<!-- gen/ui/components/shared/EntityRefSelect.svelte -->
-
-<script lang="ts">
-  import { createEventDispatcher } from 'svelte';
-  import { Autocomplete } from '@skeletonlabs/skeleton';
-  import { apiClient } from '../../api/client';
-
-  export let entityType: string;
-  export let displayField: string = 'name';
-  export let displayTemplate: string | null = null;
-  export let filter: Record<string, any> = {};
-  export let multiple = false;
-  export let value: string | string[] | null = null;
-
-  const dispatch = createEventDispatcher();
-
-  let options: Array<{ label: string; value: string }> = [];
-  let searchTimeout: ReturnType<typeof setTimeout>;
-
-  async function search(query: string) {
-    const params = { ...filter, search: query, limit: 20 };
-    const response = await apiClient.get(`/v1/${entityType}s`, params);
-
-    options = response.data.map((item: any) => ({
-      label: displayTemplate
-        ? displayTemplate.replace(/\{(\w+(?:\.\w+)*)\}/g, (_, path) =>
-            path.split('.').reduce((obj: any, key: string) => obj?.[key], item) ?? '')
-        : item[displayField] ?? item.id,
-      value: item.id,
-    }));
-  }
-
-  function handleInput(event: Event) {
-    const query = (event.target as HTMLInputElement).value;
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => search(query), 300);
-  }
-
-  function handleSelect(event: CustomEvent) {
-    dispatch('change', multiple
-      ? [...(Array.isArray(value) ? value : []), event.detail.value]
-      : event.detail.value
-    );
-  }
-</script>
-
-<Autocomplete
-  {options}
-  on:input={handleInput}
-  on:selection={handleSelect}
-  placeholder="Search..."
-/>
-```
+MoneyInput, EntityRefSelect, AddressForm, DateRangeInput, etc. — unchanged from v2 Sections 5.7–5.8.
 
 ---
 
-## 6. Svelte Stores
+## 7. Svelte Stores
 
-### 6.1 Entity Store
-
-```typescript
-// gen/ui/stores/entity.ts
-import { writable, derived } from 'svelte/store';
-import { apiClient } from '../api/client';
-
-export function entityStore<T>(entityType: string, id: string, include?: string[]) {
-  const { subscribe, set, update } = writable<{
-    data: T | null;
-    loading: boolean;
-    error: Error | null;
-  }>({ data: null, loading: true, error: null });
-
-  async function fetch() {
-    update(s => ({ ...s, loading: true, error: null }));
-    try {
-      const params = include ? { include: include.join(',') } : {};
-      const data = await apiClient.get<T>(`/v1/${entityType}s/${id}`, params);
-      set({ data, loading: false, error: null });
-    } catch (error) {
-      set({ data: null, loading: false, error: error as Error });
-    }
-  }
-
-  fetch(); // initial load
-
-  return { subscribe, refetch: fetch };
-}
-```
-
-### 6.2 State Machine Store
-
-```typescript
-// gen/ui/stores/stateMachine.ts
-
-export function stateMachineStore(entityType: string, currentStatus: string) {
-  // Import the generated transition config for this entity type
-  // (from the UI schema state_machine section)
-  // Return valid transitions for current status
-  // Provide transition function that calls the appropriate API endpoint
-}
-```
+Unchanged from v2 Section 6. Entity stores, list stores, state machine stores, event-aware stores.
 
 ---
 
-## 7. Generator Implementation
+## 8. Generator Implementation
 
-### 7.1 cmd/uigen — Schema Generator
+### 8.1 cmd/uigen — Schema Generator
 
 ```
 Pipeline:
-  1. Load ontology CUE files → parsed entity/field/constraint/state_machine/relationship structures
-  2. Load codegen/uigen.cue → field type mapping rules, section grouping rules
-  3. For each entity:
-     a. Map fields to schema field types (Section 4.1)
-     b. Determine required/optional/conditional (Section 4.2)
-     c. Determine show/hide per view (Section 4.3)
-     d. Extract visibility rules from constraints (Section 4.4)
-     e. Process state machine for colors and actions (Section 4.5)
-     f. Process relationships for detail sections (Section 4.6)
-     g. Process embedded types for form sections (Section 4.7)
-     h. Generate validation rules from constraints
-     i. Generate API endpoint mapping from apigen.cue
-     j. Write {entity}.schema.json
-  4. Generate _enums.schema.json from all enum types
+  1. Load ontology CUE files → parsed entity, field, constraint, state machine, relationship structures
+  2. Load codegen/uigen.cue → parsed view definitions per entity
+  3. Load codegen/apigen.cue → API endpoint mappings
+  4. Validate: every field referenced in uigen.cue exists in ontology (CUE does this, but double-check)
+  5. For each entity with a view definition:
+     a. Resolve each referenced field to its ontology type → component type (Section 4.1)
+     b. Extract validation rules from ontology constraints (Section 4.2, 4.3)
+     c. Map state machine to action buttons (Section 4.4)
+     d. Resolve relationships for related sections (Section 4.5)
+     e. Generate enum labels (Section 4.6)
+     f. Map API endpoints (Section 4.7)
+     g. Merge view definition layout with ontology-derived metadata
+     h. Add realtime subscription config (from event catalog)
+     i. Write {entity}.schema.json
+  6. Generate _enums.schema.json from all enum types
 ```
 
-### 7.2 cmd/uirender — Svelte Renderer
+**What changed from v2:** Steps 5a–5i used to be heuristic inference ("guess which fields go in the list, which in forms, which in detail"). Now the view definition tells the generator what goes where. The generator only derives TYPE information, CONSTRAINTS, TRANSITIONS, and ENDPOINTS — things that are ontological truth, not UI opinion.
+
+### 8.2 cmd/uirender — Svelte Renderer
 
 ```
 Pipeline:
@@ -1791,7 +1663,7 @@ Pipeline:
      a. Generate TypeScript types (from schema fields)
      b. Generate API client (from schema api section)
      c. Generate validation (from schema validation section)
-     d. Generate form config (from schema form.sections + visibility rules)
+     d. Generate form visibility config (from schema form.sections.visible_when)
      e. Apply Svelte form template → {Entity}Form.svelte
      f. Apply Svelte detail template → {Entity}Detail.svelte
      g. Apply Svelte list template → {Entity}List.svelte
@@ -1820,7 +1692,7 @@ cmd/uirender/templates/
 └── enums.ts.tmpl
 ```
 
-### 7.3 Makefile Integration
+### 8.3 Makefile Integration
 
 ```makefile
 generate: generate-ent generate-api generate-events generate-authz generate-agent generate-ui
@@ -1836,7 +1708,7 @@ generate-ui-svelte:
 
 ---
 
-## 8. What the Generator Does NOT Produce
+## 9. What the Generator Does NOT Produce
 
 - Page layouts (how forms/lists/details compose into pages and routes)
 - Navigation (sidebar, breadcrumbs, routing)
@@ -1849,19 +1721,20 @@ generate-ui-svelte:
 - Loading skeleton screens
 - Animations and transitions beyond Skeleton defaults
 - Search pages (global search across entity types)
+- Role-based view variants (future: multiple #EntityViews per entity)
 
 These require design and UX decisions. The generator produces correct, functional, typed, validated, API-wired components. A designer and frontend engineer compose them into a complete application.
 
-**Boundary: the generator handles data correctness. Humans handle user experience.**
+**Boundary: the ontology handles domain correctness. View definitions handle field selection and layout. The generator handles type resolution and wiring. Humans handle user experience.**
 
 ---
 
-## 9. Regeneration Behavior
+## 10. Regeneration Behavior
 
-When any ontology .cue file changes:
+When any ontology .cue file OR codegen/uigen.cue changes:
 
 ```
-1. cmd/uigen re-reads CUE files, regenerates all .schema.json files
+1. cmd/uigen re-reads both inputs, regenerates all .schema.json files
 2. cmd/uirender re-reads schemas, regenerates all Svelte components
 3. Report: "X schemas updated, Y components regenerated, Z new components, W removed"
 ```
@@ -1869,18 +1742,20 @@ When any ontology .cue file changes:
 All generated files carry a header:
 
 ```
-<!-- GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT. -->
-<!-- Source: ontology/lease.cue -->
-<!-- Generated: 2026-02-25T10:30:00Z -->
+<!-- GENERATED FROM PROPELLER ONTOLOGY + VIEW DEFINITIONS. DO NOT HAND-EDIT. -->
+<!-- Sources: ontology/lease.cue, codegen/uigen.cue -->
+<!-- Generated: 2026-02-26T10:30:00Z -->
 ```
 
 Custom behavior uses wrapper components that import and extend generated components. Generated components are never hand-edited.
 
 ---
 
-## 10. Real-Time Event Wiring
+## 11. Real-Time Event Wiring
 
-### 10.1 The Free Lunch
+Unchanged from v2 Section 10. The real-time system is ontology-driven (events, entity references) and independent of view definitions. View definitions don't affect what events flow — they only affect what the user sees when events arrive.
+
+### 11.1 The Free Lunch
 
 The ontology already emits events tagged with every entity they reference (via the activity indexing in the signal system). The generated stores already know which entity they're watching. Wiring them together means every generated component gets real-time updates with zero per-entity code.
 
@@ -1893,15 +1768,7 @@ Frontend:
   WebSocket Client → Event Router → Entity Store → Component re-renders
 ```
 
-A user looking at Lease #4872's detail view sees it update live when:
-- A payment posts against that lease
-- A tenant submits a maintenance request referencing that lease's space
-- A co-worker changes the lease status from another browser tab
-- The nightly ML model updates the renewal probability
-
-No polling. No manual refresh. No per-component subscription code. The ontology already defines which events affect which entities — the frontend just listens.
-
-### 10.2 Architecture
+### 11.2 Architecture
 
 **WebSocket Gateway** (Go, backend service):
 - Accepts WebSocket connections from authenticated browser sessions
@@ -1910,79 +1777,9 @@ No polling. No manual refresh. No per-component subscription code. The ontology 
 - Fans out matching events to connected WebSocket clients
 - Handles connection lifecycle, heartbeat, reconnection tokens
 
-**Why not NATS directly in the browser:**
-NATS has WebSocket support, but exposing NATS subjects directly to the browser leaks internal topology, bypasses authorization, and makes permission changes require frontend changes. The gateway is a thin authorization-aware bridge.
+**Gateway is NOT a data transport.** It carries notifications, not payloads. The store uses the notification to decide whether to refetch or apply an optimistic update. Actual data always comes through the authorized API.
 
-**Event flow:**
-
-```
-1. User A updates Lease #4872 status → active
-2. Ent hook emits: lease.status_changed { lease_id: "4872", space_ids: ["91", "92"], person_ids: ["301", "302"] }
-3. Activity indexer creates index entries for lease:4872, space:91, space:92, person:301, person:302
-4. WebSocket gateway receives event from NATS
-5. Gateway checks subscriber map:
-   - User B has detail view of lease:4872 open → send event
-   - User C has list view of spaces (includes space:91) → send event
-   - User D has tenant profile of person:301 open → send event
-6. Each client's event router dispatches to the appropriate store
-7. Stores invalidate/refetch. Components re-render.
-```
-
-### 10.3 WebSocket Gateway
-
-```go
-// internal/ws/gateway.go
-
-// Client subscription: subscribe to events affecting specific entities
-// Message format (client → server):
-{
-  "action": "subscribe",
-  "channels": [
-    "entity:lease:4872",
-    "entity:space:91",
-    "entity:person:301"
-  ]
-}
-
-{
-  "action": "unsubscribe",
-  "channels": ["entity:lease:4872"]
-}
-
-// Message format (server → client):
-{
-  "channel": "entity:lease:4872",
-  "event_type": "lease.status_changed",
-  "entity_type": "lease",
-  "entity_id": "4872",
-  "timestamp": "2026-02-25T10:30:00Z",
-  "actor_id": "user_123",
-  "payload": {
-    "field": "status",
-    "old_value": "pending_signature",
-    "new_value": "active"
-  },
-  "affected_entities": [
-    { "type": "lease", "id": "4872" },
-    { "type": "space", "id": "91" },
-    { "type": "space", "id": "92" },
-    { "type": "person", "id": "301" },
-    { "type": "person", "id": "302" }
-  ]
-}
-```
-
-**Authorization in the gateway:**
-- On connect: validate session token, extract user permissions
-- On subscribe: check user has read access to the requested entity (via OPA policy, same as API)
-- On event fan-out: re-check permission (entity visibility may have changed)
-- Events never contain data the user shouldn't see — they contain just enough to trigger a refetch through the authorized API
-
-**Gateway is NOT a data transport.** It carries notifications, not payloads. The `payload` field contains minimal change metadata (which field changed, old/new status). The store uses this to decide whether to refetch or apply an optimistic update. Actual data always comes through the authorized API.
-
-### 10.4 Generated Event Registry
-
-The ontology already defines events and which entities they reference. `cmd/uigen` extracts this into a client-side registry:
+### 11.3 Generated Event Registry
 
 ```typescript
 // gen/ui/stores/eventRegistry.ts
@@ -1993,11 +1790,6 @@ export type EntityType = 'lease' | 'space' | 'person' | 'property' | 'building'
   | 'ledger_entry' | 'journal_entry' | 'bank_account' | 'reconciliation'
   | 'jurisdiction' | 'jurisdiction_rule';
 
-export type EventAction = 'created' | 'updated' | 'deleted' | 'status_changed'
-  | 'field_changed' | 'relationship_added' | 'relationship_removed';
-
-// For each event type, which entity types might be affected?
-// Used by list views to know when to refetch.
 export const EVENT_ENTITY_IMPACT: Record<string, EntityType[]> = {
   'lease.created':           ['lease', 'space', 'person', 'property'],
   'lease.status_changed':    ['lease', 'space', 'person'],
@@ -2015,8 +1807,6 @@ export const EVENT_ENTITY_IMPACT: Record<string, EntityType[]> = {
   'journal_entry.posted':    ['journal_entry', 'ledger_entry', 'account'],
   'journal_entry.voided':    ['journal_entry', 'ledger_entry', 'account'],
   'reconciliation.completed': ['reconciliation', 'bank_account', 'ledger_entry'],
-  
-  // Jurisdiction events
   'jurisdiction_rule.activated':  ['jurisdiction_rule', 'jurisdiction', 'property'],
   'jurisdiction_rule.superseded': ['jurisdiction_rule', 'jurisdiction', 'property'],
   'jurisdiction_rule.expired':    ['jurisdiction_rule', 'jurisdiction', 'property'],
@@ -2025,552 +1815,32 @@ export const EVENT_ENTITY_IMPACT: Record<string, EntityType[]> = {
   'property_jurisdiction.removed': ['property', 'jurisdiction'],
 };
 
-// For each entity type, which related entity types should refetch
-// when this entity changes? Derived from relationships.cue.
 export const ENTITY_RELATIONSHIPS: Record<EntityType, EntityType[]> = {
-  lease:           ['space', 'person', 'person_role', 'ledger_entry'],
-  space:           ['lease', 'property', 'building', 'work_order'],
-  person:          ['person_role', 'lease'],
-  property:        ['space', 'building', 'portfolio', 'jurisdiction'],
-  building:        ['space', 'property'],
-  portfolio:       ['property'],
-  person_role:     ['person', 'lease'],
-  application:     ['person', 'space', 'property'],
-  work_order:      ['space', 'property'],
-  account:         ['ledger_entry'],
-  ledger_entry:    ['journal_entry', 'lease', 'account'],
-  journal_entry:   ['ledger_entry'],
-  bank_account:    ['reconciliation'],
-  reconciliation:  ['bank_account', 'ledger_entry'],
-  jurisdiction:    ['property', 'jurisdiction_rule'],
-  jurisdiction_rule: ['jurisdiction', 'property'],
+  lease:              ['space', 'person', 'person_role', 'ledger_entry'],
+  space:              ['lease', 'property', 'building', 'work_order'],
+  person:             ['person_role', 'lease'],
+  property:           ['space', 'building', 'portfolio', 'jurisdiction'],
+  building:           ['space', 'property'],
+  portfolio:          ['property'],
+  person_role:        ['person', 'lease'],
+  application:        ['person', 'space', 'property'],
+  work_order:         ['space', 'property'],
+  account:            ['ledger_entry'],
+  ledger_entry:       ['journal_entry', 'lease', 'account'],
+  journal_entry:      ['ledger_entry'],
+  bank_account:       ['reconciliation'],
+  reconciliation:     ['bank_account', 'ledger_entry'],
+  jurisdiction:       ['property', 'jurisdiction_rule'],
+  jurisdiction_rule:  ['jurisdiction', 'property'],
 };
 ```
 
-This file is regenerated from the ontology's event definitions and relationship graph. When a new entity or event type is added to the ontology, the registry updates automatically.
-
-### 10.5 Client-Side Event System
-
-```typescript
-// gen/ui/stores/events.ts
-
-import { writable, get } from 'svelte/store';
-
-// --- WebSocket Connection ---
-
-type ConnectionState = 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
-
-interface EventMessage {
-  channel: string;
-  event_type: string;
-  entity_type: string;
-  entity_id: string;
-  timestamp: string;
-  actor_id: string;
-  payload: Record<string, any>;
-  affected_entities: Array<{ type: string; id: string }>;
-}
-
-type EventCallback = (event: EventMessage) => void;
-
-class EventClient {
-  private ws: WebSocket | null = null;
-  private subscriptions = new Map<string, Set<EventCallback>>();
-  private pendingSubscriptions = new Set<string>();
-  private reconnectAttempts = 0;
-  private maxReconnectDelay = 30_000; // 30 seconds
-  private heartbeatInterval: ReturnType<typeof setInterval> | null = null;
-
-  public state = writable<ConnectionState>('disconnected');
-
-  connect(wsUrl: string, sessionToken: string) {
-    this.state.set('connecting');
-    this.ws = new WebSocket(`${wsUrl}?token=${sessionToken}`);
-
-    this.ws.onopen = () => {
-      this.state.set('connected');
-      this.reconnectAttempts = 0;
-      this.resubscribeAll();
-      this.startHeartbeat();
-    };
-
-    this.ws.onmessage = (msg) => {
-      const event: EventMessage = JSON.parse(msg.data);
-      this.dispatch(event);
-    };
-
-    this.ws.onclose = () => {
-      this.state.set('reconnecting');
-      this.stopHeartbeat();
-      this.reconnect(wsUrl, sessionToken);
-    };
-
-    this.ws.onerror = () => {
-      this.ws?.close();
-    };
-  }
-
-  subscribe(channel: string, callback: EventCallback): () => void {
-    if (!this.subscriptions.has(channel)) {
-      this.subscriptions.set(channel, new Set());
-      this.sendSubscribe([channel]);
-    }
-    this.subscriptions.get(channel)!.add(callback);
-
-    // Return unsubscribe function
-    return () => {
-      const callbacks = this.subscriptions.get(channel);
-      if (callbacks) {
-        callbacks.delete(callback);
-        if (callbacks.size === 0) {
-          this.subscriptions.delete(channel);
-          this.sendUnsubscribe([channel]);
-        }
-      }
-    };
-  }
-
-  // Subscribe to all events affecting a specific entity
-  subscribeEntity(entityType: string, entityId: string, callback: EventCallback): () => void {
-    return this.subscribe(`entity:${entityType}:${entityId}`, callback);
-  }
-
-  // Subscribe to all events of a given entity type (for list views)
-  subscribeEntityType(entityType: string, callback: EventCallback): () => void {
-    return this.subscribe(`entity_type:${entityType}`, callback);
-  }
-
-  private dispatch(event: EventMessage) {
-    // Dispatch to specific entity channel
-    const entityChannel = `entity:${event.entity_type}:${event.entity_id}`;
-    this.subscriptions.get(entityChannel)?.forEach(cb => cb(event));
-
-    // Dispatch to all affected entities
-    for (const affected of event.affected_entities) {
-      const affectedChannel = `entity:${affected.type}:${affected.id}`;
-      if (affectedChannel !== entityChannel) {
-        this.subscriptions.get(affectedChannel)?.forEach(cb => cb(event));
-      }
-    }
-
-    // Dispatch to entity type channels (for list views)
-    const typeChannel = `entity_type:${event.entity_type}`;
-    this.subscriptions.get(typeChannel)?.forEach(cb => cb(event));
-
-    // Also notify related entity type channels
-    for (const affected of event.affected_entities) {
-      const affectedTypeChannel = `entity_type:${affected.type}`;
-      if (affectedTypeChannel !== typeChannel) {
-        this.subscriptions.get(affectedTypeChannel)?.forEach(cb => cb(event));
-      }
-    }
-  }
-
-  private sendSubscribe(channels: string[]) {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ action: 'subscribe', channels }));
-    } else {
-      channels.forEach(c => this.pendingSubscriptions.add(c));
-    }
-  }
-
-  private sendUnsubscribe(channels: string[]) {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ action: 'unsubscribe', channels }));
-    }
-    channels.forEach(c => this.pendingSubscriptions.delete(c));
-  }
-
-  private resubscribeAll() {
-    const allChannels = [
-      ...this.subscriptions.keys(),
-      ...this.pendingSubscriptions,
-    ];
-    if (allChannels.length > 0) {
-      this.sendSubscribe(allChannels);
-      this.pendingSubscriptions.clear();
-    }
-  }
-
-  private reconnect(wsUrl: string, sessionToken: string) {
-    const delay = Math.min(
-      1000 * Math.pow(2, this.reconnectAttempts),
-      this.maxReconnectDelay
-    );
-    this.reconnectAttempts++;
-    setTimeout(() => this.connect(wsUrl, sessionToken), delay);
-  }
-
-  private startHeartbeat() {
-    this.heartbeatInterval = setInterval(() => {
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ action: 'ping' }));
-      }
-    }, 30_000);
-  }
-
-  private stopHeartbeat() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
-  }
-}
-
-// Singleton — one WebSocket connection per browser tab
-export const eventClient = new EventClient();
-```
-
-### 10.6 Store Integration
-
-The entity stores from Section 6 gain automatic event subscription. When a store mounts, it subscribes to events for its entity. When an event arrives, it decides whether to refetch or apply an optimistic patch.
-
-```typescript
-// gen/ui/stores/entity.ts (updated with real-time)
-import { writable, onDestroy } from 'svelte/store';
-import { apiClient } from '../api/client';
-import { eventClient } from './events';
-
-export function entityStore<T>(entityType: string, id: string, include?: string[]) {
-  const { subscribe, set, update } = writable<{
-    data: T | null;
-    loading: boolean;
-    error: Error | null;
-    lastEvent: string | null;
-  }>({ data: null, loading: true, error: null, lastEvent: null });
-
-  async function fetch() {
-    update(s => ({ ...s, loading: true, error: null }));
-    try {
-      const params = include ? { include: include.join(',') } : {};
-      const data = await apiClient.get<T>(`/v1/${entityType}s/${id}`, params);
-      set({ data, loading: false, error: null, lastEvent: null });
-    } catch (error) {
-      set({ data: null, loading: false, error: error as Error, lastEvent: null });
-    }
-  }
-
-  // Subscribe to real-time events for this entity
-  const unsubscribe = eventClient.subscribeEntity(entityType, id, (event) => {
-    // Skip events caused by the current user's own actions
-    // (those are handled by optimistic updates in entityMutation)
-    if (event.actor_id === getCurrentUserId()) return;
-
-    if (event.payload?.field === 'status') {
-      // Status change: can apply optimistically without refetch
-      update(s => {
-        if (s.data && 'status' in (s.data as any)) {
-          return {
-            ...s,
-            data: { ...s.data, status: event.payload.new_value } as T,
-            lastEvent: event.event_type,
-          };
-        }
-        return s;
-      });
-    } else {
-      // General change: refetch to get fresh data
-      update(s => ({ ...s, lastEvent: event.event_type }));
-      fetch();
-    }
-  });
-
-  fetch(); // initial load
-
-  return {
-    subscribe,
-    refetch: fetch,
-    destroy: unsubscribe,  // call on component unmount
-  };
-}
-```
-
-```typescript
-// gen/ui/stores/entityList.ts (updated with real-time)
-import { writable } from 'svelte/store';
-import { apiClient } from '../api/client';
-import { eventClient } from './events';
-import { EVENT_ENTITY_IMPACT } from './eventRegistry';
-
-export function entityListStore<T>(entityType: string, options: {
-  defaultSort?: { field: string; direction: 'asc' | 'desc' };
-  defaultFilters?: Record<string, any>;
-  pageSize?: number;
-}) {
-  const { subscribe, set, update } = writable<{
-    data: T[];
-    total: number;
-    loading: boolean;
-    error: Error | null;
-    stale: boolean;  // true when we know data has changed but haven't refetched
-    pagination: { page: number; size: number };
-    sort: { field: string; direction: string };
-    filters: Record<string, any>;
-  }>({
-    data: [],
-    total: 0,
-    loading: true,
-    error: null,
-    stale: false,
-    pagination: { page: 0, size: options.pageSize ?? 25 },
-    sort: options.defaultSort ?? { field: 'updated_at', direction: 'desc' },
-    filters: options.defaultFilters ?? {},
-  });
-
-  async function fetch() {
-    // ... standard list fetch logic ...
-  }
-
-  // Subscribe to entity type channel — any create/update/delete of this type
-  const unsubscribe = eventClient.subscribeEntityType(entityType, (event) => {
-    if (event.actor_id === getCurrentUserId()) return;
-
-    if (event.event_type.endsWith('.created') || event.event_type.endsWith('.deleted')) {
-      // Item added or removed — refetch immediately (count changed)
-      fetch();
-    } else {
-      // Item updated — mark stale, show indicator, debounce refetch
-      update(s => ({ ...s, stale: true }));
-      debouncedFetch();
-    }
-  });
-
-  // Debounce rapid updates (e.g., bulk operations)
-  let fetchTimeout: ReturnType<typeof setTimeout>;
-  function debouncedFetch() {
-    clearTimeout(fetchTimeout);
-    fetchTimeout = setTimeout(fetch, 500);
-  }
-
-  fetch();
-
-  return {
-    subscribe,
-    refetch: fetch,
-    setPage: (page: number) => { /* ... */ fetch(); },
-    setSort: (field: string) => { /* ... */ fetch(); },
-    setFilter: (field: string, value: any) => { /* ... */ fetch(); },
-    destroy: unsubscribe,
-  };
-}
-```
-
-### 10.7 Component Wiring
-
-The generated components automatically use the event-aware stores. No additional code needed per component. The only requirement is calling `destroy()` on unmount:
-
-```svelte
-<!-- Detail view: automatically subscribes to entity:lease:4872 -->
-<script lang="ts">
-  import { onDestroy } from 'svelte';
-  import { entityStore } from '../../../stores/entity';
-
-  export let id: string;
-  const store = entityStore<Lease>('lease', id, ['spaces', 'tenant_roles']);
-
-  onDestroy(() => store.destroy());
-</script>
-
-{#if $store.data}
-  <!-- Renders. Re-renders automatically when events arrive. -->
-  <!-- Status badge updates live. Related sections refetch. -->
-{/if}
-```
-
-```svelte
-<!-- List view: automatically subscribes to entity_type:lease -->
-<script lang="ts">
-  import { onDestroy } from 'svelte';
-  import { entityListStore } from '../../../stores/entityList';
-
-  const store = entityListStore<Lease>('lease', {
-    defaultSort: { field: 'updated_at', direction: 'desc' },
-  });
-
-  onDestroy(() => store.destroy());
-</script>
-
-<!-- Stale indicator when data has changed -->
-{#if $store.stale}
-  <div class="alert variant-soft-warning">
-    <span>Data has been updated.</span>
-    <button class="btn btn-sm variant-filled" on:click={() => store.refetch()}>
-      Refresh
-    </button>
-  </div>
-{/if}
-```
-
-### 10.8 Subscription Lifecycle
-
-Subscriptions follow component lifecycle automatically:
-
-```
-Component mounts
-  → Store created
-    → eventClient.subscribeEntity(type, id) called
-      → WebSocket subscribe message sent to gateway
-        → Gateway subscribes to NATS subject
-
-Component unmounts
-  → onDestroy calls store.destroy()
-    → eventClient unsubscribe callback fires
-      → If no more listeners for that channel, WebSocket unsubscribe sent
-        → Gateway drops NATS subscription
-```
-
-**Page navigation:** SvelteKit's page transitions destroy old components, unsubscribing their channels, and mount new ones, subscribing to new channels. No leaked subscriptions.
-
-**Tab visibility:** When browser tab becomes hidden (Page Visibility API), the WebSocket connection stays alive but the client stops refetching on events. Events queue. When the tab becomes visible again, one refetch per active store catches up. This prevents unnecessary API calls for background tabs.
-
-```typescript
-// In events.ts
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    eventClient.pause();  // queue events, don't dispatch
-  } else {
-    eventClient.resume(); // dispatch queued events (triggers refetches)
-  }
-});
-```
-
-### 10.9 Optimistic Updates + Event Reconciliation
-
-When the current user performs an action (status transition, field update), the mutation store applies the change optimistically before the API responds. When the server event arrives confirming the change, the store skips the redundant refetch:
-
-```typescript
-// gen/ui/stores/entityMutation.ts
-export async function transitionEntity(
-  entityType: string,
-  entityId: string,
-  endpoint: string,
-  optimisticUpdate: Partial<any>,
-) {
-  // 1. Apply optimistic update to the entity store immediately
-  entityCache.patch(entityType, entityId, optimisticUpdate);
-
-  // 2. Record the pending mutation (so event handler knows to skip)
-  pendingMutations.add(`${entityType}:${entityId}:${Date.now()}`);
-
-  try {
-    // 3. Call the API
-    const result = await apiClient.post(endpoint);
-
-    // 4. On success: reconcile with server response (server is source of truth)
-    entityCache.set(entityType, entityId, result);
-  } catch (error) {
-    // 5. On failure: rollback optimistic update
-    entityCache.rollback(entityType, entityId);
-    throw error;
-  } finally {
-    // 6. Clear pending mutation after short delay
-    // (allows the echo event from server to be ignored)
-    setTimeout(() => {
-      pendingMutations.delete(`${entityType}:${entityId}:${Date.now()}`);
-    }, 5000);
-  }
-}
-```
-
-User experience: click "Activate" on a lease → status badge immediately turns green → API call completes → server event arrives → skipped (already up to date). If API fails → badge rolls back to previous color, error toast shown. Zero perceived latency.
-
-### 10.10 Multi-Tab Coordination
-
-Multiple browser tabs for the same user share the same WebSocket connection via `BroadcastChannel`:
-
-```typescript
-// In events.ts
-const broadcast = new BroadcastChannel('propeller-events');
-
-// Leader tab: has the WebSocket connection, broadcasts to followers
-// Follower tabs: receive events from leader via BroadcastChannel
-
-// Leader election: first tab to connect becomes leader
-// If leader closes: next tab promotes itself and opens WebSocket
-```
-
-This prevents N WebSocket connections for N open tabs. One connection, N listeners.
-
-### 10.11 Gateway Implementation Notes
-
-**Backend WebSocket Gateway** (`internal/ws/`):
-
-```go
-// Subscription map: channel → set of connection IDs
-// NATS consumer: one JetStream consumer per gateway instance
-// Fan-out: event arrives from NATS → look up channel subscribers → send to each
-
-// Key design decisions:
-// 1. Gateway does NOT filter by permission at subscribe time for most entities
-//    (user can only see entities they already have in the UI, which means
-//     they already passed the API-level permission check)
-// 2. Gateway DOES check permission for entity_type subscriptions
-//    (list views need row-level filtering, which the API handles on refetch)
-// 3. Event payload is minimal (entity type, id, event type, changed field)
-//    No sensitive data in the event — actual data comes via authorized API refetch
-// 4. One NATS consumer group per gateway pod (shared nothing between pods)
-//    Each pod manages its own WebSocket connections
-
-// Scale: 10K concurrent WebSocket connections per gateway pod
-// At 10K managed units with ~50 events/minute across portfolio:
-//   ~50 NATS messages/minute → fan-out to ~10-20 relevant connections each
-//   ~500-1000 WebSocket messages/minute across all connections
-//   Trivial load
-```
-
-### 10.12 What This Enables
-
-With real-time wiring, the generated UI gets several capabilities for free:
-
-**Collaborative editing awareness:** Two property managers looking at the same lease see each other's changes live. No save conflicts. No stale data.
-
-**Live dashboards:** A portfolio overview showing vacancy counts, pending applications, overdue balances updates in real-time as events flow through the system. No polling interval. No refresh button.
-
-**Agent visibility:** When the AI agent processes a maintenance request (routes to vendor, sends communication), the property manager watching the work order detail view sees each step happen live. The agent's actions flow through the same event system as human actions.
-
-**Operational awareness:** Site manager has the lease list open. A new application comes in → list updates with new row. A payment posts → lease's balance indicator changes. A work order escalates → the urgency badge on the related space updates. All without the manager doing anything.
-
-**Audit trail transparency:** Because events carry `actor_id`, the UI can show "Updated by Sarah Chen 2 minutes ago" or "Updated by AI Agent 30 seconds ago" on detail views. Users see who (human or agent) made every change.
-
-### 10.13 What This Does NOT Do
-
-- **Conflict resolution.** If two users edit the same field simultaneously, last write wins at the API level. The event system shows the result, not the conflict. For true collaborative editing (Google Docs style), you need CRDTs or OT — that's a different problem and not in scope.
-- **Offline support.** If the WebSocket disconnects, events are missed. On reconnect, stores refetch current state. No event replay to the client. (NATS JetStream handles replay on the backend for the signal system, but the frontend doesn't need it — it just needs current state.)
-- **Cross-entity computed aggregations.** "Total portfolio vacancy rate" doesn't update from a single space event. Aggregations are computed server-side and exposed as their own endpoints. The real-time system can notify when an aggregation changes, but doesn't compute it client-side.
-
-### 10.14 Generation Rules
-
-`cmd/uigen` adds to each entity schema:
-
-```json
-{
-  "realtime": {
-    "subscribable": true,
-    "channels": {
-      "entity": "entity:{entity_type}:{id}",
-      "entity_type": "entity_type:{entity_type}"
-    },
-    "events": [
-      "lease.created",
-      "lease.updated",
-      "lease.status_changed",
-      "lease.terminated"
-    ],
-    "optimistic_fields": ["status"],
-    "refetch_on": ["*"]
-  }
-}
-```
-
-Derivation rules:
-- `subscribable: true` for all entities with events defined in the ontology
-- `events`: collected from events.cue for this entity type
-- `optimistic_fields`: status field (if entity has state machine) + any enum field that's displayed as a badge
-- `refetch_on: ["*"]`: default. Refetch on any non-optimistic event. Can be narrowed per entity if needed.
-
-`cmd/uirender` reads the realtime schema section and:
-- Wires entity stores with `eventClient.subscribeEntity` calls
-- Wires list stores with `eventClient.subscribeEntityType` calls
-- Generates `onDestroy` cleanup in every component
-- Adds stale indicator to list components
-- Adds `lastEvent` display to detail components (optional, for debugging)
+### 11.4 Client-Side Event System, Store Integration, Optimistic Updates, Multi-Tab, Gateway
+
+All unchanged from v2 Sections 10.5–10.14. See those sections for complete implementation details including:
+- EventClient WebSocket class with reconnection and heartbeat
+- Store integration with automatic event subscription/unsubscription
+- Optimistic updates with event reconciliation
+- BroadcastChannel for multi-tab coordination
+- Tab visibility pausing
+- Gateway implementation notes

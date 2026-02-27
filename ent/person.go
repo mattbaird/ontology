@@ -37,10 +37,14 @@ type Person struct {
 	AgentGoalID *string `json:"agent_goal_id,omitempty"`
 	// FirstName holds the value of the "first_name" field.
 	FirstName string `json:"first_name,omitempty"`
+	// MiddleName holds the value of the "middle_name" field.
+	MiddleName *string `json:"middle_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
 	LastName string `json:"last_name,omitempty"`
 	// DisplayName holds the value of the "display_name" field.
 	DisplayName string `json:"display_name,omitempty"`
+	// RecordSource holds the value of the "record_source" field.
+	RecordSource person.RecordSource `json:"record_source,omitempty"`
 	// DateOfBirth holds the value of the "date_of_birth" field.
 	DateOfBirth *time.Time `json:"date_of_birth,omitempty"`
 	// SsnLastFour holds the value of the "ssn_last_four" field.
@@ -129,7 +133,7 @@ func (*Person) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case person.FieldDoNotContact, person.FieldIdentityVerified:
 			values[i] = new(sql.NullBool)
-		case person.FieldCreatedBy, person.FieldUpdatedBy, person.FieldSource, person.FieldCorrelationID, person.FieldAgentGoalID, person.FieldFirstName, person.FieldLastName, person.FieldDisplayName, person.FieldSsnLastFour, person.FieldPreferredContact, person.FieldLanguagePreference, person.FieldTimezone, person.FieldVerificationMethod:
+		case person.FieldCreatedBy, person.FieldUpdatedBy, person.FieldSource, person.FieldCorrelationID, person.FieldAgentGoalID, person.FieldFirstName, person.FieldMiddleName, person.FieldLastName, person.FieldDisplayName, person.FieldRecordSource, person.FieldSsnLastFour, person.FieldPreferredContact, person.FieldLanguagePreference, person.FieldTimezone, person.FieldVerificationMethod:
 			values[i] = new(sql.NullString)
 		case person.FieldCreatedAt, person.FieldUpdatedAt, person.FieldDateOfBirth, person.FieldVerifiedAt:
 			values[i] = new(sql.NullTime)
@@ -206,6 +210,13 @@ func (_m *Person) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.FirstName = value.String
 			}
+		case person.FieldMiddleName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field middle_name", values[i])
+			} else if value.Valid {
+				_m.MiddleName = new(string)
+				*_m.MiddleName = value.String
+			}
 		case person.FieldLastName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field last_name", values[i])
@@ -217,6 +228,12 @@ func (_m *Person) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field display_name", values[i])
 			} else if value.Valid {
 				_m.DisplayName = value.String
+			}
+		case person.FieldRecordSource:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field record_source", values[i])
+			} else if value.Valid {
+				_m.RecordSource = person.RecordSource(value.String)
 			}
 		case person.FieldDateOfBirth:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -377,11 +394,19 @@ func (_m *Person) String() string {
 	builder.WriteString("first_name=")
 	builder.WriteString(_m.FirstName)
 	builder.WriteString(", ")
+	if v := _m.MiddleName; v != nil {
+		builder.WriteString("middle_name=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
 	builder.WriteString("last_name=")
 	builder.WriteString(_m.LastName)
 	builder.WriteString(", ")
 	builder.WriteString("display_name=")
 	builder.WriteString(_m.DisplayName)
+	builder.WriteString(", ")
+	builder.WriteString("record_source=")
+	builder.WriteString(fmt.Sprintf("%v", _m.RecordSource))
 	builder.WriteString(", ")
 	if v := _m.DateOfBirth; v != nil {
 		builder.WriteString("date_of_birth=")

@@ -1,45 +1,66 @@
 // ontology/property.cue
 package propeller
 
-import "time"
+import (
+	"strings"
+	"time"
+)
+
+// ─── Named Enum Types ───────────────────────────────────────────────────────
+
+#PortfolioStatus: "active" | "inactive" | "onboarding" | "offboarding"
+
+#PropertyType: "single_family" | "multi_family" | "commercial_office" |
+	"commercial_retail" | "mixed_use" | "industrial" |
+	"affordable_housing" | "student_housing" | "senior_living" |
+	"vacation_rental" | "mobile_home_park" |
+	"self_storage" | "coworking" | "data_center" | "medical_office"
+
+#PropertyStatus: "active" | "inactive" | "under_renovation" | "for_sale" | "onboarding"
+
+#BuildingType: "residential" | "commercial" | "mixed_use" | "parking_structure" |
+	"industrial" | "storage" | "auxiliary"
+
+#BuildingStatus: "active" | "inactive" | "under_renovation"
+
+#SpaceType: "residential_unit" | "commercial_office" | "commercial_retail" |
+	"storage" | "parking" | "common_area" |
+	"industrial" | "lot_pad" | "bed_space" | "desk_space" |
+	"parking_garage" | "private_office" | "warehouse" | "amenity" |
+	"rack" | "cage" | "server_room" | "other"
+
+#SpaceStatus: "vacant" | "occupied" | "notice_given" | "make_ready" |
+	"down" | "model" | "reserved" | "owner_occupied"
 
 // ─── Portfolio ───────────────────────────────────────────────────────────────
 // The top-level organizational grouping. A management company may manage
 // multiple portfolios for different ownership entities.
 
-#Portfolio: {
-	id:       string & !=""
-	name:     string & !="" @display()
+#Portfolio: close({
+	#StatefulEntity
+	name:     string & strings.MinRunes(1) @display()
 	owner_id: string & !="" // Organization ID of the ownership entity
 
 	management_type: "self_managed" | "third_party" | "hybrid"
 
-//	description: string & !="" @text()
-
-	// Trust accounting — drives major architectural decisions downstream
-	requires_trust_accounting: bool
-	trust_bank_account_id?:    string
+	description?: string @text()
 
 	status: "active" | "inactive" | "onboarding" | "offboarding"
 
-	// Financial settings at portfolio level
-	default_payment_methods?: [...("ach" | "credit_card" | "check" | "cash" | "money_order")]
-	fiscal_year_start_month: *1 | int & >=1 & <=12 // January default
+	// Default financial references
+	default_chart_of_accounts_id?: string
+	default_bank_account_id?:      string
 
-	// CONSTRAINT: Trust accounting requires a linked bank account
-	if requires_trust_accounting {
-		trust_bank_account_id: string & !=""
-	}
-
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "{name}"
+})
 
 // ─── Property ────────────────────────────────────────────────────────────────
 
-#Property: {
-	id:           string & !=""
+#Property: close({
+	#StatefulEntity
 	portfolio_id: string & !=""
-	name:         string & !="" @display()
+	name:         string & strings.MinRunes(1) @display()
 	address:      #Address
 
 	property_type: "single_family" | "multi_family" | "commercial_office" |
@@ -94,18 +115,19 @@ import "time"
 		requires_lead_disclosure: true
 	}
 
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "{name}"
+})
 
 // ─── Building ────────────────────────────────────────────────────────────────
 // Optional grouping between Property and Space. Not all properties have
 // distinct buildings (e.g., single-family), but campuses and multi-building
 // complexes need this level.
 
-#Building: {
-	id:          string & !=""
+#Building: close({
+	#StatefulEntity
 	property_id: string & !=""
-	name:        string & !="" @display()
+	name:        string & strings.MinRunes(1) @display()
 
 	building_type: "residential" | "commercial" | "mixed_use" | "parking_structure" |
 		"industrial" | "storage" | "auxiliary"
@@ -120,21 +142,24 @@ import "time"
 	total_square_footage?:         float & >0
 	total_rentable_square_footage?: float & >0
 
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "{name}"
+})
 
 // ─── Space ──────────────────────────────────────────────────────────────────
 // A leasable (or non-leasable) area within a property or building.
 // Replaces the former "Unit" entity with expanded capabilities.
 
-#Space: {
-	id:          string & !=""
+#Space: close({
+	#StatefulEntity
 	property_id: string & !=""
-	space_number: string & !="" @display() // "101", "A", "Suite 200", etc.
+	space_number: string & strings.MinRunes(1) @display() // "101", "A", "Suite 200", etc.
 
 	space_type: "residential_unit" | "commercial_office" | "commercial_retail" |
 		"storage" | "parking" | "common_area" |
-		"industrial" | "lot_pad" | "bed_space" | "desk_space"
+		"industrial" | "lot_pad" | "bed_space" | "desk_space" |
+		"parking_garage" | "private_office" | "warehouse" | "amenity" |
+		"rack" | "cage" | "server_room" | "other"
 
 	status: "vacant" | "occupied" | "notice_given" | "make_ready" |
 		"down" | "model" | "reserved" | "owner_occupied"
@@ -199,5 +224,6 @@ import "time"
 	// CONSTRAINT: If parent_space_id is set, building_id should match parent's building_id
 	// (enforced at runtime via Ent hooks — cross-entity validation)
 
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "Space {space_number}"
+})

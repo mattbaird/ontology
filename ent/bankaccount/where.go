@@ -91,9 +91,9 @@ func Name(v string) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldEQ(FieldName, v))
 }
 
-// BankName applies equality check predicate on the "bank_name" field. It's identical to BankNameEQ.
-func BankName(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldBankName, v))
+// InstitutionName applies equality check predicate on the "institution_name" field. It's identical to InstitutionNameEQ.
+func InstitutionName(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldInstitutionName, v))
 }
 
 // RoutingNumber applies equality check predicate on the "routing_number" field. It's identical to RoutingNumberEQ.
@@ -101,9 +101,24 @@ func RoutingNumber(v string) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldEQ(FieldRoutingNumber, v))
 }
 
-// AccountNumberLastFour applies equality check predicate on the "account_number_last_four" field. It's identical to AccountNumberLastFourEQ.
-func AccountNumberLastFour(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldAccountNumberLastFour, v))
+// AccountMask applies equality check predicate on the "account_mask" field. It's identical to AccountMaskEQ.
+func AccountMask(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldAccountMask, v))
+}
+
+// AccountNumberEncrypted applies equality check predicate on the "account_number_encrypted" field. It's identical to AccountNumberEncryptedEQ.
+func AccountNumberEncrypted(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldAccountNumberEncrypted, v))
+}
+
+// PlaidAccountID applies equality check predicate on the "plaid_account_id" field. It's identical to PlaidAccountIDEQ.
+func PlaidAccountID(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldPlaidAccountID, v))
+}
+
+// PlaidAccessToken applies equality check predicate on the "plaid_access_token" field. It's identical to PlaidAccessTokenEQ.
+func PlaidAccessToken(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldPlaidAccessToken, v))
 }
 
 // PropertyID applies equality check predicate on the "property_id" field. It's identical to PropertyIDEQ.
@@ -116,6 +131,21 @@ func EntityID(v string) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldEQ(FieldEntityID, v))
 }
 
+// IsDefault applies equality check predicate on the "is_default" field. It's identical to IsDefaultEQ.
+func IsDefault(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldIsDefault, v))
+}
+
+// AcceptsDeposits applies equality check predicate on the "accepts_deposits" field. It's identical to AcceptsDepositsEQ.
+func AcceptsDeposits(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldAcceptsDeposits, v))
+}
+
+// AcceptsPayments applies equality check predicate on the "accepts_payments" field. It's identical to AcceptsPaymentsEQ.
+func AcceptsPayments(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldAcceptsPayments, v))
+}
+
 // CurrentBalanceAmountCents applies equality check predicate on the "current_balance_amount_cents" field. It's identical to CurrentBalanceAmountCentsEQ.
 func CurrentBalanceAmountCents(v int64) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldEQ(FieldCurrentBalanceAmountCents, v))
@@ -126,24 +156,9 @@ func CurrentBalanceCurrency(v string) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldEQ(FieldCurrentBalanceCurrency, v))
 }
 
-// LastReconciledAt applies equality check predicate on the "last_reconciled_at" field. It's identical to LastReconciledAtEQ.
-func LastReconciledAt(v time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldLastReconciledAt, v))
-}
-
-// IsTrust applies equality check predicate on the "is_trust" field. It's identical to IsTrustEQ.
-func IsTrust(v bool) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldIsTrust, v))
-}
-
-// TrustState applies equality check predicate on the "trust_state" field. It's identical to TrustStateEQ.
-func TrustState(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldTrustState, v))
-}
-
-// ComminglingAllowed applies equality check predicate on the "commingling_allowed" field. It's identical to ComminglingAllowedEQ.
-func ComminglingAllowed(v bool) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldComminglingAllowed, v))
+// LastStatementDate applies equality check predicate on the "last_statement_date" field. It's identical to LastStatementDateEQ.
+func LastStatementDate(v time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldLastStatementDate, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -611,69 +626,69 @@ func AccountTypeNotIn(vs ...AccountType) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldNotIn(FieldAccountType, vs...))
 }
 
-// BankNameEQ applies the EQ predicate on the "bank_name" field.
-func BankNameEQ(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldBankName, v))
+// InstitutionNameEQ applies the EQ predicate on the "institution_name" field.
+func InstitutionNameEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldInstitutionName, v))
 }
 
-// BankNameNEQ applies the NEQ predicate on the "bank_name" field.
-func BankNameNEQ(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNEQ(FieldBankName, v))
+// InstitutionNameNEQ applies the NEQ predicate on the "institution_name" field.
+func InstitutionNameNEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldInstitutionName, v))
 }
 
-// BankNameIn applies the In predicate on the "bank_name" field.
-func BankNameIn(vs ...string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldIn(FieldBankName, vs...))
+// InstitutionNameIn applies the In predicate on the "institution_name" field.
+func InstitutionNameIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIn(FieldInstitutionName, vs...))
 }
 
-// BankNameNotIn applies the NotIn predicate on the "bank_name" field.
-func BankNameNotIn(vs ...string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNotIn(FieldBankName, vs...))
+// InstitutionNameNotIn applies the NotIn predicate on the "institution_name" field.
+func InstitutionNameNotIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotIn(FieldInstitutionName, vs...))
 }
 
-// BankNameGT applies the GT predicate on the "bank_name" field.
-func BankNameGT(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldGT(FieldBankName, v))
+// InstitutionNameGT applies the GT predicate on the "institution_name" field.
+func InstitutionNameGT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGT(FieldInstitutionName, v))
 }
 
-// BankNameGTE applies the GTE predicate on the "bank_name" field.
-func BankNameGTE(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldGTE(FieldBankName, v))
+// InstitutionNameGTE applies the GTE predicate on the "institution_name" field.
+func InstitutionNameGTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGTE(FieldInstitutionName, v))
 }
 
-// BankNameLT applies the LT predicate on the "bank_name" field.
-func BankNameLT(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldLT(FieldBankName, v))
+// InstitutionNameLT applies the LT predicate on the "institution_name" field.
+func InstitutionNameLT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLT(FieldInstitutionName, v))
 }
 
-// BankNameLTE applies the LTE predicate on the "bank_name" field.
-func BankNameLTE(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldLTE(FieldBankName, v))
+// InstitutionNameLTE applies the LTE predicate on the "institution_name" field.
+func InstitutionNameLTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLTE(FieldInstitutionName, v))
 }
 
-// BankNameContains applies the Contains predicate on the "bank_name" field.
-func BankNameContains(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldContains(FieldBankName, v))
+// InstitutionNameContains applies the Contains predicate on the "institution_name" field.
+func InstitutionNameContains(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContains(FieldInstitutionName, v))
 }
 
-// BankNameHasPrefix applies the HasPrefix predicate on the "bank_name" field.
-func BankNameHasPrefix(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldHasPrefix(FieldBankName, v))
+// InstitutionNameHasPrefix applies the HasPrefix predicate on the "institution_name" field.
+func InstitutionNameHasPrefix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasPrefix(FieldInstitutionName, v))
 }
 
-// BankNameHasSuffix applies the HasSuffix predicate on the "bank_name" field.
-func BankNameHasSuffix(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldHasSuffix(FieldBankName, v))
+// InstitutionNameHasSuffix applies the HasSuffix predicate on the "institution_name" field.
+func InstitutionNameHasSuffix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasSuffix(FieldInstitutionName, v))
 }
 
-// BankNameEqualFold applies the EqualFold predicate on the "bank_name" field.
-func BankNameEqualFold(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEqualFold(FieldBankName, v))
+// InstitutionNameEqualFold applies the EqualFold predicate on the "institution_name" field.
+func InstitutionNameEqualFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEqualFold(FieldInstitutionName, v))
 }
 
-// BankNameContainsFold applies the ContainsFold predicate on the "bank_name" field.
-func BankNameContainsFold(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldContainsFold(FieldBankName, v))
+// InstitutionNameContainsFold applies the ContainsFold predicate on the "institution_name" field.
+func InstitutionNameContainsFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContainsFold(FieldInstitutionName, v))
 }
 
 // RoutingNumberEQ applies the EQ predicate on the "routing_number" field.
@@ -731,16 +746,6 @@ func RoutingNumberHasSuffix(v string) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldHasSuffix(FieldRoutingNumber, v))
 }
 
-// RoutingNumberIsNil applies the IsNil predicate on the "routing_number" field.
-func RoutingNumberIsNil() predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldIsNull(FieldRoutingNumber))
-}
-
-// RoutingNumberNotNil applies the NotNil predicate on the "routing_number" field.
-func RoutingNumberNotNil() predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNotNull(FieldRoutingNumber))
-}
-
 // RoutingNumberEqualFold applies the EqualFold predicate on the "routing_number" field.
 func RoutingNumberEqualFold(v string) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldEqualFold(FieldRoutingNumber, v))
@@ -751,69 +756,294 @@ func RoutingNumberContainsFold(v string) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldContainsFold(FieldRoutingNumber, v))
 }
 
-// AccountNumberLastFourEQ applies the EQ predicate on the "account_number_last_four" field.
-func AccountNumberLastFourEQ(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldAccountNumberLastFour, v))
+// AccountMaskEQ applies the EQ predicate on the "account_mask" field.
+func AccountMaskEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourNEQ applies the NEQ predicate on the "account_number_last_four" field.
-func AccountNumberLastFourNEQ(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNEQ(FieldAccountNumberLastFour, v))
+// AccountMaskNEQ applies the NEQ predicate on the "account_mask" field.
+func AccountMaskNEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourIn applies the In predicate on the "account_number_last_four" field.
-func AccountNumberLastFourIn(vs ...string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldIn(FieldAccountNumberLastFour, vs...))
+// AccountMaskIn applies the In predicate on the "account_mask" field.
+func AccountMaskIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIn(FieldAccountMask, vs...))
 }
 
-// AccountNumberLastFourNotIn applies the NotIn predicate on the "account_number_last_four" field.
-func AccountNumberLastFourNotIn(vs ...string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNotIn(FieldAccountNumberLastFour, vs...))
+// AccountMaskNotIn applies the NotIn predicate on the "account_mask" field.
+func AccountMaskNotIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotIn(FieldAccountMask, vs...))
 }
 
-// AccountNumberLastFourGT applies the GT predicate on the "account_number_last_four" field.
-func AccountNumberLastFourGT(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldGT(FieldAccountNumberLastFour, v))
+// AccountMaskGT applies the GT predicate on the "account_mask" field.
+func AccountMaskGT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGT(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourGTE applies the GTE predicate on the "account_number_last_four" field.
-func AccountNumberLastFourGTE(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldGTE(FieldAccountNumberLastFour, v))
+// AccountMaskGTE applies the GTE predicate on the "account_mask" field.
+func AccountMaskGTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGTE(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourLT applies the LT predicate on the "account_number_last_four" field.
-func AccountNumberLastFourLT(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldLT(FieldAccountNumberLastFour, v))
+// AccountMaskLT applies the LT predicate on the "account_mask" field.
+func AccountMaskLT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLT(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourLTE applies the LTE predicate on the "account_number_last_four" field.
-func AccountNumberLastFourLTE(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldLTE(FieldAccountNumberLastFour, v))
+// AccountMaskLTE applies the LTE predicate on the "account_mask" field.
+func AccountMaskLTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLTE(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourContains applies the Contains predicate on the "account_number_last_four" field.
-func AccountNumberLastFourContains(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldContains(FieldAccountNumberLastFour, v))
+// AccountMaskContains applies the Contains predicate on the "account_mask" field.
+func AccountMaskContains(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContains(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourHasPrefix applies the HasPrefix predicate on the "account_number_last_four" field.
-func AccountNumberLastFourHasPrefix(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldHasPrefix(FieldAccountNumberLastFour, v))
+// AccountMaskHasPrefix applies the HasPrefix predicate on the "account_mask" field.
+func AccountMaskHasPrefix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasPrefix(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourHasSuffix applies the HasSuffix predicate on the "account_number_last_four" field.
-func AccountNumberLastFourHasSuffix(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldHasSuffix(FieldAccountNumberLastFour, v))
+// AccountMaskHasSuffix applies the HasSuffix predicate on the "account_mask" field.
+func AccountMaskHasSuffix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasSuffix(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourEqualFold applies the EqualFold predicate on the "account_number_last_four" field.
-func AccountNumberLastFourEqualFold(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEqualFold(FieldAccountNumberLastFour, v))
+// AccountMaskEqualFold applies the EqualFold predicate on the "account_mask" field.
+func AccountMaskEqualFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEqualFold(FieldAccountMask, v))
 }
 
-// AccountNumberLastFourContainsFold applies the ContainsFold predicate on the "account_number_last_four" field.
-func AccountNumberLastFourContainsFold(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldContainsFold(FieldAccountNumberLastFour, v))
+// AccountMaskContainsFold applies the ContainsFold predicate on the "account_mask" field.
+func AccountMaskContainsFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContainsFold(FieldAccountMask, v))
+}
+
+// AccountNumberEncryptedEQ applies the EQ predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedNEQ applies the NEQ predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedNEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedIn applies the In predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIn(FieldAccountNumberEncrypted, vs...))
+}
+
+// AccountNumberEncryptedNotIn applies the NotIn predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedNotIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotIn(FieldAccountNumberEncrypted, vs...))
+}
+
+// AccountNumberEncryptedGT applies the GT predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedGT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGT(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedGTE applies the GTE predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedGTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGTE(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedLT applies the LT predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedLT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLT(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedLTE applies the LTE predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedLTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLTE(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedContains applies the Contains predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedContains(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContains(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedHasPrefix applies the HasPrefix predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedHasPrefix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasPrefix(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedHasSuffix applies the HasSuffix predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedHasSuffix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasSuffix(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedIsNil applies the IsNil predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedIsNil() predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIsNull(FieldAccountNumberEncrypted))
+}
+
+// AccountNumberEncryptedNotNil applies the NotNil predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedNotNil() predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotNull(FieldAccountNumberEncrypted))
+}
+
+// AccountNumberEncryptedEqualFold applies the EqualFold predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedEqualFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEqualFold(FieldAccountNumberEncrypted, v))
+}
+
+// AccountNumberEncryptedContainsFold applies the ContainsFold predicate on the "account_number_encrypted" field.
+func AccountNumberEncryptedContainsFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContainsFold(FieldAccountNumberEncrypted, v))
+}
+
+// PlaidAccountIDEQ applies the EQ predicate on the "plaid_account_id" field.
+func PlaidAccountIDEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDNEQ applies the NEQ predicate on the "plaid_account_id" field.
+func PlaidAccountIDNEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDIn applies the In predicate on the "plaid_account_id" field.
+func PlaidAccountIDIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIn(FieldPlaidAccountID, vs...))
+}
+
+// PlaidAccountIDNotIn applies the NotIn predicate on the "plaid_account_id" field.
+func PlaidAccountIDNotIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotIn(FieldPlaidAccountID, vs...))
+}
+
+// PlaidAccountIDGT applies the GT predicate on the "plaid_account_id" field.
+func PlaidAccountIDGT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGT(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDGTE applies the GTE predicate on the "plaid_account_id" field.
+func PlaidAccountIDGTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGTE(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDLT applies the LT predicate on the "plaid_account_id" field.
+func PlaidAccountIDLT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLT(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDLTE applies the LTE predicate on the "plaid_account_id" field.
+func PlaidAccountIDLTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLTE(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDContains applies the Contains predicate on the "plaid_account_id" field.
+func PlaidAccountIDContains(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContains(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDHasPrefix applies the HasPrefix predicate on the "plaid_account_id" field.
+func PlaidAccountIDHasPrefix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasPrefix(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDHasSuffix applies the HasSuffix predicate on the "plaid_account_id" field.
+func PlaidAccountIDHasSuffix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasSuffix(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDIsNil applies the IsNil predicate on the "plaid_account_id" field.
+func PlaidAccountIDIsNil() predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIsNull(FieldPlaidAccountID))
+}
+
+// PlaidAccountIDNotNil applies the NotNil predicate on the "plaid_account_id" field.
+func PlaidAccountIDNotNil() predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotNull(FieldPlaidAccountID))
+}
+
+// PlaidAccountIDEqualFold applies the EqualFold predicate on the "plaid_account_id" field.
+func PlaidAccountIDEqualFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEqualFold(FieldPlaidAccountID, v))
+}
+
+// PlaidAccountIDContainsFold applies the ContainsFold predicate on the "plaid_account_id" field.
+func PlaidAccountIDContainsFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContainsFold(FieldPlaidAccountID, v))
+}
+
+// PlaidAccessTokenEQ applies the EQ predicate on the "plaid_access_token" field.
+func PlaidAccessTokenEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenNEQ applies the NEQ predicate on the "plaid_access_token" field.
+func PlaidAccessTokenNEQ(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenIn applies the In predicate on the "plaid_access_token" field.
+func PlaidAccessTokenIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIn(FieldPlaidAccessToken, vs...))
+}
+
+// PlaidAccessTokenNotIn applies the NotIn predicate on the "plaid_access_token" field.
+func PlaidAccessTokenNotIn(vs ...string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotIn(FieldPlaidAccessToken, vs...))
+}
+
+// PlaidAccessTokenGT applies the GT predicate on the "plaid_access_token" field.
+func PlaidAccessTokenGT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGT(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenGTE applies the GTE predicate on the "plaid_access_token" field.
+func PlaidAccessTokenGTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGTE(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenLT applies the LT predicate on the "plaid_access_token" field.
+func PlaidAccessTokenLT(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLT(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenLTE applies the LTE predicate on the "plaid_access_token" field.
+func PlaidAccessTokenLTE(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLTE(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenContains applies the Contains predicate on the "plaid_access_token" field.
+func PlaidAccessTokenContains(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContains(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenHasPrefix applies the HasPrefix predicate on the "plaid_access_token" field.
+func PlaidAccessTokenHasPrefix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasPrefix(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenHasSuffix applies the HasSuffix predicate on the "plaid_access_token" field.
+func PlaidAccessTokenHasSuffix(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldHasSuffix(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenIsNil applies the IsNil predicate on the "plaid_access_token" field.
+func PlaidAccessTokenIsNil() predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIsNull(FieldPlaidAccessToken))
+}
+
+// PlaidAccessTokenNotNil applies the NotNil predicate on the "plaid_access_token" field.
+func PlaidAccessTokenNotNil() predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotNull(FieldPlaidAccessToken))
+}
+
+// PlaidAccessTokenEqualFold applies the EqualFold predicate on the "plaid_access_token" field.
+func PlaidAccessTokenEqualFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEqualFold(FieldPlaidAccessToken, v))
+}
+
+// PlaidAccessTokenContainsFold applies the ContainsFold predicate on the "plaid_access_token" field.
+func PlaidAccessTokenContainsFold(v string) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldContainsFold(FieldPlaidAccessToken, v))
 }
 
 // PropertyIDEQ applies the EQ predicate on the "property_id" field.
@@ -986,6 +1216,36 @@ func StatusNotIn(vs ...Status) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldNotIn(FieldStatus, vs...))
 }
 
+// IsDefaultEQ applies the EQ predicate on the "is_default" field.
+func IsDefaultEQ(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldIsDefault, v))
+}
+
+// IsDefaultNEQ applies the NEQ predicate on the "is_default" field.
+func IsDefaultNEQ(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldIsDefault, v))
+}
+
+// AcceptsDepositsEQ applies the EQ predicate on the "accepts_deposits" field.
+func AcceptsDepositsEQ(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldAcceptsDeposits, v))
+}
+
+// AcceptsDepositsNEQ applies the NEQ predicate on the "accepts_deposits" field.
+func AcceptsDepositsNEQ(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldAcceptsDeposits, v))
+}
+
+// AcceptsPaymentsEQ applies the EQ predicate on the "accepts_payments" field.
+func AcceptsPaymentsEQ(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldAcceptsPayments, v))
+}
+
+// AcceptsPaymentsNEQ applies the NEQ predicate on the "accepts_payments" field.
+func AcceptsPaymentsNEQ(v bool) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldAcceptsPayments, v))
+}
+
 // CurrentBalanceAmountCentsEQ applies the EQ predicate on the "current_balance_amount_cents" field.
 func CurrentBalanceAmountCentsEQ(v int64) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldEQ(FieldCurrentBalanceAmountCents, v))
@@ -1111,149 +1371,54 @@ func CurrentBalanceCurrencyContainsFold(v string) predicate.BankAccount {
 	return predicate.BankAccount(sql.FieldContainsFold(FieldCurrentBalanceCurrency, v))
 }
 
-// LastReconciledAtEQ applies the EQ predicate on the "last_reconciled_at" field.
-func LastReconciledAtEQ(v time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldLastReconciledAt, v))
+// LastStatementDateEQ applies the EQ predicate on the "last_statement_date" field.
+func LastStatementDateEQ(v time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldEQ(FieldLastStatementDate, v))
 }
 
-// LastReconciledAtNEQ applies the NEQ predicate on the "last_reconciled_at" field.
-func LastReconciledAtNEQ(v time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNEQ(FieldLastReconciledAt, v))
+// LastStatementDateNEQ applies the NEQ predicate on the "last_statement_date" field.
+func LastStatementDateNEQ(v time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNEQ(FieldLastStatementDate, v))
 }
 
-// LastReconciledAtIn applies the In predicate on the "last_reconciled_at" field.
-func LastReconciledAtIn(vs ...time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldIn(FieldLastReconciledAt, vs...))
+// LastStatementDateIn applies the In predicate on the "last_statement_date" field.
+func LastStatementDateIn(vs ...time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIn(FieldLastStatementDate, vs...))
 }
 
-// LastReconciledAtNotIn applies the NotIn predicate on the "last_reconciled_at" field.
-func LastReconciledAtNotIn(vs ...time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNotIn(FieldLastReconciledAt, vs...))
+// LastStatementDateNotIn applies the NotIn predicate on the "last_statement_date" field.
+func LastStatementDateNotIn(vs ...time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotIn(FieldLastStatementDate, vs...))
 }
 
-// LastReconciledAtGT applies the GT predicate on the "last_reconciled_at" field.
-func LastReconciledAtGT(v time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldGT(FieldLastReconciledAt, v))
+// LastStatementDateGT applies the GT predicate on the "last_statement_date" field.
+func LastStatementDateGT(v time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGT(FieldLastStatementDate, v))
 }
 
-// LastReconciledAtGTE applies the GTE predicate on the "last_reconciled_at" field.
-func LastReconciledAtGTE(v time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldGTE(FieldLastReconciledAt, v))
+// LastStatementDateGTE applies the GTE predicate on the "last_statement_date" field.
+func LastStatementDateGTE(v time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldGTE(FieldLastStatementDate, v))
 }
 
-// LastReconciledAtLT applies the LT predicate on the "last_reconciled_at" field.
-func LastReconciledAtLT(v time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldLT(FieldLastReconciledAt, v))
+// LastStatementDateLT applies the LT predicate on the "last_statement_date" field.
+func LastStatementDateLT(v time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLT(FieldLastStatementDate, v))
 }
 
-// LastReconciledAtLTE applies the LTE predicate on the "last_reconciled_at" field.
-func LastReconciledAtLTE(v time.Time) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldLTE(FieldLastReconciledAt, v))
+// LastStatementDateLTE applies the LTE predicate on the "last_statement_date" field.
+func LastStatementDateLTE(v time.Time) predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldLTE(FieldLastStatementDate, v))
 }
 
-// LastReconciledAtIsNil applies the IsNil predicate on the "last_reconciled_at" field.
-func LastReconciledAtIsNil() predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldIsNull(FieldLastReconciledAt))
+// LastStatementDateIsNil applies the IsNil predicate on the "last_statement_date" field.
+func LastStatementDateIsNil() predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldIsNull(FieldLastStatementDate))
 }
 
-// LastReconciledAtNotNil applies the NotNil predicate on the "last_reconciled_at" field.
-func LastReconciledAtNotNil() predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNotNull(FieldLastReconciledAt))
-}
-
-// IsTrustEQ applies the EQ predicate on the "is_trust" field.
-func IsTrustEQ(v bool) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldIsTrust, v))
-}
-
-// IsTrustNEQ applies the NEQ predicate on the "is_trust" field.
-func IsTrustNEQ(v bool) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNEQ(FieldIsTrust, v))
-}
-
-// TrustStateEQ applies the EQ predicate on the "trust_state" field.
-func TrustStateEQ(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldTrustState, v))
-}
-
-// TrustStateNEQ applies the NEQ predicate on the "trust_state" field.
-func TrustStateNEQ(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNEQ(FieldTrustState, v))
-}
-
-// TrustStateIn applies the In predicate on the "trust_state" field.
-func TrustStateIn(vs ...string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldIn(FieldTrustState, vs...))
-}
-
-// TrustStateNotIn applies the NotIn predicate on the "trust_state" field.
-func TrustStateNotIn(vs ...string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNotIn(FieldTrustState, vs...))
-}
-
-// TrustStateGT applies the GT predicate on the "trust_state" field.
-func TrustStateGT(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldGT(FieldTrustState, v))
-}
-
-// TrustStateGTE applies the GTE predicate on the "trust_state" field.
-func TrustStateGTE(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldGTE(FieldTrustState, v))
-}
-
-// TrustStateLT applies the LT predicate on the "trust_state" field.
-func TrustStateLT(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldLT(FieldTrustState, v))
-}
-
-// TrustStateLTE applies the LTE predicate on the "trust_state" field.
-func TrustStateLTE(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldLTE(FieldTrustState, v))
-}
-
-// TrustStateContains applies the Contains predicate on the "trust_state" field.
-func TrustStateContains(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldContains(FieldTrustState, v))
-}
-
-// TrustStateHasPrefix applies the HasPrefix predicate on the "trust_state" field.
-func TrustStateHasPrefix(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldHasPrefix(FieldTrustState, v))
-}
-
-// TrustStateHasSuffix applies the HasSuffix predicate on the "trust_state" field.
-func TrustStateHasSuffix(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldHasSuffix(FieldTrustState, v))
-}
-
-// TrustStateIsNil applies the IsNil predicate on the "trust_state" field.
-func TrustStateIsNil() predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldIsNull(FieldTrustState))
-}
-
-// TrustStateNotNil applies the NotNil predicate on the "trust_state" field.
-func TrustStateNotNil() predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNotNull(FieldTrustState))
-}
-
-// TrustStateEqualFold applies the EqualFold predicate on the "trust_state" field.
-func TrustStateEqualFold(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEqualFold(FieldTrustState, v))
-}
-
-// TrustStateContainsFold applies the ContainsFold predicate on the "trust_state" field.
-func TrustStateContainsFold(v string) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldContainsFold(FieldTrustState, v))
-}
-
-// ComminglingAllowedEQ applies the EQ predicate on the "commingling_allowed" field.
-func ComminglingAllowedEQ(v bool) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldEQ(FieldComminglingAllowed, v))
-}
-
-// ComminglingAllowedNEQ applies the NEQ predicate on the "commingling_allowed" field.
-func ComminglingAllowedNEQ(v bool) predicate.BankAccount {
-	return predicate.BankAccount(sql.FieldNEQ(FieldComminglingAllowed, v))
+// LastStatementDateNotNil applies the NotNil predicate on the "last_statement_date" field.
+func LastStatementDateNotNil() predicate.BankAccount {
+	return predicate.BankAccount(sql.FieldNotNull(FieldLastStatementDate))
 }
 
 // HasTrustPortfolio applies the HasEdge predicate on the "trust_portfolio" edge.

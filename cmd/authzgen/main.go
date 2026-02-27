@@ -52,6 +52,10 @@ func main() {
 		if defVal.LookupPath(cue.ParsePath("id")).Err() == nil &&
 			defVal.LookupPath(cue.ParsePath("audit")).Err() == nil {
 			name := strings.TrimPrefix(label, "#")
+			// Skip base entity types — not domain entities
+			if name == "BaseEntity" || name == "StatefulEntity" || name == "ImmutableEntity" {
+				continue
+			}
 			entities = append(entities, name)
 
 			// Collect sensitive/PII fields for policy annotations

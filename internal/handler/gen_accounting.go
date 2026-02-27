@@ -79,14 +79,14 @@ func (h *AccountingHandler) CreateAccount(w http.ResponseWriter, r *http.Request
 	if req.Dimensions != nil {
 		builder.SetDimensions(req.Dimensions)
 	}
-	builder.SetNormalBalance(req.NormalBalance)
+	builder.SetNormalBalance(account.NormalBalance(req.NormalBalance))
 	builder.SetIsHeader(req.IsHeader)
 	builder.SetIsSystem(req.IsSystem)
 	builder.SetAllowsDirectPosting(req.AllowsDirectPosting)
 	builder.SetStatus(account.Status(req.Status))
 	builder.SetIsTrustAccount(req.IsTrustAccount)
 	if req.TrustType != nil {
-		builder.SetNillableTrustType(req.TrustType)
+		builder.SetTrustType(account.TrustType(*req.TrustType))
 	}
 	if req.BudgetAmountAmountCents != nil {
 		builder.SetNillableBudgetAmountAmountCents(req.BudgetAmountAmountCents)
@@ -201,7 +201,7 @@ func (h *AccountingHandler) UpdateAccount(w http.ResponseWriter, r *http.Request
 		builder.SetDimensions(req.Dimensions)
 	}
 	if req.NormalBalance != nil {
-		builder.SetNormalBalance(*req.NormalBalance)
+		builder.SetNormalBalance(account.NormalBalance(*req.NormalBalance))
 	}
 	if req.IsHeader != nil {
 		builder.SetIsHeader(*req.IsHeader)
@@ -219,7 +219,7 @@ func (h *AccountingHandler) UpdateAccount(w http.ResponseWriter, r *http.Request
 		builder.SetIsTrustAccount(*req.IsTrustAccount)
 	}
 	if req.TrustType != nil {
-		builder.SetNillableTrustType(req.TrustType)
+		builder.SetTrustType(account.TrustType(*req.TrustType))
 	}
 	if req.BudgetAmountAmountCents != nil {
 		builder.SetBudgetAmountAmountCents(*req.BudgetAmountAmountCents)
@@ -385,22 +385,23 @@ func (h *AccountingHandler) ListJournalEntries(w http.ResponseWriter, r *http.Re
 // ============================================================================
 
 type createBankAccountRequest struct {
-	Name                      string     `json:"name"`
-	AccountType               string     `json:"account_type"`
-	BankName                  string     `json:"bank_name"`
-	RoutingNumber             *string    `json:"routing_number,omitempty"`
-	AccountNumberLastFour     string     `json:"account_number_last_four"`
-	PropertyID                *string    `json:"property_id,omitempty"`
-	EntityID                  *string    `json:"entity_id,omitempty"`
-	Status                    string     `json:"status"`
-	CurrentBalanceAmountCents *int64     `json:"current_balance_amount_cents,omitempty"`
-	CurrentBalanceCurrency    *string    `json:"current_balance_currency,omitempty"`
-	LastReconciledAt          *time.Time `json:"last_reconciled_at,omitempty"`
-	IsTrust                   bool       `json:"is_trust"`
-	TrustState                *string    `json:"trust_state,omitempty"`
-	ComminglingAllowed        bool       `json:"commingling_allowed"`
-	PortfolioID               *string    `json:"portfolio_id,omitempty"`
-	GlAccountID               string     `json:"gl_account_id"`
+	Name                   string     `json:"name"`
+	AccountType            string     `json:"account_type"`
+	InstitutionName        string     `json:"institution_name"`
+	RoutingNumber          string     `json:"routing_number"`
+	AccountMask            string     `json:"account_mask"`
+	AccountNumberEncrypted *string    `json:"account_number_encrypted,omitempty"`
+	PlaidAccountID         *string    `json:"plaid_account_id,omitempty"`
+	PlaidAccessToken       *string    `json:"plaid_access_token,omitempty"`
+	PropertyID             *string    `json:"property_id,omitempty"`
+	EntityID               *string    `json:"entity_id,omitempty"`
+	Status                 string     `json:"status"`
+	IsDefault              bool       `json:"is_default"`
+	AcceptsDeposits        bool       `json:"accepts_deposits"`
+	AcceptsPayments        bool       `json:"accepts_payments"`
+	LastStatementDate      *time.Time `json:"last_statement_date,omitempty"`
+	PortfolioID            *string    `json:"portfolio_id,omitempty"`
+	GlAccountID            string     `json:"gl_account_id"`
 }
 
 func (h *AccountingHandler) CreateBankAccount(w http.ResponseWriter, r *http.Request) {
@@ -416,11 +417,18 @@ func (h *AccountingHandler) CreateBankAccount(w http.ResponseWriter, r *http.Req
 	builder := h.client.BankAccount.Create()
 	builder.SetName(req.Name)
 	builder.SetAccountType(bankaccount.AccountType(req.AccountType))
-	builder.SetBankName(req.BankName)
-	if req.RoutingNumber != nil {
-		builder.SetNillableRoutingNumber(req.RoutingNumber)
+	builder.SetInstitutionName(req.InstitutionName)
+	builder.SetRoutingNumber(req.RoutingNumber)
+	builder.SetAccountMask(req.AccountMask)
+	if req.AccountNumberEncrypted != nil {
+		builder.SetNillableAccountNumberEncrypted(req.AccountNumberEncrypted)
 	}
-	builder.SetAccountNumberLastFour(req.AccountNumberLastFour)
+	if req.PlaidAccountID != nil {
+		builder.SetNillablePlaidAccountID(req.PlaidAccountID)
+	}
+	if req.PlaidAccessToken != nil {
+		builder.SetNillablePlaidAccessToken(req.PlaidAccessToken)
+	}
 	if req.PropertyID != nil {
 		builder.SetNillablePropertyID(req.PropertyID)
 	}
@@ -428,20 +436,12 @@ func (h *AccountingHandler) CreateBankAccount(w http.ResponseWriter, r *http.Req
 		builder.SetNillableEntityID(req.EntityID)
 	}
 	builder.SetStatus(bankaccount.Status(req.Status))
-	if req.CurrentBalanceAmountCents != nil {
-		builder.SetNillableCurrentBalanceAmountCents(req.CurrentBalanceAmountCents)
+	builder.SetIsDefault(req.IsDefault)
+	builder.SetAcceptsDeposits(req.AcceptsDeposits)
+	builder.SetAcceptsPayments(req.AcceptsPayments)
+	if req.LastStatementDate != nil {
+		builder.SetNillableLastStatementDate(req.LastStatementDate)
 	}
-	if req.CurrentBalanceCurrency != nil {
-		builder.SetNillableCurrentBalanceCurrency(req.CurrentBalanceCurrency)
-	}
-	if req.LastReconciledAt != nil {
-		builder.SetNillableLastReconciledAt(req.LastReconciledAt)
-	}
-	builder.SetIsTrust(req.IsTrust)
-	if req.TrustState != nil {
-		builder.SetNillableTrustState(req.TrustState)
-	}
-	builder.SetComminglingAllowed(req.ComminglingAllowed)
 	if req.PortfolioID != nil {
 		uid, err := uuid.Parse(*req.PortfolioID)
 		if err != nil {
@@ -497,22 +497,23 @@ func (h *AccountingHandler) ListBankAccounts(w http.ResponseWriter, r *http.Requ
 }
 
 type updateBankAccountRequest struct {
-	Name                      *string    `json:"name,omitempty"`
-	AccountType               *string    `json:"account_type,omitempty"`
-	BankName                  *string    `json:"bank_name,omitempty"`
-	RoutingNumber             *string    `json:"routing_number,omitempty"`
-	AccountNumberLastFour     *string    `json:"account_number_last_four,omitempty"`
-	PropertyID                *string    `json:"property_id,omitempty"`
-	EntityID                  *string    `json:"entity_id,omitempty"`
-	Status                    *string    `json:"status,omitempty"`
-	CurrentBalanceAmountCents *int64     `json:"current_balance_amount_cents,omitempty"`
-	CurrentBalanceCurrency    *string    `json:"current_balance_currency,omitempty"`
-	LastReconciledAt          *time.Time `json:"last_reconciled_at,omitempty"`
-	IsTrust                   *bool      `json:"is_trust,omitempty"`
-	TrustState                *string    `json:"trust_state,omitempty"`
-	ComminglingAllowed        *bool      `json:"commingling_allowed,omitempty"`
-	PortfolioID               *string    `json:"portfolio_id,omitempty"`
-	GlAccountID               *string    `json:"gl_account_id,omitempty"`
+	Name                   *string    `json:"name,omitempty"`
+	AccountType            *string    `json:"account_type,omitempty"`
+	InstitutionName        *string    `json:"institution_name,omitempty"`
+	RoutingNumber          *string    `json:"routing_number,omitempty"`
+	AccountMask            *string    `json:"account_mask,omitempty"`
+	AccountNumberEncrypted *string    `json:"account_number_encrypted,omitempty"`
+	PlaidAccountID         *string    `json:"plaid_account_id,omitempty"`
+	PlaidAccessToken       *string    `json:"plaid_access_token,omitempty"`
+	PropertyID             *string    `json:"property_id,omitempty"`
+	EntityID               *string    `json:"entity_id,omitempty"`
+	Status                 *string    `json:"status,omitempty"`
+	IsDefault              *bool      `json:"is_default,omitempty"`
+	AcceptsDeposits        *bool      `json:"accepts_deposits,omitempty"`
+	AcceptsPayments        *bool      `json:"accepts_payments,omitempty"`
+	LastStatementDate      *time.Time `json:"last_statement_date,omitempty"`
+	PortfolioID            *string    `json:"portfolio_id,omitempty"`
+	GlAccountID            *string    `json:"gl_account_id,omitempty"`
 }
 
 func (h *AccountingHandler) UpdateBankAccount(w http.ResponseWriter, r *http.Request) {
@@ -536,14 +537,23 @@ func (h *AccountingHandler) UpdateBankAccount(w http.ResponseWriter, r *http.Req
 	if req.AccountType != nil {
 		builder.SetAccountType(bankaccount.AccountType(*req.AccountType))
 	}
-	if req.BankName != nil {
-		builder.SetBankName(*req.BankName)
+	if req.InstitutionName != nil {
+		builder.SetInstitutionName(*req.InstitutionName)
 	}
 	if req.RoutingNumber != nil {
-		builder.SetNillableRoutingNumber(req.RoutingNumber)
+		builder.SetRoutingNumber(*req.RoutingNumber)
 	}
-	if req.AccountNumberLastFour != nil {
-		builder.SetAccountNumberLastFour(*req.AccountNumberLastFour)
+	if req.AccountMask != nil {
+		builder.SetAccountMask(*req.AccountMask)
+	}
+	if req.AccountNumberEncrypted != nil {
+		builder.SetNillableAccountNumberEncrypted(req.AccountNumberEncrypted)
+	}
+	if req.PlaidAccountID != nil {
+		builder.SetNillablePlaidAccountID(req.PlaidAccountID)
+	}
+	if req.PlaidAccessToken != nil {
+		builder.SetNillablePlaidAccessToken(req.PlaidAccessToken)
 	}
 	if req.PropertyID != nil {
 		builder.SetNillablePropertyID(req.PropertyID)
@@ -554,23 +564,17 @@ func (h *AccountingHandler) UpdateBankAccount(w http.ResponseWriter, r *http.Req
 	if req.Status != nil {
 		builder.SetStatus(bankaccount.Status(*req.Status))
 	}
-	if req.CurrentBalanceAmountCents != nil {
-		builder.SetCurrentBalanceAmountCents(*req.CurrentBalanceAmountCents)
+	if req.IsDefault != nil {
+		builder.SetIsDefault(*req.IsDefault)
 	}
-	if req.CurrentBalanceCurrency != nil {
-		builder.SetCurrentBalanceCurrency(*req.CurrentBalanceCurrency)
+	if req.AcceptsDeposits != nil {
+		builder.SetAcceptsDeposits(*req.AcceptsDeposits)
 	}
-	if req.LastReconciledAt != nil {
-		builder.SetNillableLastReconciledAt(req.LastReconciledAt)
+	if req.AcceptsPayments != nil {
+		builder.SetAcceptsPayments(*req.AcceptsPayments)
 	}
-	if req.IsTrust != nil {
-		builder.SetIsTrust(*req.IsTrust)
-	}
-	if req.TrustState != nil {
-		builder.SetNillableTrustState(req.TrustState)
-	}
-	if req.ComminglingAllowed != nil {
-		builder.SetComminglingAllowed(*req.ComminglingAllowed)
+	if req.LastStatementDate != nil {
+		builder.SetNillableLastStatementDate(req.LastStatementDate)
 	}
 	if req.PortfolioID != nil {
 		uid, err := uuid.Parse(*req.PortfolioID)
@@ -607,17 +611,14 @@ func (h *AccountingHandler) UpdateBankAccount(w http.ResponseWriter, r *http.Req
 type createReconciliationRequest struct {
 	PeriodStart                 time.Time  `json:"period_start"`
 	PeriodEnd                   time.Time  `json:"period_end"`
+	StatementDate               time.Time  `json:"statement_date"`
 	StatementBalanceAmountCents int64      `json:"statement_balance_amount_cents"`
 	StatementBalanceCurrency    string     `json:"statement_balance_currency,omitempty"`
-	SystemBalanceAmountCents    int64      `json:"system_balance_amount_cents"`
-	SystemBalanceCurrency       string     `json:"system_balance_currency,omitempty"`
-	DifferenceAmountCents       int64      `json:"difference_amount_cents"`
-	DifferenceCurrency          string     `json:"difference_currency,omitempty"`
+	GlBalanceAmountCents        int64      `json:"gl_balance_amount_cents"`
+	GlBalanceCurrency           string     `json:"gl_balance_currency,omitempty"`
 	Status                      string     `json:"status"`
-	MatchedTransactionCount     int        `json:"matched_transaction_count"`
-	UnmatchedTransactionCount   int        `json:"unmatched_transaction_count"`
-	CompletedBy                 *string    `json:"completed_by,omitempty"`
-	CompletedAt                 *time.Time `json:"completed_at,omitempty"`
+	ReconciledBy                *string    `json:"reconciled_by,omitempty"`
+	ReconciledAt                *time.Time `json:"reconciled_at,omitempty"`
 	ApprovedBy                  *string    `json:"approved_by,omitempty"`
 	ApprovedAt                  *time.Time `json:"approved_at,omitempty"`
 	BankAccountID               string     `json:"bank_account_id"`
@@ -636,26 +637,21 @@ func (h *AccountingHandler) CreateReconciliation(w http.ResponseWriter, r *http.
 	builder := h.client.Reconciliation.Create()
 	builder.SetPeriodStart(req.PeriodStart)
 	builder.SetPeriodEnd(req.PeriodEnd)
+	builder.SetStatementDate(req.StatementDate)
 	builder.SetStatementBalanceAmountCents(req.StatementBalanceAmountCents)
 	if req.StatementBalanceCurrency != "" {
 		builder.SetStatementBalanceCurrency(req.StatementBalanceCurrency)
 	}
-	builder.SetSystemBalanceAmountCents(req.SystemBalanceAmountCents)
-	if req.SystemBalanceCurrency != "" {
-		builder.SetSystemBalanceCurrency(req.SystemBalanceCurrency)
-	}
-	builder.SetDifferenceAmountCents(req.DifferenceAmountCents)
-	if req.DifferenceCurrency != "" {
-		builder.SetDifferenceCurrency(req.DifferenceCurrency)
+	builder.SetGlBalanceAmountCents(req.GlBalanceAmountCents)
+	if req.GlBalanceCurrency != "" {
+		builder.SetGlBalanceCurrency(req.GlBalanceCurrency)
 	}
 	builder.SetStatus(reconciliation.Status(req.Status))
-	builder.SetMatchedTransactionCount(req.MatchedTransactionCount)
-	builder.SetUnmatchedTransactionCount(req.UnmatchedTransactionCount)
-	if req.CompletedBy != nil {
-		builder.SetNillableCompletedBy(req.CompletedBy)
+	if req.ReconciledBy != nil {
+		builder.SetNillableReconciledBy(req.ReconciledBy)
 	}
-	if req.CompletedAt != nil {
-		builder.SetNillableCompletedAt(req.CompletedAt)
+	if req.ReconciledAt != nil {
+		builder.SetNillableReconciledAt(req.ReconciledAt)
 	}
 	if req.ApprovedBy != nil {
 		builder.SetNillableApprovedBy(req.ApprovedBy)

@@ -113,6 +113,21 @@ ui_entity_overrides: {
 		display_name_plural:      "Reconciliations"
 		primary_display_template: "{status}"
 	}
+	Jurisdiction: {
+		display_name:             "Jurisdiction"
+		display_name_plural:      "Jurisdictions"
+		primary_display_template: "{name}"
+	}
+	PropertyJurisdiction: {
+		display_name:             "Property Jurisdiction"
+		display_name_plural:      "Property Jurisdictions"
+		primary_display_template: "{jurisdiction_id}"
+	}
+	JurisdictionRule: {
+		display_name:             "Jurisdiction Rule"
+		display_name_plural:      "Jurisdiction Rules"
+		primary_display_template: "{rule_type}"
+	}
 }
 
 // Enum grouping overrides (for enums that benefit from grouped display)

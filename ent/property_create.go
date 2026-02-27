@@ -17,6 +17,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/propertyjurisdiction"
 	"github.com/matthewbaird/ontology/ent/space"
 	"github.com/matthewbaird/ontology/internal/types"
 )
@@ -372,6 +373,21 @@ func (_c *PropertyCreate) AddLedgerEntries(v ...*LedgerEntry) *PropertyCreate {
 	return _c.AddLedgerEntryIDs(ids...)
 }
 
+// AddPropertyJurisdictionIDs adds the "property_jurisdictions" edge to the PropertyJurisdiction entity by IDs.
+func (_c *PropertyCreate) AddPropertyJurisdictionIDs(ids ...uuid.UUID) *PropertyCreate {
+	_c.mutation.AddPropertyJurisdictionIDs(ids...)
+	return _c
+}
+
+// AddPropertyJurisdictions adds the "property_jurisdictions" edges to the PropertyJurisdiction entity.
+func (_c *PropertyCreate) AddPropertyJurisdictions(v ...*PropertyJurisdiction) *PropertyCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddPropertyJurisdictionIDs(ids...)
+}
+
 // Mutation returns the PropertyMutation object of the builder.
 func (_c *PropertyCreate) Mutation() *PropertyMutation {
 	return _c.mutation
@@ -471,6 +487,11 @@ func (_c *PropertyCreate) check() error {
 	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Property.name"`)}
+	}
+	if v, ok := _c.mutation.Name(); ok {
+		if err := property.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Property.name": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.Address(); !ok {
 		return &ValidationError{Name: "address", err: errors.New(`ent: missing required field "Property.address"`)}
@@ -731,6 +752,22 @@ func (_c *PropertyCreate) createSpec() (*Property, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.PropertyJurisdictionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.PropertyJurisdictionsTable,
+			Columns: []string{property.PropertyJurisdictionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(propertyjurisdiction.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

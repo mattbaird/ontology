@@ -29,7 +29,7 @@ func (Organization) Mixin() []ent.Mixin {
 func (Organization) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.String("legal_name").SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("legal_name").NotEmpty().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("dba_name").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("org_type").Values("management_company", "ownership_entity", "vendor", "corporate_tenant", "government_agency", "hoa", "investment_fund", "other"),
 		field.String("tax_id").Optional().Nillable().Sensitive().SchemaType(map[string]string{"postgres": "varchar"}),

@@ -2,8 +2,6 @@
 package schema
 
 import (
-	"context"
-	"fmt"
 	"regexp"
 
 	"entgo.io/ent"
@@ -34,18 +32,21 @@ func (BankAccount) Fields() []ent.Field {
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
 		field.String("name").SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("account_type").Values("operating", "trust", "security_deposit", "escrow", "reserve"),
-		field.String("bank_name").SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("routing_number").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.String("account_number_last_four").SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("institution_name").SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("routing_number").Sensitive().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("account_mask").Sensitive().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("account_number_encrypted").Optional().Nillable().Sensitive().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("plaid_account_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("plaid_access_token").Optional().Nillable().Sensitive().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("property_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.String("entity_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("status").Values("active", "inactive", "frozen", "closed"),
+		field.Bool("is_default").Default(false),
+		field.Bool("accepts_deposits").Default(true),
+		field.Bool("accepts_payments").Default(true),
 		field.Int64("current_balance_amount_cents").Optional().Nillable().Comment("current_balance — amount in cents"),
 		field.String("current_balance_currency").Optional().Nillable().Default("USD").Match(regexp.MustCompile(`^[A-Z]{3}$`)).Comment("current_balance — ISO 4217 currency code"),
-		field.Time("last_reconciled_at").Optional().Nillable(),
-		field.Bool("is_trust").Default(false),
-		field.String("trust_state").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
-		field.Bool("commingling_allowed").Default(false),
+		field.Time("last_statement_date").Optional().Nillable(),
 	}
 }
 
@@ -66,55 +67,4 @@ var ValidBankAccountTransitions = map[string][]string{
 	"closed":   {},
 	"frozen":   {"active", "closed"},
 	"inactive": {"active", "closed"},
-}
-
-// Hooks returns cross-field constraint validation hooks.
-// Generated from CUE ontology conditional blocks.
-func (BankAccount) Hooks() []ent.Hook {
-	return []ent.Hook{
-		validateBankAccountConstraints(),
-	}
-}
-
-func validateBankAccountConstraints() ent.Hook {
-	return func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			getField := func(name string) (interface{}, bool) {
-				if v, ok := m.Field(name); ok {
-					return v, true
-				}
-				if v, err := m.OldField(ctx, name); err == nil {
-					return v, true
-				}
-				return nil, false
-			}
-			toString := func(v interface{}) string {
-				if v == nil {
-					return ""
-				}
-				switch s := v.(type) {
-				case string:
-					return s
-				case *string:
-					if s != nil {
-						return *s
-					}
-					return ""
-				}
-				return fmt.Sprint(v)
-			}
-
-			// Trust accounts must specify state and prohibit commingling
-			if v, ok := getField("is_trust"); ok && fmt.Sprint(v) == "true" {
-				ts, tsOk := getField("trust_state")
-				if !tsOk || toString(ts) == "" {
-					return nil, fmt.Errorf("trust bank account must have trust_state set")
-				}
-				if ca, ok := getField("commingling_allowed"); ok && fmt.Sprint(ca) == "true" {
-					return nil, fmt.Errorf("trust bank account must have commingling_allowed=false")
-				}
-			}
-			return next.Mutate(ctx, m)
-		})
-	}
 }

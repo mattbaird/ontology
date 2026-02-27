@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -35,30 +34,36 @@ const (
 	FieldName = "name"
 	// FieldAccountType holds the string denoting the account_type field in the database.
 	FieldAccountType = "account_type"
-	// FieldBankName holds the string denoting the bank_name field in the database.
-	FieldBankName = "bank_name"
+	// FieldInstitutionName holds the string denoting the institution_name field in the database.
+	FieldInstitutionName = "institution_name"
 	// FieldRoutingNumber holds the string denoting the routing_number field in the database.
 	FieldRoutingNumber = "routing_number"
-	// FieldAccountNumberLastFour holds the string denoting the account_number_last_four field in the database.
-	FieldAccountNumberLastFour = "account_number_last_four"
+	// FieldAccountMask holds the string denoting the account_mask field in the database.
+	FieldAccountMask = "account_mask"
+	// FieldAccountNumberEncrypted holds the string denoting the account_number_encrypted field in the database.
+	FieldAccountNumberEncrypted = "account_number_encrypted"
+	// FieldPlaidAccountID holds the string denoting the plaid_account_id field in the database.
+	FieldPlaidAccountID = "plaid_account_id"
+	// FieldPlaidAccessToken holds the string denoting the plaid_access_token field in the database.
+	FieldPlaidAccessToken = "plaid_access_token"
 	// FieldPropertyID holds the string denoting the property_id field in the database.
 	FieldPropertyID = "property_id"
 	// FieldEntityID holds the string denoting the entity_id field in the database.
 	FieldEntityID = "entity_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
+	// FieldIsDefault holds the string denoting the is_default field in the database.
+	FieldIsDefault = "is_default"
+	// FieldAcceptsDeposits holds the string denoting the accepts_deposits field in the database.
+	FieldAcceptsDeposits = "accepts_deposits"
+	// FieldAcceptsPayments holds the string denoting the accepts_payments field in the database.
+	FieldAcceptsPayments = "accepts_payments"
 	// FieldCurrentBalanceAmountCents holds the string denoting the current_balance_amount_cents field in the database.
 	FieldCurrentBalanceAmountCents = "current_balance_amount_cents"
 	// FieldCurrentBalanceCurrency holds the string denoting the current_balance_currency field in the database.
 	FieldCurrentBalanceCurrency = "current_balance_currency"
-	// FieldLastReconciledAt holds the string denoting the last_reconciled_at field in the database.
-	FieldLastReconciledAt = "last_reconciled_at"
-	// FieldIsTrust holds the string denoting the is_trust field in the database.
-	FieldIsTrust = "is_trust"
-	// FieldTrustState holds the string denoting the trust_state field in the database.
-	FieldTrustState = "trust_state"
-	// FieldComminglingAllowed holds the string denoting the commingling_allowed field in the database.
-	FieldComminglingAllowed = "commingling_allowed"
+	// FieldLastStatementDate holds the string denoting the last_statement_date field in the database.
+	FieldLastStatementDate = "last_statement_date"
 	// EdgeTrustPortfolio holds the string denoting the trust_portfolio edge name in mutations.
 	EdgeTrustPortfolio = "trust_portfolio"
 	// EdgeProperties holds the string denoting the properties edge name in mutations.
@@ -111,18 +116,21 @@ var Columns = []string{
 	FieldAgentGoalID,
 	FieldName,
 	FieldAccountType,
-	FieldBankName,
+	FieldInstitutionName,
 	FieldRoutingNumber,
-	FieldAccountNumberLastFour,
+	FieldAccountMask,
+	FieldAccountNumberEncrypted,
+	FieldPlaidAccountID,
+	FieldPlaidAccessToken,
 	FieldPropertyID,
 	FieldEntityID,
 	FieldStatus,
+	FieldIsDefault,
+	FieldAcceptsDeposits,
+	FieldAcceptsPayments,
 	FieldCurrentBalanceAmountCents,
 	FieldCurrentBalanceCurrency,
-	FieldLastReconciledAt,
-	FieldIsTrust,
-	FieldTrustState,
-	FieldComminglingAllowed,
+	FieldLastStatementDate,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "bank_accounts"
@@ -148,13 +156,7 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// Note that the variables below are initialized by the runtime
-// package on the initialization of the application. Therefore,
-// it should be imported in the main as follows:
-//
-//	import _ "github.com/matthewbaird/ontology/ent/runtime"
 var (
-	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -165,14 +167,16 @@ var (
 	CreatedByValidator func(string) error
 	// UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	UpdatedByValidator func(string) error
+	// DefaultIsDefault holds the default value on creation for the "is_default" field.
+	DefaultIsDefault bool
+	// DefaultAcceptsDeposits holds the default value on creation for the "accepts_deposits" field.
+	DefaultAcceptsDeposits bool
+	// DefaultAcceptsPayments holds the default value on creation for the "accepts_payments" field.
+	DefaultAcceptsPayments bool
 	// DefaultCurrentBalanceCurrency holds the default value on creation for the "current_balance_currency" field.
 	DefaultCurrentBalanceCurrency string
 	// CurrentBalanceCurrencyValidator is a validator for the "current_balance_currency" field. It is called by the builders before save.
 	CurrentBalanceCurrencyValidator func(string) error
-	// DefaultIsTrust holds the default value on creation for the "is_trust" field.
-	DefaultIsTrust bool
-	// DefaultComminglingAllowed holds the default value on creation for the "commingling_allowed" field.
-	DefaultComminglingAllowed bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -307,9 +311,9 @@ func ByAccountType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAccountType, opts...).ToFunc()
 }
 
-// ByBankName orders the results by the bank_name field.
-func ByBankName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBankName, opts...).ToFunc()
+// ByInstitutionName orders the results by the institution_name field.
+func ByInstitutionName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldInstitutionName, opts...).ToFunc()
 }
 
 // ByRoutingNumber orders the results by the routing_number field.
@@ -317,9 +321,24 @@ func ByRoutingNumber(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRoutingNumber, opts...).ToFunc()
 }
 
-// ByAccountNumberLastFour orders the results by the account_number_last_four field.
-func ByAccountNumberLastFour(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAccountNumberLastFour, opts...).ToFunc()
+// ByAccountMask orders the results by the account_mask field.
+func ByAccountMask(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAccountMask, opts...).ToFunc()
+}
+
+// ByAccountNumberEncrypted orders the results by the account_number_encrypted field.
+func ByAccountNumberEncrypted(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAccountNumberEncrypted, opts...).ToFunc()
+}
+
+// ByPlaidAccountID orders the results by the plaid_account_id field.
+func ByPlaidAccountID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPlaidAccountID, opts...).ToFunc()
+}
+
+// ByPlaidAccessToken orders the results by the plaid_access_token field.
+func ByPlaidAccessToken(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPlaidAccessToken, opts...).ToFunc()
 }
 
 // ByPropertyID orders the results by the property_id field.
@@ -337,6 +356,21 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
+// ByIsDefault orders the results by the is_default field.
+func ByIsDefault(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsDefault, opts...).ToFunc()
+}
+
+// ByAcceptsDeposits orders the results by the accepts_deposits field.
+func ByAcceptsDeposits(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAcceptsDeposits, opts...).ToFunc()
+}
+
+// ByAcceptsPayments orders the results by the accepts_payments field.
+func ByAcceptsPayments(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAcceptsPayments, opts...).ToFunc()
+}
+
 // ByCurrentBalanceAmountCents orders the results by the current_balance_amount_cents field.
 func ByCurrentBalanceAmountCents(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCurrentBalanceAmountCents, opts...).ToFunc()
@@ -347,24 +381,9 @@ func ByCurrentBalanceCurrency(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCurrentBalanceCurrency, opts...).ToFunc()
 }
 
-// ByLastReconciledAt orders the results by the last_reconciled_at field.
-func ByLastReconciledAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldLastReconciledAt, opts...).ToFunc()
-}
-
-// ByIsTrust orders the results by the is_trust field.
-func ByIsTrust(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldIsTrust, opts...).ToFunc()
-}
-
-// ByTrustState orders the results by the trust_state field.
-func ByTrustState(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTrustState, opts...).ToFunc()
-}
-
-// ByComminglingAllowed orders the results by the commingling_allowed field.
-func ByComminglingAllowed(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldComminglingAllowed, opts...).ToFunc()
+// ByLastStatementDate orders the results by the last_statement_date field.
+func ByLastStatementDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastStatementDate, opts...).ToFunc()
 }
 
 // ByTrustPortfolioField orders the results by trust_portfolio field.

@@ -201,6 +201,8 @@ var (
 	CreatedByValidator func(string) error
 	// UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	UpdatedByValidator func(string) error
+	// SpaceNumberValidator is a validator for the "space_number" field. It is called by the builders before save.
+	SpaceNumberValidator func(string) error
 	// DefaultSharedWithParent holds the default value on creation for the "shared_with_parent" field.
 	DefaultSharedWithParent bool
 	// DefaultAdaAccessible holds the default value on creation for the "ada_accessible" field.
@@ -258,6 +260,14 @@ const (
 	SpaceTypeLotPad           SpaceType = "lot_pad"
 	SpaceTypeBedSpace         SpaceType = "bed_space"
 	SpaceTypeDeskSpace        SpaceType = "desk_space"
+	SpaceTypeParkingGarage    SpaceType = "parking_garage"
+	SpaceTypePrivateOffice    SpaceType = "private_office"
+	SpaceTypeWarehouse        SpaceType = "warehouse"
+	SpaceTypeAmenity          SpaceType = "amenity"
+	SpaceTypeRack             SpaceType = "rack"
+	SpaceTypeCage             SpaceType = "cage"
+	SpaceTypeServerRoom       SpaceType = "server_room"
+	SpaceTypeOther            SpaceType = "other"
 )
 
 func (st SpaceType) String() string {
@@ -267,7 +277,7 @@ func (st SpaceType) String() string {
 // SpaceTypeValidator is a validator for the "space_type" field enum values. It is called by the builders before save.
 func SpaceTypeValidator(st SpaceType) error {
 	switch st {
-	case SpaceTypeResidentialUnit, SpaceTypeCommercialOffice, SpaceTypeCommercialRetail, SpaceTypeStorage, SpaceTypeParking, SpaceTypeCommonArea, SpaceTypeIndustrial, SpaceTypeLotPad, SpaceTypeBedSpace, SpaceTypeDeskSpace:
+	case SpaceTypeResidentialUnit, SpaceTypeCommercialOffice, SpaceTypeCommercialRetail, SpaceTypeStorage, SpaceTypeParking, SpaceTypeCommonArea, SpaceTypeIndustrial, SpaceTypeLotPad, SpaceTypeBedSpace, SpaceTypeDeskSpace, SpaceTypeParkingGarage, SpaceTypePrivateOffice, SpaceTypeWarehouse, SpaceTypeAmenity, SpaceTypeRack, SpaceTypeCage, SpaceTypeServerRoom, SpaceTypeOther:
 		return nil
 	default:
 		return fmt.Errorf("space: invalid enum value for space_type field: %q", st)

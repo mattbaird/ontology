@@ -1,17 +1,35 @@
 // ontology/person.cue
 package propeller
 
-import "time"
+import (
+	"strings"
+	"time"
+)
+
+// ─── Named Enum Types ───────────────────────────────────────────────────────
+
+#OrgType: "management_company" | "ownership_entity" | "vendor" |
+	"corporate_tenant" | "government_agency" | "hoa" |
+	"investment_fund" | "other"
+
+#RoleType: "tenant" | "owner" | "property_manager" | "maintenance_tech" |
+	"leasing_agent" | "accountant" | "vendor_contact" |
+	"guarantor" | "emergency_contact" | "authorized_occupant" | "co_signer"
+
+#ScopeType: "organization" | "portfolio" | "property" | "building" | "space" | "lease"
 
 // ─── Person ──────────────────────────────────────────────────────────────────
 // A Person is any individual who interacts with the property management system.
 // Roles (tenant, owner, manager, vendor contact) are relationships, not types.
 
-#Person: {
-	id:           string & !=""
-	first_name:   string & !=""
-	last_name:    string & !=""
-	display_name: string & !="" @display()
+#Person: close({
+	#BaseEntity
+	first_name:   string & strings.MinRunes(1)
+	middle_name?: string
+	last_name:    string & strings.MinRunes(1)
+	display_name: string & strings.MinRunes(1) @display()
+
+	record_source: *"user" | "applicant" | "import" | "system"
 
 	date_of_birth?: time.Time @pii()
 	ssn_last_four?: =~"^[0-9]{4}$" @pii()
@@ -32,14 +50,15 @@ import "time"
 	// Tags for flexible categorization
 	tags?: [...string]
 
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "{first_name} {last_name}"
+})
 
 // ─── Organization ────────────────────────────────────────────────────────────
 
-#Organization: {
-	id:         string & !=""
-	legal_name: string & !="" @display()
+#Organization: close({
+	#StatefulEntity
+	legal_name: string & strings.MinRunes(1) @display()
 	dba_name?:  string @display()
 
 	org_type: "management_company" | "ownership_entity" | "vendor" |
@@ -55,21 +74,22 @@ import "time"
 	contact_methods?: [...#ContactMethod]
 
 	// Regulatory
-	state_of_incorporation?: #USState
+	state_of_incorporation?: =~"^[A-Z]{2}$"
 	formation_date?:         time.Time
 
 	// For management companies
 	management_license?: string
-	license_state?:      #USState
+	license_state?:      =~"^[A-Z]{2}$"
 	license_expiry?:     time.Time
 
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "{legal_name}"
+})
 
 // ─── PersonRole ──────────────────────────────────────────────────────────────
 
-#PersonRole: {
-	id:        string & !=""
+#PersonRole: close({
+	#StatefulEntity
 	person_id: string & !=""
 	role_type: "tenant" | "owner" | "property_manager" | "maintenance_tech" |
 		"leasing_agent" | "accountant" | "vendor_contact" |
@@ -85,11 +105,23 @@ import "time"
 	// Role-specific attributes stored as structured JSON
 	attributes?: #TenantAttributes | #OwnerAttributes | #ManagerAttributes | #GuarantorAttributes
 
-	audit: #AuditMetadata
-}
+	// Type-safe: role attributes must match role_type
+	if role_type == "tenant" && attributes != _|_ {
+		attributes: #TenantAttributes
+	}
+	if role_type == "owner" && attributes != _|_ {
+		attributes: #OwnerAttributes
+	}
+	if role_type == "property_manager" && attributes != _|_ {
+		attributes: #ManagerAttributes
+	}
+	if role_type == "guarantor" && attributes != _|_ {
+		attributes: #GuarantorAttributes
+	}
+})
 
 // Role-specific attribute sets
-#TenantAttributes: {
+#TenantAttributes: close({
 	_type:            "tenant"
 	standing:         *"good" | "good" | "late" | "collections" | "eviction"
 	screening_status: "not_started" | "in_progress" | "approved" | "denied" | "conditional"
@@ -101,30 +133,30 @@ import "time"
 	vehicle_count?:   int & >=0
 	occupancy_status: *"occupying" | "occupying" | "vacated" | "never_occupied"
 	liability_status: *"active" | "active" | "released" | "guarantor_only"
-}
+})
 
-#OwnerAttributes: {
+#OwnerAttributes: close({
 	_type:                "owner"
 	ownership_percent:    float & >0 & <=100
 	distribution_method:  *"ach" | "ach" | "check" | "hold"
 	management_fee_percent?: float & >=0 & <=100
 	tax_reporting:        *"1099" | "1099" | "k1" | "none"
 	reserve_amount?:      #NonNegativeMoney
-}
+})
 
-#ManagerAttributes: {
+#ManagerAttributes: close({
 	_type:               "manager"
 	license_number?:     string
 	license_state?:      =~"^[A-Z]{2}$"
 	approval_limit?:     #NonNegativeMoney
 	can_sign_leases:     bool | *false
 	can_approve_expenses: bool | *true
-}
+})
 
-#GuarantorAttributes: {
+#GuarantorAttributes: close({
 	_type:            "guarantor"
 	guarantee_type:   "full" | "partial" | "conditional"
 	guarantee_amount?: #PositiveMoney
 	guarantee_term?:  #DateRange
 	credit_score?:    int & >=300 & <=850
-}
+})

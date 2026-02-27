@@ -316,6 +316,11 @@ func (_c *BuildingCreate) check() error {
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Building.name"`)}
 	}
+	if v, ok := _c.mutation.Name(); ok {
+		if err := building.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Building.name": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.BuildingType(); !ok {
 		return &ValidationError{Name: "building_type", err: errors.New(`ent: missing required field "Building.building_type"`)}
 	}

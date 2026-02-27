@@ -106,6 +106,20 @@ func (_c *PersonCreate) SetFirstName(v string) *PersonCreate {
 	return _c
 }
 
+// SetMiddleName sets the "middle_name" field.
+func (_c *PersonCreate) SetMiddleName(v string) *PersonCreate {
+	_c.mutation.SetMiddleName(v)
+	return _c
+}
+
+// SetNillableMiddleName sets the "middle_name" field if the given value is not nil.
+func (_c *PersonCreate) SetNillableMiddleName(v *string) *PersonCreate {
+	if v != nil {
+		_c.SetMiddleName(*v)
+	}
+	return _c
+}
+
 // SetLastName sets the "last_name" field.
 func (_c *PersonCreate) SetLastName(v string) *PersonCreate {
 	_c.mutation.SetLastName(v)
@@ -115,6 +129,20 @@ func (_c *PersonCreate) SetLastName(v string) *PersonCreate {
 // SetDisplayName sets the "display_name" field.
 func (_c *PersonCreate) SetDisplayName(v string) *PersonCreate {
 	_c.mutation.SetDisplayName(v)
+	return _c
+}
+
+// SetRecordSource sets the "record_source" field.
+func (_c *PersonCreate) SetRecordSource(v person.RecordSource) *PersonCreate {
+	_c.mutation.SetRecordSource(v)
+	return _c
+}
+
+// SetNillableRecordSource sets the "record_source" field if the given value is not nil.
+func (_c *PersonCreate) SetNillableRecordSource(v *person.RecordSource) *PersonCreate {
+	if v != nil {
+		_c.SetRecordSource(*v)
+	}
 	return _c
 }
 
@@ -365,6 +393,10 @@ func (_c *PersonCreate) defaults() {
 		v := person.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.RecordSource(); !ok {
+		v := person.DefaultRecordSource
+		_c.mutation.SetRecordSource(v)
+	}
 	if _, ok := _c.mutation.PreferredContact(); !ok {
 		v := person.DefaultPreferredContact
 		_c.mutation.SetPreferredContact(v)
@@ -418,11 +450,34 @@ func (_c *PersonCreate) check() error {
 	if _, ok := _c.mutation.FirstName(); !ok {
 		return &ValidationError{Name: "first_name", err: errors.New(`ent: missing required field "Person.first_name"`)}
 	}
+	if v, ok := _c.mutation.FirstName(); ok {
+		if err := person.FirstNameValidator(v); err != nil {
+			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "Person.first_name": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.LastName(); !ok {
 		return &ValidationError{Name: "last_name", err: errors.New(`ent: missing required field "Person.last_name"`)}
 	}
+	if v, ok := _c.mutation.LastName(); ok {
+		if err := person.LastNameValidator(v); err != nil {
+			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "Person.last_name": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.DisplayName(); !ok {
 		return &ValidationError{Name: "display_name", err: errors.New(`ent: missing required field "Person.display_name"`)}
+	}
+	if v, ok := _c.mutation.DisplayName(); ok {
+		if err := person.DisplayNameValidator(v); err != nil {
+			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Person.display_name": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.RecordSource(); !ok {
+		return &ValidationError{Name: "record_source", err: errors.New(`ent: missing required field "Person.record_source"`)}
+	}
+	if v, ok := _c.mutation.RecordSource(); ok {
+		if err := person.RecordSourceValidator(v); err != nil {
+			return &ValidationError{Name: "record_source", err: fmt.Errorf(`ent: validator failed for field "Person.record_source": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.ContactMethods(); !ok {
 		return &ValidationError{Name: "contact_methods", err: errors.New(`ent: missing required field "Person.contact_methods"`)}
@@ -516,6 +571,10 @@ func (_c *PersonCreate) createSpec() (*Person, *sqlgraph.CreateSpec) {
 		_spec.SetField(person.FieldFirstName, field.TypeString, value)
 		_node.FirstName = value
 	}
+	if value, ok := _c.mutation.MiddleName(); ok {
+		_spec.SetField(person.FieldMiddleName, field.TypeString, value)
+		_node.MiddleName = &value
+	}
 	if value, ok := _c.mutation.LastName(); ok {
 		_spec.SetField(person.FieldLastName, field.TypeString, value)
 		_node.LastName = value
@@ -523,6 +582,10 @@ func (_c *PersonCreate) createSpec() (*Person, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DisplayName(); ok {
 		_spec.SetField(person.FieldDisplayName, field.TypeString, value)
 		_node.DisplayName = value
+	}
+	if value, ok := _c.mutation.RecordSource(); ok {
+		_spec.SetField(person.FieldRecordSource, field.TypeEnum, value)
+		_node.RecordSource = value
 	}
 	if value, ok := _c.mutation.DateOfBirth(); ok {
 		_spec.SetField(person.FieldDateOfBirth, field.TypeTime, value)

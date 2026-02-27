@@ -41,6 +41,8 @@ tmp/
 /handlergen
 /uigen
 /uirender
+/testgen
+/driftcheck
 
 # Frontend
 node_modules/

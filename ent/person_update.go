@@ -137,6 +137,26 @@ func (_u *PersonUpdate) SetNillableFirstName(v *string) *PersonUpdate {
 	return _u
 }
 
+// SetMiddleName sets the "middle_name" field.
+func (_u *PersonUpdate) SetMiddleName(v string) *PersonUpdate {
+	_u.mutation.SetMiddleName(v)
+	return _u
+}
+
+// SetNillableMiddleName sets the "middle_name" field if the given value is not nil.
+func (_u *PersonUpdate) SetNillableMiddleName(v *string) *PersonUpdate {
+	if v != nil {
+		_u.SetMiddleName(*v)
+	}
+	return _u
+}
+
+// ClearMiddleName clears the value of the "middle_name" field.
+func (_u *PersonUpdate) ClearMiddleName() *PersonUpdate {
+	_u.mutation.ClearMiddleName()
+	return _u
+}
+
 // SetLastName sets the "last_name" field.
 func (_u *PersonUpdate) SetLastName(v string) *PersonUpdate {
 	_u.mutation.SetLastName(v)
@@ -161,6 +181,20 @@ func (_u *PersonUpdate) SetDisplayName(v string) *PersonUpdate {
 func (_u *PersonUpdate) SetNillableDisplayName(v *string) *PersonUpdate {
 	if v != nil {
 		_u.SetDisplayName(*v)
+	}
+	return _u
+}
+
+// SetRecordSource sets the "record_source" field.
+func (_u *PersonUpdate) SetRecordSource(v person.RecordSource) *PersonUpdate {
+	_u.mutation.SetRecordSource(v)
+	return _u
+}
+
+// SetNillableRecordSource sets the "record_source" field if the given value is not nil.
+func (_u *PersonUpdate) SetNillableRecordSource(v *person.RecordSource) *PersonUpdate {
+	if v != nil {
+		_u.SetRecordSource(*v)
 	}
 	return _u
 }
@@ -553,6 +587,26 @@ func (_u *PersonUpdate) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Person.source": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.FirstName(); ok {
+		if err := person.FirstNameValidator(v); err != nil {
+			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "Person.first_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LastName(); ok {
+		if err := person.LastNameValidator(v); err != nil {
+			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "Person.last_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.DisplayName(); ok {
+		if err := person.DisplayNameValidator(v); err != nil {
+			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Person.display_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RecordSource(); ok {
+		if err := person.RecordSourceValidator(v); err != nil {
+			return &ValidationError{Name: "record_source", err: fmt.Errorf(`ent: validator failed for field "Person.record_source": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.PreferredContact(); ok {
 		if err := person.PreferredContactValidator(v); err != nil {
 			return &ValidationError{Name: "preferred_contact", err: fmt.Errorf(`ent: validator failed for field "Person.preferred_contact": %w`, err)}
@@ -605,11 +659,20 @@ func (_u *PersonUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(person.FieldFirstName, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.MiddleName(); ok {
+		_spec.SetField(person.FieldMiddleName, field.TypeString, value)
+	}
+	if _u.mutation.MiddleNameCleared() {
+		_spec.ClearField(person.FieldMiddleName, field.TypeString)
+	}
 	if value, ok := _u.mutation.LastName(); ok {
 		_spec.SetField(person.FieldLastName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(person.FieldDisplayName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.RecordSource(); ok {
+		_spec.SetField(person.FieldRecordSource, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.DateOfBirth(); ok {
 		_spec.SetField(person.FieldDateOfBirth, field.TypeTime, value)
@@ -974,6 +1037,26 @@ func (_u *PersonUpdateOne) SetNillableFirstName(v *string) *PersonUpdateOne {
 	return _u
 }
 
+// SetMiddleName sets the "middle_name" field.
+func (_u *PersonUpdateOne) SetMiddleName(v string) *PersonUpdateOne {
+	_u.mutation.SetMiddleName(v)
+	return _u
+}
+
+// SetNillableMiddleName sets the "middle_name" field if the given value is not nil.
+func (_u *PersonUpdateOne) SetNillableMiddleName(v *string) *PersonUpdateOne {
+	if v != nil {
+		_u.SetMiddleName(*v)
+	}
+	return _u
+}
+
+// ClearMiddleName clears the value of the "middle_name" field.
+func (_u *PersonUpdateOne) ClearMiddleName() *PersonUpdateOne {
+	_u.mutation.ClearMiddleName()
+	return _u
+}
+
 // SetLastName sets the "last_name" field.
 func (_u *PersonUpdateOne) SetLastName(v string) *PersonUpdateOne {
 	_u.mutation.SetLastName(v)
@@ -998,6 +1081,20 @@ func (_u *PersonUpdateOne) SetDisplayName(v string) *PersonUpdateOne {
 func (_u *PersonUpdateOne) SetNillableDisplayName(v *string) *PersonUpdateOne {
 	if v != nil {
 		_u.SetDisplayName(*v)
+	}
+	return _u
+}
+
+// SetRecordSource sets the "record_source" field.
+func (_u *PersonUpdateOne) SetRecordSource(v person.RecordSource) *PersonUpdateOne {
+	_u.mutation.SetRecordSource(v)
+	return _u
+}
+
+// SetNillableRecordSource sets the "record_source" field if the given value is not nil.
+func (_u *PersonUpdateOne) SetNillableRecordSource(v *person.RecordSource) *PersonUpdateOne {
+	if v != nil {
+		_u.SetRecordSource(*v)
 	}
 	return _u
 }
@@ -1403,6 +1500,26 @@ func (_u *PersonUpdateOne) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Person.source": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.FirstName(); ok {
+		if err := person.FirstNameValidator(v); err != nil {
+			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "Person.first_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.LastName(); ok {
+		if err := person.LastNameValidator(v); err != nil {
+			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "Person.last_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.DisplayName(); ok {
+		if err := person.DisplayNameValidator(v); err != nil {
+			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "Person.display_name": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RecordSource(); ok {
+		if err := person.RecordSourceValidator(v); err != nil {
+			return &ValidationError{Name: "record_source", err: fmt.Errorf(`ent: validator failed for field "Person.record_source": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.PreferredContact(); ok {
 		if err := person.PreferredContactValidator(v); err != nil {
 			return &ValidationError{Name: "preferred_contact", err: fmt.Errorf(`ent: validator failed for field "Person.preferred_contact": %w`, err)}
@@ -1472,11 +1589,20 @@ func (_u *PersonUpdateOne) sqlSave(ctx context.Context) (_node *Person, err erro
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(person.FieldFirstName, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.MiddleName(); ok {
+		_spec.SetField(person.FieldMiddleName, field.TypeString, value)
+	}
+	if _u.mutation.MiddleNameCleared() {
+		_spec.ClearField(person.FieldMiddleName, field.TypeString)
+	}
 	if value, ok := _u.mutation.LastName(); ok {
 		_spec.SetField(person.FieldLastName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(person.FieldDisplayName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.RecordSource(); ok {
+		_spec.SetField(person.FieldRecordSource, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.DateOfBirth(); ok {
 		_spec.SetField(person.FieldDateOfBirth, field.TypeTime, value)

@@ -38,8 +38,10 @@ func NewPersonHandler(client *ent.Client) *PersonHandler {
 
 type createPersonRequest struct {
 	FirstName          string                `json:"first_name"`
+	MiddleName         *string               `json:"middle_name,omitempty"`
 	LastName           string                `json:"last_name"`
 	DisplayName        string                `json:"display_name"`
+	RecordSource       string                `json:"record_source"`
 	DateOfBirth        *time.Time            `json:"date_of_birth,omitempty"`
 	SsnLastFour        *string               `json:"ssn_last_four,omitempty"`
 	ContactMethods     []types.ContactMethod `json:"contact_methods"`
@@ -65,8 +67,14 @@ func (h *PersonHandler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 	}
 	builder := h.client.Person.Create()
 	builder.SetFirstName(req.FirstName)
+	if req.MiddleName != nil {
+		builder.SetNillableMiddleName(req.MiddleName)
+	}
 	builder.SetLastName(req.LastName)
 	builder.SetDisplayName(req.DisplayName)
+	if req.RecordSource != "" {
+		builder.SetRecordSource(person.RecordSource(req.RecordSource))
+	}
 	if req.DateOfBirth != nil {
 		builder.SetNillableDateOfBirth(req.DateOfBirth)
 	}
@@ -132,8 +140,10 @@ func (h *PersonHandler) ListPersons(w http.ResponseWriter, r *http.Request) {
 
 type updatePersonRequest struct {
 	FirstName          *string               `json:"first_name,omitempty"`
+	MiddleName         *string               `json:"middle_name,omitempty"`
 	LastName           *string               `json:"last_name,omitempty"`
 	DisplayName        *string               `json:"display_name,omitempty"`
+	RecordSource       *string               `json:"record_source,omitempty"`
 	DateOfBirth        *time.Time            `json:"date_of_birth,omitempty"`
 	SsnLastFour        *string               `json:"ssn_last_four,omitempty"`
 	ContactMethods     []types.ContactMethod `json:"contact_methods,omitempty"`
@@ -165,11 +175,17 @@ func (h *PersonHandler) UpdatePerson(w http.ResponseWriter, r *http.Request) {
 	if req.FirstName != nil {
 		builder.SetFirstName(*req.FirstName)
 	}
+	if req.MiddleName != nil {
+		builder.SetNillableMiddleName(req.MiddleName)
+	}
 	if req.LastName != nil {
 		builder.SetLastName(*req.LastName)
 	}
 	if req.DisplayName != nil {
 		builder.SetDisplayName(*req.DisplayName)
+	}
+	if req.RecordSource != nil {
+		builder.SetRecordSource(person.RecordSource(*req.RecordSource))
 	}
 	if req.DateOfBirth != nil {
 		builder.SetNillableDateOfBirth(req.DateOfBirth)

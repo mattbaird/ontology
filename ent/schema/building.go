@@ -29,7 +29,7 @@ func (Building) Mixin() []ent.Mixin {
 func (Building) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.String("name").SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("name").NotEmpty().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("building_type").Values("residential", "commercial", "mixed_use", "parking_structure", "industrial", "storage", "auxiliary"),
 		field.JSON("address", &types.Address{}).Optional(),
 		field.String("description").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),

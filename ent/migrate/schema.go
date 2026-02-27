@@ -26,13 +26,13 @@ var (
 		{Name: "parent_account_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "depth", Type: field.TypeInt},
 		{Name: "dimensions", Type: field.TypeJSON, Nullable: true},
-		{Name: "normal_balance", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "normal_balance", Type: field.TypeEnum, Enums: []string{"debit", "credit"}},
 		{Name: "is_header", Type: field.TypeBool, Default: false},
 		{Name: "is_system", Type: field.TypeBool, Default: false},
 		{Name: "allows_direct_posting", Type: field.TypeBool, Default: true},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "archived"}},
 		{Name: "is_trust_account", Type: field.TypeBool, Default: false},
-		{Name: "trust_type", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "trust_type", Type: field.TypeEnum, Nullable: true, Enums: []string{"operating", "security_deposit", "escrow"}},
 		{Name: "budget_amount_amount_cents", Type: field.TypeInt64, Nullable: true},
 		{Name: "budget_amount_currency", Type: field.TypeString, Nullable: true, Default: "USD"},
 		{Name: "tax_line", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
@@ -134,18 +134,21 @@ var (
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
 		{Name: "name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "account_type", Type: field.TypeEnum, Enums: []string{"operating", "trust", "security_deposit", "escrow", "reserve"}},
-		{Name: "bank_name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
-		{Name: "routing_number", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
-		{Name: "account_number_last_four", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "institution_name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "routing_number", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "account_mask", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "account_number_encrypted", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "plaid_account_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "plaid_access_token", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "property_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "entity_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "frozen", "closed"}},
+		{Name: "is_default", Type: field.TypeBool, Default: false},
+		{Name: "accepts_deposits", Type: field.TypeBool, Default: true},
+		{Name: "accepts_payments", Type: field.TypeBool, Default: true},
 		{Name: "current_balance_amount_cents", Type: field.TypeInt64, Nullable: true},
 		{Name: "current_balance_currency", Type: field.TypeString, Nullable: true, Default: "USD"},
-		{Name: "last_reconciled_at", Type: field.TypeTime, Nullable: true},
-		{Name: "is_trust", Type: field.TypeBool, Default: false},
-		{Name: "trust_state", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
-		{Name: "commingling_allowed", Type: field.TypeBool, Default: false},
+		{Name: "last_statement_date", Type: field.TypeTime, Nullable: true},
 		{Name: "account_bank_accounts", Type: field.TypeUUID, Nullable: true},
 		{Name: "bank_account_gl_account", Type: field.TypeUUID},
 		{Name: "portfolio_trust_account", Type: field.TypeUUID, Unique: true, Nullable: true},
@@ -158,23 +161,40 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "bank_accounts_accounts_bank_accounts",
-				Columns:    []*schema.Column{BankAccountsColumns[22]},
+				Columns:    []*schema.Column{BankAccountsColumns[25]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "bank_accounts_accounts_gl_account",
-				Columns:    []*schema.Column{BankAccountsColumns[23]},
+				Columns:    []*schema.Column{BankAccountsColumns[26]},
 				RefColumns: []*schema.Column{AccountsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "bank_accounts_portfolios_trust_account",
-				Columns:    []*schema.Column{BankAccountsColumns[24]},
+				Columns:    []*schema.Column{BankAccountsColumns[27]},
 				RefColumns: []*schema.Column{PortfoliosColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
+	}
+	// BaseEntitiesColumns holds the columns for the "base_entities" table.
+	BaseEntitiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by", Type: field.TypeString},
+		{Name: "updated_by", Type: field.TypeString},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
+		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
+		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
+	}
+	// BaseEntitiesTable holds the schema information for the "base_entities" table.
+	BaseEntitiesTable = &schema.Table{
+		Name:       "base_entities",
+		Columns:    BaseEntitiesColumns,
+		PrimaryKey: []*schema.Column{BaseEntitiesColumns[0]},
 	}
 	// BuildingsColumns holds the columns for the "buildings" table.
 	BuildingsColumns = []*schema.Column{
@@ -211,6 +231,23 @@ var (
 			},
 		},
 	}
+	// ImmutableEntitiesColumns holds the columns for the "immutable_entities" table.
+	ImmutableEntitiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by", Type: field.TypeString},
+		{Name: "updated_by", Type: field.TypeString},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
+		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
+		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
+	}
+	// ImmutableEntitiesTable holds the schema information for the "immutable_entities" table.
+	ImmutableEntitiesTable = &schema.Table{
+		Name:       "immutable_entities",
+		Columns:    ImmutableEntitiesColumns,
+		PrimaryKey: []*schema.Column{ImmutableEntitiesColumns[0]},
+	}
 	// JournalEntriesColumns holds the columns for the "journal_entries" table.
 	JournalEntriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -241,6 +278,91 @@ var (
 		Name:       "journal_entries",
 		Columns:    JournalEntriesColumns,
 		PrimaryKey: []*schema.Column{JournalEntriesColumns[0]},
+	}
+	// JurisdictionsColumns holds the columns for the "jurisdictions" table.
+	JurisdictionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by", Type: field.TypeString},
+		{Name: "updated_by", Type: field.TypeString},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
+		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
+		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
+		{Name: "name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "jurisdiction_type", Type: field.TypeEnum, Enums: []string{"federal", "state", "county", "city", "special_district", "unincorporated_area"}},
+		{Name: "fips_code", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "state_code", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "country_code", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "dissolved", "merged", "pending"}},
+		{Name: "successor_jurisdiction_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "effective_date", Type: field.TypeTime, Nullable: true},
+		{Name: "dissolution_date", Type: field.TypeTime, Nullable: true},
+		{Name: "governing_body", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "regulatory_url", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "jurisdiction_children", Type: field.TypeUUID, Nullable: true},
+	}
+	// JurisdictionsTable holds the schema information for the "jurisdictions" table.
+	JurisdictionsTable = &schema.Table{
+		Name:       "jurisdictions",
+		Columns:    JurisdictionsColumns,
+		PrimaryKey: []*schema.Column{JurisdictionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "jurisdictions_jurisdictions_children",
+				Columns:    []*schema.Column{JurisdictionsColumns[19]},
+				RefColumns: []*schema.Column{JurisdictionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// JurisdictionRulesColumns holds the columns for the "jurisdiction_rules" table.
+	JurisdictionRulesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by", Type: field.TypeString},
+		{Name: "updated_by", Type: field.TypeString},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
+		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
+		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
+		{Name: "rule_type", Type: field.TypeEnum, Enums: []string{"security_deposit_limit", "notice_period", "rent_increase_cap", "required_disclosure", "eviction_procedure", "late_fee_cap", "rent_control", "habitability_standard", "tenant_screening_restriction", "lease_term_restriction", "fee_restriction", "relocation_assistance", "right_to_counsel", "just_cause_eviction", "source_of_income_protection", "lead_paint_disclosure", "mold_disclosure", "bed_bug_disclosure", "flood_zone_disclosure", "utility_billing_restriction", "short_term_rental_restriction"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "active", "superseded", "expired", "repealed"}},
+		{Name: "applies_to_lease_types", Type: field.TypeJSON, Nullable: true},
+		{Name: "applies_to_property_types", Type: field.TypeJSON, Nullable: true},
+		{Name: "applies_to_space_types", Type: field.TypeJSON, Nullable: true},
+		{Name: "exemptions", Type: field.TypeJSON, Nullable: true},
+		{Name: "rule_definition", Type: field.TypeJSON},
+		{Name: "statute_reference", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "ordinance_number", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "statute_url", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "effective_date", Type: field.TypeTime},
+		{Name: "expiration_date", Type: field.TypeTime, Nullable: true},
+		{Name: "last_verified", Type: field.TypeTime, Nullable: true},
+		{Name: "verified_by", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "verification_source", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "jurisdiction_rules", Type: field.TypeUUID},
+		{Name: "jurisdiction_rule_superseded_by", Type: field.TypeUUID, Unique: true, Nullable: true},
+	}
+	// JurisdictionRulesTable holds the schema information for the "jurisdiction_rules" table.
+	JurisdictionRulesTable = &schema.Table{
+		Name:       "jurisdiction_rules",
+		Columns:    JurisdictionRulesColumns,
+		PrimaryKey: []*schema.Column{JurisdictionRulesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "jurisdiction_rules_jurisdictions_rules",
+				Columns:    []*schema.Column{JurisdictionRulesColumns[23]},
+				RefColumns: []*schema.Column{JurisdictionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "jurisdiction_rules_jurisdiction_rules_superseded_by",
+				Columns:    []*schema.Column{JurisdictionRulesColumns[24]},
+				RefColumns: []*schema.Column{JurisdictionRulesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// LeasesColumns holds the columns for the "leases" table.
 	LeasesColumns = []*schema.Column{
@@ -519,8 +641,10 @@ var (
 		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
 		{Name: "first_name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "middle_name", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "last_name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "display_name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "record_source", Type: field.TypeEnum, Enums: []string{"user", "applicant", "import", "system"}, Default: "user"},
 		{Name: "date_of_birth", Type: field.TypeTime, Nullable: true},
 		{Name: "ssn_last_four", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "contact_methods", Type: field.TypeJSON},
@@ -583,11 +707,10 @@ var (
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
 		{Name: "name", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "management_type", Type: field.TypeEnum, Enums: []string{"self_managed", "third_party", "hybrid"}},
-		{Name: "requires_trust_accounting", Type: field.TypeBool},
-		{Name: "trust_bank_account_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "description", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "inactive", "onboarding", "offboarding"}},
-		{Name: "default_payment_methods", Type: field.TypeJSON, Nullable: true},
-		{Name: "fiscal_year_start_month", Type: field.TypeInt},
+		{Name: "default_chart_of_accounts_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "default_bank_account_id", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "organization_owned_portfolios", Type: field.TypeUUID, Nullable: true},
 		{Name: "portfolio_owner", Type: field.TypeUUID},
 	}
@@ -599,13 +722,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "portfolios_organizations_owned_portfolios",
-				Columns:    []*schema.Column{PortfoliosColumns[15]},
+				Columns:    []*schema.Column{PortfoliosColumns[14]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "portfolios_organizations_owner",
-				Columns:    []*schema.Column{PortfoliosColumns[16]},
+				Columns:    []*schema.Column{PortfoliosColumns[15]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -668,6 +791,59 @@ var (
 			},
 		},
 	}
+	// PropertyJurisdictionsColumns holds the columns for the "property_jurisdictions" table.
+	PropertyJurisdictionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by", Type: field.TypeString},
+		{Name: "updated_by", Type: field.TypeString},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
+		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
+		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
+		{Name: "effective_date", Type: field.TypeTime},
+		{Name: "end_date", Type: field.TypeTime, Nullable: true},
+		{Name: "lookup_source", Type: field.TypeEnum, Enums: []string{"address_geocode", "manual", "api_lookup", "imported"}},
+		{Name: "verified", Type: field.TypeBool, Default: false},
+		{Name: "verified_at", Type: field.TypeTime, Nullable: true},
+		{Name: "verified_by", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "jurisdiction_property_jurisdictions", Type: field.TypeUUID, Nullable: true},
+		{Name: "property_property_jurisdictions", Type: field.TypeUUID, Nullable: true},
+		{Name: "property_jurisdiction_property", Type: field.TypeUUID},
+		{Name: "property_jurisdiction_jurisdiction", Type: field.TypeUUID},
+	}
+	// PropertyJurisdictionsTable holds the schema information for the "property_jurisdictions" table.
+	PropertyJurisdictionsTable = &schema.Table{
+		Name:       "property_jurisdictions",
+		Columns:    PropertyJurisdictionsColumns,
+		PrimaryKey: []*schema.Column{PropertyJurisdictionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "property_jurisdictions_jurisdictions_property_jurisdictions",
+				Columns:    []*schema.Column{PropertyJurisdictionsColumns[14]},
+				RefColumns: []*schema.Column{JurisdictionsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "property_jurisdictions_properties_property_jurisdictions",
+				Columns:    []*schema.Column{PropertyJurisdictionsColumns[15]},
+				RefColumns: []*schema.Column{PropertiesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "property_jurisdictions_properties_property",
+				Columns:    []*schema.Column{PropertyJurisdictionsColumns[16]},
+				RefColumns: []*schema.Column{PropertiesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "property_jurisdictions_jurisdictions_jurisdiction",
+				Columns:    []*schema.Column{PropertyJurisdictionsColumns[17]},
+				RefColumns: []*schema.Column{JurisdictionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// ReconciliationsColumns holds the columns for the "reconciliations" table.
 	ReconciliationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -680,17 +856,17 @@ var (
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
 		{Name: "period_start", Type: field.TypeTime},
 		{Name: "period_end", Type: field.TypeTime},
+		{Name: "statement_date", Type: field.TypeTime},
 		{Name: "statement_balance_amount_cents", Type: field.TypeInt64},
 		{Name: "statement_balance_currency", Type: field.TypeString, Default: "USD"},
-		{Name: "system_balance_amount_cents", Type: field.TypeInt64},
-		{Name: "system_balance_currency", Type: field.TypeString, Default: "USD"},
-		{Name: "difference_amount_cents", Type: field.TypeInt64},
-		{Name: "difference_currency", Type: field.TypeString, Default: "USD"},
+		{Name: "gl_balance_amount_cents", Type: field.TypeInt64},
+		{Name: "gl_balance_currency", Type: field.TypeString, Default: "USD"},
+		{Name: "difference_amount_cents", Type: field.TypeInt64, Nullable: true},
+		{Name: "difference_currency", Type: field.TypeString, Nullable: true, Default: "USD"},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"in_progress", "balanced", "unbalanced", "approved"}},
-		{Name: "matched_transaction_count", Type: field.TypeInt},
-		{Name: "unmatched_transaction_count", Type: field.TypeInt},
-		{Name: "completed_by", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
-		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "unreconciled_items", Type: field.TypeInt, Nullable: true},
+		{Name: "reconciled_by", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
+		{Name: "reconciled_at", Type: field.TypeTime, Nullable: true},
 		{Name: "approved_by", Type: field.TypeString, Nullable: true, SchemaType: map[string]string{"postgres": "varchar"}},
 		{Name: "approved_at", Type: field.TypeTime, Nullable: true},
 		{Name: "bank_account_reconciliations", Type: field.TypeUUID, Nullable: true},
@@ -727,7 +903,7 @@ var (
 		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
 		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
 		{Name: "space_number", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
-		{Name: "space_type", Type: field.TypeEnum, Enums: []string{"residential_unit", "commercial_office", "commercial_retail", "storage", "parking", "common_area", "industrial", "lot_pad", "bed_space", "desk_space"}},
+		{Name: "space_type", Type: field.TypeEnum, Enums: []string{"residential_unit", "commercial_office", "commercial_retail", "storage", "parking", "common_area", "industrial", "lot_pad", "bed_space", "desk_space", "parking_garage", "private_office", "warehouse", "amenity", "rack", "cage", "server_room", "other"}},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"vacant", "occupied", "notice_given", "make_ready", "down", "model", "reserved", "owner_occupied"}},
 		{Name: "leasable", Type: field.TypeBool},
 		{Name: "shared_with_parent", Type: field.TypeBool, Default: false},
@@ -774,6 +950,24 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 		},
+	}
+	// StatefulEntitiesColumns holds the columns for the "stateful_entities" table.
+	StatefulEntitiesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by", Type: field.TypeString},
+		{Name: "updated_by", Type: field.TypeString},
+		{Name: "source", Type: field.TypeEnum, Enums: []string{"user", "agent", "import", "system", "migration"}},
+		{Name: "correlation_id", Type: field.TypeString, Nullable: true},
+		{Name: "agent_goal_id", Type: field.TypeString, Nullable: true},
+		{Name: "status", Type: field.TypeString, SchemaType: map[string]string{"postgres": "varchar"}},
+	}
+	// StatefulEntitiesTable holds the schema information for the "stateful_entities" table.
+	StatefulEntitiesTable = &schema.Table{
+		Name:       "stateful_entities",
+		Columns:    StatefulEntitiesColumns,
+		PrimaryKey: []*schema.Column{StatefulEntitiesColumns[0]},
 	}
 	// LeaseTenantRolesColumns holds the columns for the "lease_tenant_roles" table.
 	LeaseTenantRolesColumns = []*schema.Column{
@@ -855,8 +1049,12 @@ var (
 		AccountsTable,
 		ApplicationsTable,
 		BankAccountsTable,
+		BaseEntitiesTable,
 		BuildingsTable,
+		ImmutableEntitiesTable,
 		JournalEntriesTable,
+		JurisdictionsTable,
+		JurisdictionRulesTable,
 		LeasesTable,
 		LeaseSpacesTable,
 		LedgerEntriesTable,
@@ -865,8 +1063,10 @@ var (
 		PersonRolesTable,
 		PortfoliosTable,
 		PropertiesTable,
+		PropertyJurisdictionsTable,
 		ReconciliationsTable,
 		SpacesTable,
+		StatefulEntitiesTable,
 		LeaseTenantRolesTable,
 		LeaseGuarantorRolesTable,
 		PersonOrganizationsTable,
@@ -884,6 +1084,9 @@ func init() {
 	BankAccountsTable.ForeignKeys[1].RefTable = AccountsTable
 	BankAccountsTable.ForeignKeys[2].RefTable = PortfoliosTable
 	BuildingsTable.ForeignKeys[0].RefTable = PropertiesTable
+	JurisdictionsTable.ForeignKeys[0].RefTable = JurisdictionsTable
+	JurisdictionRulesTable.ForeignKeys[0].RefTable = JurisdictionsTable
+	JurisdictionRulesTable.ForeignKeys[1].RefTable = JurisdictionRulesTable
 	LeasesTable.ForeignKeys[0].RefTable = LeasesTable
 	LeaseSpacesTable.ForeignKeys[0].RefTable = LeasesTable
 	LeaseSpacesTable.ForeignKeys[1].RefTable = LeasesTable
@@ -907,6 +1110,10 @@ func init() {
 	PropertiesTable.ForeignKeys[0].RefTable = BankAccountsTable
 	PropertiesTable.ForeignKeys[1].RefTable = PortfoliosTable
 	PropertiesTable.ForeignKeys[2].RefTable = BankAccountsTable
+	PropertyJurisdictionsTable.ForeignKeys[0].RefTable = JurisdictionsTable
+	PropertyJurisdictionsTable.ForeignKeys[1].RefTable = PropertiesTable
+	PropertyJurisdictionsTable.ForeignKeys[2].RefTable = PropertiesTable
+	PropertyJurisdictionsTable.ForeignKeys[3].RefTable = JurisdictionsTable
 	ReconciliationsTable.ForeignKeys[0].RefTable = BankAccountsTable
 	ReconciliationsTable.ForeignKeys[1].RefTable = BankAccountsTable
 	SpacesTable.ForeignKeys[0].RefTable = BuildingsTable

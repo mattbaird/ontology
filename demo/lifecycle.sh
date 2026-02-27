@@ -226,10 +226,7 @@ PORTFOLIO=$(api_ok POST /v1/portfolios "{
   \"name\": \"Denver Metro Residential\",
   \"owner_id\": \"${ORG_ID}\",
   \"management_type\": \"third_party\",
-  \"requires_trust_accounting\": false,
-  \"status\": \"onboarding\",
-  \"fiscal_year_start_month\": 1,
-  \"default_payment_methods\": [\"ach\", \"check\"]
+  \"status\": \"onboarding\"
 }")
 PORTFOLIO_ID=$(id_of "$PORTFOLIO")
 entity "Portfolio: Denver Metro Residential (onboarding)  (id: ${PORTFOLIO_ID:0:8}…)"
@@ -465,9 +462,9 @@ BANK=$(api_ok POST /v1/bank-accounts "{
   \"name\": \"Denver Metro Operating\",
   \"account_type\": \"operating\",
   \"gl_account_id\": \"${CASH_ID}\",
-  \"bank_name\": \"First National Bank\",
+  \"institution_name\": \"First National Bank\",
   \"routing_number\": \"102003154\",
-  \"account_number_last_four\": \"4821\",
+  \"account_mask\": \"****4821\",
   \"status\": \"active\"
 }")
 BANK_ID=$(id_of "$BANK")
@@ -507,13 +504,10 @@ RECON=$(api_ok POST /v1/reconciliations "{
   \"period_end\": \"2026-03-31T00:00:00Z\",
   \"statement_balance_amount_cents\": 185000,
   \"statement_balance_currency\": \"USD\",
-  \"system_balance_amount_cents\": 185000,
-  \"system_balance_currency\": \"USD\",
-  \"difference_amount_cents\": 0,
-  \"difference_currency\": \"USD\",
-  \"status\": \"balanced\",
-  \"matched_transaction_count\": 1,
-  \"unmatched_transaction_count\": 0
+  \"gl_balance_amount_cents\": 185000,
+  \"gl_balance_currency\": \"USD\",
+  \"statement_date\": \"2026-03-31T00:00:00Z\",
+  \"status\": \"balanced\"
 }")
 RECON_ID=$(id_of "$RECON")
 entity "Reconciliation: March 2026 (balanced, diff=\$0)  (id: ${RECON_ID:0:8}…)"

@@ -251,4 +251,52 @@ services: [
 				description: "Full-text search across all activity streams by keyword."},
 		]
 	},
+	{
+		name:      "JurisdictionService"
+		base_path: "/v1"
+		entities: ["Jurisdiction", "PropertyJurisdiction", "JurisdictionRule"]
+		operations: [
+			// Jurisdiction CRUD + transitions
+			{name: "CreateJurisdiction", entity: "Jurisdiction", entity_path: "jurisdictions", type: "create", description: "Create a new jurisdiction"},
+			{name: "GetJurisdiction", entity: "Jurisdiction", entity_path: "jurisdictions", type: "get", description: "Get jurisdiction by ID"},
+			{name: "ListJurisdictions", entity: "Jurisdiction", entity_path: "jurisdictions", type: "list", description: "List jurisdictions with filtering"},
+			{name: "UpdateJurisdiction", entity: "Jurisdiction", entity_path: "jurisdictions", type: "update", description: "Update jurisdiction fields"},
+			{name: "ActivateJurisdiction", entity: "Jurisdiction", entity_path: "jurisdictions", type: "transition", action: "activate",
+				from_status: ["pending"], to_status: "active",
+				description: "Activate a pending jurisdiction"},
+			{name: "DissolveJurisdiction", entity: "Jurisdiction", entity_path: "jurisdictions", type: "transition", action: "dissolve",
+				from_status: ["active"], to_status: "dissolved",
+				extra_fields: ["successor_jurisdiction_id", "dissolution_date"],
+				description: "Mark a jurisdiction as dissolved"},
+			{name: "MergeJurisdiction", entity: "Jurisdiction", entity_path: "jurisdictions", type: "transition", action: "merge",
+				from_status: ["active"], to_status: "merged",
+				extra_fields: ["successor_jurisdiction_id", "dissolution_date"],
+				description: "Merge a jurisdiction into another"},
+
+			// PropertyJurisdiction CRUD
+			{name: "CreatePropertyJurisdiction", entity: "PropertyJurisdiction", entity_path: "property-jurisdictions", type: "create", description: "Link a property to a jurisdiction"},
+			{name: "GetPropertyJurisdiction", entity: "PropertyJurisdiction", entity_path: "property-jurisdictions", type: "get", description: "Get property-jurisdiction link by ID"},
+			{name: "ListPropertyJurisdictions", entity: "PropertyJurisdiction", entity_path: "property-jurisdictions", type: "list", description: "List property-jurisdiction links"},
+			{name: "UpdatePropertyJurisdiction", entity: "PropertyJurisdiction", entity_path: "property-jurisdictions", type: "update", description: "Update property-jurisdiction link"},
+
+			// JurisdictionRule CRUD + transitions
+			{name: "CreateJurisdictionRule", entity: "JurisdictionRule", entity_path: "jurisdiction-rules", type: "create", description: "Create a new jurisdiction rule"},
+			{name: "GetJurisdictionRule", entity: "JurisdictionRule", entity_path: "jurisdiction-rules", type: "get", description: "Get jurisdiction rule by ID"},
+			{name: "ListJurisdictionRules", entity: "JurisdictionRule", entity_path: "jurisdiction-rules", type: "list", description: "List jurisdiction rules"},
+			{name: "UpdateJurisdictionRule", entity: "JurisdictionRule", entity_path: "jurisdiction-rules", type: "update", description: "Update jurisdiction rule"},
+			{name: "ActivateRule", entity: "JurisdictionRule", entity_path: "jurisdiction-rules", type: "transition", action: "activate",
+				from_status: ["draft"], to_status: "active",
+				description: "Activate a draft rule"},
+			{name: "SupersedeRule", entity: "JurisdictionRule", entity_path: "jurisdiction-rules", type: "transition", action: "supersede",
+				from_status: ["active"], to_status: "superseded",
+				extra_fields: ["superseded_by_id"],
+				description: "Mark a rule as superseded by a newer rule"},
+			{name: "ExpireRule", entity: "JurisdictionRule", entity_path: "jurisdiction-rules", type: "transition", action: "expire",
+				from_status: ["active"], to_status: "expired",
+				description: "Mark a rule as expired"},
+			{name: "RepealRule", entity: "JurisdictionRule", entity_path: "jurisdiction-rules", type: "transition", action: "repeal",
+				from_status: ["active"], to_status: "repealed",
+				description: "Mark a rule as repealed"},
+		]
+	},
 ]

@@ -32,7 +32,7 @@ func (Property) Mixin() []ent.Mixin {
 func (Property) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.String("name").SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("name").NotEmpty().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.JSON("address", &types.Address{}),
 		field.Enum("property_type").Values("single_family", "multi_family", "commercial_office", "commercial_retail", "mixed_use", "industrial", "affordable_housing", "student_housing", "senior_living", "vacation_rental", "mobile_home_park", "self_storage", "coworking", "data_center", "medical_office"),
 		field.Enum("status").Values("active", "inactive", "under_renovation", "for_sale", "onboarding"),
@@ -61,6 +61,7 @@ func (Property) Edges() []ent.Edge {
 		edge.To("bank_account", BankAccount.Type).Unique().Comment("Property uses BankAccount"),
 		edge.To("applications", Application.Type).Comment("Property receives Applications"),
 		edge.To("ledger_entries", LedgerEntry.Type).Comment("LedgerEntry relates to Property (inverse)"),
+		edge.To("property_jurisdictions", PropertyJurisdiction.Type).Comment("PropertyJurisdiction links Property (inverse)"),
 	}
 }
 

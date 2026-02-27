@@ -413,6 +413,11 @@ func (_u *BuildingUpdate) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Building.source": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Name(); ok {
+		if err := building.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Building.name": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.BuildingType(); ok {
 		if err := building.BuildingTypeValidator(v); err != nil {
 			return &ValidationError{Name: "building_type", err: fmt.Errorf(`ent: validator failed for field "Building.building_type": %w`, err)}
@@ -1008,6 +1013,11 @@ func (_u *BuildingUpdateOne) check() error {
 	if v, ok := _u.mutation.Source(); ok {
 		if err := building.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Building.source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Name(); ok {
+		if err := building.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Building.name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.BuildingType(); ok {

@@ -2,9 +2,6 @@
 package schema
 
 import (
-	"context"
-	"fmt"
-
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
@@ -31,13 +28,12 @@ func (Portfolio) Mixin() []ent.Mixin {
 func (Portfolio) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.String("name").SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("name").NotEmpty().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("management_type").Values("self_managed", "third_party", "hybrid"),
-		field.Bool("requires_trust_accounting"),
-		field.String("trust_bank_account_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("description").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 		field.Enum("status").Values("active", "inactive", "onboarding", "offboarding"),
-		field.JSON("default_payment_methods", []string{}).Optional(),
-		field.Int("fiscal_year_start_month"),
+		field.String("default_chart_of_accounts_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.String("default_bank_account_id").Optional().Nillable().SchemaType(map[string]string{"postgres": "varchar"}),
 	}
 }
 
@@ -57,52 +53,4 @@ var ValidPortfolioTransitions = map[string][]string{
 	"inactive":    {"active", "offboarding"},
 	"offboarding": {"inactive"},
 	"onboarding":  {"active"},
-}
-
-// Hooks returns cross-field constraint validation hooks.
-// Generated from CUE ontology conditional blocks.
-func (Portfolio) Hooks() []ent.Hook {
-	return []ent.Hook{
-		validatePortfolioConstraints(),
-	}
-}
-
-func validatePortfolioConstraints() ent.Hook {
-	return func(next ent.Mutator) ent.Mutator {
-		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-			getField := func(name string) (interface{}, bool) {
-				if v, ok := m.Field(name); ok {
-					return v, true
-				}
-				if v, err := m.OldField(ctx, name); err == nil {
-					return v, true
-				}
-				return nil, false
-			}
-			toString := func(v interface{}) string {
-				if v == nil {
-					return ""
-				}
-				switch s := v.(type) {
-				case string:
-					return s
-				case *string:
-					if s != nil {
-						return *s
-					}
-					return ""
-				}
-				return fmt.Sprint(v)
-			}
-
-			// requires_trust_accounting == true → trust_bank_account_id must be non-empty
-			if v, ok := getField("requires_trust_accounting"); ok && fmt.Sprint(v) == "true" {
-				tid, tidOk := getField("trust_bank_account_id")
-				if !tidOk || toString(tid) == "" {
-					return nil, fmt.Errorf("portfolio with requires_trust_accounting=true must have trust_bank_account_id set")
-				}
-			}
-			return next.Mutate(ctx, m)
-		})
-	}
 }

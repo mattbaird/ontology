@@ -108,6 +108,12 @@ func (_c *ReconciliationCreate) SetPeriodEnd(v time.Time) *ReconciliationCreate 
 	return _c
 }
 
+// SetStatementDate sets the "statement_date" field.
+func (_c *ReconciliationCreate) SetStatementDate(v time.Time) *ReconciliationCreate {
+	_c.mutation.SetStatementDate(v)
+	return _c
+}
+
 // SetStatementBalanceAmountCents sets the "statement_balance_amount_cents" field.
 func (_c *ReconciliationCreate) SetStatementBalanceAmountCents(v int64) *ReconciliationCreate {
 	_c.mutation.SetStatementBalanceAmountCents(v)
@@ -128,22 +134,22 @@ func (_c *ReconciliationCreate) SetNillableStatementBalanceCurrency(v *string) *
 	return _c
 }
 
-// SetSystemBalanceAmountCents sets the "system_balance_amount_cents" field.
-func (_c *ReconciliationCreate) SetSystemBalanceAmountCents(v int64) *ReconciliationCreate {
-	_c.mutation.SetSystemBalanceAmountCents(v)
+// SetGlBalanceAmountCents sets the "gl_balance_amount_cents" field.
+func (_c *ReconciliationCreate) SetGlBalanceAmountCents(v int64) *ReconciliationCreate {
+	_c.mutation.SetGlBalanceAmountCents(v)
 	return _c
 }
 
-// SetSystemBalanceCurrency sets the "system_balance_currency" field.
-func (_c *ReconciliationCreate) SetSystemBalanceCurrency(v string) *ReconciliationCreate {
-	_c.mutation.SetSystemBalanceCurrency(v)
+// SetGlBalanceCurrency sets the "gl_balance_currency" field.
+func (_c *ReconciliationCreate) SetGlBalanceCurrency(v string) *ReconciliationCreate {
+	_c.mutation.SetGlBalanceCurrency(v)
 	return _c
 }
 
-// SetNillableSystemBalanceCurrency sets the "system_balance_currency" field if the given value is not nil.
-func (_c *ReconciliationCreate) SetNillableSystemBalanceCurrency(v *string) *ReconciliationCreate {
+// SetNillableGlBalanceCurrency sets the "gl_balance_currency" field if the given value is not nil.
+func (_c *ReconciliationCreate) SetNillableGlBalanceCurrency(v *string) *ReconciliationCreate {
 	if v != nil {
-		_c.SetSystemBalanceCurrency(*v)
+		_c.SetGlBalanceCurrency(*v)
 	}
 	return _c
 }
@@ -151,6 +157,14 @@ func (_c *ReconciliationCreate) SetNillableSystemBalanceCurrency(v *string) *Rec
 // SetDifferenceAmountCents sets the "difference_amount_cents" field.
 func (_c *ReconciliationCreate) SetDifferenceAmountCents(v int64) *ReconciliationCreate {
 	_c.mutation.SetDifferenceAmountCents(v)
+	return _c
+}
+
+// SetNillableDifferenceAmountCents sets the "difference_amount_cents" field if the given value is not nil.
+func (_c *ReconciliationCreate) SetNillableDifferenceAmountCents(v *int64) *ReconciliationCreate {
+	if v != nil {
+		_c.SetDifferenceAmountCents(*v)
+	}
 	return _c
 }
 
@@ -174,42 +188,44 @@ func (_c *ReconciliationCreate) SetStatus(v reconciliation.Status) *Reconciliati
 	return _c
 }
 
-// SetMatchedTransactionCount sets the "matched_transaction_count" field.
-func (_c *ReconciliationCreate) SetMatchedTransactionCount(v int) *ReconciliationCreate {
-	_c.mutation.SetMatchedTransactionCount(v)
+// SetUnreconciledItems sets the "unreconciled_items" field.
+func (_c *ReconciliationCreate) SetUnreconciledItems(v int) *ReconciliationCreate {
+	_c.mutation.SetUnreconciledItems(v)
 	return _c
 }
 
-// SetUnmatchedTransactionCount sets the "unmatched_transaction_count" field.
-func (_c *ReconciliationCreate) SetUnmatchedTransactionCount(v int) *ReconciliationCreate {
-	_c.mutation.SetUnmatchedTransactionCount(v)
-	return _c
-}
-
-// SetCompletedBy sets the "completed_by" field.
-func (_c *ReconciliationCreate) SetCompletedBy(v string) *ReconciliationCreate {
-	_c.mutation.SetCompletedBy(v)
-	return _c
-}
-
-// SetNillableCompletedBy sets the "completed_by" field if the given value is not nil.
-func (_c *ReconciliationCreate) SetNillableCompletedBy(v *string) *ReconciliationCreate {
+// SetNillableUnreconciledItems sets the "unreconciled_items" field if the given value is not nil.
+func (_c *ReconciliationCreate) SetNillableUnreconciledItems(v *int) *ReconciliationCreate {
 	if v != nil {
-		_c.SetCompletedBy(*v)
+		_c.SetUnreconciledItems(*v)
 	}
 	return _c
 }
 
-// SetCompletedAt sets the "completed_at" field.
-func (_c *ReconciliationCreate) SetCompletedAt(v time.Time) *ReconciliationCreate {
-	_c.mutation.SetCompletedAt(v)
+// SetReconciledBy sets the "reconciled_by" field.
+func (_c *ReconciliationCreate) SetReconciledBy(v string) *ReconciliationCreate {
+	_c.mutation.SetReconciledBy(v)
 	return _c
 }
 
-// SetNillableCompletedAt sets the "completed_at" field if the given value is not nil.
-func (_c *ReconciliationCreate) SetNillableCompletedAt(v *time.Time) *ReconciliationCreate {
+// SetNillableReconciledBy sets the "reconciled_by" field if the given value is not nil.
+func (_c *ReconciliationCreate) SetNillableReconciledBy(v *string) *ReconciliationCreate {
 	if v != nil {
-		_c.SetCompletedAt(*v)
+		_c.SetReconciledBy(*v)
+	}
+	return _c
+}
+
+// SetReconciledAt sets the "reconciled_at" field.
+func (_c *ReconciliationCreate) SetReconciledAt(v time.Time) *ReconciliationCreate {
+	_c.mutation.SetReconciledAt(v)
+	return _c
+}
+
+// SetNillableReconciledAt sets the "reconciled_at" field if the given value is not nil.
+func (_c *ReconciliationCreate) SetNillableReconciledAt(v *time.Time) *ReconciliationCreate {
+	if v != nil {
+		_c.SetReconciledAt(*v)
 	}
 	return _c
 }
@@ -274,9 +290,7 @@ func (_c *ReconciliationCreate) Mutation() *ReconciliationMutation {
 
 // Save creates the Reconciliation in the database.
 func (_c *ReconciliationCreate) Save(ctx context.Context) (*Reconciliation, error) {
-	if err := _c.defaults(); err != nil {
-		return nil, err
-	}
+	_c.defaults()
 	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
@@ -303,18 +317,12 @@ func (_c *ReconciliationCreate) ExecX(ctx context.Context) {
 }
 
 // defaults sets the default values of the builder before save.
-func (_c *ReconciliationCreate) defaults() error {
+func (_c *ReconciliationCreate) defaults() {
 	if _, ok := _c.mutation.CreatedAt(); !ok {
-		if reconciliation.DefaultCreatedAt == nil {
-			return fmt.Errorf("ent: uninitialized reconciliation.DefaultCreatedAt (forgotten import ent/runtime?)")
-		}
 		v := reconciliation.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
-		if reconciliation.DefaultUpdatedAt == nil {
-			return fmt.Errorf("ent: uninitialized reconciliation.DefaultUpdatedAt (forgotten import ent/runtime?)")
-		}
 		v := reconciliation.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
@@ -322,22 +330,18 @@ func (_c *ReconciliationCreate) defaults() error {
 		v := reconciliation.DefaultStatementBalanceCurrency
 		_c.mutation.SetStatementBalanceCurrency(v)
 	}
-	if _, ok := _c.mutation.SystemBalanceCurrency(); !ok {
-		v := reconciliation.DefaultSystemBalanceCurrency
-		_c.mutation.SetSystemBalanceCurrency(v)
+	if _, ok := _c.mutation.GlBalanceCurrency(); !ok {
+		v := reconciliation.DefaultGlBalanceCurrency
+		_c.mutation.SetGlBalanceCurrency(v)
 	}
 	if _, ok := _c.mutation.DifferenceCurrency(); !ok {
 		v := reconciliation.DefaultDifferenceCurrency
 		_c.mutation.SetDifferenceCurrency(v)
 	}
 	if _, ok := _c.mutation.ID(); !ok {
-		if reconciliation.DefaultID == nil {
-			return fmt.Errorf("ent: uninitialized reconciliation.DefaultID (forgotten import ent/runtime?)")
-		}
 		v := reconciliation.DefaultID()
 		_c.mutation.SetID(v)
 	}
-	return nil
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -378,6 +382,9 @@ func (_c *ReconciliationCreate) check() error {
 	if _, ok := _c.mutation.PeriodEnd(); !ok {
 		return &ValidationError{Name: "period_end", err: errors.New(`ent: missing required field "Reconciliation.period_end"`)}
 	}
+	if _, ok := _c.mutation.StatementDate(); !ok {
+		return &ValidationError{Name: "statement_date", err: errors.New(`ent: missing required field "Reconciliation.statement_date"`)}
+	}
 	if _, ok := _c.mutation.StatementBalanceAmountCents(); !ok {
 		return &ValidationError{Name: "statement_balance_amount_cents", err: errors.New(`ent: missing required field "Reconciliation.statement_balance_amount_cents"`)}
 	}
@@ -389,22 +396,16 @@ func (_c *ReconciliationCreate) check() error {
 			return &ValidationError{Name: "statement_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.statement_balance_currency": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.SystemBalanceAmountCents(); !ok {
-		return &ValidationError{Name: "system_balance_amount_cents", err: errors.New(`ent: missing required field "Reconciliation.system_balance_amount_cents"`)}
+	if _, ok := _c.mutation.GlBalanceAmountCents(); !ok {
+		return &ValidationError{Name: "gl_balance_amount_cents", err: errors.New(`ent: missing required field "Reconciliation.gl_balance_amount_cents"`)}
 	}
-	if _, ok := _c.mutation.SystemBalanceCurrency(); !ok {
-		return &ValidationError{Name: "system_balance_currency", err: errors.New(`ent: missing required field "Reconciliation.system_balance_currency"`)}
+	if _, ok := _c.mutation.GlBalanceCurrency(); !ok {
+		return &ValidationError{Name: "gl_balance_currency", err: errors.New(`ent: missing required field "Reconciliation.gl_balance_currency"`)}
 	}
-	if v, ok := _c.mutation.SystemBalanceCurrency(); ok {
-		if err := reconciliation.SystemBalanceCurrencyValidator(v); err != nil {
-			return &ValidationError{Name: "system_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.system_balance_currency": %w`, err)}
+	if v, ok := _c.mutation.GlBalanceCurrency(); ok {
+		if err := reconciliation.GlBalanceCurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "gl_balance_currency", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.gl_balance_currency": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.DifferenceAmountCents(); !ok {
-		return &ValidationError{Name: "difference_amount_cents", err: errors.New(`ent: missing required field "Reconciliation.difference_amount_cents"`)}
-	}
-	if _, ok := _c.mutation.DifferenceCurrency(); !ok {
-		return &ValidationError{Name: "difference_currency", err: errors.New(`ent: missing required field "Reconciliation.difference_currency"`)}
 	}
 	if v, ok := _c.mutation.DifferenceCurrency(); ok {
 		if err := reconciliation.DifferenceCurrencyValidator(v); err != nil {
@@ -418,12 +419,6 @@ func (_c *ReconciliationCreate) check() error {
 		if err := reconciliation.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Reconciliation.status": %w`, err)}
 		}
-	}
-	if _, ok := _c.mutation.MatchedTransactionCount(); !ok {
-		return &ValidationError{Name: "matched_transaction_count", err: errors.New(`ent: missing required field "Reconciliation.matched_transaction_count"`)}
-	}
-	if _, ok := _c.mutation.UnmatchedTransactionCount(); !ok {
-		return &ValidationError{Name: "unmatched_transaction_count", err: errors.New(`ent: missing required field "Reconciliation.unmatched_transaction_count"`)}
 	}
 	if len(_c.mutation.BankAccountIDs()) == 0 {
 		return &ValidationError{Name: "bank_account", err: errors.New(`ent: missing required edge "Reconciliation.bank_account"`)}
@@ -499,6 +494,10 @@ func (_c *ReconciliationCreate) createSpec() (*Reconciliation, *sqlgraph.CreateS
 		_spec.SetField(reconciliation.FieldPeriodEnd, field.TypeTime, value)
 		_node.PeriodEnd = value
 	}
+	if value, ok := _c.mutation.StatementDate(); ok {
+		_spec.SetField(reconciliation.FieldStatementDate, field.TypeTime, value)
+		_node.StatementDate = value
+	}
 	if value, ok := _c.mutation.StatementBalanceAmountCents(); ok {
 		_spec.SetField(reconciliation.FieldStatementBalanceAmountCents, field.TypeInt64, value)
 		_node.StatementBalanceAmountCents = value
@@ -507,41 +506,37 @@ func (_c *ReconciliationCreate) createSpec() (*Reconciliation, *sqlgraph.CreateS
 		_spec.SetField(reconciliation.FieldStatementBalanceCurrency, field.TypeString, value)
 		_node.StatementBalanceCurrency = value
 	}
-	if value, ok := _c.mutation.SystemBalanceAmountCents(); ok {
-		_spec.SetField(reconciliation.FieldSystemBalanceAmountCents, field.TypeInt64, value)
-		_node.SystemBalanceAmountCents = value
+	if value, ok := _c.mutation.GlBalanceAmountCents(); ok {
+		_spec.SetField(reconciliation.FieldGlBalanceAmountCents, field.TypeInt64, value)
+		_node.GlBalanceAmountCents = value
 	}
-	if value, ok := _c.mutation.SystemBalanceCurrency(); ok {
-		_spec.SetField(reconciliation.FieldSystemBalanceCurrency, field.TypeString, value)
-		_node.SystemBalanceCurrency = value
+	if value, ok := _c.mutation.GlBalanceCurrency(); ok {
+		_spec.SetField(reconciliation.FieldGlBalanceCurrency, field.TypeString, value)
+		_node.GlBalanceCurrency = value
 	}
 	if value, ok := _c.mutation.DifferenceAmountCents(); ok {
 		_spec.SetField(reconciliation.FieldDifferenceAmountCents, field.TypeInt64, value)
-		_node.DifferenceAmountCents = value
+		_node.DifferenceAmountCents = &value
 	}
 	if value, ok := _c.mutation.DifferenceCurrency(); ok {
 		_spec.SetField(reconciliation.FieldDifferenceCurrency, field.TypeString, value)
-		_node.DifferenceCurrency = value
+		_node.DifferenceCurrency = &value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(reconciliation.FieldStatus, field.TypeEnum, value)
 		_node.Status = value
 	}
-	if value, ok := _c.mutation.MatchedTransactionCount(); ok {
-		_spec.SetField(reconciliation.FieldMatchedTransactionCount, field.TypeInt, value)
-		_node.MatchedTransactionCount = value
+	if value, ok := _c.mutation.UnreconciledItems(); ok {
+		_spec.SetField(reconciliation.FieldUnreconciledItems, field.TypeInt, value)
+		_node.UnreconciledItems = &value
 	}
-	if value, ok := _c.mutation.UnmatchedTransactionCount(); ok {
-		_spec.SetField(reconciliation.FieldUnmatchedTransactionCount, field.TypeInt, value)
-		_node.UnmatchedTransactionCount = value
+	if value, ok := _c.mutation.ReconciledBy(); ok {
+		_spec.SetField(reconciliation.FieldReconciledBy, field.TypeString, value)
+		_node.ReconciledBy = &value
 	}
-	if value, ok := _c.mutation.CompletedBy(); ok {
-		_spec.SetField(reconciliation.FieldCompletedBy, field.TypeString, value)
-		_node.CompletedBy = &value
-	}
-	if value, ok := _c.mutation.CompletedAt(); ok {
-		_spec.SetField(reconciliation.FieldCompletedAt, field.TypeTime, value)
-		_node.CompletedAt = &value
+	if value, ok := _c.mutation.ReconciledAt(); ok {
+		_spec.SetField(reconciliation.FieldReconciledAt, field.TypeTime, value)
+		_node.ReconciledAt = &value
 	}
 	if value, ok := _c.mutation.ApprovedBy(); ok {
 		_spec.SetField(reconciliation.FieldApprovedBy, field.TypeString, value)

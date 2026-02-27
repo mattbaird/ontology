@@ -19,8 +19,12 @@ import (
 	"github.com/matthewbaird/ontology/ent/account"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/baseentity"
 	"github.com/matthewbaird/ontology/ent/building"
+	"github.com/matthewbaird/ontology/ent/immutableentity"
 	"github.com/matthewbaird/ontology/ent/journalentry"
+	"github.com/matthewbaird/ontology/ent/jurisdiction"
+	"github.com/matthewbaird/ontology/ent/jurisdictionrule"
 	"github.com/matthewbaird/ontology/ent/lease"
 	"github.com/matthewbaird/ontology/ent/leasespace"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
@@ -29,8 +33,10 @@ import (
 	"github.com/matthewbaird/ontology/ent/personrole"
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/propertyjurisdiction"
 	"github.com/matthewbaird/ontology/ent/reconciliation"
 	"github.com/matthewbaird/ontology/ent/space"
+	"github.com/matthewbaird/ontology/ent/statefulentity"
 )
 
 // Client is the client that holds all ent builders.
@@ -44,10 +50,18 @@ type Client struct {
 	Application *ApplicationClient
 	// BankAccount is the client for interacting with the BankAccount builders.
 	BankAccount *BankAccountClient
+	// BaseEntity is the client for interacting with the BaseEntity builders.
+	BaseEntity *BaseEntityClient
 	// Building is the client for interacting with the Building builders.
 	Building *BuildingClient
+	// ImmutableEntity is the client for interacting with the ImmutableEntity builders.
+	ImmutableEntity *ImmutableEntityClient
 	// JournalEntry is the client for interacting with the JournalEntry builders.
 	JournalEntry *JournalEntryClient
+	// Jurisdiction is the client for interacting with the Jurisdiction builders.
+	Jurisdiction *JurisdictionClient
+	// JurisdictionRule is the client for interacting with the JurisdictionRule builders.
+	JurisdictionRule *JurisdictionRuleClient
 	// Lease is the client for interacting with the Lease builders.
 	Lease *LeaseClient
 	// LeaseSpace is the client for interacting with the LeaseSpace builders.
@@ -64,10 +78,14 @@ type Client struct {
 	Portfolio *PortfolioClient
 	// Property is the client for interacting with the Property builders.
 	Property *PropertyClient
+	// PropertyJurisdiction is the client for interacting with the PropertyJurisdiction builders.
+	PropertyJurisdiction *PropertyJurisdictionClient
 	// Reconciliation is the client for interacting with the Reconciliation builders.
 	Reconciliation *ReconciliationClient
 	// Space is the client for interacting with the Space builders.
 	Space *SpaceClient
+	// StatefulEntity is the client for interacting with the StatefulEntity builders.
+	StatefulEntity *StatefulEntityClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -82,8 +100,12 @@ func (c *Client) init() {
 	c.Account = NewAccountClient(c.config)
 	c.Application = NewApplicationClient(c.config)
 	c.BankAccount = NewBankAccountClient(c.config)
+	c.BaseEntity = NewBaseEntityClient(c.config)
 	c.Building = NewBuildingClient(c.config)
+	c.ImmutableEntity = NewImmutableEntityClient(c.config)
 	c.JournalEntry = NewJournalEntryClient(c.config)
+	c.Jurisdiction = NewJurisdictionClient(c.config)
+	c.JurisdictionRule = NewJurisdictionRuleClient(c.config)
 	c.Lease = NewLeaseClient(c.config)
 	c.LeaseSpace = NewLeaseSpaceClient(c.config)
 	c.LedgerEntry = NewLedgerEntryClient(c.config)
@@ -92,8 +114,10 @@ func (c *Client) init() {
 	c.PersonRole = NewPersonRoleClient(c.config)
 	c.Portfolio = NewPortfolioClient(c.config)
 	c.Property = NewPropertyClient(c.config)
+	c.PropertyJurisdiction = NewPropertyJurisdictionClient(c.config)
 	c.Reconciliation = NewReconciliationClient(c.config)
 	c.Space = NewSpaceClient(c.config)
+	c.StatefulEntity = NewStatefulEntityClient(c.config)
 }
 
 type (
@@ -184,23 +208,29 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:            ctx,
-		config:         cfg,
-		Account:        NewAccountClient(cfg),
-		Application:    NewApplicationClient(cfg),
-		BankAccount:    NewBankAccountClient(cfg),
-		Building:       NewBuildingClient(cfg),
-		JournalEntry:   NewJournalEntryClient(cfg),
-		Lease:          NewLeaseClient(cfg),
-		LeaseSpace:     NewLeaseSpaceClient(cfg),
-		LedgerEntry:    NewLedgerEntryClient(cfg),
-		Organization:   NewOrganizationClient(cfg),
-		Person:         NewPersonClient(cfg),
-		PersonRole:     NewPersonRoleClient(cfg),
-		Portfolio:      NewPortfolioClient(cfg),
-		Property:       NewPropertyClient(cfg),
-		Reconciliation: NewReconciliationClient(cfg),
-		Space:          NewSpaceClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		Account:              NewAccountClient(cfg),
+		Application:          NewApplicationClient(cfg),
+		BankAccount:          NewBankAccountClient(cfg),
+		BaseEntity:           NewBaseEntityClient(cfg),
+		Building:             NewBuildingClient(cfg),
+		ImmutableEntity:      NewImmutableEntityClient(cfg),
+		JournalEntry:         NewJournalEntryClient(cfg),
+		Jurisdiction:         NewJurisdictionClient(cfg),
+		JurisdictionRule:     NewJurisdictionRuleClient(cfg),
+		Lease:                NewLeaseClient(cfg),
+		LeaseSpace:           NewLeaseSpaceClient(cfg),
+		LedgerEntry:          NewLedgerEntryClient(cfg),
+		Organization:         NewOrganizationClient(cfg),
+		Person:               NewPersonClient(cfg),
+		PersonRole:           NewPersonRoleClient(cfg),
+		Portfolio:            NewPortfolioClient(cfg),
+		Property:             NewPropertyClient(cfg),
+		PropertyJurisdiction: NewPropertyJurisdictionClient(cfg),
+		Reconciliation:       NewReconciliationClient(cfg),
+		Space:                NewSpaceClient(cfg),
+		StatefulEntity:       NewStatefulEntityClient(cfg),
 	}, nil
 }
 
@@ -218,23 +248,29 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:            ctx,
-		config:         cfg,
-		Account:        NewAccountClient(cfg),
-		Application:    NewApplicationClient(cfg),
-		BankAccount:    NewBankAccountClient(cfg),
-		Building:       NewBuildingClient(cfg),
-		JournalEntry:   NewJournalEntryClient(cfg),
-		Lease:          NewLeaseClient(cfg),
-		LeaseSpace:     NewLeaseSpaceClient(cfg),
-		LedgerEntry:    NewLedgerEntryClient(cfg),
-		Organization:   NewOrganizationClient(cfg),
-		Person:         NewPersonClient(cfg),
-		PersonRole:     NewPersonRoleClient(cfg),
-		Portfolio:      NewPortfolioClient(cfg),
-		Property:       NewPropertyClient(cfg),
-		Reconciliation: NewReconciliationClient(cfg),
-		Space:          NewSpaceClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		Account:              NewAccountClient(cfg),
+		Application:          NewApplicationClient(cfg),
+		BankAccount:          NewBankAccountClient(cfg),
+		BaseEntity:           NewBaseEntityClient(cfg),
+		Building:             NewBuildingClient(cfg),
+		ImmutableEntity:      NewImmutableEntityClient(cfg),
+		JournalEntry:         NewJournalEntryClient(cfg),
+		Jurisdiction:         NewJurisdictionClient(cfg),
+		JurisdictionRule:     NewJurisdictionRuleClient(cfg),
+		Lease:                NewLeaseClient(cfg),
+		LeaseSpace:           NewLeaseSpaceClient(cfg),
+		LedgerEntry:          NewLedgerEntryClient(cfg),
+		Organization:         NewOrganizationClient(cfg),
+		Person:               NewPersonClient(cfg),
+		PersonRole:           NewPersonRoleClient(cfg),
+		Portfolio:            NewPortfolioClient(cfg),
+		Property:             NewPropertyClient(cfg),
+		PropertyJurisdiction: NewPropertyJurisdictionClient(cfg),
+		Reconciliation:       NewReconciliationClient(cfg),
+		Space:                NewSpaceClient(cfg),
+		StatefulEntity:       NewStatefulEntityClient(cfg),
 	}, nil
 }
 
@@ -264,9 +300,11 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Account, c.Application, c.BankAccount, c.Building, c.JournalEntry, c.Lease,
+		c.Account, c.Application, c.BankAccount, c.BaseEntity, c.Building,
+		c.ImmutableEntity, c.JournalEntry, c.Jurisdiction, c.JurisdictionRule, c.Lease,
 		c.LeaseSpace, c.LedgerEntry, c.Organization, c.Person, c.PersonRole,
-		c.Portfolio, c.Property, c.Reconciliation, c.Space,
+		c.Portfolio, c.Property, c.PropertyJurisdiction, c.Reconciliation, c.Space,
+		c.StatefulEntity,
 	} {
 		n.Use(hooks...)
 	}
@@ -276,9 +314,11 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Account, c.Application, c.BankAccount, c.Building, c.JournalEntry, c.Lease,
+		c.Account, c.Application, c.BankAccount, c.BaseEntity, c.Building,
+		c.ImmutableEntity, c.JournalEntry, c.Jurisdiction, c.JurisdictionRule, c.Lease,
 		c.LeaseSpace, c.LedgerEntry, c.Organization, c.Person, c.PersonRole,
-		c.Portfolio, c.Property, c.Reconciliation, c.Space,
+		c.Portfolio, c.Property, c.PropertyJurisdiction, c.Reconciliation, c.Space,
+		c.StatefulEntity,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -293,10 +333,18 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Application.mutate(ctx, m)
 	case *BankAccountMutation:
 		return c.BankAccount.mutate(ctx, m)
+	case *BaseEntityMutation:
+		return c.BaseEntity.mutate(ctx, m)
 	case *BuildingMutation:
 		return c.Building.mutate(ctx, m)
+	case *ImmutableEntityMutation:
+		return c.ImmutableEntity.mutate(ctx, m)
 	case *JournalEntryMutation:
 		return c.JournalEntry.mutate(ctx, m)
+	case *JurisdictionMutation:
+		return c.Jurisdiction.mutate(ctx, m)
+	case *JurisdictionRuleMutation:
+		return c.JurisdictionRule.mutate(ctx, m)
 	case *LeaseMutation:
 		return c.Lease.mutate(ctx, m)
 	case *LeaseSpaceMutation:
@@ -313,10 +361,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Portfolio.mutate(ctx, m)
 	case *PropertyMutation:
 		return c.Property.mutate(ctx, m)
+	case *PropertyJurisdictionMutation:
+		return c.PropertyJurisdiction.mutate(ctx, m)
 	case *ReconciliationMutation:
 		return c.Reconciliation.mutate(ctx, m)
 	case *SpaceMutation:
 		return c.Space.mutate(ctx, m)
+	case *StatefulEntityMutation:
+		return c.StatefulEntity.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -892,8 +944,7 @@ func (c *BankAccountClient) QueryReconciliations(_m *BankAccount) *Reconciliatio
 
 // Hooks returns the client hooks.
 func (c *BankAccountClient) Hooks() []Hook {
-	hooks := c.hooks.BankAccount
-	return append(hooks[:len(hooks):len(hooks)], bankaccount.Hooks[:]...)
+	return c.hooks.BankAccount
 }
 
 // Interceptors returns the client interceptors.
@@ -913,6 +964,139 @@ func (c *BankAccountClient) mutate(ctx context.Context, m *BankAccountMutation) 
 		return (&BankAccountDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown BankAccount mutation op: %q", m.Op())
+	}
+}
+
+// BaseEntityClient is a client for the BaseEntity schema.
+type BaseEntityClient struct {
+	config
+}
+
+// NewBaseEntityClient returns a client for the BaseEntity from the given config.
+func NewBaseEntityClient(c config) *BaseEntityClient {
+	return &BaseEntityClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `baseentity.Hooks(f(g(h())))`.
+func (c *BaseEntityClient) Use(hooks ...Hook) {
+	c.hooks.BaseEntity = append(c.hooks.BaseEntity, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `baseentity.Intercept(f(g(h())))`.
+func (c *BaseEntityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.BaseEntity = append(c.inters.BaseEntity, interceptors...)
+}
+
+// Create returns a builder for creating a BaseEntity entity.
+func (c *BaseEntityClient) Create() *BaseEntityCreate {
+	mutation := newBaseEntityMutation(c.config, OpCreate)
+	return &BaseEntityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of BaseEntity entities.
+func (c *BaseEntityClient) CreateBulk(builders ...*BaseEntityCreate) *BaseEntityCreateBulk {
+	return &BaseEntityCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *BaseEntityClient) MapCreateBulk(slice any, setFunc func(*BaseEntityCreate, int)) *BaseEntityCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &BaseEntityCreateBulk{err: fmt.Errorf("calling to BaseEntityClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*BaseEntityCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &BaseEntityCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for BaseEntity.
+func (c *BaseEntityClient) Update() *BaseEntityUpdate {
+	mutation := newBaseEntityMutation(c.config, OpUpdate)
+	return &BaseEntityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *BaseEntityClient) UpdateOne(_m *BaseEntity) *BaseEntityUpdateOne {
+	mutation := newBaseEntityMutation(c.config, OpUpdateOne, withBaseEntity(_m))
+	return &BaseEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *BaseEntityClient) UpdateOneID(id uuid.UUID) *BaseEntityUpdateOne {
+	mutation := newBaseEntityMutation(c.config, OpUpdateOne, withBaseEntityID(id))
+	return &BaseEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for BaseEntity.
+func (c *BaseEntityClient) Delete() *BaseEntityDelete {
+	mutation := newBaseEntityMutation(c.config, OpDelete)
+	return &BaseEntityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *BaseEntityClient) DeleteOne(_m *BaseEntity) *BaseEntityDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *BaseEntityClient) DeleteOneID(id uuid.UUID) *BaseEntityDeleteOne {
+	builder := c.Delete().Where(baseentity.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &BaseEntityDeleteOne{builder}
+}
+
+// Query returns a query builder for BaseEntity.
+func (c *BaseEntityClient) Query() *BaseEntityQuery {
+	return &BaseEntityQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeBaseEntity},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a BaseEntity entity by its id.
+func (c *BaseEntityClient) Get(ctx context.Context, id uuid.UUID) (*BaseEntity, error) {
+	return c.Query().Where(baseentity.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *BaseEntityClient) GetX(ctx context.Context, id uuid.UUID) *BaseEntity {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *BaseEntityClient) Hooks() []Hook {
+	return c.hooks.BaseEntity
+}
+
+// Interceptors returns the client interceptors.
+func (c *BaseEntityClient) Interceptors() []Interceptor {
+	return c.inters.BaseEntity
+}
+
+func (c *BaseEntityClient) mutate(ctx context.Context, m *BaseEntityMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&BaseEntityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&BaseEntityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&BaseEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&BaseEntityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown BaseEntity mutation op: %q", m.Op())
 	}
 }
 
@@ -1081,6 +1265,139 @@ func (c *BuildingClient) mutate(ctx context.Context, m *BuildingMutation) (Value
 	}
 }
 
+// ImmutableEntityClient is a client for the ImmutableEntity schema.
+type ImmutableEntityClient struct {
+	config
+}
+
+// NewImmutableEntityClient returns a client for the ImmutableEntity from the given config.
+func NewImmutableEntityClient(c config) *ImmutableEntityClient {
+	return &ImmutableEntityClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `immutableentity.Hooks(f(g(h())))`.
+func (c *ImmutableEntityClient) Use(hooks ...Hook) {
+	c.hooks.ImmutableEntity = append(c.hooks.ImmutableEntity, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `immutableentity.Intercept(f(g(h())))`.
+func (c *ImmutableEntityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ImmutableEntity = append(c.inters.ImmutableEntity, interceptors...)
+}
+
+// Create returns a builder for creating a ImmutableEntity entity.
+func (c *ImmutableEntityClient) Create() *ImmutableEntityCreate {
+	mutation := newImmutableEntityMutation(c.config, OpCreate)
+	return &ImmutableEntityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ImmutableEntity entities.
+func (c *ImmutableEntityClient) CreateBulk(builders ...*ImmutableEntityCreate) *ImmutableEntityCreateBulk {
+	return &ImmutableEntityCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ImmutableEntityClient) MapCreateBulk(slice any, setFunc func(*ImmutableEntityCreate, int)) *ImmutableEntityCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ImmutableEntityCreateBulk{err: fmt.Errorf("calling to ImmutableEntityClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ImmutableEntityCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ImmutableEntityCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ImmutableEntity.
+func (c *ImmutableEntityClient) Update() *ImmutableEntityUpdate {
+	mutation := newImmutableEntityMutation(c.config, OpUpdate)
+	return &ImmutableEntityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ImmutableEntityClient) UpdateOne(_m *ImmutableEntity) *ImmutableEntityUpdateOne {
+	mutation := newImmutableEntityMutation(c.config, OpUpdateOne, withImmutableEntity(_m))
+	return &ImmutableEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ImmutableEntityClient) UpdateOneID(id uuid.UUID) *ImmutableEntityUpdateOne {
+	mutation := newImmutableEntityMutation(c.config, OpUpdateOne, withImmutableEntityID(id))
+	return &ImmutableEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ImmutableEntity.
+func (c *ImmutableEntityClient) Delete() *ImmutableEntityDelete {
+	mutation := newImmutableEntityMutation(c.config, OpDelete)
+	return &ImmutableEntityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ImmutableEntityClient) DeleteOne(_m *ImmutableEntity) *ImmutableEntityDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ImmutableEntityClient) DeleteOneID(id uuid.UUID) *ImmutableEntityDeleteOne {
+	builder := c.Delete().Where(immutableentity.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ImmutableEntityDeleteOne{builder}
+}
+
+// Query returns a query builder for ImmutableEntity.
+func (c *ImmutableEntityClient) Query() *ImmutableEntityQuery {
+	return &ImmutableEntityQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeImmutableEntity},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ImmutableEntity entity by its id.
+func (c *ImmutableEntityClient) Get(ctx context.Context, id uuid.UUID) (*ImmutableEntity, error) {
+	return c.Query().Where(immutableentity.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ImmutableEntityClient) GetX(ctx context.Context, id uuid.UUID) *ImmutableEntity {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ImmutableEntityClient) Hooks() []Hook {
+	return c.hooks.ImmutableEntity
+}
+
+// Interceptors returns the client interceptors.
+func (c *ImmutableEntityClient) Interceptors() []Interceptor {
+	return c.inters.ImmutableEntity
+}
+
+func (c *ImmutableEntityClient) mutate(ctx context.Context, m *ImmutableEntityMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ImmutableEntityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ImmutableEntityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ImmutableEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ImmutableEntityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ImmutableEntity mutation op: %q", m.Op())
+	}
+}
+
 // JournalEntryClient is a client for the JournalEntry schema.
 type JournalEntryClient struct {
 	config
@@ -1228,6 +1545,384 @@ func (c *JournalEntryClient) mutate(ctx context.Context, m *JournalEntryMutation
 		return (&JournalEntryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown JournalEntry mutation op: %q", m.Op())
+	}
+}
+
+// JurisdictionClient is a client for the Jurisdiction schema.
+type JurisdictionClient struct {
+	config
+}
+
+// NewJurisdictionClient returns a client for the Jurisdiction from the given config.
+func NewJurisdictionClient(c config) *JurisdictionClient {
+	return &JurisdictionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `jurisdiction.Hooks(f(g(h())))`.
+func (c *JurisdictionClient) Use(hooks ...Hook) {
+	c.hooks.Jurisdiction = append(c.hooks.Jurisdiction, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `jurisdiction.Intercept(f(g(h())))`.
+func (c *JurisdictionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Jurisdiction = append(c.inters.Jurisdiction, interceptors...)
+}
+
+// Create returns a builder for creating a Jurisdiction entity.
+func (c *JurisdictionClient) Create() *JurisdictionCreate {
+	mutation := newJurisdictionMutation(c.config, OpCreate)
+	return &JurisdictionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Jurisdiction entities.
+func (c *JurisdictionClient) CreateBulk(builders ...*JurisdictionCreate) *JurisdictionCreateBulk {
+	return &JurisdictionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *JurisdictionClient) MapCreateBulk(slice any, setFunc func(*JurisdictionCreate, int)) *JurisdictionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &JurisdictionCreateBulk{err: fmt.Errorf("calling to JurisdictionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*JurisdictionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &JurisdictionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Jurisdiction.
+func (c *JurisdictionClient) Update() *JurisdictionUpdate {
+	mutation := newJurisdictionMutation(c.config, OpUpdate)
+	return &JurisdictionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *JurisdictionClient) UpdateOne(_m *Jurisdiction) *JurisdictionUpdateOne {
+	mutation := newJurisdictionMutation(c.config, OpUpdateOne, withJurisdiction(_m))
+	return &JurisdictionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *JurisdictionClient) UpdateOneID(id uuid.UUID) *JurisdictionUpdateOne {
+	mutation := newJurisdictionMutation(c.config, OpUpdateOne, withJurisdictionID(id))
+	return &JurisdictionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Jurisdiction.
+func (c *JurisdictionClient) Delete() *JurisdictionDelete {
+	mutation := newJurisdictionMutation(c.config, OpDelete)
+	return &JurisdictionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *JurisdictionClient) DeleteOne(_m *Jurisdiction) *JurisdictionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *JurisdictionClient) DeleteOneID(id uuid.UUID) *JurisdictionDeleteOne {
+	builder := c.Delete().Where(jurisdiction.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &JurisdictionDeleteOne{builder}
+}
+
+// Query returns a query builder for Jurisdiction.
+func (c *JurisdictionClient) Query() *JurisdictionQuery {
+	return &JurisdictionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeJurisdiction},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Jurisdiction entity by its id.
+func (c *JurisdictionClient) Get(ctx context.Context, id uuid.UUID) (*Jurisdiction, error) {
+	return c.Query().Where(jurisdiction.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *JurisdictionClient) GetX(ctx context.Context, id uuid.UUID) *Jurisdiction {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryChildren queries the children edge of a Jurisdiction.
+func (c *JurisdictionClient) QueryChildren(_m *Jurisdiction) *JurisdictionQuery {
+	query := (&JurisdictionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(jurisdiction.Table, jurisdiction.FieldID, id),
+			sqlgraph.To(jurisdiction.Table, jurisdiction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, jurisdiction.ChildrenTable, jurisdiction.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParentJurisdiction queries the parent_jurisdiction edge of a Jurisdiction.
+func (c *JurisdictionClient) QueryParentJurisdiction(_m *Jurisdiction) *JurisdictionQuery {
+	query := (&JurisdictionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(jurisdiction.Table, jurisdiction.FieldID, id),
+			sqlgraph.To(jurisdiction.Table, jurisdiction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, jurisdiction.ParentJurisdictionTable, jurisdiction.ParentJurisdictionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRules queries the rules edge of a Jurisdiction.
+func (c *JurisdictionClient) QueryRules(_m *Jurisdiction) *JurisdictionRuleQuery {
+	query := (&JurisdictionRuleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(jurisdiction.Table, jurisdiction.FieldID, id),
+			sqlgraph.To(jurisdictionrule.Table, jurisdictionrule.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, jurisdiction.RulesTable, jurisdiction.RulesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPropertyJurisdictions queries the property_jurisdictions edge of a Jurisdiction.
+func (c *JurisdictionClient) QueryPropertyJurisdictions(_m *Jurisdiction) *PropertyJurisdictionQuery {
+	query := (&PropertyJurisdictionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(jurisdiction.Table, jurisdiction.FieldID, id),
+			sqlgraph.To(propertyjurisdiction.Table, propertyjurisdiction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, jurisdiction.PropertyJurisdictionsTable, jurisdiction.PropertyJurisdictionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *JurisdictionClient) Hooks() []Hook {
+	return c.hooks.Jurisdiction
+}
+
+// Interceptors returns the client interceptors.
+func (c *JurisdictionClient) Interceptors() []Interceptor {
+	return c.inters.Jurisdiction
+}
+
+func (c *JurisdictionClient) mutate(ctx context.Context, m *JurisdictionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&JurisdictionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&JurisdictionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&JurisdictionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&JurisdictionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Jurisdiction mutation op: %q", m.Op())
+	}
+}
+
+// JurisdictionRuleClient is a client for the JurisdictionRule schema.
+type JurisdictionRuleClient struct {
+	config
+}
+
+// NewJurisdictionRuleClient returns a client for the JurisdictionRule from the given config.
+func NewJurisdictionRuleClient(c config) *JurisdictionRuleClient {
+	return &JurisdictionRuleClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `jurisdictionrule.Hooks(f(g(h())))`.
+func (c *JurisdictionRuleClient) Use(hooks ...Hook) {
+	c.hooks.JurisdictionRule = append(c.hooks.JurisdictionRule, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `jurisdictionrule.Intercept(f(g(h())))`.
+func (c *JurisdictionRuleClient) Intercept(interceptors ...Interceptor) {
+	c.inters.JurisdictionRule = append(c.inters.JurisdictionRule, interceptors...)
+}
+
+// Create returns a builder for creating a JurisdictionRule entity.
+func (c *JurisdictionRuleClient) Create() *JurisdictionRuleCreate {
+	mutation := newJurisdictionRuleMutation(c.config, OpCreate)
+	return &JurisdictionRuleCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of JurisdictionRule entities.
+func (c *JurisdictionRuleClient) CreateBulk(builders ...*JurisdictionRuleCreate) *JurisdictionRuleCreateBulk {
+	return &JurisdictionRuleCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *JurisdictionRuleClient) MapCreateBulk(slice any, setFunc func(*JurisdictionRuleCreate, int)) *JurisdictionRuleCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &JurisdictionRuleCreateBulk{err: fmt.Errorf("calling to JurisdictionRuleClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*JurisdictionRuleCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &JurisdictionRuleCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for JurisdictionRule.
+func (c *JurisdictionRuleClient) Update() *JurisdictionRuleUpdate {
+	mutation := newJurisdictionRuleMutation(c.config, OpUpdate)
+	return &JurisdictionRuleUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *JurisdictionRuleClient) UpdateOne(_m *JurisdictionRule) *JurisdictionRuleUpdateOne {
+	mutation := newJurisdictionRuleMutation(c.config, OpUpdateOne, withJurisdictionRule(_m))
+	return &JurisdictionRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *JurisdictionRuleClient) UpdateOneID(id uuid.UUID) *JurisdictionRuleUpdateOne {
+	mutation := newJurisdictionRuleMutation(c.config, OpUpdateOne, withJurisdictionRuleID(id))
+	return &JurisdictionRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for JurisdictionRule.
+func (c *JurisdictionRuleClient) Delete() *JurisdictionRuleDelete {
+	mutation := newJurisdictionRuleMutation(c.config, OpDelete)
+	return &JurisdictionRuleDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *JurisdictionRuleClient) DeleteOne(_m *JurisdictionRule) *JurisdictionRuleDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *JurisdictionRuleClient) DeleteOneID(id uuid.UUID) *JurisdictionRuleDeleteOne {
+	builder := c.Delete().Where(jurisdictionrule.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &JurisdictionRuleDeleteOne{builder}
+}
+
+// Query returns a query builder for JurisdictionRule.
+func (c *JurisdictionRuleClient) Query() *JurisdictionRuleQuery {
+	return &JurisdictionRuleQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeJurisdictionRule},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a JurisdictionRule entity by its id.
+func (c *JurisdictionRuleClient) Get(ctx context.Context, id uuid.UUID) (*JurisdictionRule, error) {
+	return c.Query().Where(jurisdictionrule.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *JurisdictionRuleClient) GetX(ctx context.Context, id uuid.UUID) *JurisdictionRule {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryJurisdiction queries the jurisdiction edge of a JurisdictionRule.
+func (c *JurisdictionRuleClient) QueryJurisdiction(_m *JurisdictionRule) *JurisdictionQuery {
+	query := (&JurisdictionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(jurisdictionrule.Table, jurisdictionrule.FieldID, id),
+			sqlgraph.To(jurisdiction.Table, jurisdiction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, jurisdictionrule.JurisdictionTable, jurisdictionrule.JurisdictionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySupersededBy queries the superseded_by edge of a JurisdictionRule.
+func (c *JurisdictionRuleClient) QuerySupersededBy(_m *JurisdictionRule) *JurisdictionRuleQuery {
+	query := (&JurisdictionRuleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(jurisdictionrule.Table, jurisdictionrule.FieldID, id),
+			sqlgraph.To(jurisdictionrule.Table, jurisdictionrule.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, jurisdictionrule.SupersededByTable, jurisdictionrule.SupersededByColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySupersedes queries the supersedes edge of a JurisdictionRule.
+func (c *JurisdictionRuleClient) QuerySupersedes(_m *JurisdictionRule) *JurisdictionRuleQuery {
+	query := (&JurisdictionRuleClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(jurisdictionrule.Table, jurisdictionrule.FieldID, id),
+			sqlgraph.To(jurisdictionrule.Table, jurisdictionrule.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, jurisdictionrule.SupersedesTable, jurisdictionrule.SupersedesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *JurisdictionRuleClient) Hooks() []Hook {
+	return c.hooks.JurisdictionRule
+}
+
+// Interceptors returns the client interceptors.
+func (c *JurisdictionRuleClient) Interceptors() []Interceptor {
+	return c.inters.JurisdictionRule
+}
+
+func (c *JurisdictionRuleClient) mutate(ctx context.Context, m *JurisdictionRuleMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&JurisdictionRuleCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&JurisdictionRuleUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&JurisdictionRuleUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&JurisdictionRuleDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown JurisdictionRule mutation op: %q", m.Op())
 	}
 }
 
@@ -2605,8 +3300,7 @@ func (c *PortfolioClient) QueryTrustAccount(_m *Portfolio) *BankAccountQuery {
 
 // Hooks returns the client hooks.
 func (c *PortfolioClient) Hooks() []Hook {
-	hooks := c.hooks.Portfolio
-	return append(hooks[:len(hooks):len(hooks)], portfolio.Hooks[:]...)
+	return c.hooks.Portfolio
 }
 
 // Interceptors returns the client interceptors.
@@ -2833,6 +3527,22 @@ func (c *PropertyClient) QueryLedgerEntries(_m *Property) *LedgerEntryQuery {
 	return query
 }
 
+// QueryPropertyJurisdictions queries the property_jurisdictions edge of a Property.
+func (c *PropertyClient) QueryPropertyJurisdictions(_m *Property) *PropertyJurisdictionQuery {
+	query := (&PropertyJurisdictionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(property.Table, property.FieldID, id),
+			sqlgraph.To(propertyjurisdiction.Table, propertyjurisdiction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, property.PropertyJurisdictionsTable, property.PropertyJurisdictionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *PropertyClient) Hooks() []Hook {
 	hooks := c.hooks.Property
@@ -2856,6 +3566,171 @@ func (c *PropertyClient) mutate(ctx context.Context, m *PropertyMutation) (Value
 		return (&PropertyDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Property mutation op: %q", m.Op())
+	}
+}
+
+// PropertyJurisdictionClient is a client for the PropertyJurisdiction schema.
+type PropertyJurisdictionClient struct {
+	config
+}
+
+// NewPropertyJurisdictionClient returns a client for the PropertyJurisdiction from the given config.
+func NewPropertyJurisdictionClient(c config) *PropertyJurisdictionClient {
+	return &PropertyJurisdictionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `propertyjurisdiction.Hooks(f(g(h())))`.
+func (c *PropertyJurisdictionClient) Use(hooks ...Hook) {
+	c.hooks.PropertyJurisdiction = append(c.hooks.PropertyJurisdiction, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `propertyjurisdiction.Intercept(f(g(h())))`.
+func (c *PropertyJurisdictionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.PropertyJurisdiction = append(c.inters.PropertyJurisdiction, interceptors...)
+}
+
+// Create returns a builder for creating a PropertyJurisdiction entity.
+func (c *PropertyJurisdictionClient) Create() *PropertyJurisdictionCreate {
+	mutation := newPropertyJurisdictionMutation(c.config, OpCreate)
+	return &PropertyJurisdictionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of PropertyJurisdiction entities.
+func (c *PropertyJurisdictionClient) CreateBulk(builders ...*PropertyJurisdictionCreate) *PropertyJurisdictionCreateBulk {
+	return &PropertyJurisdictionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *PropertyJurisdictionClient) MapCreateBulk(slice any, setFunc func(*PropertyJurisdictionCreate, int)) *PropertyJurisdictionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &PropertyJurisdictionCreateBulk{err: fmt.Errorf("calling to PropertyJurisdictionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*PropertyJurisdictionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &PropertyJurisdictionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for PropertyJurisdiction.
+func (c *PropertyJurisdictionClient) Update() *PropertyJurisdictionUpdate {
+	mutation := newPropertyJurisdictionMutation(c.config, OpUpdate)
+	return &PropertyJurisdictionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *PropertyJurisdictionClient) UpdateOne(_m *PropertyJurisdiction) *PropertyJurisdictionUpdateOne {
+	mutation := newPropertyJurisdictionMutation(c.config, OpUpdateOne, withPropertyJurisdiction(_m))
+	return &PropertyJurisdictionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *PropertyJurisdictionClient) UpdateOneID(id uuid.UUID) *PropertyJurisdictionUpdateOne {
+	mutation := newPropertyJurisdictionMutation(c.config, OpUpdateOne, withPropertyJurisdictionID(id))
+	return &PropertyJurisdictionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for PropertyJurisdiction.
+func (c *PropertyJurisdictionClient) Delete() *PropertyJurisdictionDelete {
+	mutation := newPropertyJurisdictionMutation(c.config, OpDelete)
+	return &PropertyJurisdictionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *PropertyJurisdictionClient) DeleteOne(_m *PropertyJurisdiction) *PropertyJurisdictionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *PropertyJurisdictionClient) DeleteOneID(id uuid.UUID) *PropertyJurisdictionDeleteOne {
+	builder := c.Delete().Where(propertyjurisdiction.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &PropertyJurisdictionDeleteOne{builder}
+}
+
+// Query returns a query builder for PropertyJurisdiction.
+func (c *PropertyJurisdictionClient) Query() *PropertyJurisdictionQuery {
+	return &PropertyJurisdictionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypePropertyJurisdiction},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a PropertyJurisdiction entity by its id.
+func (c *PropertyJurisdictionClient) Get(ctx context.Context, id uuid.UUID) (*PropertyJurisdiction, error) {
+	return c.Query().Where(propertyjurisdiction.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *PropertyJurisdictionClient) GetX(ctx context.Context, id uuid.UUID) *PropertyJurisdiction {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryProperty queries the property edge of a PropertyJurisdiction.
+func (c *PropertyJurisdictionClient) QueryProperty(_m *PropertyJurisdiction) *PropertyQuery {
+	query := (&PropertyClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(propertyjurisdiction.Table, propertyjurisdiction.FieldID, id),
+			sqlgraph.To(property.Table, property.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, propertyjurisdiction.PropertyTable, propertyjurisdiction.PropertyColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryJurisdiction queries the jurisdiction edge of a PropertyJurisdiction.
+func (c *PropertyJurisdictionClient) QueryJurisdiction(_m *PropertyJurisdiction) *JurisdictionQuery {
+	query := (&JurisdictionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(propertyjurisdiction.Table, propertyjurisdiction.FieldID, id),
+			sqlgraph.To(jurisdiction.Table, jurisdiction.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, propertyjurisdiction.JurisdictionTable, propertyjurisdiction.JurisdictionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *PropertyJurisdictionClient) Hooks() []Hook {
+	return c.hooks.PropertyJurisdiction
+}
+
+// Interceptors returns the client interceptors.
+func (c *PropertyJurisdictionClient) Interceptors() []Interceptor {
+	return c.inters.PropertyJurisdiction
+}
+
+func (c *PropertyJurisdictionClient) mutate(ctx context.Context, m *PropertyJurisdictionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&PropertyJurisdictionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&PropertyJurisdictionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&PropertyJurisdictionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&PropertyJurisdictionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown PropertyJurisdiction mutation op: %q", m.Op())
 	}
 }
 
@@ -2985,8 +3860,7 @@ func (c *ReconciliationClient) QueryBankAccount(_m *Reconciliation) *BankAccount
 
 // Hooks returns the client hooks.
 func (c *ReconciliationClient) Hooks() []Hook {
-	hooks := c.hooks.Reconciliation
-	return append(hooks[:len(hooks):len(hooks)], reconciliation.Hooks[:]...)
+	return c.hooks.Reconciliation
 }
 
 // Interceptors returns the client interceptors.
@@ -3255,16 +4129,151 @@ func (c *SpaceClient) mutate(ctx context.Context, m *SpaceMutation) (Value, erro
 	}
 }
 
+// StatefulEntityClient is a client for the StatefulEntity schema.
+type StatefulEntityClient struct {
+	config
+}
+
+// NewStatefulEntityClient returns a client for the StatefulEntity from the given config.
+func NewStatefulEntityClient(c config) *StatefulEntityClient {
+	return &StatefulEntityClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `statefulentity.Hooks(f(g(h())))`.
+func (c *StatefulEntityClient) Use(hooks ...Hook) {
+	c.hooks.StatefulEntity = append(c.hooks.StatefulEntity, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `statefulentity.Intercept(f(g(h())))`.
+func (c *StatefulEntityClient) Intercept(interceptors ...Interceptor) {
+	c.inters.StatefulEntity = append(c.inters.StatefulEntity, interceptors...)
+}
+
+// Create returns a builder for creating a StatefulEntity entity.
+func (c *StatefulEntityClient) Create() *StatefulEntityCreate {
+	mutation := newStatefulEntityMutation(c.config, OpCreate)
+	return &StatefulEntityCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of StatefulEntity entities.
+func (c *StatefulEntityClient) CreateBulk(builders ...*StatefulEntityCreate) *StatefulEntityCreateBulk {
+	return &StatefulEntityCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *StatefulEntityClient) MapCreateBulk(slice any, setFunc func(*StatefulEntityCreate, int)) *StatefulEntityCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &StatefulEntityCreateBulk{err: fmt.Errorf("calling to StatefulEntityClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*StatefulEntityCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &StatefulEntityCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for StatefulEntity.
+func (c *StatefulEntityClient) Update() *StatefulEntityUpdate {
+	mutation := newStatefulEntityMutation(c.config, OpUpdate)
+	return &StatefulEntityUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *StatefulEntityClient) UpdateOne(_m *StatefulEntity) *StatefulEntityUpdateOne {
+	mutation := newStatefulEntityMutation(c.config, OpUpdateOne, withStatefulEntity(_m))
+	return &StatefulEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *StatefulEntityClient) UpdateOneID(id uuid.UUID) *StatefulEntityUpdateOne {
+	mutation := newStatefulEntityMutation(c.config, OpUpdateOne, withStatefulEntityID(id))
+	return &StatefulEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for StatefulEntity.
+func (c *StatefulEntityClient) Delete() *StatefulEntityDelete {
+	mutation := newStatefulEntityMutation(c.config, OpDelete)
+	return &StatefulEntityDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *StatefulEntityClient) DeleteOne(_m *StatefulEntity) *StatefulEntityDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *StatefulEntityClient) DeleteOneID(id uuid.UUID) *StatefulEntityDeleteOne {
+	builder := c.Delete().Where(statefulentity.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &StatefulEntityDeleteOne{builder}
+}
+
+// Query returns a query builder for StatefulEntity.
+func (c *StatefulEntityClient) Query() *StatefulEntityQuery {
+	return &StatefulEntityQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeStatefulEntity},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a StatefulEntity entity by its id.
+func (c *StatefulEntityClient) Get(ctx context.Context, id uuid.UUID) (*StatefulEntity, error) {
+	return c.Query().Where(statefulentity.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *StatefulEntityClient) GetX(ctx context.Context, id uuid.UUID) *StatefulEntity {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *StatefulEntityClient) Hooks() []Hook {
+	return c.hooks.StatefulEntity
+}
+
+// Interceptors returns the client interceptors.
+func (c *StatefulEntityClient) Interceptors() []Interceptor {
+	return c.inters.StatefulEntity
+}
+
+func (c *StatefulEntityClient) mutate(ctx context.Context, m *StatefulEntityMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&StatefulEntityCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&StatefulEntityUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&StatefulEntityUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&StatefulEntityDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown StatefulEntity mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Account, Application, BankAccount, Building, JournalEntry, Lease, LeaseSpace,
-		LedgerEntry, Organization, Person, PersonRole, Portfolio, Property,
-		Reconciliation, Space []ent.Hook
+		Account, Application, BankAccount, BaseEntity, Building, ImmutableEntity,
+		JournalEntry, Jurisdiction, JurisdictionRule, Lease, LeaseSpace, LedgerEntry,
+		Organization, Person, PersonRole, Portfolio, Property, PropertyJurisdiction,
+		Reconciliation, Space, StatefulEntity []ent.Hook
 	}
 	inters struct {
-		Account, Application, BankAccount, Building, JournalEntry, Lease, LeaseSpace,
-		LedgerEntry, Organization, Person, PersonRole, Portfolio, Property,
-		Reconciliation, Space []ent.Interceptor
+		Account, Application, BankAccount, BaseEntity, Building, ImmutableEntity,
+		JournalEntry, Jurisdiction, JurisdictionRule, Lease, LeaseSpace, LedgerEntry,
+		Organization, Person, PersonRole, Portfolio, Property, PropertyJurisdiction,
+		Reconciliation, Space, StatefulEntity []ent.Interceptor
 	}
 )

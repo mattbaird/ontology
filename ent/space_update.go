@@ -762,6 +762,11 @@ func (_u *SpaceUpdate) check() error {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Space.source": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.SpaceNumber(); ok {
+		if err := space.SpaceNumberValidator(v); err != nil {
+			return &ValidationError{Name: "space_number", err: fmt.Errorf(`ent: validator failed for field "Space.space_number": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.SpaceType(); ok {
 		if err := space.SpaceTypeValidator(v); err != nil {
 			return &ValidationError{Name: "space_type", err: fmt.Errorf(`ent: validator failed for field "Space.space_type": %w`, err)}
@@ -1959,6 +1964,11 @@ func (_u *SpaceUpdateOne) check() error {
 	if v, ok := _u.mutation.Source(); ok {
 		if err := space.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Space.source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.SpaceNumber(); ok {
+		if err := space.SpaceNumberValidator(v); err != nil {
+			return &ValidationError{Name: "space_number", err: fmt.Errorf(`ent: validator failed for field "Space.space_number": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.SpaceType(); ok {

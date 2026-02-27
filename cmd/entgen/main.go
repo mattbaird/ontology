@@ -154,20 +154,8 @@ func extractAttributes(v cue.Value) fieldAttrs {
 	return fa
 }
 
-// entityTransitionMap maps entity names to their CUE state machine definition names.
-var entityTransitionMap = map[string]string{
-	"Lease":          "#LeaseTransitions",
-	"Space":          "#SpaceTransitions",
-	"Building":       "#BuildingTransitions",
-	"Application":    "#ApplicationTransitions",
-	"JournalEntry":   "#JournalEntryTransitions",
-	"Portfolio":      "#PortfolioTransitions",
-	"Property":       "#PropertyTransitions",
-	"PersonRole":     "#PersonRoleTransitions",
-	"Organization":   "#OrganizationTransitions",
-	"BankAccount":    "#BankAccountTransitions",
-	"Reconciliation": "#ReconciliationTransitions",
-}
+// State machines are now read from the unified #StateMachines map in CUE.
+// Entity name (PascalCase) is converted to snake_case for lookup.
 
 // findProjectRoot walks up from cwd to find the directory containing go.mod.
 func findProjectRoot() string {
@@ -261,6 +249,11 @@ func parseEntities(val cue.Value) map[string]*entityDef {
 		}
 
 		name := strings.TrimPrefix(label, "#")
+		// Skip base entity types — they provide shared structure via embedding,
+		// but are not domain entities themselves.
+		if name == "BaseEntity" || name == "StatefulEntity" || name == "ImmutableEntity" {
+			continue
+		}
 		ent := &entityDef{
 			Name: name,
 		}
@@ -483,6 +476,12 @@ func classifyField(name string, val cue.Value, optional bool) *fieldDef {
 		fd.JSONType = "json.RawMessage{}"
 
 	default:
+		// Top type (_) or mixed kind → JSON
+		if kind != 0 && kind != cue.BottomKind {
+			fd.EntType = "JSON"
+			fd.JSONType = "json.RawMessage{}"
+			return fd
+		}
 		// Skip fields we can't classify
 		return nil
 	}
@@ -603,7 +602,31 @@ func classifyListField(name string, val cue.Value, optional bool) *fieldDef {
 
 // isEnum checks if a CUE value is a disjunction of string literals.
 func isEnum(val cue.Value) bool {
+	return isEnumDirect(findEnumDisjunction(val))
+}
+
+// findEnumDisjunction extracts the OrOp disjunction from a value that may be
+// wrapped in an AndOp (e.g., when a `status: string` from an embedded base type
+// is unified with `status: "a" | "b" | "c"` in the entity).
+func findEnumDisjunction(val cue.Value) (cue.Op, []cue.Value) {
 	op, args := val.Expr()
+	if op == cue.OrOp {
+		return op, args
+	}
+	// When embedding introduces `string & ("a" | "b" | "c")`, the expression
+	// tree has AndOp at top level. Look through it for the OrOp branch.
+	if op == cue.AndOp {
+		for _, arg := range args {
+			argOp, argArgs := arg.Expr()
+			if argOp == cue.OrOp && isEnumDirect(argOp, argArgs) {
+				return argOp, argArgs
+			}
+		}
+	}
+	return op, args
+}
+
+func isEnumDirect(op cue.Op, args []cue.Value) bool {
 	if op != cue.OrOp {
 		return false
 	}
@@ -635,10 +658,7 @@ func isEnum(val cue.Value) bool {
 
 // extractEnumValues pulls string literal values from a disjunction.
 func extractEnumValues(val cue.Value) []string {
-	op, args := val.Expr()
-	if op != cue.OrOp {
-		return nil
-	}
+	_, args := findEnumDisjunction(val)
 	var values []string
 	for _, arg := range args {
 		// Handle default markers
@@ -683,7 +703,7 @@ func extractPattern(val cue.Value) string {
 	return ""
 }
 
-// hasNonEmpty checks if a string field has the !="" constraint.
+// hasNonEmpty checks if a string field has the !="" or strings.MinRunes(1) constraint.
 func hasNonEmpty(val cue.Value) bool {
 	op, args := val.Expr()
 	if op == cue.AndOp {
@@ -695,6 +715,12 @@ func hasNonEmpty(val cue.Value) bool {
 	}
 	if op == cue.NotEqualOp && len(args) >= 2 {
 		if s, err := args[1].String(); err == nil && s == "" {
+			return true
+		}
+	}
+	// Detect strings.MinRunes(1) CallOp pattern
+	if op == cue.CallOp && len(args) >= 2 {
+		if n, err := args[1].Int64(); err == nil && n >= 1 {
 			return true
 		}
 	}
@@ -820,15 +846,11 @@ func parseRelationships(val cue.Value, entities map[string]*entityDef) {
 	}
 }
 
-// parseStateMachines reads state machine definitions from CUE.
+// parseStateMachines reads state machine definitions from the unified #StateMachines map.
 func parseStateMachines(val cue.Value, entities map[string]*entityDef) {
-	for entName, cueName := range entityTransitionMap {
-		ent, ok := entities[entName]
-		if !ok {
-			continue
-		}
-
-		smVal := val.LookupPath(cue.ParsePath(cueName))
+	for entName := range entities {
+		ent := entities[entName]
+		smVal := val.LookupPath(cue.ParsePath("#StateMachines." + toSnake(entName)))
 		if smVal.Err() != nil {
 			continue
 		}
@@ -1070,16 +1092,7 @@ func validate%sConstraints() ent.Hook {
 
 	switch entityName {
 	case "Portfolio":
-		return wrap("Portfolio",
-			helperGetField+helperToString,
-			`
-			// requires_trust_accounting == true → trust_bank_account_id must be non-empty
-			if v, ok := getField("requires_trust_accounting"); ok && fmt.Sprint(v) == "true" {
-				tid, tidOk := getField("trust_bank_account_id")
-				if !tidOk || toString(tid) == "" {
-					return nil, fmt.Errorf("portfolio with requires_trust_accounting=true must have trust_bank_account_id set")
-				}
-			}`)
+		return "" // No custom constraints after trust field removal
 
 	case "Property":
 		return wrap("Property",
@@ -1417,35 +1430,10 @@ func validate%sConstraints() ent.Hook {
 			}`)
 
 	case "BankAccount":
-		return wrap("BankAccount",
-			helperGetField+helperToString,
-			`
-			// Trust accounts must specify state and prohibit commingling
-			if v, ok := getField("is_trust"); ok && fmt.Sprint(v) == "true" {
-				ts, tsOk := getField("trust_state")
-				if !tsOk || toString(ts) == "" {
-					return nil, fmt.Errorf("trust bank account must have trust_state set")
-				}
-				if ca, ok := getField("commingling_allowed"); ok && fmt.Sprint(ca) == "true" {
-					return nil, fmt.Errorf("trust bank account must have commingling_allowed=false")
-				}
-			}`)
+		return "" // Trust fields removed in v3
 
 	case "Reconciliation":
-		return wrap("Reconciliation",
-			helperGetField+helperToInt64,
-			`
-			// Balanced/approved reconciliations must have zero difference
-			if v, ok := getField("status"); ok {
-				st := fmt.Sprint(v)
-				if st == "balanced" || st == "approved" {
-					if diff, ok := getField("difference_amount_cents"); ok {
-						if d, isI64 := toInt64(diff); isI64 && d != 0 {
-							return nil, fmt.Errorf("%s reconciliation must have difference_amount_cents=0, got %d", st, d)
-						}
-					}
-				}
-			}`)
+		return "" // Difference is now @computed, validation at service level
 
 	default:
 		return ""

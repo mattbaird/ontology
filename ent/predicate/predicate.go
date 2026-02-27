@@ -15,11 +15,23 @@ type Application func(*sql.Selector)
 // BankAccount is the predicate function for bankaccount builders.
 type BankAccount func(*sql.Selector)
 
+// BaseEntity is the predicate function for baseentity builders.
+type BaseEntity func(*sql.Selector)
+
 // Building is the predicate function for building builders.
 type Building func(*sql.Selector)
 
+// ImmutableEntity is the predicate function for immutableentity builders.
+type ImmutableEntity func(*sql.Selector)
+
 // JournalEntry is the predicate function for journalentry builders.
 type JournalEntry func(*sql.Selector)
+
+// Jurisdiction is the predicate function for jurisdiction builders.
+type Jurisdiction func(*sql.Selector)
+
+// JurisdictionRule is the predicate function for jurisdictionrule builders.
+type JurisdictionRule func(*sql.Selector)
 
 // Lease is the predicate function for lease builders.
 type Lease func(*sql.Selector)
@@ -45,8 +57,14 @@ type Portfolio func(*sql.Selector)
 // Property is the predicate function for property builders.
 type Property func(*sql.Selector)
 
+// PropertyJurisdiction is the predicate function for propertyjurisdiction builders.
+type PropertyJurisdiction func(*sql.Selector)
+
 // Reconciliation is the predicate function for reconciliation builders.
 type Reconciliation func(*sql.Selector)
 
 // Space is the predicate function for space builders.
 type Space func(*sql.Selector)
+
+// StatefulEntity is the predicate function for statefulentity builders.
+type StatefulEntity func(*sql.Selector)

@@ -3,10 +3,46 @@ package propeller
 
 import "time"
 
+// ─── Named Enum Types ───────────────────────────────────────────────────────
+
+#LeaseType: "fixed_term" | "month_to_month" |
+	"commercial_nnn" | "commercial_nn" | "commercial_n" | "commercial_gross" | "commercial_modified_gross" |
+	"affordable" | "section_8" | "student" |
+	"ground_lease" | "short_term" | "membership"
+
+#LeaseStatus: "draft" | "pending_approval" | "pending_signature" | "active" |
+	"expired" | "month_to_month_holdover" | "renewed" |
+	"terminated" | "eviction"
+
+#LiabilityType: "joint_and_several" | "individual" | "by_the_bed" | "proportional"
+
+#LeaseSpaceRelationship: "primary" | "expansion" | "sublease" | "shared_access" |
+	"parking" | "storage" | "loading_dock" | "rooftop" |
+	"patio" | "signage" | "included" | "membership"
+
+#ApplicationStatus: "submitted" | "screening" | "under_review" | "approved" |
+	"conditionally_approved" | "denied" | "withdrawn" | "expired"
+
+#ChargeFrequency:        "monthly" | "quarterly" | "annually" | "one_time"
+#RentAdjustmentMethod:   "cpi" | "fixed_percent" | "fixed_amount_increase" | "market_review"
+#LateFeeType:            "flat" | "percent" | "per_day" | "tiered"
+#ExpansionType:          "first_right_of_refusal" | "first_right_to_negotiate" | "must_take" | "option"
+#SubsidyProgram:         "section_8" | "pbv" | "vash" | "home" | "lihtc"
+#UnitOfMeasure:          "kwh" | "gallon" | "cubic_foot" | "therm" | "hour" | "gb"
+#CAMReconciliationType:  "estimated_with_annual_reconciliation" | "fixed" | "actual"
+#CAMCategory: "property_tax" | "insurance" | "utilities" | "janitorial" |
+	"landscaping" | "security" | "management_fee" | "repairs" |
+	"snow_removal" | "elevator" | "hvac_maintenance" | "other"
+
+// Groups of lease types for conditional logic
+_commercial_types: ["commercial_nnn", "commercial_nn", "commercial_n",
+	"commercial_gross", "commercial_modified_gross"]
+_net_lease_types: ["commercial_nnn", "commercial_nn", "commercial_n"]
+
 // ─── Lease ───────────────────────────────────────────────────────────────────
 
-#Lease: {
-	id:          string & !=""
+#Lease: close({
+	#StatefulEntity
 	property_id: string & !="" // Denormalized for query efficiency
 
 	// Tenant references — via PersonRole, not directly to Person
@@ -134,18 +170,28 @@ import "time"
 	// CONSTRAINT: rent_commencement_date must be on or after lease_commencement_date
 	// (enforced at runtime via Ent hooks)
 
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "{property.name} — {lease_type}"
+	_test_scenarios: {
+		cross_field: [
+			"NNN requires all three CAM flags",
+			"fixed_term requires end date",
+			"section_8 requires subsidy",
+			"sublease requires parent_lease_id",
+			"active requires move_in_date",
+		]
+	}
+})
 
-#RentScheduleEntry: {
+#RentScheduleEntry: close({
 	effective_period: #DateRange
 	fixed_amount?:    #NonNegativeMoney
 	adjustment?:      #RentAdjustment
 	description:      string & !=""
 	charge_code:      string & !=""
-}
+})
 
-#RecurringCharge: {
+#RecurringCharge: close({
 	id:               string & !=""
 	charge_code:      string & !=""
 	description:      string & !=""
@@ -154,9 +200,9 @@ import "time"
 	effective_period: #DateRange
 	taxable:          bool | *false
 	space_id?:        string
-}
+})
 
-#LateFeePolicy: {
+#LateFeePolicy: close({
 	grace_period_days: *5 | int & >=0
 	fee_type:          "flat" | "percent" | "per_day" | "tiered"
 	flat_amount?:      #NonNegativeMoney
@@ -168,9 +214,9 @@ import "time"
 		days_late_max: int
 		amount:        #NonNegativeMoney
 	}]
-}
+})
 
-#CAMTerms: {
+#CAMTerms: close({
 	reconciliation_type:    "estimated_with_annual_reconciliation" | "fixed" | "actual"
 	pro_rata_share_percent: float & >0 & <=100
 	estimated_monthly_cam:  #NonNegativeMoney
@@ -188,17 +234,17 @@ import "time"
 	// If reconciliation_type is "fixed", annual_cap is not allowed
 	// base_year and expense_stop are mutually exclusive
 	// (both enforced at runtime via Ent hooks)
-}
+})
 
-#TenantImprovement: {
+#TenantImprovement: close({
 	allowance:                #NonNegativeMoney
 	amortized:                bool | *false
 	amortization_term_months?: int & >0
 	interest_rate_percent?:   float & >=0
 	completion_deadline?:     time.Time
-}
+})
 
-#RenewalOption: {
+#RenewalOption: close({
 	option_number:       int & >=1
 	term_months:         int & >0
 	rent_adjustment:     "fixed" | "cpi" | "percent_increase" | "market"
@@ -208,9 +254,9 @@ import "time"
 	must_exercise_by?:   time.Time
 	cpi_floor?:          float & >=0
 	cpi_ceiling?:        float & >0
-}
+})
 
-#SubsidyTerms: {
+#SubsidyTerms: close({
 	program:                  "section_8" | "pbv" | "vash" | "home" | "lihtc"
 	housing_authority:        string & !=""
 	hap_contract_id?:         string
@@ -220,11 +266,11 @@ import "time"
 	utility_allowance:        #NonNegativeMoney
 	annual_recert_date?:      time.Time
 	income_limit_ami_percent: int & >0 & <=150
-}
+})
 
 // ─── New Value Types ─────────────────────────────────────────────────────────
 
-#UsageBasedCharge: {
+#UsageBasedCharge: close({
 	id:                string & !=""
 	charge_code:       string & !=""
 	description:       string & !=""
@@ -234,18 +280,18 @@ import "time"
 	billing_frequency: "monthly" | "quarterly"
 	cap?:              #NonNegativeMoney
 	space_id?:         string
-}
+})
 
-#PercentageRent: {
+#PercentageRent: close({
 	rate:                   float & >0 & <=100
 	breakpoint_type:        "natural" | "artificial"
 	natural_breakpoint?:    #NonNegativeMoney
 	artificial_breakpoint?: #NonNegativeMoney
 	reporting_frequency:    "monthly" | "quarterly" | "annually"
 	audit_rights:           bool | *true
-}
+})
 
-#RentAdjustment: {
+#RentAdjustment: close({
 	method:      "cpi" | "fixed_percent" | "fixed_amount_increase" | "market_review"
 	base_amount: #NonNegativeMoney
 
@@ -262,24 +308,24 @@ import "time"
 
 	// For market review
 	market_review_mechanism?: string
-}
+})
 
-#ExpansionRight: {
+#ExpansionRight: close({
 	type:                 "first_right_of_refusal" | "first_right_to_negotiate" | "must_take" | "option"
 	target_space_ids:     [...string]
 	exercise_deadline?:   time.Time
 	terms?:               string
 	notice_required_days: int & >=0
-}
+})
 
-#ContractionRight: {
+#ContractionRight: close({
 	minimum_retained_sqft:  float & >0
 	earliest_exercise_date: time.Time
 	penalty?:               #NonNegativeMoney
 	notice_required_days:   int & >=0
-}
+})
 
-#CAMCategoryTerms: {
+#CAMCategoryTerms: close({
 	category: "property_tax" | "insurance" | "utilities" | "janitorial" |
 		"landscaping" | "security" | "management_fee" | "repairs" |
 		"snow_removal" | "elevator" | "hvac_maintenance" | "other"
@@ -287,13 +333,13 @@ import "time"
 	landlord_cap?: #NonNegativeMoney
 	tenant_cap?:   #NonNegativeMoney
 	escalation?:   float
-}
+})
 
 // ─── LeaseSpace ──────────────────────────────────────────────────────────────
 // First-class M2M join between Lease and Space.
 
-#LeaseSpace: {
-	id:       string & !=""
+#LeaseSpace: close({
+	#BaseEntity
 	lease_id: string & !=""
 	space_id: string & !=""
 
@@ -306,14 +352,12 @@ import "time"
 	effective: #DateRange
 
 	square_footage_leased?: float & >0
-
-	audit: #AuditMetadata
-}
+})
 
 // ─── Application ─────────────────────────────────────────────────────────────
 
-#Application: {
-	id:                  string & !=""
+#Application: close({
+	#StatefulEntity
 	property_id:         string & !=""
 	space_id?:           string
 	applicant_person_id: string & !=""
@@ -354,6 +398,4 @@ import "time"
 	if status == "denied" {
 		decision_reason: string & !=""
 	}
-
-	audit: #AuditMetadata
-}
+})

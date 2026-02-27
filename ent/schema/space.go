@@ -32,8 +32,8 @@ func (Space) Mixin() []ent.Mixin {
 func (Space) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).Default(uuid.New).Immutable().Comment("Primary key"),
-		field.String("space_number").SchemaType(map[string]string{"postgres": "varchar"}),
-		field.Enum("space_type").Values("residential_unit", "commercial_office", "commercial_retail", "storage", "parking", "common_area", "industrial", "lot_pad", "bed_space", "desk_space"),
+		field.String("space_number").NotEmpty().SchemaType(map[string]string{"postgres": "varchar"}),
+		field.Enum("space_type").Values("residential_unit", "commercial_office", "commercial_retail", "storage", "parking", "common_area", "industrial", "lot_pad", "bed_space", "desk_space", "parking_garage", "private_office", "warehouse", "amenity", "rack", "cage", "server_room", "other"),
 		field.Enum("status").Values("vacant", "occupied", "notice_given", "make_ready", "down", "model", "reserved", "owner_occupied"),
 		field.Bool("leasable"),
 		field.Bool("shared_with_parent").Default(false),

@@ -402,6 +402,11 @@ func (_c *OrganizationCreate) check() error {
 	if _, ok := _c.mutation.LegalName(); !ok {
 		return &ValidationError{Name: "legal_name", err: errors.New(`ent: missing required field "Organization.legal_name"`)}
 	}
+	if v, ok := _c.mutation.LegalName(); ok {
+		if err := organization.LegalNameValidator(v); err != nil {
+			return &ValidationError{Name: "legal_name", err: fmt.Errorf(`ent: validator failed for field "Organization.legal_name": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.OrgType(); !ok {
 		return &ValidationError{Name: "org_type", err: errors.New(`ent: missing required field "Organization.org_type"`)}
 	}

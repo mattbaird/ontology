@@ -77,6 +77,8 @@ const (
 	EdgeApplications = "applications"
 	// EdgeLedgerEntries holds the string denoting the ledger_entries edge name in mutations.
 	EdgeLedgerEntries = "ledger_entries"
+	// EdgePropertyJurisdictions holds the string denoting the property_jurisdictions edge name in mutations.
+	EdgePropertyJurisdictions = "property_jurisdictions"
 	// Table holds the table name of the property in the database.
 	Table = "properties"
 	// PortfolioTable is the table that holds the portfolio relation/edge.
@@ -121,6 +123,13 @@ const (
 	LedgerEntriesInverseTable = "ledger_entries"
 	// LedgerEntriesColumn is the table column denoting the ledger_entries relation/edge.
 	LedgerEntriesColumn = "property_ledger_entries"
+	// PropertyJurisdictionsTable is the table that holds the property_jurisdictions relation/edge.
+	PropertyJurisdictionsTable = "property_jurisdictions"
+	// PropertyJurisdictionsInverseTable is the table name for the PropertyJurisdiction entity.
+	// It exists in this package in order to avoid circular dependency with the "propertyjurisdiction" package.
+	PropertyJurisdictionsInverseTable = "property_jurisdictions"
+	// PropertyJurisdictionsColumn is the table column denoting the property_jurisdictions relation/edge.
+	PropertyJurisdictionsColumn = "property_property_jurisdictions"
 )
 
 // Columns holds all SQL columns for property fields.
@@ -192,6 +201,8 @@ var (
 	CreatedByValidator func(string) error
 	// UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	UpdatedByValidator func(string) error
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
 	// DefaultRentControlled holds the default value on creation for the "rent_controlled" field.
 	DefaultRentControlled bool
 	// DefaultID holds the default value on creation for the "id" field.
@@ -473,6 +484,20 @@ func ByLedgerEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newLedgerEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByPropertyJurisdictionsCount orders the results by property_jurisdictions count.
+func ByPropertyJurisdictionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPropertyJurisdictionsStep(), opts...)
+	}
+}
+
+// ByPropertyJurisdictions orders the results by property_jurisdictions terms.
+func ByPropertyJurisdictions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPropertyJurisdictionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPortfolioStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -513,5 +538,12 @@ func newLedgerEntriesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LedgerEntriesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, LedgerEntriesTable, LedgerEntriesColumn),
+	)
+}
+func newPropertyJurisdictionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PropertyJurisdictionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PropertyJurisdictionsTable, PropertyJurisdictionsColumn),
 	)
 }

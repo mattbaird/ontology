@@ -3,10 +3,38 @@ package propeller
 
 import "time"
 
+// ─── Named Enum Types ───────────────────────────────────────────────────────
+
+#AccountType:    "asset" | "liability" | "equity" | "revenue" | "expense"
+#AccountSubtype: "cash" | "accounts_receivable" | "prepaid" | "fixed_asset" |
+	"accumulated_depreciation" | "other_asset" |
+	"accounts_payable" | "accrued_liability" | "unearned_revenue" |
+	"security_deposits_held" | "other_liability" |
+	"owners_equity" | "retained_earnings" | "distributions" |
+	"rental_income" | "other_income" | "cam_recovery" |
+	"percentage_rent_income" |
+	"operating_expense" | "maintenance_expense" | "utility_expense" |
+	"management_fee_expense" | "depreciation_expense" | "other_expense"
+#NormalBalance: "debit" | "credit"
+
+#EntryType: "charge" | "payment" | "credit" | "adjustment" |
+	"refund" | "deposit" | "nsf" | "write_off" |
+	"late_fee" | "management_fee" | "owner_draw"
+
+#JournalEntrySource: "manual" | "auto_charge" | "payment" | "bank_import" |
+	"cam_reconciliation" | "depreciation" | "accrual" |
+	"intercompany" | "management_fee" | "system"
+#JournalEntryStatus: "draft" | "pending_approval" | "posted" | "voided"
+
+#BankAccountType:   "operating" | "trust" | "security_deposit" | "escrow" | "reserve"
+#BankAccountStatus: "active" | "inactive" | "frozen" | "closed"
+
+#ReconciliationStatus: "in_progress" | "balanced" | "unbalanced" | "approved"
+
 // ─── Chart of Accounts ──────────────────────────────────────────────────────
 
-#Account: {
-	id:             string & !=""
+#Account: close({
+	#BaseEntity
 	account_number: string & !=""
 	name:           string & !="" @display()
 	description?:   string @text()
@@ -71,21 +99,22 @@ import "time"
 		trust_type: string & !=""
 	}
 
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "{account_number} — {name}"
+})
 
-#AccountDimensions: {
+#AccountDimensions: close({
 	entity_id?:   string
 	property_id?: string
 	dimension_1?: string
 	dimension_2?: string
 	dimension_3?: string
-}
+})
 
 // ─── Ledger Entry ────────────────────────────────────────────────────────────
 
-#LedgerEntry: {
-	id:         string & !="" @immutable()
+#LedgerEntry: close({
+	#ImmutableEntity
 	account_id: string & !="" @immutable()
 
 	entry_type: ("charge" | "payment" | "credit" | "adjustment" |
@@ -148,13 +177,17 @@ import "time"
 
 	// CONSTRAINT: LedgerEntries are immutable (enforced at Ent hook level)
 
-	audit: #AuditMetadata
-}
+	// Hidden: invariant documentation
+	_invariant: "LedgerEntries are append-only. Errors corrected via adjustment entries."
+})
 
 // ─── Journal Entry ───────────────────────────────────────────────────────────
 
+// NOTE: #JournalEntry is NOT wrapped in close() because close() + conditional
+// blocks (if status == "posted") causes CUE to hide all fields from the Go API,
+// breaking generators that need to introspect fields.
 #JournalEntry: {
-	id: string & !="" @immutable()
+	#StatefulEntity
 
 	entry_date:  time.Time @immutable()
 	posted_date: time.Time
@@ -202,10 +235,11 @@ import "time"
 
 	// CONSTRAINT: Sum of debits must equal sum of credits (enforced at Ent hook level)
 
-	audit: #AuditMetadata
+	// Hidden: invariant documentation
+	_invariant: "Sum of debits must equal sum of credits across all lines."
 }
 
-#JournalLine: {
+#JournalLine: close({
 	account_id:  string & !=""
 	debit?:      #NonNegativeMoney
 	credit?:     #NonNegativeMoney
@@ -213,12 +247,12 @@ import "time"
 	dimensions?: #AccountDimensions
 	// CONSTRAINT: Must have exactly one of debit or credit (not both, not neither)
 	// (enforced at runtime via Ent hooks)
-}
+})
 
 // ─── Bank Account ────────────────────────────────────────────────────────────
 
-#BankAccount: {
-	id:   string & !=""
+#BankAccount: close({
+	#StatefulEntity
 	name: string & !="" @display()
 
 	account_type: "operating" | "trust" | "security_deposit" | "escrow" | "reserve"
@@ -227,9 +261,14 @@ import "time"
 	gl_account_id: string & !=""
 
 	// Bank details
-	bank_name:                string & !=""
-	routing_number?:          string
-	account_number_last_four: =~"^[0-9]{4}$"
+	institution_name:          string & !=""
+	routing_number:            =~"^[0-9]{9}$" @sensitive()
+	account_mask:              =~"^\\*{4}[0-9]{4}$" @sensitive()
+	account_number_encrypted?: string @sensitive()
+
+	// Plaid integration
+	plaid_account_id?:    string
+	plaid_access_token?:  string @sensitive()
 
 	// Scope
 	portfolio_id?: string
@@ -238,53 +277,45 @@ import "time"
 
 	status: "active" | "inactive" | "frozen" | "closed"
 
+	// Capabilities
+	is_default:       bool | *false
+	accepts_deposits: bool | *true
+	accepts_payments: bool | *true
+
 	// Current balance
-	current_balance?:    #Money
-	last_reconciled_at?: time.Time
+	current_balance?:    #Money @computed()
+	last_statement_date?: time.Time
 
-	// Trust accounting controls
-	is_trust:             bool | *false
-	trust_state?:         =~"^[A-Z]{2}$"
-	commingling_allowed:  bool | *false
-
-	// CONSTRAINTS:
-	// Trust accounts must specify state and prohibit commingling
-	if is_trust {
-		trust_state:        =~"^[A-Z]{2}$"
-		commingling_allowed: false
-	}
-
-	audit: #AuditMetadata
-}
+	// Hidden: generator metadata
+	_display_template: "{name}"
+})
 
 // ─── Reconciliation ──────────────────────────────────────────────────────────
 
-#Reconciliation: {
-	id:              string & !=""
+#Reconciliation: close({
+	#StatefulEntity
 	bank_account_id: string & !=""
 
-	period_start: time.Time
-	period_end:   time.Time
+	period_start:    time.Time
+	period_end:      time.Time
+	statement_date:  time.Time
 
 	statement_balance: #Money
-	system_balance:    #Money
-	difference:        #Money
+	gl_balance:        #Money
+	difference?:       #Money @computed()
 
 	status: "in_progress" | "balanced" | "unbalanced" | "approved"
 
-	matched_transaction_count:   int & >=0
-	unmatched_transaction_count: int & >=0
+	unreconciled_items?: int & >=0 @computed()
 
-	completed_by?: string
-	completed_at?: time.Time
-	approved_by?:  string
-	approved_at?:  time.Time
+	reconciled_by?: string
+	reconciled_at?: time.Time
+	approved_by?:   string
+	approved_at?:   time.Time
 
 	// CONSTRAINTS:
 	// Balanced/approved reconciliations must have zero difference
 	if status == "balanced" || status == "approved" {
 		difference: amount_cents: 0
 	}
-
-	audit: #AuditMetadata
-}
+})

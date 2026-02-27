@@ -549,6 +549,11 @@ func (_c *SpaceCreate) check() error {
 	if _, ok := _c.mutation.SpaceNumber(); !ok {
 		return &ValidationError{Name: "space_number", err: errors.New(`ent: missing required field "Space.space_number"`)}
 	}
+	if v, ok := _c.mutation.SpaceNumber(); ok {
+		if err := space.SpaceNumberValidator(v); err != nil {
+			return &ValidationError{Name: "space_number", err: fmt.Errorf(`ent: validator failed for field "Space.space_number": %w`, err)}
+		}
+	}
 	if _, ok := _c.mutation.SpaceType(); !ok {
 		return &ValidationError{Name: "space_type", err: errors.New(`ent: missing required field "Space.space_type"`)}
 	}

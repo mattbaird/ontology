@@ -1349,6 +1349,29 @@ func HasLedgerEntriesWith(preds ...predicate.LedgerEntry) predicate.Property {
 	})
 }
 
+// HasPropertyJurisdictions applies the HasEdge predicate on the "property_jurisdictions" edge.
+func HasPropertyJurisdictions() predicate.Property {
+	return predicate.Property(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PropertyJurisdictionsTable, PropertyJurisdictionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPropertyJurisdictionsWith applies the HasEdge predicate on the "property_jurisdictions" edge with a given conditions (other predicates).
+func HasPropertyJurisdictionsWith(preds ...predicate.PropertyJurisdiction) predicate.Property {
+	return predicate.Property(func(s *sql.Selector) {
+		step := newPropertyJurisdictionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Property) predicate.Property {
 	return predicate.Property(sql.AndPredicates(predicates...))

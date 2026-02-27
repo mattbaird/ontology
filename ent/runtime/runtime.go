@@ -9,8 +9,12 @@ import (
 	"github.com/matthewbaird/ontology/ent/account"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/baseentity"
 	"github.com/matthewbaird/ontology/ent/building"
+	"github.com/matthewbaird/ontology/ent/immutableentity"
 	"github.com/matthewbaird/ontology/ent/journalentry"
+	"github.com/matthewbaird/ontology/ent/jurisdiction"
+	"github.com/matthewbaird/ontology/ent/jurisdictionrule"
 	"github.com/matthewbaird/ontology/ent/lease"
 	"github.com/matthewbaird/ontology/ent/leasespace"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
@@ -19,9 +23,11 @@ import (
 	"github.com/matthewbaird/ontology/ent/personrole"
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/propertyjurisdiction"
 	"github.com/matthewbaird/ontology/ent/reconciliation"
 	"github.com/matthewbaird/ontology/ent/schema"
 	"github.com/matthewbaird/ontology/ent/space"
+	"github.com/matthewbaird/ontology/ent/statefulentity"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -127,8 +133,6 @@ func init() {
 	// application.DefaultID holds the default value on creation for the id field.
 	application.DefaultID = applicationDescID.Default.(func() uuid.UUID)
 	bankaccountMixin := schema.BankAccount{}.Mixin()
-	bankaccountHooks := schema.BankAccount{}.Hooks()
-	bankaccount.Hooks[0] = bankaccountHooks[0]
 	bankaccountMixinFields0 := bankaccountMixin[0].Fields()
 	_ = bankaccountMixinFields0
 	bankaccountFields := schema.BankAccount{}.Fields()
@@ -151,24 +155,55 @@ func init() {
 	bankaccountDescUpdatedBy := bankaccountMixinFields0[3].Descriptor()
 	// bankaccount.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	bankaccount.UpdatedByValidator = bankaccountDescUpdatedBy.Validators[0].(func(string) error)
+	// bankaccountDescIsDefault is the schema descriptor for is_default field.
+	bankaccountDescIsDefault := bankaccountFields[12].Descriptor()
+	// bankaccount.DefaultIsDefault holds the default value on creation for the is_default field.
+	bankaccount.DefaultIsDefault = bankaccountDescIsDefault.Default.(bool)
+	// bankaccountDescAcceptsDeposits is the schema descriptor for accepts_deposits field.
+	bankaccountDescAcceptsDeposits := bankaccountFields[13].Descriptor()
+	// bankaccount.DefaultAcceptsDeposits holds the default value on creation for the accepts_deposits field.
+	bankaccount.DefaultAcceptsDeposits = bankaccountDescAcceptsDeposits.Default.(bool)
+	// bankaccountDescAcceptsPayments is the schema descriptor for accepts_payments field.
+	bankaccountDescAcceptsPayments := bankaccountFields[14].Descriptor()
+	// bankaccount.DefaultAcceptsPayments holds the default value on creation for the accepts_payments field.
+	bankaccount.DefaultAcceptsPayments = bankaccountDescAcceptsPayments.Default.(bool)
 	// bankaccountDescCurrentBalanceCurrency is the schema descriptor for current_balance_currency field.
-	bankaccountDescCurrentBalanceCurrency := bankaccountFields[10].Descriptor()
+	bankaccountDescCurrentBalanceCurrency := bankaccountFields[16].Descriptor()
 	// bankaccount.DefaultCurrentBalanceCurrency holds the default value on creation for the current_balance_currency field.
 	bankaccount.DefaultCurrentBalanceCurrency = bankaccountDescCurrentBalanceCurrency.Default.(string)
 	// bankaccount.CurrentBalanceCurrencyValidator is a validator for the "current_balance_currency" field. It is called by the builders before save.
 	bankaccount.CurrentBalanceCurrencyValidator = bankaccountDescCurrentBalanceCurrency.Validators[0].(func(string) error)
-	// bankaccountDescIsTrust is the schema descriptor for is_trust field.
-	bankaccountDescIsTrust := bankaccountFields[12].Descriptor()
-	// bankaccount.DefaultIsTrust holds the default value on creation for the is_trust field.
-	bankaccount.DefaultIsTrust = bankaccountDescIsTrust.Default.(bool)
-	// bankaccountDescComminglingAllowed is the schema descriptor for commingling_allowed field.
-	bankaccountDescComminglingAllowed := bankaccountFields[14].Descriptor()
-	// bankaccount.DefaultComminglingAllowed holds the default value on creation for the commingling_allowed field.
-	bankaccount.DefaultComminglingAllowed = bankaccountDescComminglingAllowed.Default.(bool)
 	// bankaccountDescID is the schema descriptor for id field.
 	bankaccountDescID := bankaccountFields[0].Descriptor()
 	// bankaccount.DefaultID holds the default value on creation for the id field.
 	bankaccount.DefaultID = bankaccountDescID.Default.(func() uuid.UUID)
+	baseentityMixin := schema.BaseEntity{}.Mixin()
+	baseentityMixinFields0 := baseentityMixin[0].Fields()
+	_ = baseentityMixinFields0
+	baseentityFields := schema.BaseEntity{}.Fields()
+	_ = baseentityFields
+	// baseentityDescCreatedAt is the schema descriptor for created_at field.
+	baseentityDescCreatedAt := baseentityMixinFields0[0].Descriptor()
+	// baseentity.DefaultCreatedAt holds the default value on creation for the created_at field.
+	baseentity.DefaultCreatedAt = baseentityDescCreatedAt.Default.(func() time.Time)
+	// baseentityDescUpdatedAt is the schema descriptor for updated_at field.
+	baseentityDescUpdatedAt := baseentityMixinFields0[1].Descriptor()
+	// baseentity.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	baseentity.DefaultUpdatedAt = baseentityDescUpdatedAt.Default.(func() time.Time)
+	// baseentity.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	baseentity.UpdateDefaultUpdatedAt = baseentityDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// baseentityDescCreatedBy is the schema descriptor for created_by field.
+	baseentityDescCreatedBy := baseentityMixinFields0[2].Descriptor()
+	// baseentity.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	baseentity.CreatedByValidator = baseentityDescCreatedBy.Validators[0].(func(string) error)
+	// baseentityDescUpdatedBy is the schema descriptor for updated_by field.
+	baseentityDescUpdatedBy := baseentityMixinFields0[3].Descriptor()
+	// baseentity.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
+	baseentity.UpdatedByValidator = baseentityDescUpdatedBy.Validators[0].(func(string) error)
+	// baseentityDescID is the schema descriptor for id field.
+	baseentityDescID := baseentityFields[0].Descriptor()
+	// baseentity.DefaultID holds the default value on creation for the id field.
+	baseentity.DefaultID = baseentityDescID.Default.(func() uuid.UUID)
 	buildingMixin := schema.Building{}.Mixin()
 	buildingMixinFields0 := buildingMixin[0].Fields()
 	_ = buildingMixinFields0
@@ -192,10 +227,41 @@ func init() {
 	buildingDescUpdatedBy := buildingMixinFields0[3].Descriptor()
 	// building.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	building.UpdatedByValidator = buildingDescUpdatedBy.Validators[0].(func(string) error)
+	// buildingDescName is the schema descriptor for name field.
+	buildingDescName := buildingFields[1].Descriptor()
+	// building.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	building.NameValidator = buildingDescName.Validators[0].(func(string) error)
 	// buildingDescID is the schema descriptor for id field.
 	buildingDescID := buildingFields[0].Descriptor()
 	// building.DefaultID holds the default value on creation for the id field.
 	building.DefaultID = buildingDescID.Default.(func() uuid.UUID)
+	immutableentityMixin := schema.ImmutableEntity{}.Mixin()
+	immutableentityMixinFields0 := immutableentityMixin[0].Fields()
+	_ = immutableentityMixinFields0
+	immutableentityFields := schema.ImmutableEntity{}.Fields()
+	_ = immutableentityFields
+	// immutableentityDescCreatedAt is the schema descriptor for created_at field.
+	immutableentityDescCreatedAt := immutableentityMixinFields0[0].Descriptor()
+	// immutableentity.DefaultCreatedAt holds the default value on creation for the created_at field.
+	immutableentity.DefaultCreatedAt = immutableentityDescCreatedAt.Default.(func() time.Time)
+	// immutableentityDescUpdatedAt is the schema descriptor for updated_at field.
+	immutableentityDescUpdatedAt := immutableentityMixinFields0[1].Descriptor()
+	// immutableentity.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	immutableentity.DefaultUpdatedAt = immutableentityDescUpdatedAt.Default.(func() time.Time)
+	// immutableentity.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	immutableentity.UpdateDefaultUpdatedAt = immutableentityDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// immutableentityDescCreatedBy is the schema descriptor for created_by field.
+	immutableentityDescCreatedBy := immutableentityMixinFields0[2].Descriptor()
+	// immutableentity.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	immutableentity.CreatedByValidator = immutableentityDescCreatedBy.Validators[0].(func(string) error)
+	// immutableentityDescUpdatedBy is the schema descriptor for updated_by field.
+	immutableentityDescUpdatedBy := immutableentityMixinFields0[3].Descriptor()
+	// immutableentity.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
+	immutableentity.UpdatedByValidator = immutableentityDescUpdatedBy.Validators[0].(func(string) error)
+	// immutableentityDescID is the schema descriptor for id field.
+	immutableentityDescID := immutableentityFields[0].Descriptor()
+	// immutableentity.DefaultID holds the default value on creation for the id field.
+	immutableentity.DefaultID = immutableentityDescID.Default.(func() uuid.UUID)
 	journalentryMixin := schema.JournalEntry{}.Mixin()
 	journalentryHooks := schema.JournalEntry{}.Hooks()
 	journalentry.Hooks[0] = journalentryHooks[0]
@@ -225,6 +291,64 @@ func init() {
 	journalentryDescID := journalentryFields[0].Descriptor()
 	// journalentry.DefaultID holds the default value on creation for the id field.
 	journalentry.DefaultID = journalentryDescID.Default.(func() uuid.UUID)
+	jurisdictionMixin := schema.Jurisdiction{}.Mixin()
+	jurisdictionMixinFields0 := jurisdictionMixin[0].Fields()
+	_ = jurisdictionMixinFields0
+	jurisdictionFields := schema.Jurisdiction{}.Fields()
+	_ = jurisdictionFields
+	// jurisdictionDescCreatedAt is the schema descriptor for created_at field.
+	jurisdictionDescCreatedAt := jurisdictionMixinFields0[0].Descriptor()
+	// jurisdiction.DefaultCreatedAt holds the default value on creation for the created_at field.
+	jurisdiction.DefaultCreatedAt = jurisdictionDescCreatedAt.Default.(func() time.Time)
+	// jurisdictionDescUpdatedAt is the schema descriptor for updated_at field.
+	jurisdictionDescUpdatedAt := jurisdictionMixinFields0[1].Descriptor()
+	// jurisdiction.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	jurisdiction.DefaultUpdatedAt = jurisdictionDescUpdatedAt.Default.(func() time.Time)
+	// jurisdiction.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	jurisdiction.UpdateDefaultUpdatedAt = jurisdictionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// jurisdictionDescCreatedBy is the schema descriptor for created_by field.
+	jurisdictionDescCreatedBy := jurisdictionMixinFields0[2].Descriptor()
+	// jurisdiction.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	jurisdiction.CreatedByValidator = jurisdictionDescCreatedBy.Validators[0].(func(string) error)
+	// jurisdictionDescUpdatedBy is the schema descriptor for updated_by field.
+	jurisdictionDescUpdatedBy := jurisdictionMixinFields0[3].Descriptor()
+	// jurisdiction.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
+	jurisdiction.UpdatedByValidator = jurisdictionDescUpdatedBy.Validators[0].(func(string) error)
+	// jurisdictionDescName is the schema descriptor for name field.
+	jurisdictionDescName := jurisdictionFields[1].Descriptor()
+	// jurisdiction.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	jurisdiction.NameValidator = jurisdictionDescName.Validators[0].(func(string) error)
+	// jurisdictionDescID is the schema descriptor for id field.
+	jurisdictionDescID := jurisdictionFields[0].Descriptor()
+	// jurisdiction.DefaultID holds the default value on creation for the id field.
+	jurisdiction.DefaultID = jurisdictionDescID.Default.(func() uuid.UUID)
+	jurisdictionruleMixin := schema.JurisdictionRule{}.Mixin()
+	jurisdictionruleMixinFields0 := jurisdictionruleMixin[0].Fields()
+	_ = jurisdictionruleMixinFields0
+	jurisdictionruleFields := schema.JurisdictionRule{}.Fields()
+	_ = jurisdictionruleFields
+	// jurisdictionruleDescCreatedAt is the schema descriptor for created_at field.
+	jurisdictionruleDescCreatedAt := jurisdictionruleMixinFields0[0].Descriptor()
+	// jurisdictionrule.DefaultCreatedAt holds the default value on creation for the created_at field.
+	jurisdictionrule.DefaultCreatedAt = jurisdictionruleDescCreatedAt.Default.(func() time.Time)
+	// jurisdictionruleDescUpdatedAt is the schema descriptor for updated_at field.
+	jurisdictionruleDescUpdatedAt := jurisdictionruleMixinFields0[1].Descriptor()
+	// jurisdictionrule.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	jurisdictionrule.DefaultUpdatedAt = jurisdictionruleDescUpdatedAt.Default.(func() time.Time)
+	// jurisdictionrule.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	jurisdictionrule.UpdateDefaultUpdatedAt = jurisdictionruleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// jurisdictionruleDescCreatedBy is the schema descriptor for created_by field.
+	jurisdictionruleDescCreatedBy := jurisdictionruleMixinFields0[2].Descriptor()
+	// jurisdictionrule.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	jurisdictionrule.CreatedByValidator = jurisdictionruleDescCreatedBy.Validators[0].(func(string) error)
+	// jurisdictionruleDescUpdatedBy is the schema descriptor for updated_by field.
+	jurisdictionruleDescUpdatedBy := jurisdictionruleMixinFields0[3].Descriptor()
+	// jurisdictionrule.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
+	jurisdictionrule.UpdatedByValidator = jurisdictionruleDescUpdatedBy.Validators[0].(func(string) error)
+	// jurisdictionruleDescID is the schema descriptor for id field.
+	jurisdictionruleDescID := jurisdictionruleFields[0].Descriptor()
+	// jurisdictionrule.DefaultID holds the default value on creation for the id field.
+	jurisdictionrule.DefaultID = jurisdictionruleDescID.Default.(func() uuid.UUID)
 	leaseMixin := schema.Lease{}.Mixin()
 	leaseHooks := schema.Lease{}.Hooks()
 	lease.Hooks[0] = leaseHooks[0]
@@ -369,6 +493,10 @@ func init() {
 	organizationDescUpdatedBy := organizationMixinFields0[3].Descriptor()
 	// organization.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	organization.UpdatedByValidator = organizationDescUpdatedBy.Validators[0].(func(string) error)
+	// organizationDescLegalName is the schema descriptor for legal_name field.
+	organizationDescLegalName := organizationFields[1].Descriptor()
+	// organization.LegalNameValidator is a validator for the "legal_name" field. It is called by the builders before save.
+	organization.LegalNameValidator = organizationDescLegalName.Validators[0].(func(string) error)
 	// organizationDescID is the schema descriptor for id field.
 	organizationDescID := organizationFields[0].Descriptor()
 	// organization.DefaultID holds the default value on creation for the id field.
@@ -396,12 +524,24 @@ func init() {
 	personDescUpdatedBy := personMixinFields0[3].Descriptor()
 	// person.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	person.UpdatedByValidator = personDescUpdatedBy.Validators[0].(func(string) error)
+	// personDescFirstName is the schema descriptor for first_name field.
+	personDescFirstName := personFields[1].Descriptor()
+	// person.FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
+	person.FirstNameValidator = personDescFirstName.Validators[0].(func(string) error)
+	// personDescLastName is the schema descriptor for last_name field.
+	personDescLastName := personFields[3].Descriptor()
+	// person.LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
+	person.LastNameValidator = personDescLastName.Validators[0].(func(string) error)
+	// personDescDisplayName is the schema descriptor for display_name field.
+	personDescDisplayName := personFields[4].Descriptor()
+	// person.DisplayNameValidator is a validator for the "display_name" field. It is called by the builders before save.
+	person.DisplayNameValidator = personDescDisplayName.Validators[0].(func(string) error)
 	// personDescDoNotContact is the schema descriptor for do_not_contact field.
-	personDescDoNotContact := personFields[10].Descriptor()
+	personDescDoNotContact := personFields[12].Descriptor()
 	// person.DefaultDoNotContact holds the default value on creation for the do_not_contact field.
 	person.DefaultDoNotContact = personDescDoNotContact.Default.(bool)
 	// personDescIdentityVerified is the schema descriptor for identity_verified field.
-	personDescIdentityVerified := personFields[11].Descriptor()
+	personDescIdentityVerified := personFields[13].Descriptor()
 	// person.DefaultIdentityVerified holds the default value on creation for the identity_verified field.
 	person.DefaultIdentityVerified = personDescIdentityVerified.Default.(bool)
 	// personDescID is the schema descriptor for id field.
@@ -436,8 +576,6 @@ func init() {
 	// personrole.DefaultID holds the default value on creation for the id field.
 	personrole.DefaultID = personroleDescID.Default.(func() uuid.UUID)
 	portfolioMixin := schema.Portfolio{}.Mixin()
-	portfolioHooks := schema.Portfolio{}.Hooks()
-	portfolio.Hooks[0] = portfolioHooks[0]
 	portfolioMixinFields0 := portfolioMixin[0].Fields()
 	_ = portfolioMixinFields0
 	portfolioFields := schema.Portfolio{}.Fields()
@@ -460,6 +598,10 @@ func init() {
 	portfolioDescUpdatedBy := portfolioMixinFields0[3].Descriptor()
 	// portfolio.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	portfolio.UpdatedByValidator = portfolioDescUpdatedBy.Validators[0].(func(string) error)
+	// portfolioDescName is the schema descriptor for name field.
+	portfolioDescName := portfolioFields[1].Descriptor()
+	// portfolio.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	portfolio.NameValidator = portfolioDescName.Validators[0].(func(string) error)
 	// portfolioDescID is the schema descriptor for id field.
 	portfolioDescID := portfolioFields[0].Descriptor()
 	// portfolio.DefaultID holds the default value on creation for the id field.
@@ -489,6 +631,10 @@ func init() {
 	propertyDescUpdatedBy := propertyMixinFields0[3].Descriptor()
 	// property.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	property.UpdatedByValidator = propertyDescUpdatedBy.Validators[0].(func(string) error)
+	// propertyDescName is the schema descriptor for name field.
+	propertyDescName := propertyFields[1].Descriptor()
+	// property.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	property.NameValidator = propertyDescName.Validators[0].(func(string) error)
 	// propertyDescRentControlled is the schema descriptor for rent_controlled field.
 	propertyDescRentControlled := propertyFields[12].Descriptor()
 	// property.DefaultRentControlled holds the default value on creation for the rent_controlled field.
@@ -497,9 +643,38 @@ func init() {
 	propertyDescID := propertyFields[0].Descriptor()
 	// property.DefaultID holds the default value on creation for the id field.
 	property.DefaultID = propertyDescID.Default.(func() uuid.UUID)
+	propertyjurisdictionMixin := schema.PropertyJurisdiction{}.Mixin()
+	propertyjurisdictionMixinFields0 := propertyjurisdictionMixin[0].Fields()
+	_ = propertyjurisdictionMixinFields0
+	propertyjurisdictionFields := schema.PropertyJurisdiction{}.Fields()
+	_ = propertyjurisdictionFields
+	// propertyjurisdictionDescCreatedAt is the schema descriptor for created_at field.
+	propertyjurisdictionDescCreatedAt := propertyjurisdictionMixinFields0[0].Descriptor()
+	// propertyjurisdiction.DefaultCreatedAt holds the default value on creation for the created_at field.
+	propertyjurisdiction.DefaultCreatedAt = propertyjurisdictionDescCreatedAt.Default.(func() time.Time)
+	// propertyjurisdictionDescUpdatedAt is the schema descriptor for updated_at field.
+	propertyjurisdictionDescUpdatedAt := propertyjurisdictionMixinFields0[1].Descriptor()
+	// propertyjurisdiction.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	propertyjurisdiction.DefaultUpdatedAt = propertyjurisdictionDescUpdatedAt.Default.(func() time.Time)
+	// propertyjurisdiction.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	propertyjurisdiction.UpdateDefaultUpdatedAt = propertyjurisdictionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// propertyjurisdictionDescCreatedBy is the schema descriptor for created_by field.
+	propertyjurisdictionDescCreatedBy := propertyjurisdictionMixinFields0[2].Descriptor()
+	// propertyjurisdiction.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	propertyjurisdiction.CreatedByValidator = propertyjurisdictionDescCreatedBy.Validators[0].(func(string) error)
+	// propertyjurisdictionDescUpdatedBy is the schema descriptor for updated_by field.
+	propertyjurisdictionDescUpdatedBy := propertyjurisdictionMixinFields0[3].Descriptor()
+	// propertyjurisdiction.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
+	propertyjurisdiction.UpdatedByValidator = propertyjurisdictionDescUpdatedBy.Validators[0].(func(string) error)
+	// propertyjurisdictionDescVerified is the schema descriptor for verified field.
+	propertyjurisdictionDescVerified := propertyjurisdictionFields[4].Descriptor()
+	// propertyjurisdiction.DefaultVerified holds the default value on creation for the verified field.
+	propertyjurisdiction.DefaultVerified = propertyjurisdictionDescVerified.Default.(bool)
+	// propertyjurisdictionDescID is the schema descriptor for id field.
+	propertyjurisdictionDescID := propertyjurisdictionFields[0].Descriptor()
+	// propertyjurisdiction.DefaultID holds the default value on creation for the id field.
+	propertyjurisdiction.DefaultID = propertyjurisdictionDescID.Default.(func() uuid.UUID)
 	reconciliationMixin := schema.Reconciliation{}.Mixin()
-	reconciliationHooks := schema.Reconciliation{}.Hooks()
-	reconciliation.Hooks[0] = reconciliationHooks[0]
 	reconciliationMixinFields0 := reconciliationMixin[0].Fields()
 	_ = reconciliationMixinFields0
 	reconciliationFields := schema.Reconciliation{}.Fields()
@@ -523,19 +698,19 @@ func init() {
 	// reconciliation.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	reconciliation.UpdatedByValidator = reconciliationDescUpdatedBy.Validators[0].(func(string) error)
 	// reconciliationDescStatementBalanceCurrency is the schema descriptor for statement_balance_currency field.
-	reconciliationDescStatementBalanceCurrency := reconciliationFields[4].Descriptor()
+	reconciliationDescStatementBalanceCurrency := reconciliationFields[5].Descriptor()
 	// reconciliation.DefaultStatementBalanceCurrency holds the default value on creation for the statement_balance_currency field.
 	reconciliation.DefaultStatementBalanceCurrency = reconciliationDescStatementBalanceCurrency.Default.(string)
 	// reconciliation.StatementBalanceCurrencyValidator is a validator for the "statement_balance_currency" field. It is called by the builders before save.
 	reconciliation.StatementBalanceCurrencyValidator = reconciliationDescStatementBalanceCurrency.Validators[0].(func(string) error)
-	// reconciliationDescSystemBalanceCurrency is the schema descriptor for system_balance_currency field.
-	reconciliationDescSystemBalanceCurrency := reconciliationFields[6].Descriptor()
-	// reconciliation.DefaultSystemBalanceCurrency holds the default value on creation for the system_balance_currency field.
-	reconciliation.DefaultSystemBalanceCurrency = reconciliationDescSystemBalanceCurrency.Default.(string)
-	// reconciliation.SystemBalanceCurrencyValidator is a validator for the "system_balance_currency" field. It is called by the builders before save.
-	reconciliation.SystemBalanceCurrencyValidator = reconciliationDescSystemBalanceCurrency.Validators[0].(func(string) error)
+	// reconciliationDescGlBalanceCurrency is the schema descriptor for gl_balance_currency field.
+	reconciliationDescGlBalanceCurrency := reconciliationFields[7].Descriptor()
+	// reconciliation.DefaultGlBalanceCurrency holds the default value on creation for the gl_balance_currency field.
+	reconciliation.DefaultGlBalanceCurrency = reconciliationDescGlBalanceCurrency.Default.(string)
+	// reconciliation.GlBalanceCurrencyValidator is a validator for the "gl_balance_currency" field. It is called by the builders before save.
+	reconciliation.GlBalanceCurrencyValidator = reconciliationDescGlBalanceCurrency.Validators[0].(func(string) error)
 	// reconciliationDescDifferenceCurrency is the schema descriptor for difference_currency field.
-	reconciliationDescDifferenceCurrency := reconciliationFields[8].Descriptor()
+	reconciliationDescDifferenceCurrency := reconciliationFields[9].Descriptor()
 	// reconciliation.DefaultDifferenceCurrency holds the default value on creation for the difference_currency field.
 	reconciliation.DefaultDifferenceCurrency = reconciliationDescDifferenceCurrency.Default.(string)
 	// reconciliation.DifferenceCurrencyValidator is a validator for the "difference_currency" field. It is called by the builders before save.
@@ -569,6 +744,10 @@ func init() {
 	spaceDescUpdatedBy := spaceMixinFields0[3].Descriptor()
 	// space.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	space.UpdatedByValidator = spaceDescUpdatedBy.Validators[0].(func(string) error)
+	// spaceDescSpaceNumber is the schema descriptor for space_number field.
+	spaceDescSpaceNumber := spaceFields[1].Descriptor()
+	// space.SpaceNumberValidator is a validator for the "space_number" field. It is called by the builders before save.
+	space.SpaceNumberValidator = spaceDescSpaceNumber.Validators[0].(func(string) error)
 	// spaceDescSharedWithParent is the schema descriptor for shared_with_parent field.
 	spaceDescSharedWithParent := spaceFields[5].Descriptor()
 	// space.DefaultSharedWithParent holds the default value on creation for the shared_with_parent field.
@@ -595,6 +774,33 @@ func init() {
 	spaceDescID := spaceFields[0].Descriptor()
 	// space.DefaultID holds the default value on creation for the id field.
 	space.DefaultID = spaceDescID.Default.(func() uuid.UUID)
+	statefulentityMixin := schema.StatefulEntity{}.Mixin()
+	statefulentityMixinFields0 := statefulentityMixin[0].Fields()
+	_ = statefulentityMixinFields0
+	statefulentityFields := schema.StatefulEntity{}.Fields()
+	_ = statefulentityFields
+	// statefulentityDescCreatedAt is the schema descriptor for created_at field.
+	statefulentityDescCreatedAt := statefulentityMixinFields0[0].Descriptor()
+	// statefulentity.DefaultCreatedAt holds the default value on creation for the created_at field.
+	statefulentity.DefaultCreatedAt = statefulentityDescCreatedAt.Default.(func() time.Time)
+	// statefulentityDescUpdatedAt is the schema descriptor for updated_at field.
+	statefulentityDescUpdatedAt := statefulentityMixinFields0[1].Descriptor()
+	// statefulentity.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	statefulentity.DefaultUpdatedAt = statefulentityDescUpdatedAt.Default.(func() time.Time)
+	// statefulentity.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	statefulentity.UpdateDefaultUpdatedAt = statefulentityDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// statefulentityDescCreatedBy is the schema descriptor for created_by field.
+	statefulentityDescCreatedBy := statefulentityMixinFields0[2].Descriptor()
+	// statefulentity.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	statefulentity.CreatedByValidator = statefulentityDescCreatedBy.Validators[0].(func(string) error)
+	// statefulentityDescUpdatedBy is the schema descriptor for updated_by field.
+	statefulentityDescUpdatedBy := statefulentityMixinFields0[3].Descriptor()
+	// statefulentity.UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
+	statefulentity.UpdatedByValidator = statefulentityDescUpdatedBy.Validators[0].(func(string) error)
+	// statefulentityDescID is the schema descriptor for id field.
+	statefulentityDescID := statefulentityFields[0].Descriptor()
+	// statefulentity.DefaultID holds the default value on creation for the id field.
+	statefulentity.DefaultID = statefulentityDescID.Default.(func() uuid.UUID)
 }
 
 const (

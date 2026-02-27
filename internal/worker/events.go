@@ -21,6 +21,13 @@ const (
 	EventJournalEntryPendingApproval = "journal_entry.pending_approval"
 	EventJournalEntryPosted = "journal_entry.posted"
 	EventJournalEntryVoided = "journal_entry.voided"
+	EventJurisdictionActive = "jurisdiction.active"
+	EventJurisdictionDissolved = "jurisdiction.dissolved"
+	EventJurisdictionMerged = "jurisdiction.merged"
+	EventJurisdictionRuleActive = "jurisdiction_rule.active"
+	EventJurisdictionRuleExpired = "jurisdiction_rule.expired"
+	EventJurisdictionRuleRepealed = "jurisdiction_rule.repealed"
+	EventJurisdictionRuleSuperseded = "jurisdiction_rule.superseded"
 	EventLeaseActive = "lease.active"
 	EventLeaseDraft = "lease.draft"
 	EventLeaseEviction = "lease.eviction"
@@ -77,6 +84,13 @@ var NATSSubjects = map[string]string{
 	"journal_entry.pending_approval": "propeller.events.journal_entry.pending_approval",
 	"journal_entry.posted": "propeller.events.journal_entry.posted",
 	"journal_entry.voided": "propeller.events.journal_entry.voided",
+	"jurisdiction.active": "propeller.events.jurisdiction.active",
+	"jurisdiction.dissolved": "propeller.events.jurisdiction.dissolved",
+	"jurisdiction.merged": "propeller.events.jurisdiction.merged",
+	"jurisdiction_rule.active": "propeller.events.jurisdiction_rule.active",
+	"jurisdiction_rule.expired": "propeller.events.jurisdiction_rule.expired",
+	"jurisdiction_rule.repealed": "propeller.events.jurisdiction_rule.repealed",
+	"jurisdiction_rule.superseded": "propeller.events.jurisdiction_rule.superseded",
 	"lease.active": "propeller.events.lease.active",
 	"lease.draft": "propeller.events.lease.draft",
 	"lease.eviction": "propeller.events.lease.eviction",

@@ -38,14 +38,13 @@ func NewPropertyHandler(client *ent.Client) *PropertyHandler {
 // ============================================================================
 
 type createPortfolioRequest struct {
-	Name                    string   `json:"name"`
-	ManagementType          string   `json:"management_type"`
-	RequiresTrustAccounting bool     `json:"requires_trust_accounting"`
-	TrustBankAccountID      *string  `json:"trust_bank_account_id,omitempty"`
-	Status                  string   `json:"status"`
-	DefaultPaymentMethods   []string `json:"default_payment_methods,omitempty"`
-	FiscalYearStartMonth    int      `json:"fiscal_year_start_month"`
-	OwnerID                 string   `json:"owner_id"`
+	Name                     string  `json:"name"`
+	ManagementType           string  `json:"management_type"`
+	Description              *string `json:"description,omitempty"`
+	Status                   string  `json:"status"`
+	DefaultChartOfAccountsID *string `json:"default_chart_of_accounts_id,omitempty"`
+	DefaultBankAccountID     *string `json:"default_bank_account_id,omitempty"`
+	OwnerID                  string  `json:"owner_id"`
 }
 
 func (h *PropertyHandler) CreatePortfolio(w http.ResponseWriter, r *http.Request) {
@@ -61,15 +60,16 @@ func (h *PropertyHandler) CreatePortfolio(w http.ResponseWriter, r *http.Request
 	builder := h.client.Portfolio.Create()
 	builder.SetName(req.Name)
 	builder.SetManagementType(portfolio.ManagementType(req.ManagementType))
-	builder.SetRequiresTrustAccounting(req.RequiresTrustAccounting)
-	if req.TrustBankAccountID != nil {
-		builder.SetNillableTrustBankAccountID(req.TrustBankAccountID)
+	if req.Description != nil {
+		builder.SetNillableDescription(req.Description)
 	}
 	builder.SetStatus(portfolio.Status(req.Status))
-	if len(req.DefaultPaymentMethods) > 0 {
-		builder.SetDefaultPaymentMethods(req.DefaultPaymentMethods)
+	if req.DefaultChartOfAccountsID != nil {
+		builder.SetNillableDefaultChartOfAccountsID(req.DefaultChartOfAccountsID)
 	}
-	builder.SetFiscalYearStartMonth(req.FiscalYearStartMonth)
+	if req.DefaultBankAccountID != nil {
+		builder.SetNillableDefaultBankAccountID(req.DefaultBankAccountID)
+	}
 	{
 		uid, err := uuid.Parse(req.OwnerID)
 		if err != nil {
@@ -117,14 +117,13 @@ func (h *PropertyHandler) ListPortfolios(w http.ResponseWriter, r *http.Request)
 }
 
 type updatePortfolioRequest struct {
-	Name                    *string  `json:"name,omitempty"`
-	ManagementType          *string  `json:"management_type,omitempty"`
-	RequiresTrustAccounting *bool    `json:"requires_trust_accounting,omitempty"`
-	TrustBankAccountID      *string  `json:"trust_bank_account_id,omitempty"`
-	Status                  *string  `json:"status,omitempty"`
-	DefaultPaymentMethods   []string `json:"default_payment_methods,omitempty"`
-	FiscalYearStartMonth    *int     `json:"fiscal_year_start_month,omitempty"`
-	OwnerID                 *string  `json:"owner_id,omitempty"`
+	Name                     *string `json:"name,omitempty"`
+	ManagementType           *string `json:"management_type,omitempty"`
+	Description              *string `json:"description,omitempty"`
+	Status                   *string `json:"status,omitempty"`
+	DefaultChartOfAccountsID *string `json:"default_chart_of_accounts_id,omitempty"`
+	DefaultBankAccountID     *string `json:"default_bank_account_id,omitempty"`
+	OwnerID                  *string `json:"owner_id,omitempty"`
 }
 
 func (h *PropertyHandler) UpdatePortfolio(w http.ResponseWriter, r *http.Request) {
@@ -148,20 +147,17 @@ func (h *PropertyHandler) UpdatePortfolio(w http.ResponseWriter, r *http.Request
 	if req.ManagementType != nil {
 		builder.SetManagementType(portfolio.ManagementType(*req.ManagementType))
 	}
-	if req.RequiresTrustAccounting != nil {
-		builder.SetRequiresTrustAccounting(*req.RequiresTrustAccounting)
-	}
-	if req.TrustBankAccountID != nil {
-		builder.SetNillableTrustBankAccountID(req.TrustBankAccountID)
+	if req.Description != nil {
+		builder.SetNillableDescription(req.Description)
 	}
 	if req.Status != nil {
 		builder.SetStatus(portfolio.Status(*req.Status))
 	}
-	if req.DefaultPaymentMethods != nil {
-		builder.SetDefaultPaymentMethods(req.DefaultPaymentMethods)
+	if req.DefaultChartOfAccountsID != nil {
+		builder.SetNillableDefaultChartOfAccountsID(req.DefaultChartOfAccountsID)
 	}
-	if req.FiscalYearStartMonth != nil {
-		builder.SetFiscalYearStartMonth(*req.FiscalYearStartMonth)
+	if req.DefaultBankAccountID != nil {
+		builder.SetNillableDefaultBankAccountID(req.DefaultBankAccountID)
 	}
 	if req.OwnerID != nil {
 		uid, err := uuid.Parse(*req.OwnerID)

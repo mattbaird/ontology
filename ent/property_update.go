@@ -20,6 +20,7 @@ import (
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/predicate"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/propertyjurisdiction"
 	"github.com/matthewbaird/ontology/ent/space"
 	"github.com/matthewbaird/ontology/internal/types"
 )
@@ -533,6 +534,21 @@ func (_u *PropertyUpdate) AddLedgerEntries(v ...*LedgerEntry) *PropertyUpdate {
 	return _u.AddLedgerEntryIDs(ids...)
 }
 
+// AddPropertyJurisdictionIDs adds the "property_jurisdictions" edge to the PropertyJurisdiction entity by IDs.
+func (_u *PropertyUpdate) AddPropertyJurisdictionIDs(ids ...uuid.UUID) *PropertyUpdate {
+	_u.mutation.AddPropertyJurisdictionIDs(ids...)
+	return _u
+}
+
+// AddPropertyJurisdictions adds the "property_jurisdictions" edges to the PropertyJurisdiction entity.
+func (_u *PropertyUpdate) AddPropertyJurisdictions(v ...*PropertyJurisdiction) *PropertyUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPropertyJurisdictionIDs(ids...)
+}
+
 // Mutation returns the PropertyMutation object of the builder.
 func (_u *PropertyUpdate) Mutation() *PropertyMutation {
 	return _u.mutation
@@ -634,6 +650,27 @@ func (_u *PropertyUpdate) RemoveLedgerEntries(v ...*LedgerEntry) *PropertyUpdate
 	return _u.RemoveLedgerEntryIDs(ids...)
 }
 
+// ClearPropertyJurisdictions clears all "property_jurisdictions" edges to the PropertyJurisdiction entity.
+func (_u *PropertyUpdate) ClearPropertyJurisdictions() *PropertyUpdate {
+	_u.mutation.ClearPropertyJurisdictions()
+	return _u
+}
+
+// RemovePropertyJurisdictionIDs removes the "property_jurisdictions" edge to PropertyJurisdiction entities by IDs.
+func (_u *PropertyUpdate) RemovePropertyJurisdictionIDs(ids ...uuid.UUID) *PropertyUpdate {
+	_u.mutation.RemovePropertyJurisdictionIDs(ids...)
+	return _u
+}
+
+// RemovePropertyJurisdictions removes "property_jurisdictions" edges to PropertyJurisdiction entities.
+func (_u *PropertyUpdate) RemovePropertyJurisdictions(v ...*PropertyJurisdiction) *PropertyUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePropertyJurisdictionIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *PropertyUpdate) Save(ctx context.Context) (int, error) {
 	if err := _u.defaults(); err != nil {
@@ -691,6 +728,11 @@ func (_u *PropertyUpdate) check() error {
 	if v, ok := _u.mutation.Source(); ok {
 		if err := property.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Property.source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Name(); ok {
+		if err := property.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Property.name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.PropertyType(); ok {
@@ -1074,6 +1116,51 @@ func (_u *PropertyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PropertyJurisdictionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.PropertyJurisdictionsTable,
+			Columns: []string{property.PropertyJurisdictionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(propertyjurisdiction.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPropertyJurisdictionsIDs(); len(nodes) > 0 && !_u.mutation.PropertyJurisdictionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.PropertyJurisdictionsTable,
+			Columns: []string{property.PropertyJurisdictionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(propertyjurisdiction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PropertyJurisdictionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.PropertyJurisdictionsTable,
+			Columns: []string{property.PropertyJurisdictionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(propertyjurisdiction.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1597,6 +1684,21 @@ func (_u *PropertyUpdateOne) AddLedgerEntries(v ...*LedgerEntry) *PropertyUpdate
 	return _u.AddLedgerEntryIDs(ids...)
 }
 
+// AddPropertyJurisdictionIDs adds the "property_jurisdictions" edge to the PropertyJurisdiction entity by IDs.
+func (_u *PropertyUpdateOne) AddPropertyJurisdictionIDs(ids ...uuid.UUID) *PropertyUpdateOne {
+	_u.mutation.AddPropertyJurisdictionIDs(ids...)
+	return _u
+}
+
+// AddPropertyJurisdictions adds the "property_jurisdictions" edges to the PropertyJurisdiction entity.
+func (_u *PropertyUpdateOne) AddPropertyJurisdictions(v ...*PropertyJurisdiction) *PropertyUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPropertyJurisdictionIDs(ids...)
+}
+
 // Mutation returns the PropertyMutation object of the builder.
 func (_u *PropertyUpdateOne) Mutation() *PropertyMutation {
 	return _u.mutation
@@ -1698,6 +1800,27 @@ func (_u *PropertyUpdateOne) RemoveLedgerEntries(v ...*LedgerEntry) *PropertyUpd
 	return _u.RemoveLedgerEntryIDs(ids...)
 }
 
+// ClearPropertyJurisdictions clears all "property_jurisdictions" edges to the PropertyJurisdiction entity.
+func (_u *PropertyUpdateOne) ClearPropertyJurisdictions() *PropertyUpdateOne {
+	_u.mutation.ClearPropertyJurisdictions()
+	return _u
+}
+
+// RemovePropertyJurisdictionIDs removes the "property_jurisdictions" edge to PropertyJurisdiction entities by IDs.
+func (_u *PropertyUpdateOne) RemovePropertyJurisdictionIDs(ids ...uuid.UUID) *PropertyUpdateOne {
+	_u.mutation.RemovePropertyJurisdictionIDs(ids...)
+	return _u
+}
+
+// RemovePropertyJurisdictions removes "property_jurisdictions" edges to PropertyJurisdiction entities.
+func (_u *PropertyUpdateOne) RemovePropertyJurisdictions(v ...*PropertyJurisdiction) *PropertyUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePropertyJurisdictionIDs(ids...)
+}
+
 // Where appends a list predicates to the PropertyUpdate builder.
 func (_u *PropertyUpdateOne) Where(ps ...predicate.Property) *PropertyUpdateOne {
 	_u.mutation.Where(ps...)
@@ -1768,6 +1891,11 @@ func (_u *PropertyUpdateOne) check() error {
 	if v, ok := _u.mutation.Source(); ok {
 		if err := property.SourceValidator(v); err != nil {
 			return &ValidationError{Name: "source", err: fmt.Errorf(`ent: validator failed for field "Property.source": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Name(); ok {
+		if err := property.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Property.name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.PropertyType(); ok {
@@ -2168,6 +2296,51 @@ func (_u *PropertyUpdateOne) sqlSave(ctx context.Context) (_node *Property, err 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(ledgerentry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PropertyJurisdictionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.PropertyJurisdictionsTable,
+			Columns: []string{property.PropertyJurisdictionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(propertyjurisdiction.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPropertyJurisdictionsIDs(); len(nodes) > 0 && !_u.mutation.PropertyJurisdictionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.PropertyJurisdictionsTable,
+			Columns: []string{property.PropertyJurisdictionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(propertyjurisdiction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PropertyJurisdictionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   property.PropertyJurisdictionsTable,
+			Columns: []string{property.PropertyJurisdictionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(propertyjurisdiction.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

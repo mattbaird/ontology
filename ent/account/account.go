@@ -282,6 +282,29 @@ func AccountSubtypeValidator(as AccountSubtype) error {
 	}
 }
 
+// NormalBalance defines the type for the "normal_balance" enum field.
+type NormalBalance string
+
+// NormalBalance values.
+const (
+	NormalBalanceDebit  NormalBalance = "debit"
+	NormalBalanceCredit NormalBalance = "credit"
+)
+
+func (nb NormalBalance) String() string {
+	return string(nb)
+}
+
+// NormalBalanceValidator is a validator for the "normal_balance" field enum values. It is called by the builders before save.
+func NormalBalanceValidator(nb NormalBalance) error {
+	switch nb {
+	case NormalBalanceDebit, NormalBalanceCredit:
+		return nil
+	default:
+		return fmt.Errorf("account: invalid enum value for normal_balance field: %q", nb)
+	}
+}
+
 // Status defines the type for the "status" enum field.
 type Status string
 
@@ -303,6 +326,30 @@ func StatusValidator(s Status) error {
 		return nil
 	default:
 		return fmt.Errorf("account: invalid enum value for status field: %q", s)
+	}
+}
+
+// TrustType defines the type for the "trust_type" enum field.
+type TrustType string
+
+// TrustType values.
+const (
+	TrustTypeOperating       TrustType = "operating"
+	TrustTypeSecurityDeposit TrustType = "security_deposit"
+	TrustTypeEscrow          TrustType = "escrow"
+)
+
+func (tt TrustType) String() string {
+	return string(tt)
+}
+
+// TrustTypeValidator is a validator for the "trust_type" field enum values. It is called by the builders before save.
+func TrustTypeValidator(tt TrustType) error {
+	switch tt {
+	case TrustTypeOperating, TrustTypeSecurityDeposit, TrustTypeEscrow:
+		return nil
+	default:
+		return fmt.Errorf("account: invalid enum value for trust_type field: %q", tt)
 	}
 }
 

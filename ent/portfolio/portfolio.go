@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -35,16 +34,14 @@ const (
 	FieldName = "name"
 	// FieldManagementType holds the string denoting the management_type field in the database.
 	FieldManagementType = "management_type"
-	// FieldRequiresTrustAccounting holds the string denoting the requires_trust_accounting field in the database.
-	FieldRequiresTrustAccounting = "requires_trust_accounting"
-	// FieldTrustBankAccountID holds the string denoting the trust_bank_account_id field in the database.
-	FieldTrustBankAccountID = "trust_bank_account_id"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
-	// FieldDefaultPaymentMethods holds the string denoting the default_payment_methods field in the database.
-	FieldDefaultPaymentMethods = "default_payment_methods"
-	// FieldFiscalYearStartMonth holds the string denoting the fiscal_year_start_month field in the database.
-	FieldFiscalYearStartMonth = "fiscal_year_start_month"
+	// FieldDefaultChartOfAccountsID holds the string denoting the default_chart_of_accounts_id field in the database.
+	FieldDefaultChartOfAccountsID = "default_chart_of_accounts_id"
+	// FieldDefaultBankAccountID holds the string denoting the default_bank_account_id field in the database.
+	FieldDefaultBankAccountID = "default_bank_account_id"
 	// EdgeProperties holds the string denoting the properties edge name in mutations.
 	EdgeProperties = "properties"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
@@ -88,11 +85,10 @@ var Columns = []string{
 	FieldAgentGoalID,
 	FieldName,
 	FieldManagementType,
-	FieldRequiresTrustAccounting,
-	FieldTrustBankAccountID,
+	FieldDescription,
 	FieldStatus,
-	FieldDefaultPaymentMethods,
-	FieldFiscalYearStartMonth,
+	FieldDefaultChartOfAccountsID,
+	FieldDefaultBankAccountID,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "portfolios"
@@ -117,13 +113,7 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// Note that the variables below are initialized by the runtime
-// package on the initialization of the application. Therefore,
-// it should be imported in the main as follows:
-//
-//	import _ "github.com/matthewbaird/ontology/ent/runtime"
 var (
-	Hooks [1]ent.Hook
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -134,6 +124,8 @@ var (
 	CreatedByValidator func(string) error
 	// UpdatedByValidator is a validator for the "updated_by" field. It is called by the builders before save.
 	UpdatedByValidator func(string) error
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -266,14 +258,9 @@ func ByManagementType(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldManagementType, opts...).ToFunc()
 }
 
-// ByRequiresTrustAccounting orders the results by the requires_trust_accounting field.
-func ByRequiresTrustAccounting(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRequiresTrustAccounting, opts...).ToFunc()
-}
-
-// ByTrustBankAccountID orders the results by the trust_bank_account_id field.
-func ByTrustBankAccountID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTrustBankAccountID, opts...).ToFunc()
+// ByDescription orders the results by the description field.
+func ByDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.
@@ -281,9 +268,14 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
-// ByFiscalYearStartMonth orders the results by the fiscal_year_start_month field.
-func ByFiscalYearStartMonth(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFiscalYearStartMonth, opts...).ToFunc()
+// ByDefaultChartOfAccountsID orders the results by the default_chart_of_accounts_id field.
+func ByDefaultChartOfAccountsID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDefaultChartOfAccountsID, opts...).ToFunc()
+}
+
+// ByDefaultBankAccountID orders the results by the default_bank_account_id field.
+func ByDefaultBankAccountID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDefaultBankAccountID, opts...).ToFunc()
 }
 
 // ByPropertiesCount orders the results by properties count.

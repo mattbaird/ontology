@@ -94,9 +94,11 @@ type PropertyEdges struct {
 	Applications []*Application `json:"applications,omitempty"`
 	// LedgerEntry relates to Property (inverse)
 	LedgerEntries []*LedgerEntry `json:"ledger_entries,omitempty"`
+	// PropertyJurisdiction links Property (inverse)
+	PropertyJurisdictions []*PropertyJurisdiction `json:"property_jurisdictions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
 // PortfolioOrErr returns the Portfolio value or an error if the edge
@@ -155,6 +157,15 @@ func (e PropertyEdges) LedgerEntriesOrErr() ([]*LedgerEntry, error) {
 		return e.LedgerEntries, nil
 	}
 	return nil, &NotLoadedError{edge: "ledger_entries"}
+}
+
+// PropertyJurisdictionsOrErr returns the PropertyJurisdictions value or an error if the edge
+// was not loaded in eager-loading.
+func (e PropertyEdges) PropertyJurisdictionsOrErr() ([]*PropertyJurisdiction, error) {
+	if e.loadedTypes[6] {
+		return e.PropertyJurisdictions, nil
+	}
+	return nil, &NotLoadedError{edge: "property_jurisdictions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -422,6 +433,11 @@ func (_m *Property) QueryApplications() *ApplicationQuery {
 // QueryLedgerEntries queries the "ledger_entries" edge of the Property entity.
 func (_m *Property) QueryLedgerEntries() *LedgerEntryQuery {
 	return NewPropertyClient(_m.config).QueryLedgerEntries(_m)
+}
+
+// QueryPropertyJurisdictions queries the "property_jurisdictions" edge of the Property entity.
+func (_m *Property) QueryPropertyJurisdictions() *PropertyJurisdictionQuery {
+	return NewPropertyClient(_m.config).QueryPropertyJurisdictions(_m)
 }
 
 // Update returns a builder for updating this Property.

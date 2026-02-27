@@ -90,14 +90,7 @@ var knownValueTypes = map[string]string{
 	"#ContractionRight": "types.ContractionRight", "#CAMCategoryTerms": "types.CAMCategoryTerms",
 }
 
-var entityTransitionMap = map[string]string{
-	"Lease": "#LeaseTransitions", "Space": "#SpaceTransitions",
-	"Building": "#BuildingTransitions",
-	"Application": "#ApplicationTransitions", "JournalEntry": "#JournalEntryTransitions",
-	"Portfolio": "#PortfolioTransitions", "Property": "#PropertyTransitions",
-	"PersonRole": "#PersonRoleTransitions", "Organization": "#OrganizationTransitions",
-	"BankAccount": "#BankAccountTransitions", "Reconciliation": "#ReconciliationTransitions",
-}
+// State machines are read from the unified #StateMachines map in CUE.
 
 // goInitialisms matches Ent's PascalCase behavior (only standard Go initialisms).
 var goInitialisms = map[string]bool{
@@ -177,7 +170,7 @@ func isTimeField(val cue.Value) bool {
 }
 
 func isEnum(val cue.Value) bool {
-	op, args := val.Expr()
+	op, args := findEnumDisjunction(val)
 	if op != cue.OrOp || len(args) < 2 {
 		return false
 	}
@@ -201,6 +194,25 @@ func isEnum(val cue.Value) bool {
 		}
 	}
 	return true
+}
+
+// findEnumDisjunction extracts the OrOp disjunction from a value that may be
+// wrapped in an AndOp (e.g., when a field from an embedded base type is
+// unified with enum values in the entity).
+func findEnumDisjunction(val cue.Value) (cue.Op, []cue.Value) {
+	op, args := val.Expr()
+	if op == cue.OrOp {
+		return op, args
+	}
+	if op == cue.AndOp {
+		for _, arg := range args {
+			argOp, argArgs := arg.Expr()
+			if argOp == cue.OrOp {
+				return argOp, argArgs
+			}
+		}
+	}
+	return op, args
 }
 
 func inferKindFromExpr(val cue.Value) cue.Kind {
@@ -336,6 +348,10 @@ func parseEntities(val cue.Value) map[string]*entityInfo {
 			continue
 		}
 		name := strings.TrimPrefix(label, "#")
+		// Skip base entity types — not domain entities
+		if name == "BaseEntity" || name == "StatefulEntity" || name == "ImmutableEntity" {
+			continue
+		}
 		ent := &entityInfo{Name: name}
 		fIter, _ := defVal.Fields(cue.Optional(true))
 		for fIter.Next() {
@@ -445,12 +461,8 @@ func appendEdge(fks []edgeFK, fields []fieldDef, e edgeDef) []edgeFK {
 }
 
 func parseStateMachines(val cue.Value, entities map[string]*entityInfo) {
-	for entName, cueName := range entityTransitionMap {
-		ent, ok := entities[entName]
-		if !ok {
-			continue
-		}
-		smVal := val.LookupPath(cue.ParsePath(cueName))
+	for entName, ent := range entities {
+		smVal := val.LookupPath(cue.ParsePath("#StateMachines." + toSnake(entName)))
 		if smVal.Err() != nil {
 			continue
 		}
@@ -1291,10 +1303,11 @@ func generateRoutesFile(projectRoot string, services []serviceDef, handlerTypes 
 
 	// Handler variable names
 	handlerVars := map[string]string{
-		"PersonService":     "ph",
-		"PropertyService":   "proph",
-		"LeaseService":      "lh",
-		"AccountingService": "ah",
+		"PersonService":       "ph",
+		"PropertyService":     "proph",
+		"LeaseService":        "lh",
+		"AccountingService":   "ah",
+		"JurisdictionService": "jh",
 	}
 
 	// Instantiate handlers — skip services where all operations are custom

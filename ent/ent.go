@@ -15,8 +15,12 @@ import (
 	"github.com/matthewbaird/ontology/ent/account"
 	"github.com/matthewbaird/ontology/ent/application"
 	"github.com/matthewbaird/ontology/ent/bankaccount"
+	"github.com/matthewbaird/ontology/ent/baseentity"
 	"github.com/matthewbaird/ontology/ent/building"
+	"github.com/matthewbaird/ontology/ent/immutableentity"
 	"github.com/matthewbaird/ontology/ent/journalentry"
+	"github.com/matthewbaird/ontology/ent/jurisdiction"
+	"github.com/matthewbaird/ontology/ent/jurisdictionrule"
 	"github.com/matthewbaird/ontology/ent/lease"
 	"github.com/matthewbaird/ontology/ent/leasespace"
 	"github.com/matthewbaird/ontology/ent/ledgerentry"
@@ -25,8 +29,10 @@ import (
 	"github.com/matthewbaird/ontology/ent/personrole"
 	"github.com/matthewbaird/ontology/ent/portfolio"
 	"github.com/matthewbaird/ontology/ent/property"
+	"github.com/matthewbaird/ontology/ent/propertyjurisdiction"
 	"github.com/matthewbaird/ontology/ent/reconciliation"
 	"github.com/matthewbaird/ontology/ent/space"
+	"github.com/matthewbaird/ontology/ent/statefulentity"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -87,21 +93,27 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			account.Table:        account.ValidColumn,
-			application.Table:    application.ValidColumn,
-			bankaccount.Table:    bankaccount.ValidColumn,
-			building.Table:       building.ValidColumn,
-			journalentry.Table:   journalentry.ValidColumn,
-			lease.Table:          lease.ValidColumn,
-			leasespace.Table:     leasespace.ValidColumn,
-			ledgerentry.Table:    ledgerentry.ValidColumn,
-			organization.Table:   organization.ValidColumn,
-			person.Table:         person.ValidColumn,
-			personrole.Table:     personrole.ValidColumn,
-			portfolio.Table:      portfolio.ValidColumn,
-			property.Table:       property.ValidColumn,
-			reconciliation.Table: reconciliation.ValidColumn,
-			space.Table:          space.ValidColumn,
+			account.Table:              account.ValidColumn,
+			application.Table:          application.ValidColumn,
+			bankaccount.Table:          bankaccount.ValidColumn,
+			baseentity.Table:           baseentity.ValidColumn,
+			building.Table:             building.ValidColumn,
+			immutableentity.Table:      immutableentity.ValidColumn,
+			journalentry.Table:         journalentry.ValidColumn,
+			jurisdiction.Table:         jurisdiction.ValidColumn,
+			jurisdictionrule.Table:     jurisdictionrule.ValidColumn,
+			lease.Table:                lease.ValidColumn,
+			leasespace.Table:           leasespace.ValidColumn,
+			ledgerentry.Table:          ledgerentry.ValidColumn,
+			organization.Table:         organization.ValidColumn,
+			person.Table:               person.ValidColumn,
+			personrole.Table:           personrole.ValidColumn,
+			portfolio.Table:            portfolio.ValidColumn,
+			property.Table:             property.ValidColumn,
+			propertyjurisdiction.Table: propertyjurisdiction.ValidColumn,
+			reconciliation.Table:       reconciliation.ValidColumn,
+			space.Table:                space.ValidColumn,
+			statefulentity.Table:       statefulentity.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

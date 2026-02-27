@@ -113,7 +113,7 @@ func isTimeField(val cue.Value) bool {
 }
 
 func isEnum(val cue.Value) bool {
-	op, args := val.Expr()
+	op, args := findEnumDisjunction(val)
 	if op != cue.OrOp || len(args) < 2 {
 		return false
 	}
@@ -140,10 +140,7 @@ func isEnum(val cue.Value) bool {
 }
 
 func extractEnumValues(val cue.Value) []string {
-	op, args := val.Expr()
-	if op != cue.OrOp {
-		return nil
-	}
+	_, args := findEnumDisjunction(val)
 	var values []string
 	for _, arg := range args {
 		if s, err := arg.String(); err == nil {
@@ -157,6 +154,25 @@ func extractEnumValues(val cue.Value) []string {
 		}
 	}
 	return values
+}
+
+// findEnumDisjunction extracts the OrOp disjunction from a value that may be
+// wrapped in an AndOp (e.g., when a field from an embedded base type is
+// unified with enum values in the entity).
+func findEnumDisjunction(val cue.Value) (cue.Op, []cue.Value) {
+	op, args := val.Expr()
+	if op == cue.OrOp {
+		return op, args
+	}
+	if op == cue.AndOp {
+		for _, arg := range args {
+			argOp, argArgs := arg.Expr()
+			if argOp == cue.OrOp {
+				return argOp, argArgs
+			}
+		}
+	}
+	return op, args
 }
 
 func inferKindFromExpr(val cue.Value) cue.Kind {
@@ -256,6 +272,11 @@ func classifyField(name string, val cue.Value, optional bool) *fieldDef {
 	case cue.BoolKind:
 		fd.FieldType = "bool"
 	default:
+		// Top type (_) or mixed kind → object (JSON)
+		if kind != 0 && kind != cue.BottomKind {
+			fd.FieldType = "object"
+			return fd
+		}
 		return nil
 	}
 	return fd
@@ -276,6 +297,10 @@ func parseEntities(val cue.Value) map[string]*entityInfo {
 			continue
 		}
 		name := strings.TrimPrefix(label, "#")
+		// Skip base entity types — not domain entities
+		if name == "BaseEntity" || name == "StatefulEntity" || name == "ImmutableEntity" {
+			continue
+		}
 		ent := &entityInfo{Name: name}
 		fIter, _ := defVal.Fields(cue.Optional(true))
 		for fIter.Next() {
