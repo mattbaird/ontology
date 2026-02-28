@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/matthewbaird/ontology/ent"
+	"github.com/matthewbaird/ontology/internal/jurisdiction"
 )
 
 // AuditInfo holds audit metadata extracted from request headers.
@@ -79,6 +81,11 @@ func parsePagination(r *http.Request) Pagination {
 
 // entErrorToHTTP maps Ent errors to appropriate HTTP responses.
 func entErrorToHTTP(w http.ResponseWriter, err error) {
+	var jv jurisdiction.Violation
+	if errors.As(err, &jv) {
+		writeError(w, http.StatusBadRequest, "JURISDICTION_VIOLATION", jv.Error())
+		return
+	}
 	if ent.IsNotFound(err) {
 		writeError(w, http.StatusNotFound, "NOT_FOUND", err.Error())
 		return

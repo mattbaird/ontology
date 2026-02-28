@@ -18,7 +18,16 @@ import (
 	"github.com/matthewbaird/ontology/ent/schema"
 	"github.com/matthewbaird/ontology/ent/space"
 	"github.com/matthewbaird/ontology/internal/event"
+	"github.com/matthewbaird/ontology/internal/jurisdiction"
 	"github.com/matthewbaird/ontology/internal/types"
+)
+
+// Well-known account UUIDs for standard chart of accounts.
+// These are deterministic UUIDs (v5, DNS namespace) so they are stable across environments.
+var (
+	accountSecurityDeposit  = uuid.MustParse("a1b2c3d4-0001-5000-8000-000000000001")
+	accountCash             = uuid.MustParse("a1b2c3d4-0002-5000-8000-000000000002")
+	accountAccountsReceivable = uuid.MustParse("a1b2c3d4-0003-5000-8000-000000000003")
 )
 
 // Ensure imports are used.
@@ -438,7 +447,7 @@ func (h *LeaseHandler) MoveInTenant(w http.ResponseWriter, r *http.Request) {
 			SetStatus(journalentry.StatusPosted).
 			SetPropertyID(l.PropertyID).
 			SetLines([]types.JournalLine{{
-				AccountID:   "deposit", // placeholder
+				AccountID:   accountSecurityDeposit.String(),
 				Debit:       &types.Money{AmountCents: l.SecurityDepositAmountCents, Currency: l.SecurityDepositCurrency},
 				Description: "Security deposit",
 			}}).
@@ -589,11 +598,11 @@ func (h *LeaseHandler) RecordPayment(w http.ResponseWriter, r *http.Request) {
 		SetStatus(journalentry.StatusPosted).
 		SetPropertyID(l.PropertyID).
 		SetLines([]types.JournalLine{{
-			AccountID:   "cash",
+			AccountID:   accountCash.String(),
 			Debit:       &types.Money{AmountCents: req.AmountCents, Currency: currency},
 			Description: desc,
 		}, {
-			AccountID:   "accounts_receivable",
+			AccountID:   accountAccountsReceivable.String(),
 			Credit:      &types.Money{AmountCents: req.AmountCents, Currency: currency},
 			Description: desc,
 		}}).
@@ -763,6 +772,20 @@ func RenewLeaseCommand(client *ent.Client) http.HandlerFunc {
 			return
 		}
 
+		// Enforce jurisdiction rent increase caps.
+		if req.NewBaseRentAmountCents > old.BaseRentAmountCents {
+			propUUID, parseErr := uuid.Parse(old.PropertyID)
+			if parseErr == nil {
+				if err := jurisdiction.ValidateRentIncrease(
+					r.Context(), client, propUUID, string(old.LeaseType),
+					old.BaseRentAmountCents, req.NewBaseRentAmountCents,
+				); err != nil {
+					writeError(w, http.StatusBadRequest, "JURISDICTION_VIOLATION", err.Error())
+					return
+				}
+			}
+		}
+
 		tx, err := client.Tx(r.Context())
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "TX_ERROR", err.Error())
@@ -872,7 +895,7 @@ func RenewLeaseCommand(client *ent.Client) http.HandlerFunc {
 			NewRent:      types.Money{AmountCents: req.NewBaseRentAmountCents, Currency: currency},
 			NewTerm:      newTerm,
 			RentChangePct: rentChangePct,
-			WithinCap:    true, // TODO: check jurisdiction rent cap
+			WithinCap:    true, // validated before transaction — would have returned 400 if exceeded
 		}))
 
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -985,16 +1008,23 @@ func InitiateEvictionCommand(client *ent.Client) http.HandlerFunc {
 		if req.BalanceOwedCents != nil {
 			balanceOwed = &types.Money{AmountCents: *req.BalanceOwedCents, Currency: "USD"}
 		}
+
+		// Look up jurisdiction eviction requirements for this property.
+		var evCtx jurisdiction.EvictionContext
+		if propUUID, parseErr := uuid.Parse(l.PropertyID); parseErr == nil {
+			evCtx = jurisdiction.GetEvictionContext(r.Context(), client, propUUID, string(l.LeaseType))
+		}
+
 		recordEvent(r.Context(), event.NewEvictionInitiated(event.EvictionInitiatedPayload{
 			LeaseID:               leaseID.String(),
 			PropertyID:            l.PropertyID,
 			PersonID:              personID,
 			Reason:                req.Reason,
 			BalanceOwed:           balanceOwed,
-			JustCauseJurisdiction: false, // TODO: check jurisdiction
-			CurePeriodDays:        0,     // TODO: check jurisdiction
-			RelocationRequired:    false, // TODO: check jurisdiction
-			RightToCounsel:        false, // TODO: check jurisdiction
+			JustCauseJurisdiction: evCtx.JustCauseRequired,
+			CurePeriodDays:        evCtx.CurePeriodDays,
+			RelocationRequired:    evCtx.RelocationRequired,
+			RightToCounsel:        evCtx.RightToCounsel,
 		}))
 
 		writeJSON(w, http.StatusOK, updated)

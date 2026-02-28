@@ -14,6 +14,7 @@ import (
 	"ariga.io/atlas-go-sdk/atlasexec"
 	"github.com/matthewbaird/ontology/ent"
 	"github.com/matthewbaird/ontology/internal/activity"
+	"github.com/matthewbaird/ontology/internal/seed"
 	"github.com/matthewbaird/ontology/internal/server"
 	"github.com/matthewbaird/ontology/internal/signals"
 
@@ -72,6 +73,9 @@ func main() {
 	if *demo {
 		if err := activity.SeedDemoData(ctx, store); err != nil {
 			log.Fatalf("seeding demo data: %v", err)
+		}
+		if err := seed.SeedJurisdictions(ctx, client); err != nil {
+			log.Fatalf("seeding jurisdictions: %v", err)
 		}
 	}
 

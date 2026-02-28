@@ -11,7 +11,9 @@ import (
 	"github.com/matthewbaird/ontology/ent"
 	"github.com/matthewbaird/ontology/internal/activity"
 	"github.com/matthewbaird/ontology/internal/event"
+	"github.com/matthewbaird/ontology/internal/eventbus"
 	"github.com/matthewbaird/ontology/internal/handler"
+	"github.com/matthewbaird/ontology/internal/jurisdiction"
 	"github.com/matthewbaird/ontology/internal/repl"
 	"github.com/matthewbaird/ontology/internal/repl/executor"
 	"github.com/matthewbaird/ontology/internal/repl/schema"
@@ -29,10 +31,22 @@ func Run(ctx context.Context, cfg Config) error {
 	r := chi.NewRouter()
 	r.Use(handler.CORS, handler.Logging, handler.Recovery)
 
-	// Wire event recorder if activity store is configured.
+	// Wire event recorder and event bus if activity store is configured.
 	if cfg.ActivityStore != nil {
-		handler.SetRecorder(event.NewActivityRecorder(cfg.ActivityStore))
+		bus := eventbus.New(256)
+		bus.Subscribe("log", eventbus.NewLogConsumer())
+		bus.Subscribe("signals", eventbus.NewSignalConsumer())
+
+		recorder := event.NewActivityRecorder(cfg.ActivityStore)
+		recorder.SetPublisher(bus)
+		handler.SetRecorder(recorder)
+
+		bus.Start(ctx)
+		log.Printf("event bus started with 2 consumers")
 	}
+
+	// Register jurisdiction enforcement hook on lease mutations.
+	cfg.DBClient.Lease.Use(jurisdiction.LeaseHook(cfg.DBClient))
 
 	// Generated routes for standard CRUD and transitions.
 	RegisterRoutes(r, cfg.DBClient)
