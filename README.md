@@ -9,7 +9,8 @@ engine, and an interactive REPL.
 **~2,500 lines of CUE generate a fully functional REST API with 18 entities,
 ~85 operations, 13 state machines, 11 domain commands with event recording,
 versioned migrations, a two-layer UI generation pipeline, cross-cutting signal
-intelligence, and a WebSocket-based query console with read/write support.**
+intelligence, runtime jurisdiction enforcement, and a WebSocket-based query
+console with read/write support.**
 
 ---
 
@@ -100,14 +101,45 @@ commit, then record a domain event.
 
 **10 domain events** — each command records a typed event via the
 `internal/event` package. Events fan out as `ActivityEntry` records (one per
-affected entity) through the `activity.Store` interface, feeding the signal
-discovery system. Event recording is best-effort and non-blocking — it never
-fails a command.
+affected entity) through the `activity.Store` interface, then publish to an
+in-process event bus (`internal/eventbus`). Two consumers process events in
+real time: a log consumer for observability and a signal consumer that
+classifies events against the signal registry. Event recording is best-effort
+and non-blocking — it never fails a command.
 
 Permissions are defined in `policies/*.cue` with 7 permission groups and
 field-level access policies. API response shapes live in `api/v1/*.cue` as
 their own anti-corruption layer — they import ontology enums but define their
 own response structures.
+
+### Runtime Jurisdiction Enforcement
+
+Jurisdiction rules are stored in the database and enforced at runtime via an
+Ent mutation hook on every lease create/update. The enforcement chain:
+
+```
+API request → Ent mutation → jurisdiction.LeaseHook()
+    → loadActiveRules(property_id)
+        → PropertyJurisdiction → Jurisdiction → JurisdictionRule
+    → checkSecurityDepositLimit(deposit, rent, max_months)
+    → checkNoticePeriod(notice_days, min_days)
+    → Violation{statute: "Cal. Civ. Code §1950.5"} or proceed
+```
+
+Rules are data-driven, not hardcoded. Link a property to a jurisdiction and
+enforcement happens automatically. The `--demo` flag seeds a 4-level hierarchy
+(Federal → California → LA County → Santa Monica) with 11 real-world rules
+including security deposit limits, notice periods, rent increase caps, just
+cause eviction requirements, disclosure mandates, and relocation assistance.
+
+Additional jurisdiction checks are called explicitly from command handlers:
+- **ValidateRentIncrease** — called by `RenewLease` before the transaction
+- **GetEvictionContext** — called by `InitiateEviction` to populate just cause,
+  cure period, relocation, and right to counsel fields
+- **GetRequiredDisclosures** — returns disclosure requirements for a property
+
+Violations return `400 JURISDICTION_VIOLATION` with the statute reference in
+the error message.
 
 ---
 
@@ -360,7 +392,7 @@ make migrate-status    # Show migration status
 ### Development
 
 ```bash
-make generate          # Run full CUE → code generation pipeline (12 generators)
+make generate          # Run full CUE → code generation pipeline (13 generators)
 air                    # Hot-reload server (auto-generates on CUE changes)
 air -- --demo          # Same, with seeded signal demo data
 ```
@@ -369,13 +401,14 @@ air -- --demo          # Same, with seeded signal demo data
 
 ```bash
 go run ./cmd/server              # REST API on :8080
-go run ./cmd/server --demo       # With seeded activity data for 6 demo tenants
+go run ./cmd/server --demo       # With seeded activity data + 4 jurisdictions with 11 rules
 ```
 
-### Signal Discovery Demo
+### Demos
 
-An interactive terminal walkthrough that hits real API endpoints and shows
-the signal engine classifying, aggregating, and escalating live — no mocks:
+**Signal Discovery** — an interactive terminal walkthrough that hits real API
+endpoints and shows the signal engine classifying, aggregating, and escalating
+live — no mocks:
 
 ```bash
 go run ./cmd/server --demo       # terminal 1
@@ -384,14 +417,28 @@ bash demo/signals.sh             # terminal 2
 
 The demo seeds 6 tenants with different activity profiles and walks through
 how the signal system surfaces a flight risk that traditional software misses.
-Press Enter to advance through each section.
+
+**Ontological Safety Net** — a self-contained walkthrough demonstrating both
+build-time and runtime guarantees. No separate server needed — the script
+builds, starts, and tears down its own server:
+
+```bash
+bash demo/v31_safety.sh
+```
+
+Covers `close()` enforcement, cross-package type safety, drift checking, state
+machine test generation, the full generation pipeline, and live jurisdiction
+enforcement (creates a lease that violates California's security deposit limit
+and shows it rejected with the statute reference).
+
+Press Enter to advance through each section in both demos.
 
 ### Build Commands
 
 ```bash
 cue vet ./ontology/...           # Validate CUE schemas
 cue vet ./commands/... ./events/... ./api/... ./policies/...  # Validate all CUE packages
-make generate                    # Full generation pipeline (12 generators)
+make generate                    # Full generation pipeline (13 generators)
 make driftcheck                  # Cross-boundary consistency validation
 go build ./...                   # Compile everything
 go test ./...                    # Run tests
@@ -460,7 +507,10 @@ ent/
   migrations/            Atlas versioned migrations
 internal/
   event/                 Domain event recording (Recorder interface, typed constructors)
+  eventbus/              In-process event bus with log + signal consumers
   handler/               Generated (gen_*.go) + custom (custom_*.go) HTTP handlers
+  jurisdiction/          Runtime jurisdiction enforcement (Ent hooks, rule validation)
+  seed/                  Demo data seeding (jurisdiction hierarchy + rules)
   server/                Route registration and server startup
   repl/                  REPL engine
     pql/                 PQL lexer, parser, AST
@@ -497,5 +547,6 @@ specs/                   Design specifications
   signaldiscovery.md     Signal discovery specification
 demo/
   signals.sh             Interactive signal discovery walkthrough
+  v31_safety.sh          Ontological safety net demo (build-time + runtime)
   lifecycle.sh           Entity lifecycle demo
 ```
