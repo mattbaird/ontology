@@ -6,6 +6,7 @@ require (
 	ariga.io/atlas-go-sdk v0.7.2
 	cuelang.org/go v0.15.4
 	entgo.io/ent v0.14.5
+	github.com/coder/websocket v1.8.14
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.11.1

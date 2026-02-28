@@ -277,6 +277,16 @@ func toCamel(s string) string {
 	return strings.ToLower(p[:1]) + p[1:]
 }
 
+func toCamelHyphen(s string) string {
+	parts := strings.Split(s, "-")
+	for i := 1; i < len(parts); i++ {
+		if parts[i] != "" {
+			parts[i] = strings.ToUpper(parts[i][:1]) + parts[i][1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
+
 func toScreamingSnake(s string) string {
 	var result []rune
 	for i, r := range s {
@@ -357,6 +367,27 @@ func tsType(f UIFieldDef) string {
 	default:
 		return "any"
 	}
+}
+
+func commonTypeImports(data templateData) string {
+	needed := map[string]bool{}
+	for _, f := range data.Fields {
+		switch f.Type {
+		case "address":
+			needed["Address"] = true
+		case "contact_method":
+			needed["ContactMethod"] = true
+		}
+	}
+	if len(needed) == 0 {
+		return ""
+	}
+	names := make([]string, 0, len(needed))
+	for n := range needed {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return fmt.Sprintf("import type { %s } from './common.types';", strings.Join(names, ", "))
 }
 
 func replaceID(s string) string {
@@ -440,31 +471,31 @@ func formFieldRender(data any, fieldName string) string {
 	switch fd.Type {
 	case "string":
 		return fmt.Sprintf(`    <FormField label="%s"%s error={errors['%s']}>
-      <input type="text" class="input" value={values.%s ?? ''} on:input={(e) => handleChange('%s', e.target.value)} />
+      <input type="text" class="input" value={values.%s ?? ''} on:input={(e) => handleChange('%s', inputValue(e))} />
     </FormField>`, fd.Label, req, fd.Name, fd.Name, fd.Name)
 	case "text":
 		return fmt.Sprintf(`    <FormField label="%s"%s error={errors['%s']}>
-      <textarea class="textarea" value={values.%s ?? ''} on:input={(e) => handleChange('%s', e.target.value)} />
+      <textarea class="textarea" value={values.%s ?? ''} on:input={(e) => handleChange('%s', textareaValue(e))} />
     </FormField>`, fd.Label, req, fd.Name, fd.Name, fd.Name)
 	case "int":
 		return fmt.Sprintf(`    <FormField label="%s"%s error={errors['%s']}>
-      <input type="number" step="1" class="input" value={values.%s ?? ''} on:input={(e) => handleChange('%s', parseInt(e.target.value))} />
+      <input type="number" step="1" class="input" value={values.%s ?? ''} on:input={(e) => handleChange('%s', parseInt(inputValue(e)))} />
     </FormField>`, fd.Label, req, fd.Name, fd.Name, fd.Name)
 	case "float":
 		return fmt.Sprintf(`    <FormField label="%s"%s error={errors['%s']}>
-      <input type="number" step="any" class="input" value={values.%s ?? ''} on:input={(e) => handleChange('%s', parseFloat(e.target.value))} />
+      <input type="number" step="any" class="input" value={values.%s ?? ''} on:input={(e) => handleChange('%s', parseFloat(inputValue(e)))} />
     </FormField>`, fd.Label, req, fd.Name, fd.Name, fd.Name)
 	case "bool":
 		return fmt.Sprintf(`    <FormField label="%s" error={errors['%s']}>
-      <input type="checkbox" class="checkbox" checked={values.%s ?? false} on:change={(e) => handleChange('%s', e.target.checked)} />
+      <input type="checkbox" class="checkbox" checked={values.%s ?? false} on:change={(e) => handleChange('%s', inputChecked(e))} />
     </FormField>`, fd.Label, fd.Name, fd.Name, fd.Name)
 	case "date":
 		return fmt.Sprintf(`    <FormField label="%s"%s error={errors['%s']}>
-      <input type="date" class="input" value={values.%s ?? ''} on:change={(e) => handleChange('%s', e.target.value)} />
+      <input type="date" class="input" value={values.%s ?? ''} on:change={(e) => handleChange('%s', inputValue(e))} />
     </FormField>`, fd.Label, req, fd.Name, fd.Name, fd.Name)
 	case "datetime":
 		return fmt.Sprintf(`    <FormField label="%s"%s error={errors['%s']}>
-      <input type="datetime-local" class="input" value={values.%s ?? ''} on:change={(e) => handleChange('%s', e.target.value)} />
+      <input type="datetime-local" class="input" value={values.%s ?? ''} on:change={(e) => handleChange('%s', inputValue(e))} />
     </FormField>`, fd.Label, req, fd.Name, fd.Name, fd.Name)
 	case "enum":
 		optConst := toScreamingSnake(fd.EnumRef) + "_OPTIONS"
@@ -582,36 +613,63 @@ func computeFormImports(schema UISchema) []importDef {
 	return imports
 }
 
+// requiredCheck generates a type-appropriate required-field check for validation templates.
+// It looks up the field type from the schema to decide whether to use === '' (string-like) or just == null.
+func requiredCheck(rule UIFieldRule, data templateData) string {
+	accessor := dotToOptional(rule.Field)
+	label := fieldLabel(rule.Field)
+	// Find the field type
+	fieldType := ""
+	for _, f := range data.Fields {
+		if f.Name == rule.Field {
+			fieldType = f.Type
+			break
+		}
+	}
+	switch fieldType {
+	case "string", "text", "date", "datetime":
+		return fmt.Sprintf(`  if (input.%s == null || input.%s === '') {
+    errors['%s'] = '%s is required';
+  }`, accessor, accessor, rule.Field, escapeJS(label))
+	default:
+		return fmt.Sprintf(`  if (input.%s == null) {
+    errors['%s'] = '%s is required';
+  }`, accessor, rule.Field, escapeJS(label))
+	}
+}
+
 func crossFieldCheck(rule UICrossFieldRule) string {
 	if rule.Condition == nil {
 		return ""
 	}
 
+	// Use bracket notation for condition field to avoid TS errors when
+	// the field (e.g. status) is not in CreateInput
+	condField := fmt.Sprintf("(input as any)['%s']", rule.Condition.Field)
 	var condCheck string
 	switch rule.Condition.Operator {
 	case "eq":
 		switch v := rule.Condition.Value.(type) {
 		case bool:
-			condCheck = fmt.Sprintf("input.%s === %v", rule.Condition.Field, v)
+			condCheck = fmt.Sprintf("%s === %v", condField, v)
 		default:
-			condCheck = fmt.Sprintf("input.%s === '%v'", rule.Condition.Field, v)
+			condCheck = fmt.Sprintf("%s === '%v'", condField, v)
 		}
 	case "in":
 		vals := make([]string, len(rule.Condition.Values))
 		for i, v := range rule.Condition.Values {
 			vals[i] = fmt.Sprintf("'%s'", v)
 		}
-		condCheck = fmt.Sprintf("[%s].includes(input.%s ?? '')", strings.Join(vals, ", "), rule.Condition.Field)
+		condCheck = fmt.Sprintf("[%s].includes(%s ?? '')", strings.Join(vals, ", "), condField)
 	case "truthy":
-		condCheck = fmt.Sprintf("!!input.%s", rule.Condition.Field)
+		condCheck = fmt.Sprintf("!!%s", condField)
 	default:
 		return ""
 	}
 
-	thenField := strings.ReplaceAll(rule.Then.Field, ".", "?.")
-	return fmt.Sprintf(`  if (%s && (input.%s == null || input.%s === '')) {
+	return fmt.Sprintf(`  if (%s && (input as any)['%s'] == null) {
     errors['%s'] = '%s';
-  }`, condCheck, thenField, thenField, rule.Then.Field, escapeJS(rule.Message))
+  }`, condCheck, rule.Then.Field, rule.Then.Field, escapeJS(rule.Message))
 }
 
 // ── Shared component content ─────────────────────────────────────────────────
@@ -658,18 +716,19 @@ var sharedComponents = map[string]string{
   export let readonly = false;
   const dispatch = createEventDispatcher();
   $: addr = value ?? {};
+  function iv(e: Event): string { return (e.target as HTMLInputElement).value; }
   function update(field: string, val: string) {
     const updated = { ...addr, [field]: val };
     dispatch('change', updated);
   }
 </script>
 <div class="space-y-2">
-  <input type="text" class="input" placeholder="Address Line 1" value={addr.line1 ?? ''} on:input={(e) => update('line1', e.target.value)} disabled={readonly} />
-  <input type="text" class="input" placeholder="Address Line 2" value={addr.line2 ?? ''} on:input={(e) => update('line2', e.target.value)} disabled={readonly} />
+  <input type="text" class="input" placeholder="Address Line 1" value={addr.line1 ?? ''} on:input={(e) => update('line1', iv(e))} disabled={readonly} />
+  <input type="text" class="input" placeholder="Address Line 2" value={addr.line2 ?? ''} on:input={(e) => update('line2', iv(e))} disabled={readonly} />
   <div class="grid grid-cols-3 gap-2">
-    <input type="text" class="input" placeholder="City" value={addr.city ?? ''} on:input={(e) => update('city', e.target.value)} disabled={readonly} />
-    <input type="text" class="input" placeholder="State" maxlength="2" value={addr.state ?? ''} on:input={(e) => update('state', e.target.value)} disabled={readonly} />
-    <input type="text" class="input" placeholder="ZIP" value={addr.postal_code ?? ''} on:input={(e) => update('postal_code', e.target.value)} disabled={readonly} />
+    <input type="text" class="input" placeholder="City" value={addr.city ?? ''} on:input={(e) => update('city', iv(e))} disabled={readonly} />
+    <input type="text" class="input" placeholder="State" maxlength="2" value={addr.state ?? ''} on:input={(e) => update('state', iv(e))} disabled={readonly} />
+    <input type="text" class="input" placeholder="ZIP" value={addr.postal_code ?? ''} on:input={(e) => update('postal_code', iv(e))} disabled={readonly} />
   </div>
 </div>`,
 
@@ -693,6 +752,7 @@ var sharedComponents = map[string]string{
   export let requireEnd = false;
   const dispatch = createEventDispatcher();
   $: range = value ?? {};
+  function iv(e: Event): string { return (e.target as HTMLInputElement).value; }
   function update(field: string, val: string) {
     const updated = { ...range, [field]: val };
     dispatch('change', updated);
@@ -701,11 +761,11 @@ var sharedComponents = map[string]string{
 <div class="grid grid-cols-2 gap-2">
   <div>
     <label class="text-sm">Start</label>
-    <input type="date" class="input" value={range.start ?? ''} on:change={(e) => update('start', e.target.value)} />
+    <input type="date" class="input" value={range.start ?? ''} on:change={(e) => update('start', iv(e))} />
   </div>
   <div>
     <label class="text-sm">End{#if requireEnd} <span class="text-error-500">*</span>{/if}</label>
-    <input type="date" class="input" value={range.end ?? ''} on:change={(e) => update('end', e.target.value)} />
+    <input type="date" class="input" value={range.end ?? ''} on:change={(e) => update('end', iv(e))} />
   </div>
 </div>`,
 
@@ -725,18 +785,20 @@ var sharedComponents = map[string]string{
   export let value: Record<string, any> | null = null;
   const dispatch = createEventDispatcher();
   $: cm = value ?? {};
+  function iv(e: Event): string { return (e.target as HTMLInputElement).value; }
+  function sv(e: Event): string { return (e.target as HTMLSelectElement).value; }
   function update(field: string, val: any) {
     const updated = { ...cm, [field]: val };
     dispatch('change', updated);
   }
 </script>
 <div class="grid grid-cols-[auto_1fr] gap-2">
-  <select class="select" value={cm.type ?? 'email'} on:change={(e) => update('type', e.target.value)}>
+  <select class="select" value={cm.type ?? 'email'} on:change={(e) => update('type', sv(e))}>
     <option value="email">Email</option>
     <option value="phone">Phone</option>
     <option value="sms">SMS</option>
   </select>
-  <input type="text" class="input" value={cm.value ?? ''} on:input={(e) => update('value', e.target.value)} />
+  <input type="text" class="input" value={cm.value ?? ''} on:input={(e) => update('value', iv(e))} />
 </div>`,
 
 	"ContactMethodDisplay.svelte": `<!-- GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT. -->
@@ -826,8 +888,9 @@ var sharedComponents = map[string]string{
   export let value: string | null = null;
   export let disabled = false;
   const dispatch = createEventDispatcher();
+  function sv(e: Event): string { return (e.target as HTMLSelectElement).value; }
 </script>
-<select class="select" {disabled} value={value ?? ''} on:change={(e) => dispatch('change', e.target.value)}>
+<select class="select" {disabled} value={value ?? ''} on:change={(e) => dispatch('change', sv(e))}>
   <option value="">Select...</option>
   {#each options as opt}
     <option value={opt.value}>{opt.label}</option>
@@ -891,6 +954,7 @@ var sharedComponents = map[string]string{
   export let value: any[] = [];
   export let itemLabel = 'Item';
   const dispatch = createEventDispatcher();
+  function iv(e: Event): string { return (e.target as HTMLInputElement).value; }
   function addItem() {
     value = [...value, ''];
     dispatch('change', value);
@@ -907,7 +971,7 @@ var sharedComponents = map[string]string{
 <div class="space-y-2">
   {#each value as item, i}
     <div class="flex gap-2 items-center">
-      <input type="text" class="input flex-1" value={item} on:input={(e) => updateItem(i, e.target.value)} />
+      <input type="text" class="input flex-1" value={item} on:input={(e) => updateItem(i, iv(e))} />
       <button type="button" class="btn-icon btn-icon-sm variant-soft-error" on:click={() => removeItem(i)}>×</button>
     </div>
   {/each}
@@ -943,7 +1007,7 @@ var sharedComponents = map[string]string{
   const dispatch = createEventDispatcher();
 </script>
 {#if open}
-  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" on:click|self={() => dispatch('cancel')}>
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" role="presentation" on:click|self={() => dispatch('cancel')}>
     <div class="card p-6 max-w-md space-y-4">
       <p>{message}</p>
       <div class="flex justify-end gap-2">
@@ -1211,6 +1275,7 @@ func main() {
 		"tsType":             tsType,
 		"toPascal":           toPascal,
 		"toCamel":            toCamel,
+		"toCamelHyphen":      toCamelHyphen,
 		"toScreamingSnake":   toScreamingSnake,
 		"fieldLabel":         fieldLabel,
 		"skeletonVariant":    skeletonVariant,
@@ -1222,6 +1287,8 @@ func main() {
 		"visibilityCheck":    visibilityCheck,
 		"formFieldRender":    formFieldRender,
 		"crossFieldCheck":    crossFieldCheck,
+		"commonTypeImports":  commonTypeImports,
+		"requiredCheck":      requiredCheck,
 	}
 
 	// Parse templates
@@ -1268,10 +1335,9 @@ func main() {
 		}
 
 		if schema.Status != nil {
-			data.StatusType = pascal + "Status"
-			// Find initial status: first enum value from the status field
 			for _, f := range schema.Fields {
 				if f.Name == "status" && f.EnumRef != "" {
+					data.StatusType = f.EnumRef
 					if e, ok := schema.Enums[f.EnumRef]; ok && len(e.Values) > 0 {
 						data.InitialStatus = e.Values[0].Value
 					}

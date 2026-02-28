@@ -10,9 +10,7 @@ export function validate{{.PascalName}}(input: Partial<{{.PascalName}}CreateInpu
 
 {{- range .Validation.FieldRules}}
 {{- if eq .Rule "required"}}
-  if (input.{{.Field | dotToOptional}} == null || input.{{.Field | dotToOptional}} === '') {
-    errors['{{.Field}}'] = '{{.Field | fieldLabel}} is required';
-  }
+{{requiredCheck . $}}
 {{- end}}
 {{- if eq .Rule "min"}}
   if (input.{{.Field | dotToOptional}} != null && input.{{.Field | dotToOptional}} < {{.Value}}) {

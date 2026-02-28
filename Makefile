@@ -1,4 +1,4 @@
-.PHONY: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen uigen uirender generate-ui generate testgen driftcheck ci-check clean serve migrate-diff migrate-apply migrate-status
+.PHONY: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen uigen uirender generate-ui generate testgen replgen driftcheck ci-check clean serve migrate-diff migrate-apply migrate-status
 
 # Validate CUE ontology
 validate:
@@ -51,12 +51,16 @@ generate-ui: uigen uirender
 testgen:
 	go run ./cmd/testgen
 
+# Generate REPL schema registry and entity dispatchers from CUE ontology
+replgen:
+	go run ./cmd/replgen
+
 # Validate cross-boundary consistency (ontology, commands, events, api, policies)
 driftcheck:
 	go run ./cmd/driftcheck
 
 # Full generation pipeline
-generate: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen generate-ui testgen
+generate: validate entgen entgenerate handlergen apigen eventgen authzgen agentgen openapigen generate-ui testgen replgen
 
 # CI check: verify generated code matches ontology (no drift)
 ci-check: generate

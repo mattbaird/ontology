@@ -11,6 +11,9 @@ import (
 	"github.com/matthewbaird/ontology/ent"
 	"github.com/matthewbaird/ontology/internal/activity"
 	"github.com/matthewbaird/ontology/internal/handler"
+	"github.com/matthewbaird/ontology/internal/repl"
+	"github.com/matthewbaird/ontology/internal/repl/executor"
+	"github.com/matthewbaird/ontology/internal/repl/schema"
 )
 
 // Config holds server configuration.
@@ -34,6 +37,11 @@ func Run(ctx context.Context, cfg Config) error {
 	if cfg.ActivityStore != nil {
 		RegisterActivityRoutes(r, cfg.ActivityStore)
 	}
+
+	// REPL routes (always registered in dev mode).
+	replRegistry := schema.InitRegistry()
+	replDispatchers := executor.InitDispatchers()
+	repl.RegisterRoutes(r, cfg.DBClient, replRegistry, replDispatchers)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	log.Printf("starting server on %s", addr)

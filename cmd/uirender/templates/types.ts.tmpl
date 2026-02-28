@@ -1,5 +1,9 @@
 // GENERATED FROM PROPELLER ONTOLOGY. DO NOT HAND-EDIT.
 // Source: gen/ui/schema/{{.Entity}}.schema.json
+{{- with commonTypeImports .}}
+
+{{.}}
+{{- end}}
 
 {{- range $enumName, $enum := .Enums}}
 export type {{$enumName}} = {{range $i, $v := $enum.Values}}{{if $i}} | {{end}}'{{$v.Value}}'{{end}};

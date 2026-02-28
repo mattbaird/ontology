@@ -37,6 +37,11 @@
     }
   }
 
+  function inputValue(e: Event): string { return (e.target as HTMLInputElement).value; }
+  function inputChecked(e: Event): boolean { return (e.target as HTMLInputElement).checked; }
+  function textareaValue(e: Event): string { return (e.target as HTMLTextAreaElement).value; }
+  function selectValue(e: Event): string { return (e.target as HTMLSelectElement).value; }
+
   function isVisible(sectionId: string): boolean {
     {{- range .Form.Sections}}
     {{- if .VisibleWhen}}

@@ -37,7 +37,7 @@ export const {{.CamelName}}Api = {
 {{- end}}
 
 {{- range $action, $ep := .API.Transitions}}
-  async {{$action}}(id: string, body?: Record<string, any>): Promise<{{$.PascalName}}> {
+  async {{$action | toCamelHyphen}}(id: string, body?: Record<string, any>): Promise<{{$.PascalName}}> {
     return apiClient.post<{{$.PascalName}}>(`{{$ep.Path | replaceID}}`.replace('{id}', id), body);
   },
 {{- end}}
