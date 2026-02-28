@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/matthewbaird/ontology/ent"
 	"github.com/matthewbaird/ontology/internal/activity"
+	"github.com/matthewbaird/ontology/internal/event"
 	"github.com/matthewbaird/ontology/internal/handler"
 	"github.com/matthewbaird/ontology/internal/repl"
 	"github.com/matthewbaird/ontology/internal/repl/executor"
@@ -28,9 +29,15 @@ func Run(ctx context.Context, cfg Config) error {
 	r := chi.NewRouter()
 	r.Use(handler.CORS, handler.Logging, handler.Recovery)
 
+	// Wire event recorder if activity store is configured.
+	if cfg.ActivityStore != nil {
+		handler.SetRecorder(event.NewActivityRecorder(cfg.ActivityStore))
+	}
+
 	// Generated routes for standard CRUD and transitions.
 	RegisterRoutes(r, cfg.DBClient)
 	// Custom routes with non-standard path patterns.
+	// Registered after generated routes so custom handlers override generated ones.
 	RegisterCustomRoutes(r, cfg.DBClient)
 
 	// Activity/signal routes (optional — no Ent dependency).

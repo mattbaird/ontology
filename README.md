@@ -7,9 +7,9 @@ policies, agent tooling, UI components, state machine tests, a signal discovery
 engine, and an interactive REPL.
 
 **~2,500 lines of CUE generate a fully functional REST API with 18 entities,
-~85 operations, 13 state machines, versioned migrations, a two-layer UI
-generation pipeline, cross-cutting signal intelligence, and a WebSocket-based
-query console.**
+~85 operations, 13 state machines, 11 domain commands with event recording,
+versioned migrations, a two-layer UI generation pipeline, cross-cutting signal
+intelligence, and a WebSocket-based query console with read/write support.**
 
 ---
 
@@ -74,11 +74,35 @@ persistence layer via generated Ent hooks — no code path can violate them.
 
 ### CQRS: Commands and Events
 
-All writes flow through a command layer defined in `commands/*.cue`. Commands
-are domain operations (MoveInTenant, RecordPayment, PostJournalEntry, etc.)
-that produce events defined in `events/*.cue`. This separation keeps the
-ontology as the shared vocabulary while commands and events reference it
-through CUE imports.
+Domain writes flow through commands defined in `commands/*.cue` and produce
+events defined in `events/*.cue`. The CUE definitions specify input shapes,
+execution plans, affected entities, and required permissions. The runtime
+command layer in `internal/handler/custom_*.go` implements each command as a
+handler function following a consistent pattern: parse request, validate state
+machine transitions, open an Ent transaction, execute multi-entity mutations,
+commit, then record a domain event.
+
+**11 commands across 4 domains:**
+
+| Command | Route | What it does |
+|---------|-------|--------------|
+| **MoveInTenant** | `POST /v1/leases/{id}/move-in` | Validates lease, sets move-in date, transitions lease to active, transitions spaces to occupied, updates tenant attributes, creates security deposit LedgerEntry |
+| **RecordPayment** | `POST /v1/leases/{id}/payments` | Creates JournalEntry + LedgerEntry, updates tenant balance and standing |
+| **RenewLease** | `POST /v1/leases/{id}/renew` | Creates new Lease copying terms, copies LeaseSpaces, transitions old lease to renewed |
+| **InitiateEviction** | `POST /v1/leases/{id}/evict` | Validates eviction reason, transitions lease to eviction, updates tenant standing |
+| **SubmitApplication** | `POST /v1/applications` | Creates Application in submitted status with optional fee recording |
+| **ApproveApplication** | `POST /v1/applications/{id}/approve` | Transitions application, records decision metadata |
+| **DenyApplication** | `POST /v1/applications/{id}/deny` | Transitions application, requires reason for fair housing compliance |
+| **OnboardProperty** | `POST /v1/properties/onboard` | Creates Property in onboarding status with bulk Space creation |
+| **PostJournalEntry** | `POST /v1/journal-entries/{id}/post` | Validates balanced lines, transitions to posted, creates LedgerEntries |
+| **StartReconciliation** | `POST /v1/reconciliations/{id}/start` | Creates Reconciliation, marks matched LedgerEntries, determines balanced/unbalanced |
+| **ApproveReconciliation** | `POST /v1/reconciliations/{id}/approve` | Transitions balanced reconciliation to approved |
+
+**10 domain events** — each command records a typed event via the
+`internal/event` package. Events fan out as `ActivityEntry` records (one per
+affected entity) through the `activity.Store` interface, feeding the signal
+discovery system. Event recording is best-effort and non-blocking — it never
+fails a command.
 
 Permissions are defined in `policies/*.cue` with 7 permission groups and
 field-level access policies. API response shapes live in `api/v1/*.cue` as
@@ -107,10 +131,13 @@ own response structures.
 the ontology, commands, events, API definitions, and policies — catching
 mismatches before they reach production.
 
-Custom operations (journal posting, payment recording, application approval,
-etc.) are marked `custom: true` in `codegen/apigen.cue` and hand-written in
-`internal/handler/custom_*.go`. The generators skip these — they coexist with
-generated code without conflict.
+Custom operations are marked `custom: true` in `codegen/apigen.cue` and
+hand-written in `internal/handler/custom_*.go`. The generators skip these —
+they coexist with generated code without conflict. Domain commands
+(MoveInTenant, RecordPayment, etc.) implement multi-entity transactional
+mutations following a consistent pattern: parse → validate → `client.Tx()` →
+mutations → commit → record event. Events fan out through `internal/event/`
+into the activity store, feeding the signal discovery system.
 
 ---
 
@@ -118,12 +145,15 @@ generated code without conflict.
 
 The Propeller REPL is a web-based interactive console providing direct access
 to the Ent entity layer over WebSocket. PQL (Propeller Query Language) is a
-domain-specific query syntax that compiles to Ent query builder calls.
+domain-specific query syntax that compiles to Ent query builder calls,
+supporting both reads and writes across all 18 entities.
 
 ### PQL syntax
 
+**Reads:**
+
 ```pql
--- Query entities
+-- Query entities with filtering
 find lease where status = "active" and lease_type = "fixed_term"
 
 -- Field projection
@@ -135,16 +165,59 @@ find lease where status = "active" include lease_spaces, tenant_roles
 -- Sorting and pagination
 find lease order by base_rent_amount_cents desc limit 25 offset 50
 
+-- Clauses can appear in any order
+find lease limit 10 where status = "active" order by created_at desc
+
 -- Get by ID
 get lease "550e8400-e29b-41d4-a716-446655440000"
 
 -- Count
 count lease where status = "active"
-
--- Schema introspection
-:schema lease
-:help find
 ```
+
+**Writes:**
+
+```pql
+-- Create entity
+create portfolio set name = "West Coast Properties"
+
+-- Update entity
+update property "550e8400-..." set name = "Maple Heights", year_built = 2005
+
+-- Delete entity
+delete building "550e8400-..."
+```
+
+**Meta-commands:**
+
+```pql
+:schema lease              -- Show entity schema (fields, edges, state machines)
+:help find                 -- Help on a specific topic
+:history                   -- Show command history
+:env                       -- Session info (ID, mode, timestamps)
+:clear                     -- Clear output
+```
+
+### Operators
+
+| Operator | Example |
+|----------|---------|
+| `=`, `!=` | `status = "active"` |
+| `>`, `<`, `>=`, `<=` | `year_built >= 2000` |
+| `like` | `first_name like "J%"` |
+| `in` | `status in ["active", "draft"]` |
+| `and`, `or` | `status = "active" and type = "fixed_term"` |
+
+### Planner features
+
+- **Fuzzy suggestions** — misspelled entity or field names produce "did you
+  mean...?" errors using Levenshtein distance
+- **Type coercion** — UUID fields auto-parse, enum fields validate against
+  allowed values, integers downcast correctly
+- **Immutability enforcement** — create/update/delete rejected for immutable
+  entities (LedgerEntry, etc.) with clear errors
+- **Computed field protection** — `id`, `created_at`, `updated_at` cannot be
+  set in mutations
 
 ### Architecture
 
@@ -386,6 +459,7 @@ ent/
   schema/                Generated Ent schemas (18 entities)
   migrations/            Atlas versioned migrations
 internal/
+  event/                 Domain event recording (Recorder interface, typed constructors)
   handler/               Generated (gen_*.go) + custom (custom_*.go) HTTP handlers
   server/                Route registration and server startup
   repl/                  REPL engine
